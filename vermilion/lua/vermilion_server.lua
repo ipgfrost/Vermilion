@@ -75,10 +75,14 @@ end
 
 -- Hooks
 local setOwnerFunc = function(vplayer, model, entity)
-	if(entity != nil) then
-		entity.Vermilion_Owner = vplayer:SteamID()
-		if(not entity:IsPlayer()) then
-			entity:SetCustomCollisionCheck(true)
+	local tEnt = entity
+	if(tEnt == nil) then
+		tEnt = model
+	end
+	if(tEnt) then
+		tEnt.Vermilion_Owner = vplayer:SteamID()
+		if(not tEnt:IsPlayer()) then
+			tEnt:SetCustomCollisionCheck(true)
 		end
 	end
 end
@@ -124,6 +128,10 @@ Vermilion:registerHook("PlayerSay", "Say1", function(vplayer, text, teamChat)
 end)
 
 Vermilion:registerHook("PlayerInitialSpawn", "Advertise", function(vplayer)
+	timer.Simple( 1, function()
+		net.Start("Vermilion_Client_Activate")
+		net.Send(vplayer)
+	end)
 	for i,plyr in pairs(player.GetHumans()) do
 		if(not plyr == vplayer) then
 			Vermilion:sendNotify(plyr, vplayer:Name() .. " has joined the server!", 5, NOTIFY_HINT)
@@ -134,13 +142,14 @@ Vermilion:registerHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 	Vermilion:sendNotify(vplayer, "Be on your best behaviour!", 20, NOTIFY_GENERIC)
 end)
 
+
 hook.Add("ShouldCollide", "Vermilion_ShouldCollide", function(ent1, ent2)
 	if((not ent1:IsWorld() and not ent2:IsWorld())) then
 		if((ent1:IsPlayer() and ent1:SteamID() != ent2.Vermilion_Owner) or (ent2:IsPlayer() and ent2:SteamID() != ent1.Vermilion_Owner) or (not ent1:IsPlayer() and not ent2:IsPlayer())) then
 			local vplayer1 = Crimson.lookupPlayerBySteamID(ent1.Vermilion_Owner)
 			local vplayer2 = Crimson.lookupPlayerBySteamID(ent2.Vermilion_Owner)
 			--print(tostring(vplayer1) .. " <=> " .. tostring(vplayer2))
-			if(not (vplayer1 == nil or vplayer2 == nil)) then
+			if(not (vplayer1 == nil or vplayer2 == nil) and vplayer1 != vplayer2) then
 				if(not Vermilion:hasPermission(vplayer1, "prop_colide_others") or not Vermilion:hasPermission(vplayer2, "prop_collide_others")) then
 					return false
 				end

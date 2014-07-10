@@ -20,42 +20,27 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 
-local EXTENSION = Vermilion:makeExtensionBase()
-EXTENSION.Name = "Sandbox Limits"
-EXTENSION.ID = "sbox_limits"
-EXTENSION.Description = "Handles sandbox limits"
-EXTENSION.Author = "Ned"
-EXTENSION.Permissions = {
-	"no_damage"
-}
+-- This tool needs a rethink...
 
-function EXTENSION:init()
-	local META = FindMetaTable("Player")
-	if(META.Vermilion_CheckLimit == nil) then
-		META.Vermilion_CheckLimit = META.CheckLimit
-	end
-	function META:CheckLimit(str)
-		if(not Vermilion:getSetting("enable_limit_remover", true)) then
-			return self:Vermilion_CheckLimit(str)
-		end
-		if(self:Vermilion_GetRank() <= Vermilion:getSetting("limit_remover_min_rank", 2)) then
-			return true
-		end
-		return self:Vermilion_CheckLimit(str)
-	end
-	
-	self:addHook("EntityTakeDamage", "V_PlayerHurt", function(target, dmg)
-		if(not target:IsPlayer()) then return end
-		if(Vermilion:getSetting("global_no_damage", false)) then
-			dmg:ScaleDamage(0)
-			return dmg
-		end
-		if(Vermilion:hasPermission(target, "no_damage")) then
-			dmg:ScaleDamage(0)
-			print("NODAMAGE")
-			return dmg
-		end
-	end)
+TOOL.Category = "Vermilion"
+TOOL.Name = "Owner"
+TOOL.Tab = "Vermilion"
+TOOL.Command = nil
+TOOL.ConfigName = ""
+
+if(CLIENT) then
+	language.Add("tool.ownerstool.name", "Owner Tool")
+	language.Add("tool.ownerstool.desc", "Figure out who owns what")
+	language.Add("tool.ownerstool.0", "Left Click to print the owner")
 end
 
-Vermilion:registerExtension(EXTENSION)
+
+
+function TOOL:LeftClick( trace )
+	if(trace.Entity) then
+		if(SERVER) then
+			Vermilion:sendNotify(self:GetOwner(), "Owner: " .. tostring(trace.Entity.Vermilion_Owner), 5, NOTIFY_GENERIC)
+		end
+	end
+	return false
+end

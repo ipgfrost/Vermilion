@@ -31,8 +31,8 @@ EXTENSION.Permissions = {
 
 function EXTENSION:init()
 	local MENU = {}
-	MENU.width = 260
-	MENU.height = 490
+	MENU.width = 600
+	MENU.height = 600
 	MENU.currentWidth = 0
 	MENU.currentHeight = 0
 	
@@ -44,21 +44,26 @@ function EXTENSION:init()
 	MENU.Panel:SetDraggable(false)
 	MENU.Panel:SetTitle("Vermilion")
 	
+	MENU.Panel:MakePopup()
+	MENU.Panel:SetKeyboardInputEnabled( false )
+	MENU.Panel:SetVisible(false)
+	
 	function MENU:show()
 		timer.Destroy("Vermilion_MenuHide")
 		self.Panel:SetVisible(true)
 		self.Panel:SetKeyboardInputEnabled(false)
 		self.Panel:SetMouseInputEnabled(true)
+		input.SetCursorPos( ScrW() / 2, ScrH() / 2 )
 		timer.Create("Vermilion_MenuShow", 1/60, 0, function()
 			if(self.currentWidth >= self.width) then
 				self.currentWidth = self.width
 			else
-				self.currentWidth = self.currentWidth + 1
+				self.currentWidth = self.currentWidth + 12
 			end
 			if(self.currentHeight >= self.height) then
 				self.currentHeight = self.height
 			else
-				self.currentHeight = self.currentHeight + 1
+				self.currentHeight = self.currentHeight + 12
 			end
 			self.Panel:SetSize(self.currentWidth, self.currentHeight)
 			self.Panel:SetPos((ScrW() / 2) - (self.currentWidth / 2), (ScrH() / 2) - (self.currentHeight / 2))
@@ -77,12 +82,12 @@ function EXTENSION:init()
 			if(self.currentWidth <= 0) then
 				self.currentWidth = 0
 			else
-				self.currentWidth = self.currentWidth - 1
+				self.currentWidth = self.currentWidth - 12
 			end
 			if(self.currentHeight <= 0) then
 				self.currentHeight = 0
 			else
-				self.currentHeight = self.currentHeight - 1
+				self.currentHeight = self.currentHeight - 12
 			end
 			self.Panel:SetSize(self.currentWidth, self.currentHeight)
 			self.Panel:SetPos((ScrW() / 2) - (self.currentWidth / 2), (ScrH() / 2) - (self.currentHeight / 2))
