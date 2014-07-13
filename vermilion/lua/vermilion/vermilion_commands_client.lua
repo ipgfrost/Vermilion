@@ -22,41 +22,4 @@
  THE SOFTWARE.
 ]]
 
-local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Physgun Limiter"
-EXTENSION.ID = "physgun"
-EXTENSION.Description = "Handles physgun limits"
-EXTENSION.Author = "Ned"
-EXTENSION.Permissions = {
-	"physgun_pickup_all",
-	"physgun_pickup_own",
-	"physgun_pickup_others",
-	"physgun_pickup_players"
-}
-EXTENSION.RankPermissions = {
-	{ "admin", {
-			{ "physgun_pickup_all" }
-		}
-	},
-	{ "player", {
-			{ "physgun_pickup_own" }
-		}
-	}
-}
-
-function EXTENSION:InitServer()
-	self:AddHook("PhysgunPickup", "Vermilion_Physgun_Pickup", function(vplayer, ent)
-		if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then
-			return true
-		end
-		if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all")) then
-			if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
-				return false
-			elseif (ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_others")) then
-				return false
-			end
-		end
-	end)
-end
-
-Vermilion:RegisterExtension(EXTENSION)
+print("This is here to avoid an error")

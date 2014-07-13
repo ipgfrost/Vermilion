@@ -23,38 +23,35 @@
 ]]
 
 local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Physgun Limiter"
-EXTENSION.ID = "physgun"
-EXTENSION.Description = "Handles physgun limits"
+EXTENSION.Name = "Fall Damage Limiter"
+EXTENSION.ID = "falldamage"
+EXTENSION.Description = "Handles fall damage limits"
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
-	"physgun_pickup_all",
-	"physgun_pickup_own",
-	"physgun_pickup_others",
-	"physgun_pickup_players"
+	"no_fall_damage",
+	"reduced_fall_damage"
 }
 EXTENSION.RankPermissions = {
 	{ "admin", {
-			{ "physgun_pickup_all" }
+			{ "no_fall_damage" }
 		}
 	},
 	{ "player", {
-			{ "physgun_pickup_own" }
+			{ "reduced_fall_damage" }
 		}
 	}
 }
 
 function EXTENSION:InitServer()
-	self:AddHook("PhysgunPickup", "Vermilion_Physgun_Pickup", function(vplayer, ent)
-		if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then
-			return true
+	self:AddHook("GetFallDamage", "Vermilion_FallDamage", function(vplayer, speed)
+		if(Vermilion:GetSetting("global_no_fall_damage", false)) then
+			return 0
 		end
-		if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all")) then
-			if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
-				return false
-			elseif (ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_others")) then
-				return false
-			end
+		if(Vermilion:HasPermission(vplayer, "no_fall_damage")) then
+			return 0
+		end
+		if(Vermilion:HasPermission(vplayer, "reduced_fall_damage")) then
+			return 5
 		end
 	end)
 end

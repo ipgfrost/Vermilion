@@ -22,41 +22,29 @@
  THE SOFTWARE.
 ]]
 
-local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Physgun Limiter"
-EXTENSION.ID = "physgun"
-EXTENSION.Description = "Handles physgun limits"
-EXTENSION.Author = "Ned"
-EXTENSION.Permissions = {
-	"physgun_pickup_all",
-	"physgun_pickup_own",
-	"physgun_pickup_others",
-	"physgun_pickup_players"
-}
-EXTENSION.RankPermissions = {
-	{ "admin", {
-			{ "physgun_pickup_all" }
-		}
-	},
-	{ "player", {
-			{ "physgun_pickup_own" }
-		}
-	}
-}
+-- This tool needs a rethink...
 
-function EXTENSION:InitServer()
-	self:AddHook("PhysgunPickup", "Vermilion_Physgun_Pickup", function(vplayer, ent)
-		if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then
-			return true
-		end
-		if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all")) then
-			if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
-				return false
-			elseif (ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_others")) then
-				return false
-			end
-		end
-	end)
+TOOL.Category = "Vermilion"
+TOOL.Name = "Save Table"
+TOOL.Tab = "Vermilion"
+TOOL.Command = nil
+TOOL.ConfigName = ""
+
+if(CLIENT) then
+	language.Add("tool.printsavetable.name", "Save Table Tool")
+	language.Add("tool.printsavetable.desc", "Print an entity save table")
+	language.Add("tool.printsavetable.0", "Left Click to print the save table")
 end
 
-Vermilion:RegisterExtension(EXTENSION)
+
+
+function TOOL:LeftClick( trace )
+	if(trace.Entity and not trace.Entity:IsWorld()) then
+		if(SERVER) then
+			for k,v in pairs(trace.Entity:GetSaveTable()) do
+				print(k .. " => " .. tostring(v))
+			end
+		end
+	end
+	return true
+end

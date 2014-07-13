@@ -23,38 +23,37 @@
 ]]
 
 local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Physgun Limiter"
-EXTENSION.ID = "physgun"
-EXTENSION.Description = "Handles physgun limits"
+EXTENSION.Name = "Sandbox Limits"
+EXTENSION.ID = "sbox_limits"
+EXTENSION.Description = "Handles sandbox limits"
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
-	"physgun_pickup_all",
-	"physgun_pickup_own",
-	"physgun_pickup_others",
-	"physgun_pickup_players"
-}
-EXTENSION.RankPermissions = {
-	{ "admin", {
-			{ "physgun_pickup_all" }
-		}
-	},
-	{ "player", {
-			{ "physgun_pickup_own" }
-		}
-	}
+	"no_damage"
 }
 
 function EXTENSION:InitServer()
-	self:AddHook("PhysgunPickup", "Vermilion_Physgun_Pickup", function(vplayer, ent)
-		if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then
+	local META = FindMetaTable("Player")
+	if(META.Vermilion_CheckLimit == nil) then
+		META.Vermilion_CheckLimit = META.CheckLimit
+	end
+	function META:CheckLimit(str)
+		if(not Vermilion:GetSetting("enable_limit_remover", true)) then
+			return self:Vermilion_CheckLimit(str)
+		end
+		if(self:Vermilion_GetRank() <= Vermilion:GetSetting("limit_remover_min_rank", 2)) then
 			return true
 		end
-		if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all")) then
-			if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
-				return false
-			elseif (ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_others")) then
-				return false
-			end
+		return self:Vermilion_CheckLimit(str)
+	end
+	self:AddHook("EntityTakeDamage", "V_PlayerHurt", function(target, dmg)
+		if(not target:IsPlayer()) then return end
+		if(Vermilion:GetSetting("global_no_damage", false)) then
+			dmg:ScaleDamage(0)
+			return dmg
+		end
+		if(Vermilion:HasPermission(target, "no_damage")) then
+			dmg:ScaleDamage(0)
+			return dmg
 		end
 	end)
 end
