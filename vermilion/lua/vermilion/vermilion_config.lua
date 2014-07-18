@@ -1,25 +1,20 @@
 --[[
- The MIT License
+ Copyright 2014 Ned Hyett
 
- Copyright 2014 Ned Hyett.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ in compliance with the License. You may obtain a copy of the License at
 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
+ http://www.apache.org/licenses/LICENSE-2.0
 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
+ Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ or implied. See the License for the specific language governing permissions and limitations under
+ the License.
+ 
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+ is reserved by the original copyright holder, regardless of any modifications made to the code,
+ resources or related content. The original copyright holder is not affiliated with Valve Corporation
+ in any way, nor claims to be so. 
 ]]
 
 -- The settings object. Don't modify this directly. Use the provided functions!
@@ -43,7 +38,6 @@ Vermilion.PermissionsList = {
 	--"grav_gun_punt_own", -- can punt their own props
 	--"grav_gun_punt_others", -- can punt other players props
 	--"grav_gun_punt_all", -- can punt anything with the gravity gun
-	"prop_colide_others", -- this player's props can collide with other player's props
 	--"physgun_freeze_own", -- can freeze own props with physgun
 	--"physgun_freeze_others", -- can freeze other players props with physgun
 	--"physgun_freeze_all", -- can freeze anything with physgun
@@ -51,13 +45,13 @@ Vermilion.PermissionsList = {
 	--"physgun_pickup_own", -- can pickup props with physgun
 	--"physgun_pickup_others", -- can pickup other player's props with physgun
 	--"physgun_pickup_all", -- can pickup anything with the physgun
-	"toolgun_own", -- can use toolgun on own props
-	"toolgun_others", -- can use toolgun on other player's props
-	"toolgun_all", -- can use the toolgun on anything
+	--"toolgun_own", -- can use toolgun on own props
+	--"toolgun_others", -- can use toolgun on other player's props
+	--"toolgun_all", -- can use the toolgun on anything
 	"open_spawnmenu", -- can open the spawnmenu
-	"noclip", -- can noclip
-	"spray", -- can use sprays
-	"flashlight", -- can use the flashlight
+	--"noclip", -- can noclip
+	--"spray", -- can use sprays
+	--"flashlight", -- can use the flashlight
 	"use_own", -- can use their own props/map props
 	"use_others", -- can use other players props
 	"use_all", -- can use anything
@@ -70,68 +64,34 @@ Vermilion.PermissionsList = {
 	"spawn_effect",
 	"spawn_ragdoll",
 	"spawn_all",
-	"give_swep",
 	"can_fire_weapon",
-	--"ban",
-	--"unban",
-	--"kick"
 }
 
 Vermilion.DefaultRankPerms = {
 	{ "owner", {
-			{"*"}
+			"*"
 		}
 	},
 	{ "admin", {
-			--{"chat"},
-			--{"no_fall_damage"},
-			--{"grav_gun_pickup_all"},
-			--{"grav_gun_punt_all"},
-			{"prop_collide_others"},
-			--{"physgun_freeze_all"},
-			--{"physgun_unfreeze"},
-			--{"physgun_pickup_all"},
-			{"toolgun_all"},
-			{"open_spawnmenu"},
-			{"noclip"},
-			{"spray"},
-			{"flashlight"},
-			{"use_all"},
-			{"spawn_all", {"#infinity"}},
-			{"give_swep"},
-			{"can_fire_weapon"},
-			{"ban"},
-			{"unban"},
-			{"kick"},
-			--{"cmd_set_rank"}
+			"open_spawnmenu",
+			"use_all",
+			"spawn_all",
+			"can_fire_weapon",
 		}
 	},
 	{ "player", {
-			--{"chat"},
-			--{"reduced_fall_damage"},
-			--{"grav_gun_pickup_own"},
-			--{"grav_gun_punt_own"},
-			{"physgun_freeze_own"},
-			{"physgun_unfreeze"},
-			{"physgun_pickup_own"},
-			{"toolgun_own"},
-			{"open_spawnmenu"},
-			{"noclip"},
-			{"spray"},
-			{"flashlight"},
-			{"spawn_all", {"#sbox_max"}},
-			{"give_swep"},
-			{"can_fire_weapon"}
+			"open_spawnmenu",
+			"spawn_all",
+			"can_fire_weapon"
 		}
 	},
 	{ "guest", {
-			--{"chat"},
-			{"open_spawnmenu"},
-			{"spawn_prop", {"5"}}
+			"open_spawnmenu",
+			"spawn_prop"
 		}
 	},
 	{ "banned", {
-			{"leave_now_plz"}
+			"leave_now_plz"
 		}
 	}
 }
@@ -139,7 +99,8 @@ Vermilion.DefaultRankPerms = {
 Vermilion.RankPerms = {}
 
 Vermilion.UserStore = {}
-Vermilion.Ranks = {
+
+Vermilion.DefaultRanks = {
 	"owner",
 	"admin",
 	"player",
@@ -147,8 +108,8 @@ Vermilion.Ranks = {
 	"banned"
 }
 
--- Structure: steamid, reason, expiry time, banner
-Vermilion.Bans = {}
+Vermilion.Ranks = {}
+
 
 function Vermilion.GetFileName(pre, suf)
 	if(CLIENT) then
@@ -160,19 +121,24 @@ function Vermilion.GetFileName(pre, suf)
 	end
 end
 
-function Vermilion:LoadSettings()
-	if(not file.Exists(self.GetFileName("vermilion", "settings.txt"), "DATA")) then
-		self.Log("Creating settings for the first time!")
-		self:ResetSettings()
-		self:SaveSettings()
+function Vermilion:LoadFile(name, resetFunc)
+	if(not file.Exists(self.GetFileName("vermilion", name .. ".txt"), "DATA")) then
+		self.Log("Creating " .. name .. " for the first time!")
+		resetFunc()
 	end
-	local data = file.Read( self.GetFileName("vermilion", "settings.txt"), "DATA")
-	local tab = von.deserialize(data)
-	self.Settings = tab
+	return von.deserialize(file.Read(self.GetFileName("vermilion", name .. ".txt"), "DATA"))
+end
+
+function Vermilion:SaveFile(name, data)
+	file.Write(self.GetFileName("vermilion", name .. ".txt"), von.serialize(data))
+end
+
+function Vermilion:LoadSettings()
+	self.Settings = self:LoadFile("settings", function() Vermilion:ResetSettings() Vermilion:SaveSettings() end)
 end
 
 function Vermilion:SaveSettings()
-	file.Write(self.GetFileName("vermilion", "settings.txt"), von.serialize(self.Settings))
+	self:SaveFile("settings", self.Settings)
 end
 
 function Vermilion:ResetSettings()
@@ -193,33 +159,41 @@ function Vermilion:SetSetting(str, val)
 	self.Settings[str] = val
 end
 
-function Vermilion:LoadPerms()
-	if(not file.Exists(self.GetFileName("vermilion", "permissions.txt"), "DATA")) then
-		self.Log("Creating permissions list for the first time!")
-		self:ResetPerms()
-		self:SavePerms()
-	end
-	local data = file.Read( self.GetFileName("vermilion", "permissions.txt"), "DATA")
-	local tab = von.deserialize(data)
-	self.RankPerms = tab
+function Vermilion:LoadRanks()
+	self.Ranks = self:LoadFile("ranks", function() Vermilion:ResetRanks() Vermilion:SaveRanks() end)
 end
 
-function Vermilion:SavePerms()
-	file.Write(self.GetFileName("vermilion", "permissions.txt"), von.serialize(self.RankPerms))
+function Vermilion:SaveRanks()
+	self:SaveFile("ranks", self.Ranks)
 end
 
-function Vermilion:ResetPerms()
+function Vermilion:ResetRanks()
+	self.Ranks = self.DefaultRanks
+end
+
+function Vermilion:LoadPermissions()
+	self.RankPerms = self:LoadFile("permissions", function() Vermilion:ResetPermissions() Vermilion:SavePermissions() end)
+end
+
+function Vermilion:SavePermissions()
+	self:SaveFile("permissions", self.RankPerms)
+end
+
+function Vermilion:ResetPermissions()
 	self.RankPerms = self.DefaultRankPerms
 end
 
 function Vermilion:HasPermission(vplayer, permission)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	local userData = self:GetPlayer(vplayer)
 	if(userData == nil) then
 		return false
 	end
 	local userRankPerms = self.RankPerms[self:LookupRank(userData['rank'])]
 	for i,perm in pairs(userRankPerms[2]) do
-		if(perm[1] == permission or perm[1] == "*") then
+		if(perm == permission or perm == "*") then
 			return true
 		end
 	end
@@ -227,6 +201,9 @@ function Vermilion:HasPermission(vplayer, permission)
 end
 
 function Vermilion:HasPermissionVerbose(vplayer, permission)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	if(not self:HasPermission(vplayer, permission)) then
 		self.Log("Access denied!")
 		return
@@ -234,15 +211,18 @@ function Vermilion:HasPermissionVerbose(vplayer, permission)
 	return true
 end
 
-function Vermilion:HasPermissionVerboseChat(vplayer, permission)
+function Vermilion:HasPermissionError(vplayer, permission)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	if(not self:HasPermission(vplayer, permission)) then
-		self.SendNotify(vplayer, "Access denied!", 5, NOTIFY_ERROR)
+		self:SendNotify(vplayer, "Access denied!", 5, NOTIFY_ERROR)
 		return
 	end
 	return true
 end
 
-function Vermilion:AddRankPermission(rank, permission, meta)
+function Vermilion:AddRankPermission(rank, permission)
 	local userRankPerms = self.RankPerms[self:LookupRank(rank)]
 	for i,perm in pairs(userRankPerms[2]) do
 		if(perm[1] == permission) then
@@ -250,38 +230,21 @@ function Vermilion:AddRankPermission(rank, permission, meta)
 			return
 		end
 	end
-	table.insert(self.RankPerms[self:LookupRank(rank)][2], { permission, meta })
-end
-
-function Vermilion:GetPermissionMetadata(vplayer, permission)
-	local tabl = {}
-	local rnk = self:LookupRank(vplayer)
-	local perms = self.RankPerms[rnk][2]
-	
-	for k,v in pairs(perms) do
-		if(v[1] == permission) then
-			tabl = v[2]
-			break
-		end
-	end
-	return tabl
+	table.insert(self.RankPerms[self:LookupRank(rank)][2], permission)
 end
 
 function Vermilion:LoadUserStore()
-	if(not file.Exists(self.GetFileName("vermilion", "users.txt"), "DATA")) then
-		self.Log("Creating data store for first time!")
-		self:SaveUserStore()
-	end
-	local data = file.Read( self.GetFileName("vermilion", "users.txt"), "DATA")
-	local tab = von.deserialize(data)
-	self.UserStore = tab
+	self.UserStore = self:LoadFile("users", function() Vermilion:SaveUserStore() end)
 end
 
 function Vermilion:SaveUserStore()
-	file.Write(self.GetFileName("vermilion", "users.txt"), von.serialize(self.UserStore))
+	self:SaveFile("users", self.UserStore)
 end
 
 function Vermilion:AddPlayer(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	self.UserStore[vplayer:SteamID()] = {
 		["rank"] = "player",
 		["name"] = vplayer:GetName()
@@ -294,6 +257,9 @@ function Vermilion:AddPlayer(vplayer)
 end
 
 function Vermilion:GetPlayer(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	return self:GetPlayerBySteamID(vplayer:SteamID())
 end
 
@@ -330,6 +296,9 @@ function Vermilion:LookupRank(rank)
 end
 
 function Vermilion:GetRank(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	if(self:GetPlayer(vplayer) == nil) then
 		return self:LookupRank("banned")
 	end
@@ -342,6 +311,9 @@ function Vermilion:GetRank(vplayer)
 end
 
 function Vermilion:SetRank(vplayer, rank)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	if(vplayer == nil) then
 		self.Log("Nil player!")
 	end
@@ -358,6 +330,9 @@ function Vermilion:SetRank(vplayer, rank)
 end
 
 function Vermilion:SetRankByNumber(vplayer, rank)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	if(vplayer == nil) then
 		self.Log("Nil player!")
 		return
@@ -423,20 +398,28 @@ function Vermilion:GetAllPlayersWithPermission(permission)
 end
 
 function Vermilion:IsOwner(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	return self:GetRank(vplayer) == self:LookupRank("owner")
 end
 
 function Vermilion:IsAdmin(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	return self:GetRank(vplayer) <= self:LookupRank("admin")
 end
 
 function Vermilion:IsBanned(vplayer)
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
 	return self:GetRank(vplayer) == self:LookupRank("banned")
 end
 
 function Vermilion:OwnerExists()
 	for steamid,playerDat in pairs(self.UserStore) do
-		print(playerDat['rank'])
 		if(playerDat['rank'] == "owner") then
 			return true
 		end
@@ -444,193 +427,14 @@ function Vermilion:OwnerExists()
 	return false
 end
 
-function Vermilion:LoadBans()
-	if(not file.Exists(self.GetFileName("vermilion", "bans.txt"), "DATA")) then
-		self.Log("Creating bans for the first time!")
-		self:ResetBans()
-		self:SaveBans()
-	end
-	local data = file.Read( self.GetFileName("vermilion", "bans.txt"), "DATA")
-	local tab = von.deserialize(data)
-	self.Bans = tab
-end
-
-function Vermilion:SaveBans()
-	file.Write(self.GetFileName("vermilion", "bans.txt"), von.serialize(self.Bans))
-end
-
-function Vermilion:ResetBans()
-	self.Bans = {}
-end
-
---[[
-	Ban a player and unban them using a unix timestamp.
-]]--
-function Vermilion:BanPlayerFor(vplayer, vplayerBanner, reason, years, months, weeks, days, hours, mins, seconds)
-	-- seconds per year = 31557600
-	-- average seconds per month = 2592000 
-	-- seconds per week = 604800
-	-- seconds per day = 86400
-	-- seconds per hour = 3600
-	
-	local time = 0
-	time = time + (years * 31557600)
-	time = time + (months * 2592000)
-	time = time + (weeks * 604800)
-	time = time + (days * 86400)
-	time = time + (hours * 3600)
-	time = time + (mins * 60)
-	time = time + seconds
-	
-	local str = vplayer:GetName() .. " has been banned by " .. vplayerBanner:GetName() .. " for "
-	
-	local timestr = ""
-	if(years > 0) then
-		if(years == 1) then
-			timestr = tostring(years) .. " year"
-		else
-			timestr = tostring(years) .. " years"
-		end
-	end
-	
-	if(years > 0 and months > 0) then
-		local connective = ", "
-		if(weeks < 1 and days < 1 and hours < 1 and mins < 1 and seconds < 1) then
-			connective = " and "
-		end
-		if(months == 1) then
-			timestr = timestr .. connective .. tostring(months) .. " month"
-		else
-			timestr = timestr .. connective .. tostring(months) .. " months"
-		end
-	elseif(months > 0) then
-		if(months == 1) then
-			timestr = tostring(months) .. " month"
-		else
-			timestr = tostring(months) .. " months"
-		end
-	end
-	
-	if((years > 0 or months > 0) and weeks > 0) then
-		local connective = ", "
-		if(days < 1 and hours < 1 and mins < 1 and seconds < 1) then
-			connective = " and "
-		end
-		if(weeks == 1) then
-			timestr = timestr .. connective .. tostring(weeks) .. " week"
-		else
-			timestr = timestr .. connective .. tostring(weeks) .. " weeks"
-		end
-	elseif(weeks > 0) then
-		if(weeks == 1) then
-			timestr = tostring(weeks) .. " week"
-		else
-			timestr = tostring(weeks) .. " weeks"
-		end
-	end
-	
-	if((years > 0 or months > 0 or weeks > 0) and days > 0) then
-		local connective = ", "
-		if(hours < 1 and mins < 1 and seconds < 1) then
-			connective = " and "
-		end
-		if(days == 1) then
-			timestr = timestr .. connective .. tostring(days) .. " day"
-		else
-			timestr = timestr .. connective .. tostring(days) .. " days"
-		end
-	elseif(days > 0) then
-		if(days == 1) then
-			timestr = tostring(days) .. " day"
-		else
-			timestr = tostring(days) .. " days"
-		end
-	end
-	
-	if((years > 0 or months > 0 or weeks > 0 or days > 0) and hours > 0) then
-		local connective = ", "
-		if(mins < 1 and seconds < 1) then
-			connective = " and "
-		end
-		if(hours == 1) then
-			timestr = timestr .. connective .. tostring(hours) .. " hour"
-		else
-			timestr = timestr .. connective .. tostring(hours) .. " hours"
-		end
-	elseif(hours > 0) then
-		if(hours == 1) then
-			timestr = tostring(hours) .. " hour"
-		else
-			timestr = tostring(hours) .. " hours"
-		end
-	end
-	
-	if((years > 0 or months > 0 or weeks > 0 or days > 0 or hours > 0) and mins > 0) then
-		local connective = ", "
-		if(seconds < 1) then
-			connective = " and "
-		end
-		if(mins == 1) then
-			timestr = timestr .. connective .. tostring(mins) .. " minute"
-		else
-			timestr = timestr .. connective .. tostring(mins) .. " minutes"
-		end
-	elseif(mins > 0) then
-		if(mins == 1) then
-			timestr = tostring(mins) .. " minute"
-		else
-			timestr = tostring(mins) .. " minutes"
-		end
-	end
-	
-	if((years > 0 or months > 0 or weeks > 0 or days > 0 or hours > 0 or mins > 0) and seconds > 0) then
-		if(seconds == 1) then
-			timestr = timestr .. " and " .. tostring(seconds) .. " second"
-		else
-			timestr = timestr .. " and " .. tostring(seconds) .. " seconds"
-		end
-	elseif(seconds > 0) then
-		if(seconds == 1) then
-			timestr = tostring(seconds) .. " second"
-		else
-			timestr = tostring(seconds) .. " seconds"
-		end
-	end
-	
-	self:BroadcastNotify(str .. timestr .. " with reason: " .. reason, 10, NOTIFY_GENERIC)
-	
-	-- steamid, reason, expiry time, banner
-	table.insert(self.Bans, { vplayer:SteamID(), reason, os.time() + time, vplayerBanner:GetName() } )
-	self:SetRank(vplayer, "banned")	
-	vplayer:Kick("Banned from server for " .. timestr .. ": " .. reason)
-	
-	
-end
-
-function Vermilion:UnbanPlayer(steamid, unbanner)
-	local idxToRemove = {}
-	for i,k in pairs(Vermilion.Bans) do
-		if(k[1] == steamid) then
-			local playerName = Vermilion:GetPlayerBySteamID(k[1])['name']
-			Vermilion:BroadcastNotify(playerName .. " has been unbanned by " .. unbanner:GetName(), 10, NOTIFY_ERROR)
-			table.insert(idxToRemove, i)
-			Vermilion:GetPlayerBySteamID(k[1])['rank'] = Vermilion:GetSetting("default_rank", "player")
-			break
-		end
-	end
-	for i,k in pairs(idxToRemove) do
-		table.remove(Vermilion.Bans, k)
-	end
-end
-
 Vermilion:LoadSettings()
-Vermilion:LoadPerms()
+Vermilion:LoadPermissions()
 Vermilion:LoadUserStore()
-Vermilion:LoadBans()
+Vermilion:LoadRanks()
 
 Vermilion:RegisterHook("ShutDown", "Vermilion-Config-Save", function()
 	Vermilion:SaveSettings()
-	Vermilion:SavePerms()
+	Vermilion:SavePermissions()
 	Vermilion:SaveUserStore()
-	Vermilion:SaveBans()
+	Vermilion:SaveRanks()
 end)

@@ -1,25 +1,20 @@
 --[[
- The MIT License
+ Copyright 2014 Ned Hyett
 
- Copyright 2014 Ned Hyett.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ in compliance with the License. You may obtain a copy of the License at
 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
+ http://www.apache.org/licenses/LICENSE-2.0
 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
+ Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ or implied. See the License for the specific language governing permissions and limitations under
+ the License.
+ 
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+ is reserved by the original copyright holder, regardless of any modifications made to the code,
+ resources or related content. The original copyright holder is not affiliated with Valve Corporation
+ in any way, nor claims to be so. 
 ]]
 
 local EXTENSION = Vermilion:MakeExtensionBase()
@@ -33,28 +28,228 @@ EXTENSION.Permissions = {
 	"ban",
 	"unban",
 	"kick",
-	"bans_alert"
+	"ban_management"
+}
+EXTENSION.RankPermissions = {
+	{ "admin", {
+			"ban",
+			"unban",
+			"kick",
+			"ban_management"
+		}
+	}
+}
+EXTENSION.NetworkStrings = {
+	"VBannedPlayersList",
+	"VBanPlayer",
+	"VUnbanPlayer",
+	"VKickPlayer"
 }
 
-function EXTENSION:InitServer()
-	util.AddNetworkString("BannedPlayers_Request")
-	util.AddNetworkString("BannedPlayers_Response")
-	util.AddNetworkString("VBanPlayer")
-	util.AddNetworkString("VUnbanPlayer")
-	util.AddNetworkString("VKickPlayer")
+EXTENSION.Bans = {}
+
+function EXTENSION:LoadBans()
+	if(not file.Exists(Vermilion.GetFileName("vermilion", "bans.txt"), "DATA")) then
+		Vermilion.Log("Creating bans for the first time!")
+		self:ResetBans()
+		self:SaveBans()
+	end
+	local data = file.Read( Vermilion.GetFileName("vermilion", "bans.txt"), "DATA")
+	local tab = von.deserialize(data)
+	self.Bans = tab
+end
+
+function EXTENSION:SaveBans()
+	file.Write(Vermilion.GetFileName("vermilion", "bans.txt"), von.serialize(self.Bans))
+end
+
+function EXTENSION:ResetBans()
+	self.Bans = {}
+end
+
+--[[
+	Ban a player and unban them using a unix timestamp.
+]]--
+function Vermilion:BanPlayerFor(vplayer, vplayerBanner, reason, years, months, weeks, days, hours, mins, seconds)
+	-- seconds per year = 31557600
+	-- average seconds per month = 2592000 
+	-- seconds per week = 604800
+	-- seconds per day = 86400
+	-- seconds per hour = 3600
 	
-	net.Receive("BannedPlayers_Request", function(len, vplayer)
-		net.Start("BannedPlayers_Response")
+	if(isstring(vplayer)) then
+		vplayer = Crimson.LookupPlayerByName(vplayer)
+	end
+	if(isstring(vplayerBanner)) then
+		vplayerBanner = Crimson.LookupByName(vplayerBanner)
+	end
+	
+	local time = 0
+	time = time + (years * 31557600)
+	time = time + (months * 2592000)
+	time = time + (weeks * 604800)
+	time = time + (days * 86400)
+	time = time + (hours * 3600)
+	time = time + (mins * 60)
+	time = time + seconds
+	
+	local str = vplayer:GetName() .. " has been banned by " .. vplayerBanner:GetName() .. " for "
+	
+	local timestr = ""
+	if(years > 0) then
+		if(years == 1) then
+			timestr = tostring(years) .. " year"
+		else
+			timestr = tostring(years) .. " years"
+		end
+	end
+	
+	if(years > 0 and months > 0) then
+		local connective = ", "
+		if(weeks < 1 and days < 1 and hours < 1 and mins < 1 and seconds < 1) then
+			connective = " and "
+		end
+		if(months == 1) then
+			timestr = timestr .. connective .. tostring(months) .. " month"
+		else
+			timestr = timestr .. connective .. tostring(months) .. " months"
+		end
+	elseif(months > 0) then
+		if(months == 1) then
+			timestr = tostring(months) .. " month"
+		else
+			timestr = tostring(months) .. " months"
+		end
+	end
+	
+	if((years > 0 or months > 0) and weeks > 0) then
+		local connective = ", "
+		if(days < 1 and hours < 1 and mins < 1 and seconds < 1) then
+			connective = " and "
+		end
+		if(weeks == 1) then
+			timestr = timestr .. connective .. tostring(weeks) .. " week"
+		else
+			timestr = timestr .. connective .. tostring(weeks) .. " weeks"
+		end
+	elseif(weeks > 0) then
+		if(weeks == 1) then
+			timestr = tostring(weeks) .. " week"
+		else
+			timestr = tostring(weeks) .. " weeks"
+		end
+	end
+	
+	if((years > 0 or months > 0 or weeks > 0) and days > 0) then
+		local connective = ", "
+		if(hours < 1 and mins < 1 and seconds < 1) then
+			connective = " and "
+		end
+		if(days == 1) then
+			timestr = timestr .. connective .. tostring(days) .. " day"
+		else
+			timestr = timestr .. connective .. tostring(days) .. " days"
+		end
+	elseif(days > 0) then
+		if(days == 1) then
+			timestr = tostring(days) .. " day"
+		else
+			timestr = tostring(days) .. " days"
+		end
+	end
+	
+	if((years > 0 or months > 0 or weeks > 0 or days > 0) and hours > 0) then
+		local connective = ", "
+		if(mins < 1 and seconds < 1) then
+			connective = " and "
+		end
+		if(hours == 1) then
+			timestr = timestr .. connective .. tostring(hours) .. " hour"
+		else
+			timestr = timestr .. connective .. tostring(hours) .. " hours"
+		end
+	elseif(hours > 0) then
+		if(hours == 1) then
+			timestr = tostring(hours) .. " hour"
+		else
+			timestr = tostring(hours) .. " hours"
+		end
+	end
+	
+	if((years > 0 or months > 0 or weeks > 0 or days > 0 or hours > 0) and mins > 0) then
+		local connective = ", "
+		if(seconds < 1) then
+			connective = " and "
+		end
+		if(mins == 1) then
+			timestr = timestr .. connective .. tostring(mins) .. " minute"
+		else
+			timestr = timestr .. connective .. tostring(mins) .. " minutes"
+		end
+	elseif(mins > 0) then
+		if(mins == 1) then
+			timestr = tostring(mins) .. " minute"
+		else
+			timestr = tostring(mins) .. " minutes"
+		end
+	end
+	
+	if((years > 0 or months > 0 or weeks > 0 or days > 0 or hours > 0 or mins > 0) and seconds > 0) then
+		if(seconds == 1) then
+			timestr = timestr .. " and " .. tostring(seconds) .. " second"
+		else
+			timestr = timestr .. " and " .. tostring(seconds) .. " seconds"
+		end
+	elseif(seconds > 0) then
+		if(seconds == 1) then
+			timestr = tostring(seconds) .. " second"
+		else
+			timestr = tostring(seconds) .. " seconds"
+		end
+	end
+	
+	self:BroadcastNotify(str .. timestr .. " with reason: " .. reason)
+	
+	-- steamid, reason, expiry time, banner
+	table.insert(EXTENSION.Bans, { vplayer:SteamID(), reason, os.time() + time, vplayerBanner:GetName() } )
+	self:SetRank(vplayer, "banned")	
+	vplayer:Kick("Banned from server for " .. timestr .. ": " .. reason)
+	
+	
+end
+
+function Vermilion:UnbanPlayer(steamid, unbanner)
+	if(isstring(unbanner)) then
+		unbanner = Crimson.LookupPlayerByName(unbanner)
+	end
+	local idxToRemove = {}
+	for i,k in pairs(EXTENSION.Bans) do
+		if(k[1] == steamid) then
+			local playerName = self:GetPlayerBySteamID(k[1])['name']
+			self:BroadcastNotify(playerName .. " has been unbanned by " .. unbanner:GetName(), 10, NOTIFY_ERROR)
+			table.insert(idxToRemove, i)
+			self:GetPlayerBySteamID(k[1])['rank'] = self:GetSetting("default_rank", "player")
+			break
+		end
+	end
+	for i,k in pairs(idxToRemove) do
+		table.remove(EXTENSION.Bans, k)
+	end
+end
+
+function EXTENSION:InitServer()
+	self:AddHook("VNET_VBannedPlayersList", function(vplayer)
+		net.Start("VBannedPlayersList")
 		local tab = {}
-		for i,k in pairs(Vermilion.Bans) do
+		for i,k in pairs(EXTENSION.Bans) do
 			table.insert(tab, {Vermilion:GetPlayerBySteamID(k[1])['name'], k[1], k[2], os.date("%c", k[3]), k[4]})
 		end
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
 	
-	net.Receive("VBanPlayer", function(len, vplayer)
-		if(Vermilion:HasPermissionVerboseChat(vplayer, "ban")) then
+	self:AddHook("VNET_VBanPlayer", function(vplayer)
+		if(Vermilion:HasPermissionError(vplayer, "ban")) then
 			local times = net.ReadTable()
 			local reason = net.ReadString()
 			local steamid = net.ReadString()
@@ -70,8 +265,8 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
-	net.Receive("VUnbanPlayer", function(len, vplayer)
-		if(Vermilion:HasPermissionVerboseChat(vplayer, "unban")) then
+	self:AddHook("VNET_VUnbanPlayer", function(vplayer)
+		if(Vermilion:HasPermissionError(vplayer, "unban")) then
 			local steamid = net.ReadString()
 			local playerData = Vermilion:GetPlayerBySteamID(steamid)
 			if(playerData != nil) then
@@ -83,7 +278,7 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
-	net.Receive("VKickPlayer", function(len, vplayer)
+	self:AddHook("VNET_VKickPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "kick")) then
 			local steamID = net.ReadString()
 			local reason = net.ReadString()
@@ -99,7 +294,7 @@ function EXTENSION:InitServer()
 
 	self:AddHook("CheckPassword", "CheckBanned", function( steamID, ip, svPassword, clPassword, name )
 		local idxToRemove = {}
-		for i,k in pairs(Vermilion.Bans) do
+		for i,k in pairs(EXTENSION.Bans) do
 			if(os.time() > k[3]) then
 				local playerName = Vermilion:GetPlayerBySteamID(k[1])['name']
 				Vermilion:BroadcastNotify(playerName .. " has been unbanned because their ban has expired!", 10, NOTIFY_ERROR)
@@ -108,26 +303,42 @@ function EXTENSION:InitServer()
 			end
 		end
 		for i,k in pairs(idxToRemove) do
-			table.remove(Vermilion.Bans, k)
+			table.remove(EXTENSION.Bans, k)
 		end
 		local playerDat = Vermilion:GetPlayerBySteamID(util.SteamIDFrom64(steamID))
 		if(playerDat != nil) then
 			if(playerDat['rank'] == "banned") then
-				Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("bans_alert"), "Warning: " .. name .. " has attempted to join the server!", 5, NOTIFY_ERROR)
+				Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("ban_management"), "Warning: " .. name .. " has attempted to join the server!", 5, NOTIFY_ERROR)
 				return false, "You are banned from this server!"
 			end
 		end
 	end)
+	
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
+		Vermilion:AddInterfaceTab("ban_control", "ban_management")
+	end)
+	
+	self:AddHook("ShutDown", "toollimit_save", function()
+		EXTENSION:SaveBans()
+	end)
+	
+	self:LoadBans()
 end
 
 function EXTENSION:InitClient()
-	self:AddHook("Vermilion_ActivePlayers", "ActivePlayersList", function(tab)
+	self:AddHook("VActivePlayers", "ActivePlayersList", function(tab)
+		if(not IsValid(EXTENSION.ActivePlayerList)) then
+			return
+		end
 		EXTENSION.ActivePlayerList:Clear()
 		for i,k in pairs(tab) do
 			EXTENSION.ActivePlayerList:AddLine( k[1], k[2], k[3] )
 		end
 	end)
-	net.Receive("BannedPlayers_Response", function(len)
+	self:AddHook("VNET_VBannedPlayersList", function()
+		if(not IsValid(EXTENSION.ActivePlayerList)) then
+			return
+		end
 		EXTENSION.BannedPlayerList:Clear()
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
@@ -275,7 +486,7 @@ function EXTENSION:InitClient()
 							net.WriteString(k:GetValue(2))
 							net.SendToServer()
 						end
-						net.Start("BannedPlayers_Request")
+						net.Start("VBannedPlayersList")
 						net.SendToServer()
 					end)
 				end)
@@ -346,14 +557,14 @@ function EXTENSION:InitClient()
 					net.WriteString(k:GetValue(2))
 					net.SendToServer()
 				end
-				net.Start("BannedPlayers_Request")
+				net.Start("VBannedPlayersList")
 				net.SendToServer()
 			end)
 			unbanPlayerButton:SetPos(panel:GetWide() - 105, 240)
 			unbanPlayerButton:SetSize(105, 30)
 			unbanPlayerButton:SetParent(panel)
 			
-			net.Start("BannedPlayers_Request")
+			net.Start("VBannedPlayersList")
 			net.SendToServer()
 			
 			return panel

@@ -17,27 +17,27 @@
  in any way, nor claims to be so. 
 ]]
 
--- This tool needs a rethink...
+local EXTENSION = Vermilion:MakeExtensionBase()
+EXTENSION.Name = "Extra Properties"
+EXTENSION.ID = "props"
+EXTENSION.Description = "Adds some useful properties to the contextual menu"
+EXTENSION.Author = "Ned"
+EXTENSION.Permissions = {
 
-TOOL.Category = "Vermilion"
-TOOL.Name = "Owner"
-TOOL.Tab = "Vermilion"
-TOOL.Command = nil
-TOOL.ConfigName = ""
+}
 
-if(CLIENT) then
-	language.Add("tool.ownerstool.name", "Owner Tool")
-	language.Add("tool.ownerstool.desc", "Figure out who owns what")
-	language.Add("tool.ownerstool.0", "Left Click to print the owner")
-end
-
-
-
-function TOOL:LeftClick( trace )
-	if(trace.Entity and not trace.Entity:IsWorld()) then
-		if(SERVER) then
-			Vermilion:SendNotify(self:GetOwner(), "Owner: " .. tostring(trace.Entity.Vermilion_Owner), 5, NOTIFY_GENERIC)
-		end
-	end
-	return true
+function EXTENSION:InitShared()
+	--[[
+		make friendly
+		make hostile
+		hacked by alyx
+		set model
+		enable camera
+		disable camera
+		enable thumper
+		disable thumper
+		change weapon
+		strip weapon
+		dog - fetch
+	]]--
 end

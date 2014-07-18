@@ -16,28 +16,17 @@
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
  in any way, nor claims to be so. 
 ]]
+local EXTENSION = Vermilion:MakeExtensionBase()
+EXTENSION.Name = "Testing"
+EXTENSION.ID = "test"
+EXTENSION.Description = "test"
+EXTENSION.Author = "Ned"
+EXTENSION.Permissions = {
 
--- This tool needs a rethink...
+}
 
-TOOL.Category = "Vermilion"
-TOOL.Name = "Owner"
-TOOL.Tab = "Vermilion"
-TOOL.Command = nil
-TOOL.ConfigName = ""
+function EXTENSION:InitServer()
 
-if(CLIENT) then
-	language.Add("tool.ownerstool.name", "Owner Tool")
-	language.Add("tool.ownerstool.desc", "Figure out who owns what")
-	language.Add("tool.ownerstool.0", "Left Click to print the owner")
 end
 
-
-
-function TOOL:LeftClick( trace )
-	if(trace.Entity and not trace.Entity:IsWorld()) then
-		if(SERVER) then
-			Vermilion:SendNotify(self:GetOwner(), "Owner: " .. tostring(trace.Entity.Vermilion_Owner), 5, NOTIFY_GENERIC)
-		end
-	end
-	return true
-end
+Vermilion:RegisterExtension(EXTENSION)

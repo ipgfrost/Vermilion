@@ -1,30 +1,26 @@
 --[[
- The MIT License
+ Copyright 2014 Ned Hyett
 
- Copyright 2014 Ned Hyett.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ in compliance with the License. You may obtain a copy of the License at
 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
+ http://www.apache.org/licenses/LICENSE-2.0
 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
+ Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ or implied. See the License for the specific language governing permissions and limitations under
+ the License.
+ 
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+ is reserved by the original copyright holder, regardless of any modifications made to the code,
+ resources or related content. The original copyright holder is not affiliated with Valve Corporation
+ in any way, nor claims to be so. 
 ]]
 
 Vermilion.Extensions = {}
 Vermilion.Hooks = {}
 Vermilion.SafeHooks = {}
+Vermilion.NetworkStrings = {}
 
 Vermilion.ChatCommands = {}
 
@@ -52,23 +48,40 @@ end
 function Vermilion:RegisterExtension(extension)
 	self.Extensions[extension.ID] = extension
 	if(extension.Permissions != nil and SERVER) then
-		for i,p in pairs(extension.Permissions) do
-			table.insert(self.PermissionsList, p)
+		for i,permission in pairs(extension.Permissions) do
+			local alreadyHas = false
+			for i1,knownPermission in pairs(self.PermissionsList) do
+				if(knownPermission == permission) then
+					alreadyHas = true
+					break
+				end
+			end
+			if(not alreadyHas) then table.insert(self.PermissionsList, permission) end
 		end
 	end
 	if(extension.RankPermissions != nil and SERVER) then
 		for i, rank in pairs(extension.RankPermissions) do
 			local rankID = self:LookupRank(rank[1])
-			for i1, perm in pairs(rank[2]) do
+			for i1, permission in pairs(rank[2]) do
 				local alreadyHas = false 
-				for i,k in pairs(self.DefaultRankPerms[rankID][2]) do
-					if(k[1] == perm[1]) then
+				for i,knownPermission in pairs(self.DefaultRankPerms[rankID][2]) do
+					if(knownPermission == permission) then
 						alreadyHas = true
 						break
 					end
 				end
-				if(not alreadyHas) then table.insert(self.DefaultRankPerms[rankID][2], perm) end
+				if(not alreadyHas) then table.insert(self.DefaultRankPerms[rankID][2], permission) end
 			end
+		end
+	end
+	if(extension.NetworkStrings != nil) then
+		for i,k in pairs(extension.NetworkStrings) do
+			table.insert(self.NetworkStrings, k)
+			if(SERVER) then util.AddNetworkString(k) end
+			net.Receive(k, function(len, vplayer)
+				print("Calling VNET_" .. k)
+				hook.Call("VNET_" .. k, nil, vplayer)
+			end)
 		end
 	end
 end
@@ -83,9 +96,14 @@ function Vermilion:MakeExtensionBase()
 	base.Hooks = {}
 	function base:InitClient() end
 	function base:InitServer() end
+	function base:InitShared() end
 	function base:Destroy() end
 	function base:Tick() end
 	function base:AddHook(evtName, id, func)
+		if(func == nil) then
+			func = id
+			id = evtName
+		end
 		if(self.Hooks[evtName] == nil) then
 			self.Hooks[evtName] = {}
 		end
@@ -100,8 +118,6 @@ function Vermilion:MakeExtensionBase()
 	end
 	return base
 end
-
-	
 
 function Vermilion:RegisterHook(evtName, id, func)
 	if(self.Hooks[evtName] == nil) then
@@ -150,6 +166,7 @@ if(CLIENT) then
 		for i,extension in pairs(Vermilion.Extensions) do
 			Vermilion.Log("Initialising extension: " .. i)
 			extension:InitClient()
+			extension:InitShared()
 		end
 		Vermilion.LoadedExtensions = true
 		hook.Call(Vermilion.EVENT_EXT_LOADED)
@@ -180,6 +197,7 @@ function Vermilion:LoadExtensions()
 	for i,extension in pairs(Vermilion.Extensions) do
 		Vermilion.Log("Initialising extension: " .. i)
 		extension:InitServer()
+		extension:InitShared()
 	end
 	Vermilion.LoadedExtensions = true
 	hook.Call(Vermilion.EVENT_EXT_LOADED)
@@ -199,16 +217,16 @@ hook.Call = function(evtName, gmTable, ...)
 	end
 	-- Run Vermilion "safehooks". All events are triggered and return values ignored.
 	if(Vermilion.SafeHooks[evtName] != nil) then
-		for id,hook1 in pairs(Vermilion.SafeHooks[evtName]) do
-			hook1(...)
+		for id,hookFunc in pairs(Vermilion.SafeHooks[evtName]) do
+			hookFunc(...)
 		end
 	end
 	-- Run Vermilion hooks
 	if(Vermilion.Hooks[evtName] != nil) then
-		for id,hook1 in pairs(Vermilion.Hooks[evtName]) do
-			local lHookVal = hook1(...)
-			if(lHookVal != nil) then
-				return lHookVal
+		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
+			local hookVal = hookFunc(...)
+			if(hookVal != nil) then
+				return hookVal
 			end
 		end
 	end
@@ -218,8 +236,8 @@ hook.Call = function(evtName, gmTable, ...)
 			if(extension.Hooks != nil) then
 				local hookList = extension.Hooks[evtName]
 				if(hookList != nil) then
-					for i,hook1 in pairs(hookList) do
-						local hookResult = hook1(...)
+					for i,hookFunc in pairs(hookList) do
+						local hookResult = hookFunc(...)
 						if(hookResult != nil) then
 							return hookResult
 						end

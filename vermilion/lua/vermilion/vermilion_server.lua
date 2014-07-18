@@ -1,25 +1,20 @@
 --[[
- The MIT License
+ Copyright 2014 Ned Hyett
 
- Copyright 2014 Ned Hyett.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ in compliance with the License. You may obtain a copy of the License at
 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
+ http://www.apache.org/licenses/LICENSE-2.0
 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
+ Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ or implied. See the License for the specific language governing permissions and limitations under
+ the License.
+ 
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+ is reserved by the original copyright holder, regardless of any modifications made to the code,
+ resources or related content. The original copyright holder is not affiliated with Valve Corporation
+ in any way, nor claims to be so. 
 ]]
 
 -- These aren't added by gmod when on the server.
@@ -34,31 +29,62 @@ local networkStrings = {
 	"Vermilion_Hint",
 	"Vermilion_Sound",
 	"Vermilion_Client_Activate",
-	"ActivePlayers_Request",
-	"ActivePlayers_Response",
-	"Vermilion_ErrorMsg"
+	"VActivePlayers",
+	"Vermilion_ErrorMsg",
+	"VRanksList"
 }
 
 for i,str in pairs(networkStrings) do
 	util.AddNetworkString(str)
 end
 
-net.Receive("ActivePlayers_Request", function(len, vplayer)
-	net.Start("ActivePlayers_Response")
+function Vermilion.internal:UpdateActivePlayers(vplayer)
+	if(vplayer == nil) then
+		vplayer = player.GetAll()
+	end
+	net.Start("VActivePlayers")
 	local activePlayers = {}
-	for i,k in pairs(player.GetAll()) do
-		local playerDat = Vermilion:GetPlayer(k)
-		table.insert(activePlayers, { k:GetName(), k:SteamID(), playerDat['rank'] } )
+	for i,cplayer in pairs(player.GetAll()) do
+		local playerDat = Vermilion:GetPlayer(cplayer)
+		table.insert(activePlayers, { cplayer:GetName(), cplayer:SteamID(), playerDat['rank'] } )
 	end
 	net.WriteTable(activePlayers)
+	net.Send(vplayer)
+end
+
+net.Receive("VActivePlayers", function(len, vplayer)
+	Vermilion.internal:UpdateActivePlayers(vplayer)
+end)
+
+Vermilion:RegisterHook("PlayerConnect", "ActivePlayersUpdate", function()
+	Vermilion.internal:UpdateActivePlayers()
+end)
+
+net.Receive("VRanksList", function(len, vplayer)
+	net.Start("VRanksList")
+	local ranksTab = {}
+	for i,k in pairs(Vermilion.Ranks) do
+		local isDefault = "No"
+		if(Vermilion:GetSetting("default_rank", "player") == k) then
+			isDefault = "Yes"
+		end
+		table.insert(ranksTab, { k, isDefault })
+	end
+	net.WriteTable(ranksTab)
 	net.Send(vplayer)
 end)
 
 function Vermilion:SendNotify(vplayer, text, duration, notifyType)
-	if(vplayer == nil or text == nil or duration == nil or notifyType == nil) then
+	if(vplayer == nil or text == nil) then
 		self.Log("Attempted to send notification with a nil parameter.")
 		self.Log(tostring(vplayer) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
 		return
+	end
+	if(duration == nil) then
+		duration = 5
+	end
+	if(notifyType == nil) then
+		notifyType = NOTIFY_GENERIC
 	end
 	net.Start("Vermilion_Hint")
 	net.WriteString("Vermilion: " .. tostring(text))
@@ -68,15 +94,20 @@ function Vermilion:SendNotify(vplayer, text, duration, notifyType)
 end
 
 function Vermilion:BroadcastNotify(text, duration, notifyType)
-	print(player.GetAll())
 	self:SendNotify(player.GetAll(), text, duration, notifyType)
 end
 
 function Vermilion:BroadcastNotifyOmit(vplayerToOmit, text, duration, notifyType)
-	if(vplayerToOmit == nil or text == nil or duration == nil or notifyType == nil) then
+	if(vplayerToOmit == nil or text == nil) then
 		self.Log("Attempted to send notification with a nil parameter.")
 		self.Log(tostring(vplayerToOmit) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
 		return
+	end
+	if(duration == nil) then
+		duration = 5
+	end
+	if(notifyType == nil) then
+		notifyType = NOTIFY_GENERIC
 	end
 	net.Start("Vermilion_Hint")
 	net.WriteString("Vermilion: " .. tostring(text))
@@ -95,18 +126,6 @@ function Vermilion:SendMessageBox(vplayer, text)
 	net.Send(vplayer)
 end
 
-function Vermilion:PlaySound(vplayer, path)
-	net.Start("Vermilion_Sound")
-	net.WriteString(path)
-	net.Send(vplayer)
-end
-
-function Vermilion:BroadcastSound(path)
-	for i,vplayer in pairs(player.GetHumans()) do
-		self:PlaySound(vplayer, path)
-	end
-end
-
 local META = FindMetaTable("Player")
 
 function META:Vermilion_GetRank()
@@ -115,6 +134,10 @@ end
 
 function META:Vermilion_IsOwner()
 	return Vermilion:IsOwner(self)
+end
+
+function META:IsAdmin()
+	return Vermilion:HasPermission(self, "identify_as_admin")
 end
 
 function META:Vermilion_IsAdmin()
@@ -133,9 +156,9 @@ local setOwnerFunc = function(vplayer, model, entity)
 	end
 	if(tEnt) then
 		tEnt.Vermilion_Owner = vplayer:SteamID()
-		if(not tEnt:IsPlayer()) then
+		--[[ if(not tEnt:IsPlayer()) then
 			tEnt:SetCustomCollisionCheck(true)
-		end
+		end ]]
 	end
 end
 
@@ -172,30 +195,65 @@ local function SpawnLimitHitFunc(vplayer, vtype)
 end
 
 Vermilion:RegisterHook("PlayerSpawnProp", "Vermilion_GMFixProp", function(vplayer, model)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_prop")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "props")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnRagdoll", "Vermilion_GMFixRagdoll", function(vplayer, model)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_ragdoll")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "ragdolls")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnEffect", "Vermilion_GMFixEffect", function(vplayer, model)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_effect")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "effects")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnVehicle", "Vermilion_GMFixVehicle", function(vplayer, model, vehicle, tab)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_vehicle")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "vehicles")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSWEP", "Vermilion_GMFixSWEP", function(vplayer, swepName, swepTab)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_weapon")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "sents")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSENT", "Vermilion_GMFixSENT", function(vplayer, name)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_entity")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "sents")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnNPC", "Vermilion_GMFixNPC", function(vplayer, npc_typ, equipment)
+	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
+		if(not Vermilion:HasPermission(vplayer, "spawn_npc")) then
+			return false
+		end
+	end
 	return SpawnLimitHitFunc(vplayer, "npcs")
 end)
 
@@ -208,7 +266,7 @@ Vermilion:RegisterHook("PlayerSay", "Say1", function(vplayer, text, teamChat)
 		if(command != nil) then
 			table.remove(parts, 1)
 			local success, err = pcall(command, vplayer, parts)
-			if(not success) then Vermilion:SendNotify(vplayer, "Command failed with an error " .. tostring(err), 5, NOTIFY_ERROR) end
+			if(not success) then Vermilion:SendNotify(vplayer, "Command failed with an error " .. tostring(err), 25, NOTIFY_ERROR) end
 		else 
 			Vermilion:SendNotify(vplayer, "No such command '" .. commandName .. "'", 5, NOTIFY_ERROR)
 		end
@@ -222,29 +280,13 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 		net.Send(vplayer)
 	end)
 	if(Vermilion:GetPlayer(vplayer) == nil) then
-		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server for the first time!", 5, NOTIFY_GENERIC)
+		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server for the first time!")
 		Vermilion:AddPlayer(vplayer)
 	else
-		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server!", 5, NOTIFY_GENERIC)
+		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server!")
 	end
 	
-	Vermilion:SendNotify(vplayer, "Welcome to <INSERT SERVER NAME HERE>!", 15, NOTIFY_GENERIC)
+	Vermilion:SendNotify(vplayer, "Welcome to " .. GetHostName() .. "!", 15, NOTIFY_GENERIC)
 	Vermilion:SendNotify(vplayer, "This server is running the Vermilion server administration tool.", 15, NOTIFY_GENERIC)
 	Vermilion:SendNotify(vplayer, "Be on your best behaviour!", 15, NOTIFY_GENERIC)
 end)
-
-
-hook.Add("ShouldCollide", "Vermilion_ShouldCollide", function(ent1, ent2)
-	if((not ent1:IsWorld() and not ent2:IsWorld())) then
-		if((ent1:IsPlayer() and ent1:SteamID() != ent2.Vermilion_Owner) or (ent2:IsPlayer() and ent2:SteamID() != ent1.Vermilion_Owner) or (not ent1:IsPlayer() and not ent2:IsPlayer())) then
-			local vplayer1 = Crimson.LookupPlayerBySteamID(ent1.Vermilion_Owner)
-			local vplayer2 = Crimson.LookupPlayerBySteamID(ent2.Vermilion_Owner)
-			if(not (vplayer1 == nil or vplayer2 == nil) and vplayer1 != vplayer2) then
-				if(not Vermilion:HasPermission(vplayer1, "prop_colide_others") or not Vermilion:HasPermission(vplayer2, "prop_collide_others")) then
-					return false
-				end
-			end
-		end
-	end
-end)
-

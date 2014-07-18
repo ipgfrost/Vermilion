@@ -20,24 +20,41 @@
 -- This tool needs a rethink...
 
 TOOL.Category = "Vermilion"
-TOOL.Name = "Owner"
+TOOL.Name = "Disposition"
 TOOL.Tab = "Vermilion"
 TOOL.Command = nil
 TOOL.ConfigName = ""
 
 if(CLIENT) then
-	language.Add("tool.ownerstool.name", "Owner Tool")
-	language.Add("tool.ownerstool.desc", "Figure out who owns what")
-	language.Add("tool.ownerstool.0", "Left Click to print the owner")
+	language.Add("tool.dispostool.name", "Disposition Tool")
+	language.Add("tool.dispostool.desc", "Set NPC dispositions towards you.")
+	language.Add("tool.dispostool.0", "Left Click to make the NPC like you, right click to make the NPC hate you!")
 end
 
+if(SERVER) then AddCSLuaFile("vermilion/crimson_gmod.lua") end
+include("vermilion/crimson_gmod.lua")
 
 
 function TOOL:LeftClick( trace )
-	if(trace.Entity and not trace.Entity:IsWorld()) then
-		if(SERVER) then
-			Vermilion:SendNotify(self:GetOwner(), "Owner: " .. tostring(trace.Entity.Vermilion_Owner), 5, NOTIFY_GENERIC)
+	if(trace.Entity) then
+		if(trace.Entity:IsNPC()) then 
+			if(SERVER) then
+				trace.Entity:AddEntityRelationship(self:GetOwner(), D_LI, 99)
+			end
+			return true
 		end
 	end
-	return true
+	return false
+end
+
+function TOOL:RightClick( trace )
+	if(trace.Entity) then
+		if(trace.Entity:IsNPC()) then 
+			if(SERVER) then
+				trace.Entity:AddEntityRelationship(self:GetOwner(), D_HT, 99)
+			end
+			return true
+		end
+	end
+	return false
 end
