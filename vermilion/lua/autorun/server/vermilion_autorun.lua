@@ -16,7 +16,7 @@
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
  in any way, nor claims to be so. 
 ]]
-
+local startTime = os.clock()
 Vermilion = {}
 
 -- Other addons shouldn't access anything stored here.
@@ -53,7 +53,7 @@ local csLuaFiles = {
 -- Internal logging function
 function Vermilion.Log( str ) 
 	print("Vermilion: " .. tostring(str))
-	file.Append("vermilion_server_log.txt", util.DateStamp() .. tostring(str) .. "\n")
+	file.Append("vermilion/vermilion_server_log.txt", util.DateStamp() .. tostring(str) .. "\n")
 end
 
 print("Vermilion: starting...")
@@ -66,7 +66,7 @@ if(not game.SinglePlayer()) then
 		include(luaFile)
 	end
 	Vermilion:LoadExtensions()
-	Vermilion.Log("Started!")
+	Vermilion.Log("Started in " .. tostring(math.Round(os.clock() - startTime, 4)) .. "ms!")
 else
 	Vermilion.Log("Not starting on singleplayer game!")
 end

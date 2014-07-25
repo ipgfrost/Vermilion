@@ -76,19 +76,20 @@ function SWEP:PrimaryAttack()
 		phys:AddGameFlag( FVPHYSICS_DMG_DISSOLVE );
 		phys:AddGameFlag( FVPHYSICS_WAS_THROWN );
 		local velocity = self.Owner:GetAimVector()
-		velocity = velocity * 1000
+		velocity = velocity * 10000
 		phys:SetVelocity( velocity );
 		phys:Wake()
 		grenade:EmitSound( "NPC_CombineBall.Launch" );
 		
-		for k,v in pairs(grenade:GetSaveTable()) do
-				print(k .. " => " .. tostring(v))
-			end
 		
 		local velocity = self.Owner:GetAimVector()
-		velocity = velocity * 10000
+		velocity = velocity * 200000
 		--velocity = velocity + ( VectorRand() * 10 ) -- a random element
 		phys:ApplyForceCenter( velocity )
-		self.Weapon:SetNextPrimaryFire(CurTime() + 0.5)
+		self.Weapon:SetNextPrimaryFire(CurTime() + 0.1)
 	end
+end
+
+function SWEP:SecondaryAttack()
+
 end

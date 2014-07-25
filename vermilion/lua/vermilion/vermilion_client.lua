@@ -22,6 +22,8 @@ Vermilion.Activated = false
 -- Convars
 CreateClientConVar("vermilion_alert_sounds", 1, true, false)
 
+
+
 -- Networking
 net.Receive("Vermilion_Hint", function(len)
 	local text = net.ReadString()
@@ -50,16 +52,15 @@ net.Receive("Vermilion_Hint", function(len)
 	end
 end)
 
-net.Receive("Vermilion_Sound", function(len)
-	local path = net.ReadString()
-	sound.PlayFile("sound/" .. path, "noplay", function(station, errorID)
-		if(IsValid(station)) then
-			station:Play()
-		else
-			print(errorID)
-		end
-	end)
+net.Receive("Vermilion_Client_Activate", function(len)
+	if(Vermilion.Activated) then
+		Vermilion.Log("Got a second activation attempt from the server! Ignoring!")
+		return
+	end
+	Vermilion.Activated = true
+	Vermilion:LoadExtensions()
 end)
+
 
 net.Receive("Vermilion_ErrorMsg", function(len)
 	Crimson:CreateErrorDialog(net.ReadString())
@@ -73,10 +74,7 @@ net.Receive("VRanksList", function(len)
 	hook.Call("Vermilion_RanksList", nil, net.ReadTable())
 end)
 
-function Vermilion:GetWeaponName(vclass)
-	return list.Get( "Weapon" )[vclass]['PrintName']
-end
+net.Receive("VWeaponsList", function(len)
+	hook.Call("Vermilion_WeaponsList", nil, net.ReadTable())
+end)
 
-function Vermilion:GetNPCName(vclass)
-	return list.Get( "NPC" )[vclass]['Name']
-end

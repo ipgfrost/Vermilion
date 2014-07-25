@@ -17,34 +17,54 @@
  in any way, nor claims to be so. 
 ]]
 
+Vermilion.Utility = {}
+
+Vermilion.HookTimes = {}
+
+function Vermilion.Utility.GetWeaponName(vclass)
+	local target = vclass
+	if(not isstring(target)) then -- assume it is a weapon
+		target = target:GetClass()
+	end
+	return list.Get( "Weapon" )[target]['PrintName']
+end
+
+function Vermilion.Utility.GetNPCName(vclass)
+	local target = vclass
+	if(not isstring(target)) then -- assume it is an NPC
+		target = target:GetClass()
+	end
+	return list.Get( "NPC" )[vclass]['Name']
+end
+
 Vermilion.Extensions = {}
 Vermilion.Hooks = {}
 Vermilion.SafeHooks = {}
 Vermilion.NetworkStrings = {}
 
-Vermilion.ChatCommands = {}
 
 
-
---[[ 
-	Add a chat command to the Vermilion interpreter
-	
-	@param: activator (string) - what the player has to type into chat to activate the command
-	@param: func (function with params: sender (player), text (table) space split input) - the command handler
-]]--
-function Vermilion:AddChatCommand(activator, func)
-	if(self.ChatCommands[activator] != nil) then
-		self.Log("Chat command " .. activator .. " has been overwritten!")
-	end
-	self.ChatCommands[activator] = func
+if(not file.Exists("vermilion", "DATA")) then
+	file.CreateDir("vermilion")
 end
 
--- Get the data structure for a loaded extension
+
+--[[
+	Get the data structure for a loaded extension
+	
+	@param id (string) - the extension id
+	
+	@return extension (table:extension or nil) - the extension
+]]--
 function Vermilion:GetExtension(id)
 	return self.Extensions[id]
 end
 
--- Used at the end of an extension to register it's data structure to Vermilion
+--[[
+	Used at the end of an extension to register it's data structure to Vermilion
+	
+	@param extension (table:extension) - the extension to register
+]]--
 function Vermilion:RegisterExtension(extension)
 	self.Extensions[extension.ID] = extension
 	if(extension.Permissions != nil and SERVER) then
@@ -79,14 +99,45 @@ function Vermilion:RegisterExtension(extension)
 			table.insert(self.NetworkStrings, k)
 			if(SERVER) then util.AddNetworkString(k) end
 			net.Receive(k, function(len, vplayer)
-				print("Calling VNET_" .. k)
 				hook.Call("VNET_" .. k, nil, vplayer)
 			end)
 		end
 	end
 end
 
--- Creates the basic extension data structure
+--[[
+	
+	Extension structure:
+	
+	- Name (string): the human-readable name for the extension.
+	- ID (string): the unique machine-id for the extension. Used to retrieve the structure from the loader.
+	- Description (string): a short description of the extension.
+	- Author (string): your name
+	- InitClient (function): called to activate the extension on the client. If you are writing a server-only extension, this is useless.
+	- InitServer (function): called to activate the extension on the server. If you are writing a client-only extension, this is useless.
+	- InitShared (function): called to activate the extension on both the client and the server.
+	- Destroy (function): called to deactivate the extension when the Lua environment is shutting down or the extension is being reloaded.
+	
+	
+	Predefined functions/variables (these should not be overridden):
+	- Hooks (table): list of hooks that you have addded to your extension. Do not interface directly with this table.
+	- AddHook (function with parameters: evtName, id, func): add a hook to the extension table
+		- evtName: the name of the hook to listen for.
+		- id: the unique id of the function (this can be dropped if you are only registering on listener for the evtName and evtName will be used as the unique id instead)
+		- func: the callback function (parameters on this are the same as the parameters of the hook)
+	- RemoveHook (function with parameters: evtName, id): remove a hook from the extension table
+		- evtName: the name of the hook to remove a listener from
+		- id: the unique id of the function to remove from the hook table (if you didn't provide the id parameter to the AddHook function you should just repeat evtName here).
+
+]]--
+
+--[[
+	Creates the basic extension data structure
+	
+	This must be extended upon and passed to RegisterExtension when writing the extension.
+	
+	@return extensionbase (table:extension) - the base structure for an extension
+]]--
 function Vermilion:MakeExtensionBase()
 	local base = {}
 	base.Name = "Base Extension"
@@ -98,7 +149,6 @@ function Vermilion:MakeExtensionBase()
 	function base:InitServer() end
 	function base:InitShared() end
 	function base:Destroy() end
-	function base:Tick() end
 	function base:AddHook(evtName, id, func)
 		if(func == nil) then
 			func = id
@@ -109,7 +159,7 @@ function Vermilion:MakeExtensionBase()
 		end
 		self.Hooks[evtName][id] = func
 	end
-	function base:Unhook(evtName, id)
+	function base:RemoveHook(evtName, id)
 		if(self.Hooks[evtName] != nil) then
 			self.Hooks[evtName][id] = nil
 		else
@@ -119,6 +169,13 @@ function Vermilion:MakeExtensionBase()
 	return base
 end
 
+--[[
+	Register a hook to Vermilion. These hooks get priority over hooks added by hook.Add.
+	
+	@param evtName (string) - the event to listen for
+	@param id (any) - the unique ID for this hook
+	@param func (function) - the callback function for this hook
+]]--
 function Vermilion:RegisterHook(evtName, id, func)
 	if(self.Hooks[evtName] == nil) then
 		self.Hooks[evtName] = {}
@@ -126,6 +183,12 @@ function Vermilion:RegisterHook(evtName, id, func)
 	self.Hooks[evtName][id] = func
 end
 
+--[[
+	Unregister a hook from Vermilion.
+	
+	@param evtName (string) - the event to remove the hook from
+	@param id (any) - the unique ID to remove
+]]--
 function Vermilion:UnregisterHook(evtName, id)
 	if(self.Hooks[evtName] != nil) then
 		self.Hooks[evtName][id] = nil
@@ -134,6 +197,13 @@ function Vermilion:UnregisterHook(evtName, id)
 	end
 end
 
+--[[
+	Register a "Vermilion SafeHook". SafeHooks cannot return a value to the caller but will always be notified of an event.
+	
+	@param evtName (string) - the event to listen for
+	@param id (any) - the unique ID for this hook
+	@param func (function) - the callback function for this hook
+]]--
 function Vermilion:RegisterSafeHook(evtName, id, func)
 	if(self.SafeHooks[evtName] == nil) then
 		self.SafeHooks[evtName] = {}
@@ -141,6 +211,12 @@ function Vermilion:RegisterSafeHook(evtName, id, func)
 	self.SafeHooks[evtName][id] = func
 end
 
+--[[
+	Unregister a "Vermilion SafeHook".
+
+	@param evtName (string) - the event to remove the hook from
+	@param id (any) - the unique ID to remove
+]]--
 function Vermilion:UnregisterSafeHook(evtName, id)
 	if(self.SafeHooks[evtName] != nil) then
 		self.SafeHooks[evtName][id] = nil
@@ -149,34 +225,17 @@ function Vermilion:UnregisterSafeHook(evtName, id)
 	end
 end
 
-if(CLIENT) then
-	net.Receive("Vermilion_Client_Activate", function(len)
-		if(Vermilion.Activated) then
-			Vermilion.Log("Got a second activation attempt from the server! Ignoring!")
-			return
-		end
-		Vermilion.Activated = true
-		local expr = "vermilion_exts/client/"
-		for _,ext in ipairs( file.Find(expr .. "*.lua", "LUA") ) do
-			include(expr .. ext)
-		end
-		for _,ext in ipairs( file.Find("vermilion_exts/shared/*.lua", "LUA") ) do
-			include("vermilion_exts/shared/" .. ext)
-		end
-		for i,extension in pairs(Vermilion.Extensions) do
-			Vermilion.Log("Initialising extension: " .. i)
-			extension:InitClient()
-			extension:InitShared()
-		end
-		Vermilion.LoadedExtensions = true
-		hook.Call(Vermilion.EVENT_EXT_LOADED)
-	end)
-end
+
 
 function Vermilion:LoadExtensions()
-	-- Load extensions
-	local expr = "vermilion_exts/server/"
-
+	
+	local expr = nil
+	if(SERVER) then
+		expr = "vermilion_exts/server/"
+	else
+		expr = "vermilion_exts/client/"
+	end
+	
 	Vermilion.LoadedExtensions = false
 
 	if(SERVER) then
@@ -196,7 +255,11 @@ function Vermilion:LoadExtensions()
 	end
 	for i,extension in pairs(Vermilion.Extensions) do
 		Vermilion.Log("Initialising extension: " .. i)
-		extension:InitServer()
+		if(SERVER) then
+			extension:InitServer()
+		else
+			extension:InitClient()
+		end
 		extension:InitShared()
 	end
 	Vermilion.LoadedExtensions = true
@@ -207,14 +270,13 @@ end
 
 local originalHook = hook.Call
 
--- This replacement is intended to let all hooks get informed, but the first to return a value "wins" control of the event. 
+--[[
+	This replacement is intended to let all hooks get informed, but the first to return a value "wins" control of the event. (this isn't true, but is the final intention)
+	
+	TODO: make it impossible for other addons to overwrite this function at all costs.
+]]--
 hook.Call = function(evtName, gmTable, ...)
-	if(evtName == "Think" and Vermilion.LoadedExtensions) then
-		--Tick extensions
-		for i,extension in pairs(Vermilion.Extensions) do
-			extension:Tick()
-		end
-	end
+	local startTime = os.clock()
 	-- Run Vermilion "safehooks". All events are triggered and return values ignored.
 	if(Vermilion.SafeHooks[evtName] != nil) then
 		for id,hookFunc in pairs(Vermilion.SafeHooks[evtName]) do
@@ -246,6 +308,18 @@ hook.Call = function(evtName, gmTable, ...)
 			end
 		end
 	end
+	local ttime = os.clock() - startTime
+	if(Vermilion.HookTimes[evtName] == nil) then
+		Vermilion.HookTimes[evtName] = ttime
+	else
+		Vermilion.HookTimes[evtName] = Vermilion.HookTimes[evtName] + ttime
+	end
 	-- Let everybody else have a go
 	return originalHook(evtName, gmTable, ...)
 end
+
+concommand.Add("ver_time", function()
+	for i,k in pairs(Vermilion.HookTimes) do
+		print(i .. " ==> " .. tostring(k) .. " ms")
+	end
+end)

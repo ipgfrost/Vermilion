@@ -51,7 +51,7 @@ function SWEP:PrimaryAttack()
 		if(trace.Hit) then
 			local tents = ents.FindInSphere(trace.HitPos, 50)
 			for i,ent in pairs(tents) do
-				if((ent:IsNPC() or ent:IsPlayer()) and IsValid(ent)) then
+				if((ent:IsNPC() --[[or ent:IsPlayer()]]) and IsValid(ent)) then
 					ent:SetHealth(ent:Health() + 25)
 				end
 			end
@@ -66,7 +66,7 @@ function SWEP:SecondaryAttack()
 		if(trace.Hit) then
 			local tents = ents.FindInSphere(trace.HitPos, 50)
 			for i,ent in pairs(tents) do
-				if((ent:IsNPC() or ent:IsPlayer()) and IsValid(ent)) then
+				if((ent:IsNPC() --[[or ent:IsPlayer()]]) and IsValid(ent)) then
 					ent:SetHealth(ent:Health() - 25)
 				end
 			end

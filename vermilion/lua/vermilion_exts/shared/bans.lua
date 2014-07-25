@@ -237,7 +237,18 @@ function Vermilion:UnbanPlayer(steamid, unbanner)
 	end
 end
 
+function Vermilion:IsSteamIDBanned(steamid)
+	for i,k in pairs(EXTENSION.Bans) do
+		if(k[1] == steamid) then
+			return true
+		end
+	end
+	return false
+end
+
 function EXTENSION:InitServer()
+
+
 	self:AddHook("VNET_VBannedPlayersList", function(vplayer)
 		net.Start("VBannedPlayersList")
 		local tab = {}
@@ -247,6 +258,7 @@ function EXTENSION:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
+	
 	
 	self:AddHook("VNET_VBanPlayer", function(vplayer)
 		if(Vermilion:HasPermissionError(vplayer, "ban")) then
@@ -265,6 +277,7 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
+	
 	self:AddHook("VNET_VUnbanPlayer", function(vplayer)
 		if(Vermilion:HasPermissionError(vplayer, "unban")) then
 			local steamid = net.ReadString()
@@ -277,6 +290,7 @@ function EXTENSION:InitServer()
 			end
 		end
 	end)
+	
 	
 	self:AddHook("VNET_VKickPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "kick")) then
@@ -292,6 +306,7 @@ function EXTENSION:InitServer()
 		end
 	end)
 
+	
 	self:AddHook("CheckPassword", "CheckBanned", function( steamID, ip, svPassword, clPassword, name )
 		local idxToRemove = {}
 		for i,k in pairs(EXTENSION.Bans) do
@@ -305,27 +320,29 @@ function EXTENSION:InitServer()
 		for i,k in pairs(idxToRemove) do
 			table.remove(EXTENSION.Bans, k)
 		end
-		local playerDat = Vermilion:GetPlayerBySteamID(util.SteamIDFrom64(steamID))
-		if(playerDat != nil) then
-			if(playerDat['rank'] == "banned") then
-				Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("ban_management"), "Warning: " .. name .. " has attempted to join the server!", 5, NOTIFY_ERROR)
-				return false, "You are banned from this server!"
-			end
+		if(Vermilion:IsSteamIDBanned(util.SteamIDFrom64(steamID))) then
+			Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("ban_management"), "Warning: " .. name .. " has attempted to join the server!", 5, NOTIFY_ERROR)
+			return false, "You are banned from this server!"
 		end
 	end)
+	
 	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("ban_control", "ban_management")
 	end)
 	
+	
 	self:AddHook("ShutDown", "toollimit_save", function()
 		EXTENSION:SaveBans()
 	end)
+	
 	
 	self:LoadBans()
 end
 
 function EXTENSION:InitClient()
+	
+	
 	self:AddHook("VActivePlayers", "ActivePlayersList", function(tab)
 		if(not IsValid(EXTENSION.ActivePlayerList)) then
 			return
@@ -335,6 +352,8 @@ function EXTENSION:InitClient()
 			EXTENSION.ActivePlayerList:AddLine( k[1], k[2], k[3] )
 		end
 	end)
+	
+	
 	self:AddHook("VNET_VBannedPlayersList", function()
 		if(not IsValid(EXTENSION.ActivePlayerList)) then
 			return
@@ -345,25 +364,22 @@ function EXTENSION:InitClient()
 			EXTENSION.BannedPlayerList:AddLine(k[1], k[2], k[3], k[4], k[5])
 		end
 	end)
+	
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("ban_control", "Bans", "icon16/delete.png", "Ban Control", function(TabHolder)
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
+		Vermilion:AddInterfaceTab("ban_control", "Bans", "delete.png", "Ban/kick large groups of troublesome players and unban players manually", function(panel)
 			
-			local activePlayersLabel = Crimson.CreateLabel("Active Players")
-			activePlayersLabel:SetPos((panel:GetWide() / 2) - (activePlayersLabel:GetWide() / 2), 10)
-			activePlayersLabel:SetParent(panel)
 			
-			local activePlayersList = vgui.Create("DListView")
-			activePlayersList:SetMultiSelect(true)
-			activePlayersList:AddColumn("Name")
-			activePlayersList:AddColumn("Steam ID")
-			activePlayersList:AddColumn("Rank")
+			local activePlayersList = Crimson.CreateList({ "Name", "Steam ID", "Rank" })
 			activePlayersList:SetParent(panel)
 			activePlayersList:SetPos(10, 30)
 			activePlayersList:SetSize(panel:GetWide() - 10, 200)
-			
 			EXTENSION.ActivePlayerList = activePlayersList
+			
+			local activePlayersLabel = Crimson:CreateHeaderLabel(activePlayersList, "Active Players")
+			activePlayersLabel:SetParent(panel)
+			
+			
 			
 			local banPlayerButton = Crimson.CreateButton("Ban Selected", function(self)
 				if(table.Count(activePlayersList:GetSelected()) == 0) then
@@ -391,6 +407,8 @@ function EXTENSION:InitClient()
 				yearsWang:SetPos(10, 45)
 				yearsWang:SetParent(bTimePanel)
 				
+				
+				
 				local monthsLabel = Crimson.CreateLabel("Months:")
 				monthsLabel:SetPos(84 + ((64 - monthsLabel:GetWide()) / 2), 30)
 				monthsLabel:SetParent(bTimePanel)
@@ -404,6 +422,8 @@ function EXTENSION:InitClient()
 						yearsWang:SetValue(yearsWang:GetValue() + 1)
 					end
 				end
+				
+				
 				
 				local weeksLabel = Crimson.CreateLabel("Weeks:")
 				weeksLabel:SetPos(158 + ((64 - weeksLabel:GetWide()) / 2), 30)
@@ -419,6 +439,8 @@ function EXTENSION:InitClient()
 					end
 				end
 				
+				
+				
 				local daysLabel = Crimson.CreateLabel("Days:")
 				daysLabel:SetPos(232 + ((64 - daysLabel:GetWide()) / 2), 30)
 				daysLabel:SetParent(bTimePanel)
@@ -432,6 +454,8 @@ function EXTENSION:InitClient()
 						weeksWang:SetValue(weeksWang:GetValue() + 1)
 					end
 				end
+				
+				
 				
 				local hoursLabel = Crimson.CreateLabel("Hours:")
 				hoursLabel:SetPos(306 + ((64 - hoursLabel:GetWide()) / 2), 30)
@@ -447,6 +471,8 @@ function EXTENSION:InitClient()
 					end
 				end
 				
+				
+				
 				local minsLabel = Crimson.CreateLabel("Minutes:")
 				minsLabel:SetPos(380 + ((64 - minsLabel:GetWide()) / 2), 30)
 				minsLabel:SetParent(bTimePanel)
@@ -461,6 +487,8 @@ function EXTENSION:InitClient()
 					end
 				end
 				
+				
+				
 				local secondsLabel = Crimson.CreateLabel("Seconds:")
 				secondsLabel:SetPos(454 + ((64 - secondsLabel:GetWide()) / 2), 30)
 				secondsLabel:SetParent(bTimePanel)
@@ -474,6 +502,8 @@ function EXTENSION:InitClient()
 						minsWang:SetValue(minsWang:GetValue() + 1)
 					end
 				end
+				
+				
 				
 				local confirmButton = Crimson.CreateButton("OK", function(self)
 					local times = { yearsWang:GetValue(), monthsWang:GetValue(), weeksWang:GetValue(), daysWang:GetValue(), hoursWang:GetValue(), minsWang:GetValue(), secondsWang:GetValue() }
@@ -494,6 +524,8 @@ function EXTENSION:InitClient()
 				confirmButton:SetSize(100, 20)
 				confirmButton:SetParent(bTimePanel)
 				
+				
+				
 				local cancelButton = Crimson.CreateButton("Cancel", function(self)
 					bTimePanel:Close()
 				end)
@@ -511,6 +543,8 @@ function EXTENSION:InitClient()
 			banPlayerButton:SetPos(10, 240)
 			banPlayerButton:SetSize(105, 30)
 			banPlayerButton:SetParent(panel)
+			
+			
 			
 			local kickPlayerButton = Crimson.CreateButton("Kick Selected", function(self)
 				if(table.Count(activePlayersList:GetSelected()) == 0) then
@@ -530,22 +564,18 @@ function EXTENSION:InitClient()
 			kickPlayerButton:SetSize(105, 30)
 			kickPlayerButton:SetParent(panel)
 			
-			local bannedPlayersLabel = Crimson.CreateLabel("Banned Players")
-			bannedPlayersLabel:SetPos((panel:GetWide() / 2) - (bannedPlayersLabel:GetWide() / 2), 280)
-			bannedPlayersLabel:SetParent(panel)
 			
-			local bannedPlayersList = vgui.Create("DListView")
-			bannedPlayersList:SetMultiSelect(true)
-			bannedPlayersList:AddColumn("Name")
-			bannedPlayersList:AddColumn("Steam ID")
-			bannedPlayersList:AddColumn("Reason")
-			bannedPlayersList:AddColumn("Expires")
-			bannedPlayersList:AddColumn("Banned By")
+			
+			local bannedPlayersList = Crimson.CreateList({ "Name", "Steam ID", "Reason", "Expires", "Banned By" })
 			bannedPlayersList:SetParent(panel)
 			bannedPlayersList:SetPos(10, 300)
 			bannedPlayersList:SetSize(panel:GetWide() - 10, 230)
-			
 			EXTENSION.BannedPlayerList = bannedPlayersList
+			
+			local bannedPlayersLabel = Crimson:CreateHeaderLabel(bannedPlayersList, "Banned Players")
+			bannedPlayersLabel:SetParent(panel)
+			
+			
 			
 			local unbanPlayerButton = Crimson.CreateButton("Unban Selected", function(self)
 				if(table.Count(bannedPlayersList:GetSelected()) == 0) then
@@ -564,10 +594,10 @@ function EXTENSION:InitClient()
 			unbanPlayerButton:SetSize(105, 30)
 			unbanPlayerButton:SetParent(panel)
 			
+			
+			
 			net.Start("VBannedPlayersList")
 			net.SendToServer()
-			
-			return panel
 		end)
 	end)
 end

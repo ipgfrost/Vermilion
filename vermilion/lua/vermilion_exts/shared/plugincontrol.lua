@@ -112,24 +112,16 @@ function EXTENSION:InitClient()
 	end)
 
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("extension_control", "Extensions", "icon16/brick.png", "Extension Control", function(TabHolder)
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
+		Vermilion:AddInterfaceTab("extension_control", "Extensions", "brick.png", "Extension Control", function(panel)
 			
-			local extList = vgui.Create("DListView")
-			extList:SetMultiSelect(false)
-			extList:AddColumn("Name")
-			extList:AddColumn("ID")
+			local extList = Crimson.CreateList({ "Name", "ID" }, false)
 			extList:SetParent(panel)
 			extList:SetPos(10, 30)
 			extList:SetSize(225, 500)
-			
 			EXTENSION.ExtList = extList
 			
 			net.Start("VExtensionList")
 			net.SendToServer()
-			
-			return panel
 		end)
 	end)
 end

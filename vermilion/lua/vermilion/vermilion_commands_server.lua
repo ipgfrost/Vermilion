@@ -17,6 +17,8 @@
  in any way, nor claims to be so. 
 ]]
 
+-- TODO: remove this
+
 concommand.Add("vermilion_saveusers", function(vplayer, cmd, args, fullstring)
 	if(Vermilion:HasPermissionVerbose(vplayer, "cmd_save_users")) then
 		Vermilion:SaveUserStore()

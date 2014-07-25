@@ -26,7 +26,23 @@ EXTENSION.Permissions = {
 }
 
 function EXTENSION:InitServer()
+	print(list.Get("Weapon")["weapon_crowbar"]['PrintName'])
+	
+	local originalStart = net.Start
+--	function net.Start(typ)
+--		print("NETWORK: " .. typ)
+--		originalStart(typ)
+--	end
+	
+	self:AddHook("OnLuaError", "PrintToConsole", function(str, realm, addontitle, addonid)
+		print(str)
+		print(realm)
+		print(addontitle)
+		print(addonid)
+	end)
+end
 
+function EXTENSION:InitClient()
 end
 
 Vermilion:RegisterExtension(EXTENSION)

@@ -60,12 +60,18 @@ function EXTENSION:InitClient()
 		for i,tab in pairs(allowedTabs) do
 			local tabData = self.Tabs[tab]
 			if(tabData != nil) then
-				local tabPanel = tabData[4](MENU.TabHolder)
+				local tpanel = vgui.Create("DPanel", MENU.TabHolder)
+				tpanel:StretchToParent(5, 20, 20, 5)
+				tabData[4](tpanel)
 				Vermilion.Log("Loading panel " .. tab)
-				MENU.TabHolder:AddSheet(tabData[1], tabPanel, tabData[2], false, false, tabData[3])
+				MENU.TabHolder:AddSheet(tabData[1], tpanel, "icon16/" .. tabData[2], false, false, tabData[3])
 			end
 		end
 	end)
+	
+	function MENU:BuildWelcomeScreen(vpanel)
+	
+	end
 	
 	function MENU:BuildClientOpts()
 		local clientOptions = vgui.Create("DPanel", self.TabHolder)
@@ -79,7 +85,7 @@ function EXTENSION:InitClient()
 	end
 	
 	function MENU:Show()
-		if(self.TabHolder) then self.TabHolder:Remove() end
+		if(self.TabHolder and IsValid(self.TabHolder)) then self.TabHolder:Remove() end
 		self.TabHolder = vgui.Create("DPropertySheet", self.Panel)
 		self.TabHolder:SetPos(0, 20)
 		self.TabHolder:SetSize(600, 580)
@@ -108,9 +114,14 @@ function EXTENSION:InitClient()
 			if(self.CurrentHeight == self.Height and self.CurrentWidth == self.Width) then
 				timer.Destroy("Vermilion_MenuShow")
 				self.IsOpen = true
+				
 				net.Start("VActivePlayers")
 				net.SendToServer()
+				
 				net.Start("VRanksList")
+				net.SendToServer()
+				
+				net.Start("VWeaponsList")
 				net.SendToServer()
 			end
 		end)
@@ -135,6 +146,7 @@ function EXTENSION:InitClient()
 			
 			if(self.CurrentHeight == 0 and self.CurrentWidth == 0) then
 				self.Panel:SetVisible(false)
+				self.TabHolder:Remove()
 				self.IsOpen = false
 				timer.Destroy("Vermilion_MenuHide")
 			end

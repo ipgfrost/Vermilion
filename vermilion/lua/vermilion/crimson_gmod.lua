@@ -60,6 +60,23 @@ function Crimson.CreateLabel(text)
 	return label
 end
 
+function Crimson:CreateHeaderLabel(object, text)
+	local label = self.CreateLabel(text)
+	local ox, oy = object:GetPos()
+	local xpos = ((object:GetWide() / 2) + ox) - (label:GetWide() / 2)
+	local ypos = oy - 20
+	label:SetPos(xpos, ypos)
+	label.OldSetText = label.SetText
+	function label:SetText(text)
+		label:OldSetText(text)
+		label:SizeToContents()
+		local xpos = ((object:GetWide() / 2) + ox) - (label:GetWide() / 2)
+		local ypos = oy - 20
+		label:SetPos(xpos, ypos)
+		end
+	return label
+end
+
 function Crimson.CreateCheckBox(text, convar, initialValue)
 	if(initialValue == nil) then
 		initialValue = GetConVarNumber(convar)
@@ -220,6 +237,21 @@ function Crimson:CreateTextInput(text, completeFunc)
 	cancelButton:SetParent(panel)
 	
 	Crimson:SetDark(true)
+end
+
+function Crimson.CreateList(cols, multiselect, sortable)
+	if(sortable == nil) then sortable = true end
+	if(multiselect == nil) then multiselect = true end
+	local lst = vgui.Create("DListView")
+	lst:SetMultiSelect(multiselect)
+	for i,col in pairs(cols) do
+		lst:AddColumn(col)
+	end
+	if(not sortable) then
+		lst:SetSortable(false)
+		function lst:SortByColumn(ColumnID, Desc) end
+	end
+	return lst
 end
 
 function Crimson.LookupPlayerByName(name)

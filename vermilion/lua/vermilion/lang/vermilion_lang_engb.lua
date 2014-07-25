@@ -17,3 +17,5 @@
  in any way, nor claims to be so. 
 ]]
 
+VermilionLang = {}
+

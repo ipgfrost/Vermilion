@@ -32,7 +32,6 @@ EXTENSION.RankPermissions = {
 	}
 }
 EXTENSION.NetworkStrings = {
-	"VWeaponsList",
 	"VRankWeaponsLoad",
 	"VRankWeaponsSave"
 }
@@ -41,16 +40,6 @@ EXTENSION.RankLimits = {}
 EXTENSION.EditingRank = ""
 
 function EXTENSION:InitServer()
-	
-	self:AddHook("VNET_VWeaponsList", function(vplayer)
-		net.Start("VWeaponsList")
-		local tab = {}
-		for i,k in pairs(list.Get("Weapon")) do
-			table.insert(tab, i)
-		end
-		net.WriteTable(tab)
-		net.Send(vplayer)
-	end)
 	
 	self:AddHook("VNET_VRankWeaponsSave", function(vplayer)
 		if(not Vermilion:HasPermission(vplayer, "weplimit_management")) then
@@ -121,6 +110,8 @@ function EXTENSION:ResetSettings()
 end
 
 function EXTENSION:InitClient()
+	
+	
 	self:AddHook("Vermilion_RanksList", "RanksList", function(tab)
 		if(not IsValid(EXTENSION.RanksList)) then
 			return
@@ -130,16 +121,19 @@ function EXTENSION:InitClient()
 			EXTENSION.RanksList:AddLine(k[1], tostring(i), k[2])
 		end
 	end)
-	self:AddHook("VNET_VWeaponsList", function()
+	
+	
+	self:AddHook("Vermilion_WeaponsList", function(tab)
 		if(not IsValid(EXTENSION.AllWeaponsList)) then
 			return
 		end
 		EXTENSION.AllWeaponsList:Clear()
-		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
 			EXTENSION.AllWeaponsList:AddLine(k)
 		end
 	end)
+	
+	
 	self:AddHook("VNET_VRankWeaponsLoad", function()
 		if(not IsValid(EXTENSION.RankPermissionsList)) then
 			return
@@ -150,52 +144,53 @@ function EXTENSION:InitClient()
 			EXTENSION.RankPermissionsList:AddLine(k)
 		end
 	end)
+	
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("wep_control", "Weapon Limits", "icon16/gun.png", "Weapon Control", function(TabHolder)
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
+		Vermilion:AddInterfaceTab("wep_control", "Weapon Limits", "gun.png", "Block players from using specific weapons", function(panel)
 			
-			local ranksLabel = Crimson.CreateLabel("Ranks")
-			ranksLabel:SetPos(110 - (ranksLabel:GetWide() / 2), 10)
-			ranksLabel:SetParent(panel)
+			--[[
+				Rank list
+			]]--
 			
-			local ranksList = vgui.Create("DListView")
-			ranksList:SetMultiSelect(true)
-			ranksList:AddColumn("Name")
-			ranksList:AddColumn("Numerical ID")
-			ranksList:AddColumn("Default")
+			local ranksList = Crimson.CreateList({ "Name", "Numerical ID", "Default" }, true, false)
 			ranksList:SetParent(panel)
 			ranksList:SetPos(10, 30)
 			ranksList:SetSize(200, 190)
-			ranksList:SetSortable(false)
-			function ranksList:SortByColumn(ColumnID, Desc) end
 			EXTENSION.RanksList = ranksList
 			
-			local blockedWeaponsLabel = Crimson.CreateLabel("Blocked Weapons")
-			blockedWeaponsLabel:SetPos(110 - (blockedWeaponsLabel:GetWide() / 2), 230)
-			blockedWeaponsLabel:SetParent(panel)
+			local ranksLabel = Crimson:CreateHeaderLabel(ranksList, "Ranks")
+			ranksLabel:SetParent(panel)
 			
-			local guiRankPermissionsList = vgui.Create("DListView")
-			guiRankPermissionsList:SetMultiSelect(true)
-			guiRankPermissionsList:AddColumn("Name")
+			--[[
+				List of blocked weapons
+			]]--
+			
+			local guiRankPermissionsList = Crimson.CreateList({ "Name" })
 			guiRankPermissionsList:SetParent(panel)
 			guiRankPermissionsList:SetPos(10, 250)
 			guiRankPermissionsList:SetSize(200, 280)
-			
 			EXTENSION.RankPermissionsList = guiRankPermissionsList
 			
-			local allWeaponsLabel = Crimson.CreateLabel("All Weapons")
-			allWeaponsLabel:SetPos(475 - (allWeaponsLabel:GetWide() / 2), 230)
-			allWeaponsLabel:SetParent(panel)
+			local blockedWeaponsLabel = Crimson:CreateHeaderLabel(guiRankPermissionsList, "Blocked Weapons")
+			blockedWeaponsLabel:SetParent(panel)
 			
-			local guiAllWeaponsList = vgui.Create("DListView")
-			guiAllWeaponsList:SetMultiSelect(true)
-			guiAllWeaponsList:AddColumn("Name")
+			--[[
+				List of all weapons installed
+			]]--
+			
+			local guiAllWeaponsList = Crimson.CreateList({ "Name" })
 			guiAllWeaponsList:SetParent(panel)
 			guiAllWeaponsList:SetPos(375, 250)
 			guiAllWeaponsList:SetSize(200, 280)
-			
 			EXTENSION.AllWeaponsList = guiAllWeaponsList
+			
+			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Weapons")
+			allWeaponsLabel:SetParent(panel)
+			
+			--[[
+				Load rank weapon blocklist button
+			]]--
 			
 			local loadRankPermissionsButton = Crimson.CreateButton("Load Permissions", function(self)
 				if(table.Count(ranksList:GetSelected()) > 1) then
@@ -214,13 +209,15 @@ function EXTENSION:InitClient()
 				net.WriteString(ranksList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 				blockedWeaponsLabel:SetText("Blocked Weapons - " .. ranksList:GetSelected()[1]:GetValue(1))
-				blockedWeaponsLabel:SizeToContents()
-				blockedWeaponsLabel:SetPos(110 - (blockedWeaponsLabel:GetWide() / 2), 230)
 				EXTENSION.EditingRank = ranksList:GetSelected()[1]:GetValue(1)
 			end)
 			loadRankPermissionsButton:SetPos(220, 250)
 			loadRankPermissionsButton:SetSize(145, 30)
 			loadRankPermissionsButton:SetParent(panel)
+			
+			--[[
+				Save rank weapon blocklist button
+			]]--
 			
 			local saveRankPermissionsButton = Crimson.CreateButton("Save Permissions", function(self)
 				if(EXTENSION.EditingRank == "") then
@@ -238,12 +235,14 @@ function EXTENSION:InitClient()
 				guiRankPermissionsList:Clear()
 				EXTENSION.EditingRank = ""
 				blockedWeaponsLabel:SetText("Blocked Weapons")
-				blockedWeaponsLabel:SizeToContents()
-				blockedWeaponsLabel:SetPos(110 - (blockedWeaponsLabel:GetWide() / 2), 230)
 			end)
 			saveRankPermissionsButton:SetPos(220, 500)
 			saveRankPermissionsButton:SetSize(145, 30)
 			saveRankPermissionsButton:SetParent(panel)
+			
+			--[[
+				Block weapon button
+			]]--
 			
 			local giveRankPermissionButton = Crimson.CreateButton("Block Weapon", function(self)
 				if(EXTENSION.EditingRank == "") then
@@ -262,7 +261,15 @@ function EXTENSION:InitClient()
 			giveRankPermissionButton:SetSize(145, 30)
 			giveRankPermissionButton:SetParent(panel)
 			
+			--[[
+				Unblock weapon button
+			]]--
+			
 			local removeRankPermissionButton = Crimson.CreateButton("Unblock Weapon", function(self)
+				if(EXTENSION.EditingRank == "") then
+					Crimson:CreateErrorDialog("Must be editing a rank take permissions!")
+					return
+				end
 				if(table.Count(guiRankPermissionsList:GetSelected()) == 0) then
 					Crimson:CreateErrorDialog("Must select at least one weapon to unblock for this rank!")
 					return
@@ -281,11 +288,6 @@ function EXTENSION:InitClient()
 			removeRankPermissionButton:SetPos(220, 390)
 			removeRankPermissionButton:SetSize(145, 30)
 			removeRankPermissionButton:SetParent(panel)
-			
-			net.Start("VWeaponsList")
-			net.SendToServer()
-			
-			return panel		
 		end)
 	end)
 end

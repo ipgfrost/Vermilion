@@ -31,7 +31,9 @@ EXTENSION.Permissions = {
 	"noclip",
 	"spray",
 	"use_voip",
-	"hear_voip"
+	"hear_voip",
+	"no_fall_damage",
+	"reduced_fall_damage"
 }
 EXTENSION.RankPermissions = {
 	{ "admin", {
@@ -43,7 +45,8 @@ EXTENSION.RankPermissions = {
 			"noclip",
 			"spray",
 			"use_voip",
-			"hear_voip"
+			"hear_voip",
+			"no_fall_damage"
 		}
 	},
 	{ "player", {
@@ -51,7 +54,8 @@ EXTENSION.RankPermissions = {
 			"noclip",
 			"spray",
 			"use_voip",
-			"hear_voip"
+			"hear_voip",
+			"reduced_fall_damage"
 		}
 	}
 }
@@ -82,7 +86,9 @@ function EXTENSION:InitServer()
 	end)
 	
 	self:AddHook("EntityTakeDamage", "V_PlayerHurt", function(target, dmg)
+		if(not Vermilion:GetSetting("enable_no_damage", true)) then return end
 		if(not target:IsPlayer()) then return end
+		if(not Vermilion:HasPermission(target, "no_damage")) then return end
 		if(Vermilion:GetSetting("global_no_damage", false)) then
 			dmg:ScaleDamage(0)
 			return dmg
@@ -93,6 +99,7 @@ function EXTENSION:InitServer()
 		end
 	end)
 	self:AddHook("Tick", "V_BulletReload", function(vent, dTab)
+		if(not Vermilion:GetSetting("unlimited_ammo", true)) then return end
 		for i,vplayer in pairs(player.GetAll()) do
 			if(Vermilion:HasPermission(vplayer, "unlimited_ammo")) then
 				if(IsValid(vplayer:GetActiveWeapon())) then
@@ -113,30 +120,42 @@ function EXTENSION:InitServer()
 		end
 	end)
 	self:AddHook("PlayerSwitchFlashlight", "LockFlashlight", function(vplayer, enabled)
-		if(enabled) then
+		if(enabled and Vermilion:GetSetting("flashlight_control", true)) then
 			if(not Vermilion:HasPermission(vplayer, "flashlight")) then
 				return false
 			end
 		end
 	end)
 	self:AddHook("PlayerNoclip", "LockNoclip", function(vplayer, enabled)
-		if(enabled) then
+		if(enabled and Vermilion:GetSetting("noclip_control", true)) then
 			if(not Vermilion:HasPermission(vplayer, "noclip")) then
 				return false
 			end
 		end
 	end)
 	self:AddHook("PlayerSpray", "LockSpray", function(vplayer)
-		if(not Vermilion:HasPermission(vplayer, "spray")) then
+		if(not Vermilion:HasPermission(vplayer, "spray") and Vermilion:GetSetting("spray_control", true)) then
 			return false
 		end
 	end)
 	self:AddHook("PlayerCanHearPlayersVoice", "LockVOIP", function(listener, talker)
+		if(not Vermilion:GetSetting("voip_control", true)) then return end
 		if(not Vermilion:HasPermission(talker, "use_voip")) then
 			return false
 		end
 		if(not Vermilion:HasPermission(listener, "hear_voip")) then
 			return false
+		end
+	end)
+	self:AddHook("GetFallDamage", "Vermilion_FallDamage", function(vplayer, speed)
+		if(Vermilion:GetSetting("global_no_fall_damage", false)) then
+			return 0
+		end
+		if(Vermilion:HasPermission(vplayer, "no_fall_damage")) then
+			return 0
+		end
+		if(Vermilion:HasPermission(vplayer, "reduced_fall_damage")) then
+			return 5
 		end
 	end)
 	self:AddHook("VNET_VClearDecals", function(vplayer)
@@ -194,13 +213,24 @@ function EXTENSION:InitClient()
 		EXTENSION.disableDamage:SetValue( tobool(net.ReadString()) )
 		EXTENSION.disableFlashlight:SetValue( tobool(net.ReadString()) )
 		EXTENSION.disableNoclip:SetValue( tobool(net.ReadString()) )
-		EXTENSION.diableSprays:SetValue( tobool(net.ReadString()) )
+		EXTENSION.disableSprays:SetValue( tobool(net.ReadString()) )
 		EXTENSION.disableVoip:SetValue( tobool(net.ReadString()) )
 	end)
+	
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("sbox_control", "Sandbox Control", "icon16/world_edit.png", "Sandbox Control", function(TabHolder)
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
+		Vermilion:AddInterfaceTab("sbox_control", "Sandbox Control", "world_edit.png", "Manage aspects of the sandbox gamemode", function(panel)
+			local function updateSBOX()
+				net.Start("VSandboxUpdate")
+				net.WriteString(tostring(EXTENSION.unlimitedAmmoEnabled:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableSpawnRestrictions:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableDamage:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableFlashlight:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableNoclip:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableSprays:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableVoip:GetChecked()))
+				net.SendToServer()
+			end
 			
 			EXTENSION.unlimitedAmmoEnabled = vgui.Create("DCheckBoxLabel")
 			EXTENSION.unlimitedAmmoEnabled:SetText("Unlimited ammunition for permitted players")
@@ -208,6 +238,11 @@ function EXTENSION:InitClient()
 			EXTENSION.unlimitedAmmoEnabled:SetPos(10, 10)
 			EXTENSION.unlimitedAmmoEnabled:SetDark(true)
 			EXTENSION.unlimitedAmmoEnabled:SizeToContents()
+			EXTENSION.unlimitedAmmoEnabled.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			EXTENSION.disableSpawnRestrictions = vgui.Create("DCheckBoxLabel")
 			EXTENSION.disableSpawnRestrictions:SetText("Disable item spawn restrictions for permitted players")
@@ -215,6 +250,11 @@ function EXTENSION:InitClient()
 			EXTENSION.disableSpawnRestrictions:SetPos(10, 30)
 			EXTENSION.disableSpawnRestrictions:SetDark(true)
 			EXTENSION.disableSpawnRestrictions:SizeToContents()
+			EXTENSION.disableSpawnRestrictions.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			EXTENSION.disableDamage = vgui.Create("DCheckBoxLabel")
 			EXTENSION.disableDamage:SetText("Disable damage for permitted players")
@@ -222,6 +262,11 @@ function EXTENSION:InitClient()
 			EXTENSION.disableDamage:SetPos(10, 50)
 			EXTENSION.disableDamage:SetDark(true)
 			EXTENSION.disableDamage:SizeToContents()
+			EXTENSION.disableDamage.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			EXTENSION.disableFlashlight = vgui.Create("DCheckBoxLabel")
 			EXTENSION.disableFlashlight:SetText("Disable flashlight for unpermitted players")
@@ -229,6 +274,11 @@ function EXTENSION:InitClient()
 			EXTENSION.disableFlashlight:SetPos(10, 70)
 			EXTENSION.disableFlashlight:SetDark(true)
 			EXTENSION.disableFlashlight:SizeToContents()
+			EXTENSION.disableFlashlight.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			EXTENSION.disableNoclip = vgui.Create("DCheckBoxLabel")
 			EXTENSION.disableNoclip:SetText("Disable noclip for unpermitted players")
@@ -236,13 +286,23 @@ function EXTENSION:InitClient()
 			EXTENSION.disableNoclip:SetPos(10, 90)
 			EXTENSION.disableNoclip:SetDark(true)
 			EXTENSION.disableNoclip:SizeToContents()
+			EXTENSION.disableNoclip.OnChange = function(self, val)
+				updateSBOX()
+			end
 			
-			EXTENSION.diableSprays = vgui.Create("DCheckBoxLabel")
-			EXTENSION.diableSprays:SetText("Disable sprays for unpermitted players")
-			EXTENSION.diableSprays:SetParent(panel)
-			EXTENSION.diableSprays:SetPos(10, 110)
-			EXTENSION.diableSprays:SetDark(true)
-			EXTENSION.diableSprays:SizeToContents()
+			
+			
+			EXTENSION.disableSprays = vgui.Create("DCheckBoxLabel")
+			EXTENSION.disableSprays:SetText("Disable sprays for unpermitted players")
+			EXTENSION.disableSprays:SetParent(panel)
+			EXTENSION.disableSprays:SetPos(10, 110)
+			EXTENSION.disableSprays:SetDark(true)
+			EXTENSION.disableSprays:SizeToContents()
+			EXTENSION.disableSprays.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			EXTENSION.disableVoip = vgui.Create("DCheckBoxLabel")
 			EXTENSION.disableVoip:SetText("Disable VoIP for unpermitted players")
@@ -250,6 +310,11 @@ function EXTENSION:InitClient()
 			EXTENSION.disableVoip:SetPos(10, 130)
 			EXTENSION.disableVoip:SetDark(true)
 			EXTENSION.disableVoip:SizeToContents()
+			EXTENSION.disableVoip.OnChange = function(self, val)
+				updateSBOX()
+			end
+			
+			
 			
 			local clearDecals = Crimson.CreateButton("Clear Decals", function(self)
 				net.Start("VClearDecals")
@@ -258,6 +323,9 @@ function EXTENSION:InitClient()
 			clearDecals:SetPos(panel:GetWide() - 135, 10)
 			clearDecals:SetSize(125, 30)
 			clearDecals:SetParent(panel)
+			clearDecals:SetTooltip("Clear all decals. Decals are the marks left behind when a bullet hits a surface or when something bleeds onto a surface. Clearing decals can offer a small performance boost.")
+			
+			
 			
 			local clearCorpses = Crimson.CreateButton("Clear Corpses", function(self)
 				net.Start("VClearCorpses")
@@ -266,11 +334,12 @@ function EXTENSION:InitClient()
 			clearCorpses:SetPos(panel:GetWide() - 135, 50)
 			clearCorpses:SetSize(125, 30)
 			clearCorpses:SetParent(panel)
+			clearCorpses:SetTooltip("Clear the corpses of dead NPCs. Doing this can offer a small performance boost.")
+			
+			
 			
 			net.Start("VSandboxGetProperties")
 			net.SendToServer()
-			
-			return panel
 		end)
 	end)
 end

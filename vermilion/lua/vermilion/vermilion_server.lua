@@ -24,266 +24,57 @@ NOTIFY_UNDO = 2
 NOTIFY_HINT = 3
 NOTIFY_CLEANUP = 4
 
--- Network
-local networkStrings = {
-	"Vermilion_Hint",
-	"Vermilion_Sound",
-	"Vermilion_Client_Activate",
-	"VActivePlayers",
-	"Vermilion_ErrorMsg",
-	"VRanksList"
+include("vermilion/server/server_utils.lua")
+include("vermilion/server/spawn_fix.lua")
+include("vermilion/server/player_meta.lua")
+include("vermilion/server/server_network.lua")
+include("vermilion/server/chat.lua")
+
+local resources = {
+	"sound/buttons/lever5.wav",
+	"sound/alarms/klaxon1.wav"
 }
 
-for i,str in pairs(networkStrings) do
-	util.AddNetworkString(str)
+for i,k in pairs(resources) do
+	resource.AddSingleFile(k)
 end
 
-function Vermilion.internal:UpdateActivePlayers(vplayer)
-	if(vplayer == nil) then
-		vplayer = player.GetAll()
-	end
-	net.Start("VActivePlayers")
-	local activePlayers = {}
-	for i,cplayer in pairs(player.GetAll()) do
-		local playerDat = Vermilion:GetPlayer(cplayer)
-		table.insert(activePlayers, { cplayer:GetName(), cplayer:SteamID(), playerDat['rank'] } )
-	end
-	net.WriteTable(activePlayers)
-	net.Send(vplayer)
+function Vermilion:CreateEffect(effect, pos, angle, scale)
+	net.Start("VEffect")
+	net.WriteString(effect)
+	net.WriteVector(pos)
+	net.WriteAngle(angle)
+	net.WriteString(tostring(scale))
+	net.Broadcast()
 end
-
-net.Receive("VActivePlayers", function(len, vplayer)
-	Vermilion.internal:UpdateActivePlayers(vplayer)
-end)
-
-Vermilion:RegisterHook("PlayerConnect", "ActivePlayersUpdate", function()
-	Vermilion.internal:UpdateActivePlayers()
-end)
-
-net.Receive("VRanksList", function(len, vplayer)
-	net.Start("VRanksList")
-	local ranksTab = {}
-	for i,k in pairs(Vermilion.Ranks) do
-		local isDefault = "No"
-		if(Vermilion:GetSetting("default_rank", "player") == k) then
-			isDefault = "Yes"
-		end
-		table.insert(ranksTab, { k, isDefault })
-	end
-	net.WriteTable(ranksTab)
-	net.Send(vplayer)
-end)
-
-function Vermilion:SendNotify(vplayer, text, duration, notifyType)
-	if(vplayer == nil or text == nil) then
-		self.Log("Attempted to send notification with a nil parameter.")
-		self.Log(tostring(vplayer) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
-		return
-	end
-	if(duration == nil) then
-		duration = 5
-	end
-	if(notifyType == nil) then
-		notifyType = NOTIFY_GENERIC
-	end
-	net.Start("Vermilion_Hint")
-	net.WriteString("Vermilion: " .. tostring(text))
-	net.WriteString(tostring(duration))
-	net.WriteString(tostring(notifyType))
-	net.Send(vplayer)
-end
-
-function Vermilion:BroadcastNotify(text, duration, notifyType)
-	self:SendNotify(player.GetAll(), text, duration, notifyType)
-end
-
-function Vermilion:BroadcastNotifyOmit(vplayerToOmit, text, duration, notifyType)
-	if(vplayerToOmit == nil or text == nil) then
-		self.Log("Attempted to send notification with a nil parameter.")
-		self.Log(tostring(vplayerToOmit) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
-		return
-	end
-	if(duration == nil) then
-		duration = 5
-	end
-	if(notifyType == nil) then
-		notifyType = NOTIFY_GENERIC
-	end
-	net.Start("Vermilion_Hint")
-	net.WriteString("Vermilion: " .. tostring(text))
-	net.WriteString(tostring(duration))
-	net.WriteString(tostring(notifyType))
-	net.SendOmit(vplayerToOmit)
-end
-
-function Vermilion:SendMessageBox(vplayer, text)
-	if(vplayer == nil or text == nil) then
-		self.Log("Attempted to send messagebox with a nil parameter!")
-		self.Log(tostring(vplayer) .. " === " .. tostring(text))
-	end
-	net.Start("Vermilion_ErrorMsg")
-	net.WriteString(text)
-	net.Send(vplayer)
-end
-
-local META = FindMetaTable("Player")
-
-function META:Vermilion_GetRank()
-	return Vermilion:GetRank(self)
-end
-
-function META:Vermilion_IsOwner()
-	return Vermilion:IsOwner(self)
-end
-
-function META:IsAdmin()
-	return Vermilion:HasPermission(self, "identify_as_admin")
-end
-
-function META:Vermilion_IsAdmin()
-	return Vermilion:IsAdmin(self)
-end
-
-function META:Vermilion_IsBanned()
-	return Vermilion:IsBanned(self)
-end
-
--- Hooks
-local setOwnerFunc = function(vplayer, model, entity)
-	local tEnt = entity
-	if(tEnt == nil) then -- some of the hooks only have 2 parameters.
-		tEnt = model
-	end
-	if(tEnt) then
-		tEnt.Vermilion_Owner = vplayer:SteamID()
-		--[[ if(not tEnt:IsPlayer()) then
-			tEnt:SetCustomCollisionCheck(true)
-		end ]]
-	end
-end
-
-local spawnedFuncs = {
-	"PlayerSpawnedProp",
-	"PlayerSpawnedSENT",
-	"PlayerSpawnedNPC",
-	"PlayerSpawnedVehicle",
-	"PlayerSpawnedEffect",
-	"PlayerSpawnedRagdoll",
-	"PlayerSpawnedSWEP"
-}
-
-local spawnFuncs = { 
-	"PlayerSpawnProp",
-	"PlayerSpawnSENT",
-	"PlayerSpawnNPC",
-	"PlayerSpawnVehicle",
-	"PlayerSpawnEffect",
-	"PlayerSpawnSWEP"
-}
-
--- Entity Creator stuff
-for i,spHook in pairs(spawnedFuncs) do
-	Vermilion:RegisterHook(spHook, "Vermilion_SpawnCreatorSet" .. i, setOwnerFunc)
-end
-
-local function SpawnLimitHitFunc(vplayer, vtype)
-	if(not IsValid(vplayer)) then return end
-	local notLimitHit = vplayer:CheckLimit(vtype)
-	if(notLimitHit == true) then
-		return true
-	end
-end
-
-Vermilion:RegisterHook("PlayerSpawnProp", "Vermilion_GMFixProp", function(vplayer, model)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_prop")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "props")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnRagdoll", "Vermilion_GMFixRagdoll", function(vplayer, model)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_ragdoll")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "ragdolls")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnEffect", "Vermilion_GMFixEffect", function(vplayer, model)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_effect")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "effects")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnVehicle", "Vermilion_GMFixVehicle", function(vplayer, model, vehicle, tab)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_vehicle")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "vehicles")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnSWEP", "Vermilion_GMFixSWEP", function(vplayer, swepName, swepTab)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_weapon")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "sents")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnSENT", "Vermilion_GMFixSENT", function(vplayer, name)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_entity")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "sents")
-end)
-
-Vermilion:RegisterHook("PlayerSpawnNPC", "Vermilion_GMFixNPC", function(vplayer, npc_typ, equipment)
-	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
-		if(not Vermilion:HasPermission(vplayer, "spawn_npc")) then
-			return false
-		end
-	end
-	return SpawnLimitHitFunc(vplayer, "npcs")
-end)
-
-Vermilion:RegisterHook("PlayerSay", "Say1", function(vplayer, text, teamChat)
-	if(string.StartWith(text, "!")) then
-		local commandText = string.sub(text, 2)
-		local parts = string.Explode(" ", commandText, false)
-		local commandName = parts[1]
-		local command = Vermilion.ChatCommands[commandName]
-		if(command != nil) then
-			table.remove(parts, 1)
-			local success, err = pcall(command, vplayer, parts)
-			if(not success) then Vermilion:SendNotify(vplayer, "Command failed with an error " .. tostring(err), 25, NOTIFY_ERROR) end
-		else 
-			Vermilion:SendNotify(vplayer, "No such command '" .. commandName .. "'", 5, NOTIFY_ERROR)
-		end
-		return ""
-	end
-end)
 
 Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 	timer.Simple( 1, function() 
 		net.Start("Vermilion_Client_Activate")
 		net.Send(vplayer)
 	end)
-	if(Vermilion:GetPlayer(vplayer) == nil) then
-		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server for the first time!")
-		Vermilion:AddPlayer(vplayer)
+	if(Vermilion:GetExtension("geoip") != nil) then
+		if(Vermilion:GetPlayer(vplayer) == nil) then
+			Vermilion.GetGeoIPForPlayer(vplayer, function(tab)
+				Vermilion:BroadcastNotify(vplayer:GetName() .. " has joined the server from " .. tab['country_name'] .. " for the first time!")
+				vplayer.Vermilion_Location = tab['country_code']
+				vplayer:SetNWString("Country_Code", tab['country_code'])
+			end)
+			Vermilion:AddPlayer(vplayer)
+		else
+			Vermilion.GetGeoIPForPlayer(vplayer, function(tab)
+				Vermilion:BroadcastNotify(vplayer:GetName() .. " has joined the server from " .. tab['country_name'])
+				vplayer.Vermilion_Location = tab['country_code']
+				vplayer:SetNWString("Country_Code", tab['country_code'])
+			end)
+		end
 	else
-		Vermilion:BroadcastNotifyOmit(vplayer, vplayer:Name() .. " has joined the server!")
+		if(Vermilion:GetPlayer(vplayer) == nil) then
+			Vermilion:BroadcastNotify(vplayer:GetName() .. " has joined the server for the first time!")
+			Vermilion:AddPlayer(vplayer)
+		else
+			Vermilion:BroadcastNotify(vplayer:GetName() .. " has joined the server!")
+		end
 	end
 	
 	Vermilion:SendNotify(vplayer, "Welcome to " .. GetHostName() .. "!", 15, NOTIFY_GENERIC)

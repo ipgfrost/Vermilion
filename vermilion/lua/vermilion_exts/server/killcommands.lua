@@ -65,7 +65,7 @@ function EXTENSION:InitServer()
 		tplayer:KillSilent()
 	end)
 
-	Vermilion:AddChatCommand("ragdollplayer", function(sender, text)
+	Vermilion:AddChatCommand("ragdoll", function(sender, text)
 		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
 			return
 		end
@@ -165,17 +165,12 @@ function EXTENSION:InitServer()
 		end
 
 		local tplayer = Crimson.LookupPlayerByName(text[1])
-
+		
 		if(!tplayer) then
 			Vermilion:SendNotify(sender, "Player does not exist", 5, NOTIFY_ERROR)
 			return
 		end
-		if(Vermilion:HasPermission(tplayer, "no_damage")) then
-			Vermilion:SendNotify(sender, "Player does not have the permission to die", 5, NOTIFY_ERROR)
-			return
-		end
 		local Location = tplayer:GetShootPos()
-		--local Location = Vector(x,y,z)
 
 		Vermilion:SendNotify(sender, tostring(Location))
 
@@ -219,6 +214,47 @@ function EXTENSION:InitServer()
 	end)
 
 
+	Vermilion:AddChatCommand("teleport", function(sender, text)
+		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+			return
+		end
+		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local lplayer = Crimson.LookupPlayerByName(text[2])
+		if(!tplayer) then
+				Vermilion:SendNotify(sender, "Player does not exist", 5, NOTIFY_ERROR)
+				return
+			end
+		if(!lplayer) then
+				Vermilion:SendNotify(sender, "Player does not exist", 5, NOTIFY_ERROR)
+				return
+			end
+
+		local Target = lplayer:GetShootPos()
+		Target:Add(Vector(0,0,5))
+
+		Vermilion:SendNotify(sender, tostring(lplayer:GetShootPos()), 5, NOTIFY_ERROR)
+		tplayer:SetPos(Vector(Target))
+
+	end)
+
+
+	Vermilion:AddChatCommand("health", function(sender, text)
+		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+			return
+		end
+		
+		
+		if Crimson.LookupPlayerByName(text[1]) == Crimson.LookupPlayerByName(sender) then
+		local tplayer = Crimson.LookupPlayerByName(text[1])
+
+		tplayer:SetHealth(text[2])
+		Vermilion:SendNotify(sender, "Your health has been set to "..tostring(text[2]))
+
+	else
+		Crimson.LookupPlayerByName(tplayer):SetHealth(text[2])
+		Vermilion:SendNotify(sender, "Your health has been set to "..tostring(text[2]))
+	end
+	end)
 
 
 

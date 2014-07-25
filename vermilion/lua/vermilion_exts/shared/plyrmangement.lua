@@ -25,11 +25,19 @@ EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 	"player_management"
 }
+EXTENSION.Functions = {}
 
 function EXTENSION:InitServer()
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("player_manager", "player_management")
 	end)
+	
+	function EXTENSION:AddCommand(name, validator, executor)
+		if(self.Functions[name] != nil) then
+			Vermilion.Log("Player Management command " .. name .. " is being overwritten!")
+		end
+		self.Functions[name] = { validator, executor }
+	end
 end
 
 function EXTENSION:InitClient()
@@ -44,34 +52,29 @@ function EXTENSION:InitClient()
 	end)
 
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("player_manager", "Player Management", "icon16/user.png", "Player Management", function(TabHolder)
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
+		Vermilion:AddInterfaceTab("player_manager", "Player Management", "user.png", "Run reward/punishment/utility commands on large groups of players", function(panel)
 			
-			local activePlayersLabel = Crimson.CreateLabel("Active Players")
-			activePlayersLabel:SetPos(110 - (activePlayersLabel:GetWide() / 2), 10)
-			activePlayersLabel:SetParent(panel)
-			
-			local playerList = vgui.Create("DListView")
-			playerList:SetMultiSelect(true)
-			playerList:AddColumn("Name")
-			playerList:AddColumn("Rank")
+			local playerList = Crimson.CreateList({ "Name", "Rank" })
 			playerList:SetParent(panel)
 			playerList:SetPos(10, 30)
 			playerList:SetSize(200, panel:GetTall() - 50)
 			EXTENSION.ActivePlayersList = playerList
 			
-			local actionsLabel = Crimson.CreateLabel("Actions")
-			actionsLabel:SetPos(320 - (actionsLabel:GetWide() / 2), 10)
-			actionsLabel:SetParent(panel)
+			local activePlayersLabel = Crimson:CreateHeaderLabel(playerList, "Active Players")
+			activePlayersLabel:SetParent(panel)
 			
-			local actionList = vgui.Create("DListView")
-			actionList:SetMultiSelect(true)
-			actionList:AddColumn("Name")
+			
+			
+			local actionList = Crimson.CreateList({ "Name" })
 			actionList:SetParent(panel)
 			actionList:SetPos(220, 30)
 			actionList:SetSize(200, panel:GetTall() - 50)
 			EXTENSION.ActionList = actionList
+			
+			local actionsLabel = Crimson:CreateHeaderLabel(actionList, "Actions")
+			actionsLabel:SetParent(panel)
+			
+			
 			
 			local runCommandButton = Crimson.CreateButton("Run", function(self)
 				
@@ -79,8 +82,6 @@ function EXTENSION:InitClient()
 			runCommandButton:SetPos(430, (panel:GetTall() / 2) - 15)
 			runCommandButton:SetSize(panel:GetWide() - 430, 30)
 			runCommandButton:SetParent(panel)
-			
-			return panel
 		end)
 	end)
 end

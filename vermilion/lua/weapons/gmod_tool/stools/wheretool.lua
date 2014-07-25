@@ -17,40 +17,27 @@
  in any way, nor claims to be so. 
 ]]
 
--- Merge this file into sbox_limits
+-- This tool needs a rethink...
 
-local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Fall Damage Limiter"
-EXTENSION.ID = "falldamage"
-EXTENSION.Description = "Handles fall damage limits"
-EXTENSION.Author = "Ned"
-EXTENSION.Permissions = {
-	"no_fall_damage",
-	"reduced_fall_damage"
-}
-EXTENSION.RankPermissions = {
-	{ "admin", {
-			"no_fall_damage"
-		}
-	},
-	{ "player", {
-			"reduced_fall_damage"
-		}
-	}
-}
+TOOL.Category = "Vermilion"
+TOOL.Name = "Where Tool"
+TOOL.Tab = "Vermilion"
+TOOL.Command = nil
+TOOL.ConfigName = ""
 
-function EXTENSION:InitServer()
-	self:AddHook("GetFallDamage", "Vermilion_FallDamage", function(vplayer, speed)
-		if(Vermilion:GetSetting("global_no_fall_damage", false)) then
-			return 0
-		end
-		if(Vermilion:HasPermission(vplayer, "no_fall_damage")) then
-			return 0
-		end
-		if(Vermilion:HasPermission(vplayer, "reduced_fall_damage")) then
-			return 5
-		end
-	end)
+if(CLIENT) then
+	language.Add("tool.wheretool.name", "Where Tool")
+	language.Add("tool.wheretool.desc", "Print where a player is from")
+	language.Add("tool.wheretool.0", "Left Click to print the country code")
 end
 
-Vermilion:RegisterExtension(EXTENSION)
+
+
+function TOOL:LeftClick( trace )
+	if(trace.Entity and trace.Entity:IsPlayer()) then
+		if(CLIENT) then
+			print(trace.Entity.VCountry)
+		end
+	end
+	return true
+end

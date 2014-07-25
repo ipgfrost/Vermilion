@@ -46,7 +46,7 @@ SWEP.SlotPos = 99
 SWEP.DrawAmmo = false
 SWEP.DrawCrosshair = true
 
-local Model = "models/props_c17/column02a.mdl"--"models/props_c17/doll01.mdl"
+local Model = "models/props_c17/doll01.mdl"
 
 
 function SWEP:FireBaby(model_file)

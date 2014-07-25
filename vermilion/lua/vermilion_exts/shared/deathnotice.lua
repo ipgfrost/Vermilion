@@ -77,13 +77,13 @@ function EXTENSION:InitClient()
 		elseif(damageType == DMG_FALL) then
 			EXTENSION:DisplayNotice(victim:GetName() .. " just understood f=ma!")
 		elseif(damageType == DMG_BLAST or damageType == DMG_BLAST_SURFACE or damageType == 134217792) then
-			if(IsValid(attacker)) then
+			if(IsValid(attacker) and (attacker:IsPlayer() or attacker:IsNPC())) then
 				if(IsValid(attacker:GetActiveWeapon()) ) then
 					local usinga = " with a "
-					if(string.EndsWith(Vermilion:GetWeaponName(attacker:GetActiveWeapon():GetClass()), "s")) then
+					if(string.EndsWith(Vermilion.Utility.GetWeaponName(attacker:GetActiveWeapon():GetClass()), "s")) then
 						usinga = " with "
 					end
-					EXTENSION:DisplayNotice(victim:GetName() .. " was blown up by " .. attacker:GetName() .. usinga .. string.lower(Vermilion:GetWeaponName(attacker:GetActiveWeapon():GetClass())) .. " at a distance of " .. dist .. " metres")
+					EXTENSION:DisplayNotice(victim:GetName() .. " was blown up by " .. attacker:GetName() .. usinga .. string.lower(Vermilion.Utility.GetWeaponName(attacker:GetActiveWeapon():GetClass())) .. " at a distance of " .. dist .. " metres")
 					return
 				end
 				EXTENSION:DisplayNotice(victim:GetName() .. " was blown up by " .. attacker:GetName() .. " at a distance of " .. dist .. " metres")
@@ -107,7 +107,7 @@ function EXTENSION:InitClient()
 		else
 			local attackerName = nil
 			if(attacker:IsNPC()) then
-				attackerName = Vermilion:GetNPCName(attacker:GetClass())
+				attackerName = Vermilion.Utility.GetNPCName(attacker:GetClass())
 			else
 				attackerName = attacker:GetName()
 			end
@@ -117,10 +117,10 @@ function EXTENSION:InitClient()
 				return
 			end
 			local usinga = " with a "
-			if(string.EndsWith(Vermilion:GetWeaponName(attacker:GetActiveWeapon():GetClass()), "s")) then
+			if(string.EndsWith(Vermilion.Utility.GetWeaponName(attacker:GetActiveWeapon():GetClass()), "s")) then
 				usinga = " with "
 			end
-			EXTENSION:DisplayNotice(victim:GetName() .. " was killed by " .. attackerName .. usinga .. string.lower(Vermilion:GetWeaponName(weapon1:GetClass())) .. " at a distance of " .. dist .. " metres")
+			EXTENSION:DisplayNotice(victim:GetName() .. " was killed by " .. attackerName .. usinga .. string.lower(Vermilion.Utility.GetWeaponName(weapon1:GetClass())) .. " at a distance of " .. dist .. " metres")
 		end
 	end)
 end

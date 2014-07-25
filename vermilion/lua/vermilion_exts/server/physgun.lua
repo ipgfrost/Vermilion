@@ -26,11 +26,13 @@ EXTENSION.Permissions = {
 	"physgun_pickup_all",
 	"physgun_pickup_own",
 	"physgun_pickup_others",
-	"physgun_pickup_players"
+	"physgun_pickup_players",
+	"physgun_persist"
 }
 EXTENSION.RankPermissions = {
 	{ "admin", {
-			"physgun_pickup_all"
+			"physgun_pickup_all",
+			"physgun_pickup_players"
 		}
 	},
 	{ "player", {
@@ -40,8 +42,16 @@ EXTENSION.RankPermissions = {
 }
 
 function EXTENSION:InitServer()
+	self:AddHook("OnPhysgunFreeze", "Vermilion_Physgun_Freeze", function( weapon, phys, ent, vplayer )
+		if(ent:GetPersistent() and Vermilion:HasPermission(vplayer, "physgun_persist")) then
+			return true
+		end
+	end)
 	self:AddHook("PhysgunPickup", "Vermilion_Physgun_Pickup", function(vplayer, ent)
 		if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then
+			return true
+		end
+		if(ent:GetPersistent() and Vermilion:HasPermission(vplayer, "physgun_persist")) then
 			return true
 		end
 		if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all") and ent.Vermilion_Owner != nil) then

@@ -17,6 +17,8 @@
  in any way, nor claims to be so. 
 ]]
 
+-- Note: this is a REQUIRED extension. Vermilion WILL NOT FUNCTION without it.
+
 local EXTENSION = Vermilion:MakeExtensionBase()
 EXTENSION.Name = "Rank Controls"
 EXTENSION.ID = "rankcontrol"
@@ -24,7 +26,10 @@ EXTENSION.Description = "Allows for ranks to be controlled"
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 	"rank_management",
-	"identify_as_admin"
+	"identify_as_admin",
+	"lock_immune",
+	"kill_immune",
+	"kick_immune"
 }
 EXTENSION.RankPermissions = {
 	{ "admin", {
@@ -271,27 +276,21 @@ function EXTENSION:InitClient()
 		end
 	end)
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("rank_control", "Ranks", "icon16/group_gear.png", "Rank Control", function(TabHolder)
+		Vermilion:AddInterfaceTab("rank_control", "Ranks", "group_gear.png", "Put players in groups to assign permission sets to different types of players", function(panel)
 			EXTENSION.EditingRank = ""
 			EXTENSION.UnsavedRankChanges = false
-			local panel = vgui.Create("DPanel", TabHolder)
-			panel:StretchToParent(5, 20, 20, 5)
 			
-			local ranksLabel = Crimson.CreateLabel("Ranks")
-			ranksLabel:SetPos(100 - (ranksLabel:GetWide() / 2), 10)
-			ranksLabel:SetParent(panel)
 			
-			local ranksList = vgui.Create("DListView")
-			ranksList:SetMultiSelect(true)
-			ranksList:AddColumn("Name")
-			ranksList:AddColumn("Numerical ID")
-			ranksList:AddColumn("Default")
+			local ranksList = Crimson.CreateList({ "Name", "Numerical ID", "Default" }, true, false)
 			ranksList:SetParent(panel)
 			ranksList:SetPos(10, 30)
 			ranksList:SetSize(180, 190)
-			ranksList:SetSortable(false)
-			function ranksList:SortByColumn(ColumnID, Desc) end
 			EXTENSION.RanksList = ranksList
+			
+			local ranksLabel = Crimson:CreateHeaderLabel(ranksList, "Ranks")
+			ranksLabel:SetParent(panel)
+			
+			
 			
 			local addRankButton = Crimson.CreateButton("Add Rank", function(self)
 				Crimson:CreateTextInput("Please type the new name of the rank you wish to add...", function(text)
@@ -322,6 +321,8 @@ function EXTENSION:InitClient()
 			addRankButton:SetPos(200, 30)
 			addRankButton:SetSize(75, 30)
 			addRankButton:SetParent(panel)
+			
+			
 			
 			local moveRankUpButton = Crimson.CreateButton("Move Up", function(self)
 				if(table.Count(ranksList:GetSelected()) == 0) then
@@ -368,6 +369,8 @@ function EXTENSION:InitClient()
 			moveRankUpButton:SetSize(75, 30)
 			moveRankUpButton:SetParent(panel)
 			
+			
+			
 			local moveRankDownButton = Crimson.CreateButton("Move Down", function(self)
 				if(table.Count(ranksList:GetSelected()) == 0) then
 					Crimson:CreateErrorDialog("Must select a rank to move!")
@@ -412,6 +415,8 @@ function EXTENSION:InitClient()
 			moveRankDownButton:SetSize(75, 30)
 			moveRankDownButton:SetParent(panel)
 			
+			
+			
 			local removeRankButton = Crimson.CreateButton("Remove Rank", function(self)
 				if(table.Count(ranksList:GetSelected()) > 1) then
 					Crimson:CreateErrorDialog("Cannot remove multiple ranks!")
@@ -453,6 +458,8 @@ function EXTENSION:InitClient()
 			removeRankButton:SetSize(75, 30)
 			removeRankButton:SetParent(panel)
 			
+			
+			
 			local saveRanksButton = Crimson.CreateButton("Save Ranks", function(self)
 				local tab = {}
 				for i,k in ipairs(ranksList:GetLines()) do
@@ -467,20 +474,18 @@ function EXTENSION:InitClient()
 			saveRanksButton:SetSize(75, 30)
 			saveRanksButton:SetParent(panel)
 			
-			local activePlayersLabel = Crimson.CreateLabel("Active Players")
-			activePlayersLabel:SetPos(385 - (activePlayersLabel:GetWide() / 2), 10)
-			activePlayersLabel:SetParent(panel)
 			
-			local activePlayerList = vgui.Create("DListView")
-			activePlayerList:SetMultiSelect(true)
-			activePlayerList:AddColumn("Name")
-			activePlayerList:AddColumn("Steam ID")
-			activePlayerList:AddColumn("Rank")
+			
+			local activePlayerList = Crimson.CreateList({ "Name", "Steam ID", "Rank" })
 			activePlayerList:SetParent(panel)
 			activePlayerList:SetPos(285, 30)
 			activePlayerList:SetSize(200, 190)
-			
 			EXTENSION.ActivePlayersList = activePlayerList
+			
+			local activePlayersLabel = Crimson:CreateHeaderLabel(activePlayerList, "Active Players")
+			activePlayersLabel:SetParent(panel)
+			
+			
 			
 			local setPlayerRankButton = Crimson.CreateButton("Set Rank", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
@@ -516,6 +521,8 @@ function EXTENSION:InitClient()
 			setPlayerRankButton:SetSize(85, 30)
 			setPlayerRankButton:SetParent(panel)
 			
+			
+			
 			local setDefaultRankButton = Crimson.CreateButton("Set Default Rank", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
 					Crimson:CreateErrorDialog("Must save changes to ranks before assigning a default rank!")
@@ -542,31 +549,29 @@ function EXTENSION:InitClient()
 			setDefaultRankButton:SetSize(85, 30)
 			setDefaultRankButton:SetParent(panel)
 			
-			local rankPermissionsLabel = Crimson.CreateLabel("Rank Permissions")
-			rankPermissionsLabel:SetPos(110 - (rankPermissionsLabel:GetWide() / 2), 230)
-			rankPermissionsLabel:SetParent(panel)
 			
-			local guiRankPermissionsList = vgui.Create("DListView")
-			guiRankPermissionsList:SetMultiSelect(true)
-			guiRankPermissionsList:AddColumn("Name")
+			
+			local guiRankPermissionsList = Crimson.CreateList({ "Name" })
 			guiRankPermissionsList:SetParent(panel)
 			guiRankPermissionsList:SetPos(10, 250)
 			guiRankPermissionsList:SetSize(200, 280)
-			
 			EXTENSION.RankPermissionsList = guiRankPermissionsList
 			
-			local allPermissionsLabel = Crimson.CreateLabel("All Permissions")
-			allPermissionsLabel:SetPos(475 - (allPermissionsLabel:GetWide() / 2), 230)
-			allPermissionsLabel:SetParent(panel)
+			local rankPermissionsLabel = Crimson:CreateHeaderLabel(guiRankPermissionsList, "Rank Permissions")
+			rankPermissionsLabel:SetParent(panel)
 			
-			local guiAllPermissionsList = vgui.Create("DListView")
-			guiAllPermissionsList:SetMultiSelect(true)
-			guiAllPermissionsList:AddColumn("Name")
+			
+			
+			local guiAllPermissionsList = Crimson.CreateList({ "Name" })
 			guiAllPermissionsList:SetParent(panel)
 			guiAllPermissionsList:SetPos(375, 250)
 			guiAllPermissionsList:SetSize(200, 280)
-			
 			EXTENSION.AllPermissionsList = guiAllPermissionsList
+			
+			local allPermissionsLabel = Crimson:CreateHeaderLabel(guiAllPermissionsList, "All Permissions")
+			allPermissionsLabel:SetParent(panel)
+			
+			
 			
 			local giveRankPermissionButton = Crimson.CreateButton("Give Permission", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
@@ -588,6 +593,8 @@ function EXTENSION:InitClient()
 			giveRankPermissionButton:SetPos(220, 350)
 			giveRankPermissionButton:SetSize(145, 30)
 			giveRankPermissionButton:SetParent(panel)
+			
+			
 			
 			local removeRankPermissionButton = Crimson.CreateButton("Take Permission", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
@@ -612,6 +619,8 @@ function EXTENSION:InitClient()
 			removeRankPermissionButton:SetPos(220, 390)
 			removeRankPermissionButton:SetSize(145, 30)
 			removeRankPermissionButton:SetParent(panel)
+			
+			
 			
 			local loadRankPermissionsButton = Crimson.CreateButton("Load Permissions", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
@@ -638,13 +647,13 @@ function EXTENSION:InitClient()
 				net.WriteString(ranksList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 				rankPermissionsLabel:SetText("Rank Permissions - " .. ranksList:GetSelected()[1]:GetValue(1))
-				rankPermissionsLabel:SizeToContents()
-				rankPermissionsLabel:SetPos(110 - (rankPermissionsLabel:GetWide() / 2), 230)
 				EXTENSION.EditingRank = ranksList:GetSelected()[1]:GetValue(1)
 			end)
 			loadRankPermissionsButton:SetPos(220, 250)
 			loadRankPermissionsButton:SetSize(145, 30)
 			loadRankPermissionsButton:SetParent(panel)
+			
+			
 			
 			local saveRankPermissionsButton = Crimson.CreateButton("Save Permissions", function(self)
 				if(EXTENSION.UnsavedRankChanges) then
@@ -666,17 +675,15 @@ function EXTENSION:InitClient()
 				guiRankPermissionsList:Clear()
 				EXTENSION.EditingRank = ""
 				rankPermissionsLabel:SetText("Rank Permissions")
-				rankPermissionsLabel:SizeToContents()
-				rankPermissionsLabel:SetPos(110 - (rankPermissionsLabel:GetWide() / 2), 230)
 			end)
 			saveRankPermissionsButton:SetPos(220, 500)
 			saveRankPermissionsButton:SetSize(145, 30)
 			saveRankPermissionsButton:SetParent(panel)
 			
+			
+			
 			net.Start("VPermissionsList")
 			net.SendToServer()
-			
-			return panel
 		end)
 	end)
 end
