@@ -13,6 +13,4 @@ In the scope of Vermilion, permissive is defined as:
 
 Vermilion is designed in a modular nature. This means that each major piece of functionality is stored in its own module (referred to by Vermilion as an "extension"). Vermilion should continue to operate regardless of what extensions are loaded. This means that all extensions should be SELF SUFFICIENT without depending on each other.
 
-Don't use this tool yet. It's not finished and won't provide adequate protection.
-
 Do not upload to the Steam Workshop without my permission. If you do, I will report your upload and your account and file for a DMCA takedown regardless of any "improvements" you may have made.
