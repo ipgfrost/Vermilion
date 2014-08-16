@@ -17,9 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
--- This tool needs a rethink...
-
-TOOL.Category = "Vermilion"
+TOOL.Category = "Misc"
 TOOL.Name = "Teleport"
 TOOL.Tab = "Vermilion"
 TOOL.Command = nil
@@ -28,7 +26,7 @@ TOOL.ConfigName = ""
 if(CLIENT) then
 	language.Add("tool.teleporttool.name", "Teleport Tool")
 	language.Add("tool.teleporttool.desc", "Teleport yourself somewhere")
-	language.Add("tool.teleporttool.0", "Left Click to teleport")
+	language.Add("tool.teleporttool.0", "Left Click: teleport. Right Click: teleport through a wall.")
 end
 
 function TOOL:LeftClick( trace )

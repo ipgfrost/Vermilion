@@ -1,0 +1,3 @@
+{
+	"initFile": "chatbox.lua"
+}

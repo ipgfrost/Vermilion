@@ -17,5 +17,33 @@
  in any way, nor claims to be so. 
 ]]
 
-VermilionLang = {}
+Vermilion.Lang = {}
 
+Vermilion.Lang.DualActivation = "Got a second activation attempt from the server! Ignoring!"
+Vermilion.Lang.CreatingFile = "Creating %s for the first time!"
+Vermilion.Lang.AccessDenied = "Access Denied!"
+Vermilion.Lang.DuplicatePermission = "Warning: rank %s already has permission %s!"
+Vermilion.Lang.SettingOwner = "Warning: no owner set. Setting %s as the owner!"
+Vermilion.Lang.NoSuchPlayer = "No such player exists on this server."
+Vermilion.Lang.NoSuchPlayerData = "No data is held about this player in the Vermilion database."
+Vermilion.Lang.JoinedServerFirst = "%s has joined the server for the first time!"
+Vermilion.Lang.JoinedServer = "%s has joined the server!"
+Vermilion.Lang.JoinedServerFirstGeoIP = "%s has joined the server from %s for the first time!"
+Vermilion.Lang.JoinedServerGeoIP = "%s has joined the server from %s!"
+Vermilion.Lang.ExtHookRemoveFailed = "Attempted to remove hook %s from event %s inside extension %s but no such event table has been created!"
+Vermilion.Lang.HookRemoveFailed = "Attempted to remove hook %s from event %s but no such event table has been created!"
+Vermilion.Lang.SafeHookRemoveFailed = "Attempted to remove SafeHook %s from event %s but no such event table has been created!"
+Vermilion.Lang.LoadingExtension = "Loading extension in directory '%s' using init file '%s'!"
+Vermilion.Lang.NoExtInitFile = "Warning: extension in directory '%s' does not have an init file!"
+Vermilion.Lang.ExtInit = "Initialising extension: %s"
+Vermilion.Lang.ChatCommandOverwrite = "Chat command %s has been overwritten!"
+Vermilion.Lang.ChatCommandFailed = "Command failed with error: %s"
+Vermilion.Lang.NoSuchCommand = "No such command '%s'!"
+Vermilion.Lang.NilNotification = "Attempted to send a notification with a nil parameter!"
+Vermilion.Lang.NilMessagebox = "Attempted to send a message box with a nil parameter!"
+Vermilion.Lang.Cancel = "Cancel"
+Vermilion.Lang.OK = "OK"
+Vermilion.Lang.SteamID = "Steam ID"
+Vermilion.Lang.Name = "Name"
+Vermilion.Lang.Rank = "Rank"
+Vermilion.Lang.ActivePlayers = "Active Players"

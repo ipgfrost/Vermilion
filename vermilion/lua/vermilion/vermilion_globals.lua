@@ -17,3 +17,4 @@
  in any way, nor claims to be so. 
 ]]
 
+VERMILION_BAD_RANK = -1

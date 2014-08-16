@@ -19,6 +19,9 @@
 
 -- The settings object. Don't modify this directly. Use the provided functions!
 Vermilion.Settings = {}
+Vermilion.OldSettings = nil
+
+util.AddNetworkString("VUpdateClientSettings")
 
 -- The default settings object
 Vermilion.DefaultSettings = {
@@ -29,42 +32,8 @@ Vermilion.DefaultSettings = {
 }
 
 Vermilion.PermissionsList = {
-	--"chat", -- can chat
-	--"no_fall_damage", -- takes no fall damage
-	--"reduced_fall_damage", -- takes reduced fall damage
-	--"grav_gun_pickup_own", -- can pickup their own props with grav gun
-	--"grav_gun_pickup_others", -- can pickup other players props with grav gun
-	--"grav_gun_pickup_all", -- can pickup anything with the gravity gun
-	--"grav_gun_punt_own", -- can punt their own props
-	--"grav_gun_punt_others", -- can punt other players props
-	--"grav_gun_punt_all", -- can punt anything with the gravity gun
-	--"physgun_freeze_own", -- can freeze own props with physgun
-	--"physgun_freeze_others", -- can freeze other players props with physgun
-	--"physgun_freeze_all", -- can freeze anything with physgun
-	--"physgun_unfreeze", -- can unfreeze props when reloading physgun
-	--"physgun_pickup_own", -- can pickup props with physgun
-	--"physgun_pickup_others", -- can pickup other player's props with physgun
-	--"physgun_pickup_all", -- can pickup anything with the physgun
-	--"toolgun_own", -- can use toolgun on own props
-	--"toolgun_others", -- can use toolgun on other player's props
-	--"toolgun_all", -- can use the toolgun on anything
 	"open_spawnmenu", -- can open the spawnmenu
-	--"noclip", -- can noclip
-	--"spray", -- can use sprays
-	--"flashlight", -- can use the flashlight
-	"use_own", -- can use their own props/map props
-	"use_others", -- can use other players props
-	"use_all", -- can use anything
-	"spawn_prop",
-	"spawn_npc",
-	"spawn_entity",
-	"spawn_weapon",
-	"spawn_dupe",
-	"spawn_vehicle",
-	"spawn_effect",
-	"spawn_ragdoll",
-	"spawn_all",
-	"can_fire_weapon",
+
 }
 
 Vermilion.DefaultRankPerms = {
@@ -73,21 +42,15 @@ Vermilion.DefaultRankPerms = {
 		}
 	},
 	{ "admin", {
-			"open_spawnmenu",
-			"use_all",
-			"spawn_all",
-			"can_fire_weapon",
+			"open_spawnmenu"
 		}
 	},
 	{ "player", {
-			"open_spawnmenu",
-			"spawn_all",
-			"can_fire_weapon"
+			"open_spawnmenu"
 		}
 	},
 	{ "guest", {
-			"open_spawnmenu",
-			"spawn_prop"
+			"open_spawnmenu"
 		}
 	},
 	{ "banned", {
@@ -122,46 +85,102 @@ function Vermilion.GetFileName(pre, suf)
 end
 
 function Vermilion:LoadFile(name, resetFunc)
+	if(name == "settings") then
+		if(not file.Exists(self.GetFileName("vermilion", name .. "-2.txt"), "DATA") and file.Exists(self.GetFileName("vermilion", name .. ".txt"), "DATA")) then
+			local tab = von.deserialize(util.Decompress(file.Read(self.GetFileName("vermilion", name .. ".txt"), "DATA")))
+			if(tab != nil) then
+				file.Write(self.GetFileName("vermilion", name .. "-2.txt"), util.Compress(util.TableToJSON(tab)))
+			end
+		end
+		name = name .. "-2"
+	end
 	if(not file.Exists(self.GetFileName("vermilion", name .. ".txt"), "DATA")) then
-		self.Log("Creating " .. name .. " for the first time!")
+		self.Log(string.format(Vermilion.Lang.CreatingFile, name))
 		resetFunc()
 	end
-	return von.deserialize(file.Read(self.GetFileName("vermilion", name .. ".txt"), "DATA"))
+	return util.JSONToTable(util.Decompress(file.Read(self.GetFileName("vermilion", name .. ".txt"), "DATA")))
 end
 
 function Vermilion:SaveFile(name, data)
-	file.Write(self.GetFileName("vermilion", name .. ".txt"), von.serialize(data))
+	if(name == "settings") then
+		name = name .. "-2"
+	end
+	file.Write(self.GetFileName("vermilion", name .. ".txt"), util.Compress(util.TableToJSON(data)))
 end
 
 function Vermilion:LoadSettings()
 	self.Settings = self:LoadFile("settings", function() Vermilion:ResetSettings() Vermilion:SaveSettings() end)
+	self.OldSettings = util.CRC(util.TableToJSON(self.Settings))
 end
 
 function Vermilion:SaveSettings() self:SaveFile("settings", self.Settings) end
 
-function Vermilion:ResetSettings() self.Settings = self.DefaultSettings end
+function Vermilion:ResetSettings()
+	self.Settings = self.DefaultSettings
+	self.OldSettings = util.CRC(util.TableToJSON(self.Settings))
+end
 
 function Vermilion:GetSetting(str, default)
 	if(self.Settings[str] == nil) then return default end
 	return self.Settings[str]
 end
 
+-- note: The settings table is networked to the client. Do NOT place sensitive info anywhere but the "protected" table.
 function Vermilion:SetSetting(str, val)
 	if(self.Settings[str] != nil) then
 		--self.Log("Warning: overwriting setting " .. str .. " with old value " .. tostring(self.Settings[str]) .. " using new value " .. tostring(val))
 	end
 	self.Settings[str] = val
+	self.OldSettings = util.CRC(util.TableToJSON(self.Settings))
 end
 
-function Vermilion:LoadRanks() self.Ranks = self:LoadFile("ranks", function() Vermilion:ResetRanks() Vermilion:SaveRanks() end) end
+timer.Create("Vermilion_Config_Distributor", 30, 0, function() -- redistribute the configuration every 30 seconds if it has been changed.
+	local crc = util.CRC(util.TableToJSON(Vermilion.Settings))
+	if(crc == Vermilion.OldSettings) then return end
+	Vermilion.OldSettings = crc
+	
+	local tab = {}
+	for i,k in pairs(Vermilion.Settings) do
+		if(i != "protected") then
+			tab[i] = k
+		end
+	end
+	net.Start("VUpdateClientSettings")
+	net.WriteTable(Crimson.NetSanitiseTable(tab))
+	net.Broadcast()
+end)
 
-function Vermilion:SaveRanks() self:SaveFile("ranks", self.Ranks) end
+Vermilion:RegisterHook("PlayerInitialSpawn", "UpdateClientConfig", function(vplayer)
+	local tab = {}
+	for i,k in pairs(Vermilion.Settings) do
+		if(i != "protected") then
+			tab[i] = k
+		end
+	end
+	net.Start("VUpdateClientSettings")
+	net.WriteTable(Crimson.NetSanitiseTable(tab))
+	net.Send(vplayer)
+end)
+
+function Vermilion:LoadRanks()
+	self.Ranks = self:GetSetting("ranks", {})
+	if(table.Count(self.Ranks) == 0) then 
+		self:ResetRanks()
+	end
+end
+
+function Vermilion:SaveRanks() self:SetSetting("ranks", self.Ranks) end
 
 function Vermilion:ResetRanks() self.Ranks = self.DefaultRanks end
 
-function Vermilion:LoadPermissions() self.RankPerms = self:LoadFile("permissions", function() Vermilion:ResetPermissions() Vermilion:SavePermissions() end) end
+function Vermilion:LoadPermissions() 
+	self.RankPerms = self:GetSetting("permissions", {})
+	if(table.Count(self.RankPerms) == 0) then
+		self:ResetPermissions()
+	end
+end
 
-function Vermilion:SavePermissions() self:SaveFile("permissions", self.RankPerms) end
+function Vermilion:SavePermissions() self:SetSetting("permissions", self.RankPerms) end
 
 function Vermilion:ResetPermissions() self.RankPerms = self.DefaultRankPerms end
 
@@ -174,11 +193,15 @@ function Vermilion:ResetPermissions() self.RankPerms = self.DefaultRankPerms end
 	@return hasPermission (boolean): boolean value representing whether or not the player has the permission
 ]]--
 function Vermilion:HasPermission(vplayer, permission) 
+	if(not IsValid(vplayer)) then return true end -- is probably the console
 	if(isstring(vplayer)) then vplayer = Crimson.LookupPlayerByName(vplayer) end
 	if(vplayer == nil) then return true end --is most likely the duplicator or the console.
 	local userData = self:GetPlayer(vplayer)
 	if(userData == nil) then return false end
 	local userRankPerms = self.RankPerms[self:LookupRank(userData['rank'])]
+	if(userRankPerms == nil) then -- uhoh, we don't have a rank set for this user!
+		return
+	end
 	for i,perm in pairs(userRankPerms[2]) do
 		if(perm == permission or perm == "*") then return true end
 	end
@@ -190,13 +213,16 @@ end
 	
 	@param vplayer (player/string): the player instance or player name to check against
 	@param permission (string): the permission to check for
+	@param log (function): output the error to this command.
 	
 	@return hasPermission (boolean): boolean value representing whether or not the player has the permission
 ]]--
-function Vermilion:HasPermissionError(vplayer, permission)
+function Vermilion:HasPermissionError(vplayer, permission, log)
 	if(isstring(vplayer)) then vplayer = Crimson.LookupPlayerByName(vplayer) end
 	if(not self:HasPermission(vplayer, permission)) then
-		self:SendNotify(vplayer, "Access denied!", 5, NOTIFY_ERROR)
+		if(log == nil) then self:SendNotify(vplayer, Vermilion.Lang.AccessDenied, 5, VERMILION_NOTIFY_ERROR) else
+			log(Vermilion.Lang.AccessDenied, VERMILION_NOTIFY_ERROR)
+		end
 		--self:Vox("access denied", vplayer)
 		return false
 	end
@@ -227,18 +253,22 @@ end
 ]]--
 function Vermilion:AddRankPermission(rank, permission)
 	if(self:RankHasPermission(rank, permission)) then
-		self.Log("Warning: rank " .. rank .. " already has permission " .. permission)
+		self.Log(string.format(Vermilion.Lang.DuplicatePermission, rank, permission))
 		return
 	end
 	table.insert(self.RankPerms[self:LookupRank(rank)][2], permission)
 end
 
 function Vermilion:LoadUserStore()
-	self.UserStore = self:LoadFile("users", function() Vermilion:SaveUserStore() end)
+	self.UserStore = self:GetSetting("user_store", {})
+	if(table.Count(self.UserStore) == 0) then 
+		self.UserStore = {}
+		self:SaveUserStore()
+	end
 end
 
 function Vermilion:SaveUserStore()
-	self:SaveFile("users", self.UserStore)
+	self:SetSetting("user_store", self.UserStore)
 end
 
 --[[
@@ -253,9 +283,9 @@ function Vermilion:AddPlayer(vplayer)
 		["rank"] = "player",
 		["name"] = vplayer:GetName()
 	}
-	if(not Vermilion:OwnerExists()) then
-		Vermilion.Log("Warning: no owner set. Setting " .. vplayer:GetName() .. " as the owner!")
-		Vermilion:SetRank(vplayer, "owner") -- set the first player to join as the owner
+	if(not self:OwnerExists() and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
+		self.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
+		self.UserStore[vplayer:SteamID()]['rank'] = "owner" -- set the first player to join as the owner
 	end
 	self:SaveUserStore()
 end
@@ -269,7 +299,17 @@ end
 ]]--
 function Vermilion:GetPlayer(vplayer)
 	if(isstring(vplayer)) then
-		vplayer = Crimson.LookupPlayerByName(vplayer)
+		local tvplayer = Crimson.LookupPlayerByName(vplayer)
+		if(tvplayer == nil) then
+			for i,k in pairs(self.UserStore) do
+				if(k.name == vplayer) then
+					return k
+				end
+			end
+			return
+		else
+			vplayer = tvplayer
+		end
 	end
 	return self:GetPlayerBySteamID(vplayer:SteamID())
 end
@@ -307,23 +347,44 @@ function Vermilion:SteamIDExists(steamid)
 	return self:GetPlayerBySteamID(steamid) != nil
 end
 
+function Vermilion:PlayerWithNameExists(name)
+	for i,k in pairs(self.UserStore) do
+		if(k.name == name) then return true end
+	end
+	return false
+end
+
+function Vermilion:GetPlayerSteamID(name)
+	if(isentity(name)) then
+		if(name:IsPlayer()) then return name:SteamID() end
+		return
+	end
+	for i,k in pairs(self.UserStore) do
+		if(k.name == name) then return i end
+	end
+end
+
+function Vermilion:CountAllPlayers()
+	return table.Count(self.UserStore)
+end
+
 --[[
 	Look up the numerical ID for a rank
 	
 	@param rank (string): the rank to look up
 	
-	@return rankid (number): the rank ID or 256 if the rank doesn't exist.
+	@return rankid (number): the rank ID or VERMILION_BAD_RANK if the rank doesn't exist.
 ]]--
 function Vermilion:LookupRank(rank)
 	if(rank == nil) then
-		return 256
+		return VERMILION_BAD_RANK
 	end
 	for k,v in pairs(self.Ranks) do
 		if(v == rank) then
 			return k
 		end
 	end
-	return 256
+	return VERMILION_BAD_RANK
 end
 
 --[[
@@ -362,15 +423,17 @@ function Vermilion:SetRank(vplayer, rank)
 		self.Log("Nil player!")
 	end
 	if(self:GetPlayer(vplayer) == nil) then
-		self.Log("No such player!")
+		self.Log(Vermilion.Lang.NoSuchPlayer)
 		return
 	end
-	if(self:LookupRank(rank) == 256) then
+	if(self:LookupRank(rank) == VERMILION_BAD_RANK) then
 		self.Log("No such rank!")
 		return
 	end
 	self.UserStore[vplayer:SteamID()]['rank'] = rank
 	self:SaveUserStore()
+	vplayer:SetNWString("Vermilion_Rank", rank)
+	vplayer:SetNWBool("Vermilion_Identify_Admin", self:HasPermission(vplayer, "identify_as_admin"))
 end
 
 --[[
@@ -391,6 +454,10 @@ function Vermilion:GetAllPlayersInRank(rank)
 		end
 	end
 	return playerTable
+end
+
+function Vermilion:CountPlayersInRank(rank)
+	return table.Count(self:GetAllPlayersInRank(rank))
 end
 
 --[[
@@ -458,14 +525,29 @@ function Vermilion:OwnerExists()
 	return table.Count(self:GetAllPlayersInRank("owner")) > 0
 end
 
+concommand.Add("vermilion_dump_settings", function(sender)
+	Crimson.PrintTable(Vermilion.Settings, nil, nil, function(text) sender:PrintMessage(HUD_PRINTCONSOLE, text) end)
+end)
+
 Vermilion:LoadSettings()
 Vermilion:LoadPermissions()
 Vermilion:LoadUserStore()
 Vermilion:LoadRanks()
 
-Vermilion:RegisterHook("ShutDown", "Vermilion-Config-Save", function()
-	Vermilion:SaveSettings()
+timer.Create("Vermilion_Autosave", 60, 0, function()
+	hook.Call("Vermilion-SaveConfigs")
 	Vermilion:SavePermissions()
 	Vermilion:SaveUserStore()
 	Vermilion:SaveRanks()
+	Vermilion:SaveSettings()
+end)
+
+Vermilion:RegisterHook("ShutDown", "Vermilion-Config-Save", function()
+	Vermilion.Log("Saving data...")
+	hook.Call("Vermilion-SaveConfigs")
+	hook.Call("Vermilion-Pre-Shutdown")
+	Vermilion:SavePermissions()
+	Vermilion:SaveUserStore()
+	Vermilion:SaveRanks()
+	Vermilion:SaveSettings()
 end)

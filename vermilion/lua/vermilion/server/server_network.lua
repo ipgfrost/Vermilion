@@ -24,6 +24,7 @@ local networkStrings = {
 	"VActivePlayers",
 	"VRanksList",
 	"VWeaponsList",
+	"VEntsList",
 	"VEffect",
 	"Vermilion_ErrorMsg"
 }
@@ -58,7 +59,7 @@ net.Receive("VWeaponsList", function(len, vplayer)
 	net.Start("VWeaponsList")
 	local tab = {}
 	for i,k in pairs(list.Get("Weapon")) do
-		table.insert(tab, i)
+		table.insert(tab, { Class = i, PrintName = k.PrintName })
 	end
 	net.WriteTable(tab)
 	net.Send(vplayer)
@@ -75,5 +76,15 @@ net.Receive("VRanksList", function(len, vplayer)
 		table.insert(ranksTab, { k, isDefault })
 	end
 	net.WriteTable(ranksTab)
+	net.Send(vplayer)
+end)
+
+net.Receive("VEntsList", function(len, vplayer)
+	net.Start("VEntsList")
+	local tab = {}
+	for i,k in pairs(list.Get("SpawnableEntities")) do
+		table.insert(tab, { Class = i, PrintName = k.PrintName })
+	end
+	net.WriteTable(tab)
 	net.Send(vplayer)
 end)

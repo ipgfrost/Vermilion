@@ -17,6 +17,9 @@
  in any way, nor claims to be so. 
 ]]
 
+duplicator.RegisterEntityModifier("Vermilion_Owner", function(vplayer, entity, data)
+	entity.Vermilion_Owner = data.Owner
+end)
 
 local setOwnerFunc = function(vplayer, model, entity)
 	local tEnt = entity
@@ -24,10 +27,14 @@ local setOwnerFunc = function(vplayer, model, entity)
 		tEnt = model
 	end
 	if(tEnt) then
-		tEnt.Vermilion_Owner = vplayer:SteamID()
-		--[[ if(not tEnt:IsPlayer()) then
-			tEnt:SetCustomCollisionCheck(true)
-		end ]]
+		local result = hook.Call("CPPIAssignOwnership", nil, vplayer, tEnt)
+		if(result == nil) then
+			tEnt.Vermilion_Owner = vplayer:SteamID()
+			tEnt:SetNWString("Vermilion_Owner", vplayer:SteamID())
+			duplicator.StoreEntityModifier(tEnt, "Vermilion_Owner", { Owner = vplayer:SteamID() })
+		else
+			Vermilion.Log("Warning: prop was spawned but something blocked the CPPI hook to assign the owner!")
+		end
 	end
 end
 
@@ -69,7 +76,9 @@ Vermilion:RegisterHook("PlayerSpawnProp", "Vermilion_GMFixProp", function(vplaye
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "props")
+	local result = hook.Call("VPlayerSpawnProp", nil, vplayer, model)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "props") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnRagdoll", "Vermilion_GMFixRagdoll", function(vplayer, model)
@@ -78,7 +87,9 @@ Vermilion:RegisterHook("PlayerSpawnRagdoll", "Vermilion_GMFixRagdoll", function(
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "ragdolls")
+	local result = hook.Call("VPlayerSpawnRagdoll", nil, vplayer, model)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "ragdolls") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnEffect", "Vermilion_GMFixEffect", function(vplayer, model)
@@ -87,7 +98,9 @@ Vermilion:RegisterHook("PlayerSpawnEffect", "Vermilion_GMFixEffect", function(vp
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "effects")
+	local result = hook.Call("VPlayerSpawnEffect", nil, vplayer, model)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "effects") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnVehicle", "Vermilion_GMFixVehicle", function(vplayer, model, vehicle, tab)
@@ -96,7 +109,9 @@ Vermilion:RegisterHook("PlayerSpawnVehicle", "Vermilion_GMFixVehicle", function(
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "vehicles")
+	local result = hook.Call("VPlayerSpawnVehicle", nil, vplayer, model, vehicle, tab)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "vehicles") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSWEP", "Vermilion_GMFixSWEP", function(vplayer, swepName, swepTab)
@@ -105,7 +120,9 @@ Vermilion:RegisterHook("PlayerSpawnSWEP", "Vermilion_GMFixSWEP", function(vplaye
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "sents")
+	local result = hook.Call("VPlayerSpawnSWEP", nil, vplayer, swepName, swepTab)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "sents") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSENT", "Vermilion_GMFixSENT", function(vplayer, name)
@@ -114,7 +131,9 @@ Vermilion:RegisterHook("PlayerSpawnSENT", "Vermilion_GMFixSENT", function(vplaye
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "sents")
+	local result = hook.Call("VPlayerSpawnSENT", nil, vplayer, name)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "sents") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnNPC", "Vermilion_GMFixNPC", function(vplayer, npc_typ, equipment)
@@ -123,5 +142,7 @@ Vermilion:RegisterHook("PlayerSpawnNPC", "Vermilion_GMFixNPC", function(vplayer,
 			return false
 		end
 	end
-	return SpawnLimitHitFunc(vplayer, "npcs")
+	local result = hook.Call("VPlayerSpawnNPC", nil, vplayer, npc_typ, equipment)
+	if(result == nil) then result = true end
+	return SpawnLimitHitFunc(vplayer, "npcs") and result
 end)

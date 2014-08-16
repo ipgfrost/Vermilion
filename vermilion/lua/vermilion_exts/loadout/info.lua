@@ -1,0 +1,3 @@
+{
+	"initFile": "loadout.lua"
+}

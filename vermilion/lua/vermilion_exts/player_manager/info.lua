@@ -1,0 +1,3 @@
+{
+	"initFile": "playermanagement.lua"
+}

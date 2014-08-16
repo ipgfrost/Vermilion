@@ -52,6 +52,19 @@ function Crimson:BuildOptionsScreen(layout, panel)
 	return objects
 end
 
+function Crimson.CreateLayoutCollection()
+	local collection = {}
+	collection.items = {}
+	
+	function collection:AddItem(item)
+		table.insert(self.items, item)
+	end
+	
+	function collection:RemoveItem(item)
+		table.RemoveByValue(self.items, item)
+	end
+end
+
 function Crimson.CreateLabel(text)
 	local label = vgui.Create("DLabel")
 	label:SetText(text)
@@ -191,6 +204,45 @@ function Crimson:CreateErrorDialog(text)
 	Crimson:SetDark(true)
 end
 
+function Crimson:CreateConfirmDialog(text, completeFunc)
+	local panel = self.CreateFrame(
+		{
+			['size'] = { 500, 100 },
+			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
+			['closeBtn'] = true,
+			['draggable'] = true,
+			['title'] = "Error",
+			['bgBlur'] = true
+		}
+	)
+	panel:MakePopup()
+	panel:DoModal()
+	panel:SetAutoDelete(true)
+	
+	Crimson:SetDark(false)
+	local textLabel = self.CreateLabel(text)
+	textLabel:SizeToContents()
+	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
+	textLabel:SetParent(panel)
+	
+	local confirmButton = self.CreateButton("OK", function(self)
+		completeFunc()
+		panel:Close()
+	end)
+	confirmButton:SetPos(255, 75)
+	confirmButton:SetSize(100, 20)
+	confirmButton:SetParent(panel)
+	
+	local cancelButton = self.CreateButton("Cancel", function(self)
+		panel:Close()
+	end)
+	cancelButton:SetPos(145, 75)
+	cancelButton:SetSize(100, 20)
+	cancelButton:SetParent(panel)
+	
+	Crimson:SetDark(true)
+end
+
 function Crimson:CreateTextInput(text, completeFunc)
 	local panel = self.CreateFrame(
 		{
@@ -276,4 +328,195 @@ function Crimson.TableLen( tab )
 	local count = 0
 	for _ in pairs( tab ) do count = count + 1 end
 	return count
+end
+
+
+function Crimson.SearchRecursively(searchdir, basedir, fileType)
+	local files, dirs = file.Find(basedir .. "/*", searchdir)
+	local f2 = {}
+	for i,k in pairs(files) do
+		if(string.EndsWith(k, fileType)) then table.insert(f2, k) end
+	end
+	files = f2
+	for i,k in pairs(dirs) do
+		local f1,d1 = Crimson.SearchRecursively(searchdir, basedir .. "/" .. k, fileType)
+		for i1,k1 in pairs(f1) do 
+			if(string.EndsWith(k1, fileType)) then
+				if(string.StartWith(k1, basedir)) then
+					table.insert(files, k1)
+				else
+					table.insert(files, basedir .. "/" .. k1)
+				end
+			end
+		end
+		
+	end
+	return files
+end
+
+function Crimson.CheckAllValid(entList)
+	for i,v in pairs(entList) do -- arg is created by ...
+		if(not IsValid(v)) then return false end
+	end
+	return true
+end
+
+function Crimson.CBound(p1, p2)
+	local CBound = {}
+	CBound.p1 = p1
+	CBound.p2 = p2
+	
+	function CBound:IsInside(point)
+		if(isentity(point) and point:IsPlayer()) then
+			return point:GetPos():WithinAABox(self.p1, self.p2) or point:GetPos():WithinAABox(self.p2, self.p1) or (point:GetPos() + Vector(0, 0, 80)):WithinAABox(self.p1, self.p2) or (point:GetPos() + Vector(0, 0, 80)):WithinAABox(self.p2, self.p1)
+		end
+		if(isentity(point)) then return point:GetPos():WithinAABox(self.p1, self.p2) or point:GetPos():WithinAABox(self.p2, self.p1) end
+		return point:WithinAABox(self.p1, self.p2) or point:WithinAABox(self.p2, self.p1)
+	end
+	
+	function CBound:GetEnts()
+		return ents.FindInBox(self.p1, self.p2)
+	end
+	
+	function CBound:Intersects(ocbound)
+		for i,k in pairs(ocbound:GetAllVertices()) do
+			if(self:IsInside(k)) then return true end
+		end
+		for i,k in pairs(self:GetAllVertices()) do
+			if(ocbound:IsInside(k)) then return true end
+		end
+		return false
+	end
+	
+	function CBound:GetAllVertices()
+		local verts = {}
+		table.insert(verts, self.p1)
+		table.insert(verts, self.p2)
+		table.insert(verts, Vector(self.p1.x, self.p2.y, self.p1.z))
+		table.insert(verts, Vector(self.p2.x, self.p1.y, self.p1.z))
+		table.insert(verts, Vector(self.p2.x, self.p2.y, self.p1.z))
+		table.insert(verts, Vector(self.p1.x, self.p2.y, self.p2.z))
+		table.insert(verts, Vector(self.p2.x, self.p1.y, self.p2.z))
+		table.insert(verts, Vector(self.p1.x, self.p1.y, self.p2.z))
+		return verts
+	end
+	
+	function CBound:Volume()
+		local p1w = Vector(self.p1.x, self.p2.y, self.p1.z)
+		local p1l = Vector(self.p2.x, self.p1.y, self.p1.z)
+		local p1h = Vector(self.p1.x, self.p1.y, self.p2.z)
+		
+		local saTop = self.p1:Distance(p1w) * self.p1:Distance(p1l)
+		return saTop * self.p1:Distance(p1h)
+	end
+	
+	function CBound:SurfaceArea()
+		return -1 --cba to do this now
+	end
+	
+	return CBound
+end
+
+function Crimson.PerPlayerStorage()
+	local storage = {}
+	storage.data = {}
+	
+	function storage:Store(vplayer, key, data)
+		if(self.data[vplayer:SteamID()] == nil) then self.data[vplayer:SteamID()] = {} end
+		self.data[vplayer:SteamID()][key] = data
+	end
+	
+	function storage:Get(vplayer, key, default)
+		if(self.data[vplayer:SteamID()] != nil) then
+			if(self.data[vplayer:SteamID()][key] != nil) then return self.data[vplayer:SteamID()][key] end
+		end
+		return default
+	end
+	
+	function storage:GetPlayerData(vplayer)
+		return self.data[vplayer:SteamID()]
+	end
+	
+	function storage:Remove(vplayer, key)
+		if(self.data[vplayer:SteamID()] != nil) then
+			self.data[vplayer:SteamID()][key] = nil
+		end
+	end
+	
+	function storage:HasData(vplayer, key)
+		if(self.data[vplayer:SteamID()] != nil) then
+			return self.data[vplayer:SteamID()][key] != nil
+		end
+		return false
+	end
+	
+	function storage:HasPlayer(vplayer)
+		return self.data[vplayer:SteamID()] != nil
+	end
+	
+	function storage:Clear(vplayer)
+		if(vplayer == nil) then
+			self.data[vplayer:SteamID()] = nil
+		else
+			self.data = {}
+		end
+	end
+	
+	function storage:ToJSON()
+		return util.TableToJSON(self.data)
+	end
+end
+
+function Crimson.FindInTable(tab, sorter)
+	local rtab = {}
+	for i,k in pairs(tab) do
+		if(sorter(k)) then rtab[i] = k end
+	end
+	return rtab
+end
+
+function Crimson.NetSanitiseTable(tab)
+	local rtab = {}
+	for i,k in pairs(tab) do
+		if(istable(k)) then rtab[i] = Crimson.NetSanitiseTable(k) else
+			if(not (isfunction(k))) then
+				rtab[i] = k
+			end
+		end
+	end
+	return rtab
+end
+
+function Crimson.TimeTable()
+	local time = os.date("*t")
+	local wday = time.wday - 1
+	if(wday == 0) then wday = 7 end
+	time.wday = wday
+	return time
+end
+
+function Crimson.PrintTable ( t, indent, done, log )
+
+	done = done or {}
+	indent = indent or 0
+
+	for key, value in pairs (t) do
+
+		log( string.rep ("\t", indent) )
+
+		if  ( istable(value) && !done[value] ) then
+
+			done [value] = true
+			log( tostring(key) .. ":" .. "\n" );
+			Crimson.PrintTable (value, indent + 2, done, log)
+
+		else
+
+			log( tostring (key) .. "\t=\t" )
+			log( tostring(value) .. "\n" )
+
+		end
+
+	end
+
 end

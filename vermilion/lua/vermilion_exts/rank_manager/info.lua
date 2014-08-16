@@ -1,0 +1,3 @@
+{
+	"initFile": "rankcontrol.lua"
+}

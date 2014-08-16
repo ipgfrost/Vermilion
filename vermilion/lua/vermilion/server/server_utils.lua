@@ -17,7 +17,20 @@
  in any way, nor claims to be so. 
 ]]
 
-function Vermilion:SendNotify(vplayer, text, duration, notifyType)
+
+--[[ function Vermilion:SendNotify(vplayer, text, duration, notifyType)
+	if(notifyType != nil) then
+		if(notifyType < 0) then
+			notifyType = (notifyType * -1) - 1
+		else
+			self.Log("Warning: invalid notify type! Reverting to default.")
+			notifyType = nil
+		end
+	end
+	if(notifyType == nil and duration != nil and duration < 0) then
+		notifyType = (duration * -1) - 1
+		duration = nil
+	end
 	if(vplayer == nil or text == nil) then
 		self.Log("Attempted to send notification with a nil parameter.")
 		self.Log(tostring(vplayer) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
@@ -30,17 +43,29 @@ function Vermilion:SendNotify(vplayer, text, duration, notifyType)
 		notifyType = NOTIFY_GENERIC
 	end
 	net.Start("Vermilion_Hint")
-	net.WriteString("Vermilion: " .. tostring(text))
+	net.WriteString("[Vermilion] " .. tostring(text))
 	net.WriteString(tostring(duration))
 	net.WriteString(tostring(notifyType))
 	net.Send(vplayer)
-end
-
+end ]]
+--[[ 
 function Vermilion:BroadcastNotify(text, duration, notifyType)
 	self:SendNotify(player.GetAll(), text, duration, notifyType)
-end
+end ]]
 
-function Vermilion:BroadcastNotifyOmit(vplayerToOmit, text, duration, notifyType)
+--[[ function Vermilion:BroadcastNotifyOmit(vplayerToOmit, text, duration, notifyType)
+	if(notifyType != nil) then
+		if(notifyType < 0) then
+			notifyType = (duration * -1) - 1
+		else
+			self.Log("Warning: invalid notify type! Reverting to default.")
+			notifyType = nil
+		end
+	end
+	if(duration < 0) then
+		notifyType = (duration * -1) - 1
+		duration = nil
+	end
 	if(vplayerToOmit == nil or text == nil) then
 		self.Log("Attempted to send notification with a nil parameter.")
 		self.Log(tostring(vplayerToOmit) .. " === " .. text .. " === " .. tostring(duration) .. " === " .. tostring(notifyType))
@@ -57,7 +82,7 @@ function Vermilion:BroadcastNotifyOmit(vplayerToOmit, text, duration, notifyType
 	net.WriteString(tostring(duration))
 	net.WriteString(tostring(notifyType))
 	net.SendOmit(vplayerToOmit)
-end
+end ]]
 
 function Vermilion:SendMessageBox(vplayer, text)
 	if(vplayer == nil or text == nil) then
@@ -68,3 +93,28 @@ function Vermilion:SendMessageBox(vplayer, text)
 	net.WriteString(text)
 	net.Send(vplayer)
 end
+
+function Vermilion:ForcePlayerModel(vplayer, model)
+	local vplayert = vplayer
+	if(not istable(vplayer)) then vplayert = { vplayer } end
+	for i,k in pairs(vplayert) do
+		k.VermilionModel = model
+		k:Spawn()
+	end
+end
+
+function Vermilion:UnForcePlayerModel(vplayer)
+	local vplayert = vplayer
+	if(not istable(vplayer)) then vplayert = { vplayer } end
+	for i,k in pairs(vplayert) do
+		k.VermilionModel = nil
+		k:Spawn()
+	end
+end
+
+Vermilion:RegisterHook("PlayerSetModel", "VermilionForcePlayerModel", function(vplayer)
+	if(vplayer.VermilionModel != nil) then
+		vplayer:SetModel(vplayer.VermilionModel)
+		return false
+	end
+end)

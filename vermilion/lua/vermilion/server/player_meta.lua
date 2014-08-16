@@ -36,34 +36,44 @@ end
 	This needs to be replicated onto the client.
 ]]--
 function META:IsAdmin()
+	if(CLIENT) then
+		return self:GetNWBool("Vermilion_Identify_Admin", false)
+	end
 	return Vermilion:HasPermission(self, "identify_as_admin")
 end
 
 
 if(META.Vermilion_Lock == nil) then META.Vermilion_Lock = META.Lock end
 function META:Lock()
-	if(not Vermilion:HasPermission(self, "lock_immune")) then
+	if(not Vermilion:HasPermission(self, "lock_immunity") or not Vermilion:GetSetting("enable_lock_immunity", true)) then
 		self:Vermilion_Lock()
+	end
+end
+
+if(META.Vermilion_Freeze == nil) then META.Vermilion_Freeze = META.Freeze end
+function META:Freeze( freeze )
+	if(not Vermilion:HasPermission(self, "lock_immunity") or not Vermilion:GetSetting("enable_lock_immunity", true)) then
+		self:Vermilion_Freeze( freeze )
 	end
 end
 
 if(META.Vermilion_Kill == nil) then META.Vermilion_Kill = META.Kill end
 function META:Kill()
-	if(not Vermilion:HasPermission(self, "kill_immune")) then
+	if(not Vermilion:HasPermission(self, "kill_immunity") or not Vermilion:GetSetting("enable_kill_immunity", true)) then
 		self:Vermilion_Kill()
 	end
 end
 
 if(META.Vermilion_KillSilent == nil) then META.Vermilion_KillSilent = META.KillSilent end
 function META:KillSilent()
-	if(not Vermilion:HasPermission(self, "kill_immune")) then
+	if(not Vermilion:HasPermission(self, "kill_immunity") or not Vermilion:GetSetting("enable_kill_immunity", true)) then
 		self:Vermilion_KillSilent()
 	end
 end
 
 if(META.Vermilion_Kick == nil) then META.Vermilion_Kick = META.Kick end
 function META:Kick(reason)
-	if(not Vermilion:HasPermission(self, "kick_immune")) then
+	if(not Vermilion:HasPermission(self, "kick_immunity") or not Vermilion:GetSetting("enable_kick_immunity", true)) then
 		self:Vermilion_Kick(reason)
 	end
 end
@@ -71,3 +81,46 @@ end
 function META:Ban()
 	Vermilion.Log("Warning: standard ban attempted!")
 end
+
+function META:HasPermission(permission)
+	return Vermilion:HasPermission(self, permission)
+end
+
+function META:Vermilion_DoRagdoll()
+	if(not self.Vermilion_Ragdoll and self:Alive()) then
+		self:DrawViewModel(false)
+		self:StripWeapons()
+		
+		local ragdoll = ents.Create("prop_ragdoll")
+		ragdoll:SetModel(self:GetModel())
+		ragdoll:SetPos(self:GetPos())
+		ragdoll:Spawn()
+		ragdoll:Activate()
+		
+		self:Spectate(OBS_MODE_CHASE)
+		self:SpectateEntity(ragdoll)
+		self:SetParent(ragdoll)
+		self.Vermilion_Ragdoll = ragdoll
+	else
+		self:SetNoTarget(false)
+		self:SetParent()
+		self.Vermilion_Ragdoll:Remove()
+		self.Vermilion_Ragdoll = nil
+		self:Spawn()
+	end
+end
+
+Vermilion:RegisterHook("CanPlayerSuicide", "RagdollSuicide", function(vplayer)
+	if(vplayer.Vermilion_Ragdoll) then return false end
+end)
+
+Vermilion:RegisterHook("PlayerDisconnect", "RagdollDisconnect", function(vplayer)
+	if(vplayer.Vermilion_Ragdoll and IsValid(vplayer.Vermilion_Ragdoll)) then vplayer.Vermilion_Ragdoll:Remove() end
+end)
+
+Vermilion:RegisterHook("PlayerSpawn", "RagdollRespawn", function(vplayer)
+	if(vplayer.Vermilion_Ragdoll) then
+		vplayer:Vermilion_DoRagdoll() -- remove the old one
+		vplayer:Vermilion_DoRagdoll() -- create a new one
+	end
+end)

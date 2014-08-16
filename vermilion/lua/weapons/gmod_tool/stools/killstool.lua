@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-TOOL.Category = "Vermilion"
+TOOL.Category = "Admin"
 TOOL.Name = "Kill"
 TOOL.Tab = "Vermilion"
 TOOL.Command = nil
@@ -41,17 +41,17 @@ function TOOL:LeftClick( trace )
 					local trank = Vermilion:LookupRank(Vermilion:GetPlayer(trace.Entity)['rank'])
 					local prank = Vermilion:LookupRank(Vermilion:GetPlayer(self:GetOwner())['rank'])
 					if(trank < prank) then
-						Vermilion:SendNotify(self:GetOwner(), "This player has a higher rank than you.", 10, NOTIFY_ERROR)
+						Vermilion:SendNotify(self:GetOwner(), "This player has a higher rank than you.", 10, VERMILION_NOTIFY_ERROR)
 						return
 					end
 				end
 				trace.Entity:Kill()
-				Vermilion:BroadcastNotify(trace.Entity:GetName() .. " was killed by " .. self:GetOwner():GetName() .. "!", 10, NOTIFY_UNDO)
+				Vermilion:BroadcastNotify(trace.Entity:GetName() .. " was killed by " .. self:GetOwner():GetName() .. "!", 10, VERMILION_NOTIFY_ERROR)
 			end
 			return true
 		else
 			if(SERVER and not trace.Entity:IsWorld()) then
-				Vermilion:SendNotify(self:GetOwner(), "That isn't a player!", 8, NOTIFY_ERROR)
+				Vermilion:SendNotify(self:GetOwner(), "That isn't a player!", 8, VERMILION_NOTIFY_ERROR)
 			end
 		end
 	end

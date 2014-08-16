@@ -18,6 +18,9 @@
 ]]
 
 Vermilion.ChatCommands = {}
+Vermilion.ChatAliases = {}
+
+
 
 
 --[[ 
@@ -26,31 +29,83 @@ Vermilion.ChatCommands = {}
 	@param activator (string) - what the player has to type into chat to activate the command
 	@param func (function with params: sender (player), text (table) space split input) - the command handler
 ]]--
-function Vermilion:AddChatCommand(activator, func)
+function Vermilion:AddChatCommand(activator, func, syntax)
+	syntax = syntax or ""
 	if(self.ChatCommands[activator] != nil) then
 		self.Log("Chat command " .. activator .. " has been overwritten!")
 	end
-	self.ChatCommands[activator] = func
+	self.ChatCommands[activator] = { Function = func, Syntax = syntax }
+	concommand.Add("vermilion_" .. activator, function(sender, cmd, args, fullstring)
+		local success, err = pcall(func, sender, args, function(text) Vermilion.Log(text) end)
+		if(not success) then
+			Vermilion.Log("Command failed with an error: " .. tostring(err))
+		end
+	end, nil, "This command can also be run by typing !" .. activator .. " into the chat.")
 end
 
+function Vermilion:AliasChatCommand(alias, command)
+	if(self.ChatAliases[alias] != nil) then
+		self.Log("Chat alias " .. alias .. " has been overwritten!")
+	end
+	self.ChatAliases[alias] = command
+end
 
-
-Vermilion:RegisterHook("PlayerSay", "Say1", function(vplayer, text, teamChat)
+function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole)
+	targetLogger = targetLogger or vplayer
+	local logFunc = nil
+	if(isfunction(targetLogger)) then
+		logFunc = targetLogger
+	else
+		if(isConsole) then
+			logFunc = function(text) if(sender == nil) then Vermilion.Log(text) else sender:PrintMessage(HUD_PRINTCONSOLE, text) end end
+		else
+			logFunc = function(text, delay, typ) Vermilion:SendNotify(targetLogger, text, delay, typ) end
+		end
+	end
 	if(string.StartWith(text, "!")) then
 		local commandText = string.sub(text, 2)
 		local parts = string.Explode(" ", commandText, false)
+		local parts2 = {}
+		local part = ""
+		local isQuoted = false
+		for i,k in pairs(parts) do
+			if(isQuoted and string.find(k, "\"")) then
+				table.insert(parts2, string.Replace(part .. " " .. k, "\"", ""))
+				isQuoted = false
+				part = ""
+			elseif(not isQuoted and string.find(k, "\"")) then
+				part = k
+				isQuoted = true
+			elseif(isQuoted) then
+				part = part .. " " .. k
+			else
+				table.insert(parts2, k)
+			end
+		end
+		parts = {}
+		for i,k in pairs(parts2) do
+			if(k != nil and k != "") then
+				table.insert(parts, k)
+			end
+		end
 		local commandName = parts[1]
+		if(Vermilion.ChatAliases[commandName] != nil) then
+			commandName = Vermilion.ChatAliases[commandName]
+		end
 		local command = Vermilion.ChatCommands[commandName]
 		if(command != nil) then
 			table.remove(parts, 1)
-			local success, err = pcall(command, vplayer, parts)
+			local success, err = pcall(command.Function, vplayer, parts, logFunc)
 			if(not success) then 
-				Vermilion:SendNotify(vplayer, "Command failed with an error " .. tostring(err), 25, NOTIFY_ERROR) 
-				Vermilion:Vox("command failed with an error", vplayer)
+				logFunc("Command failed with an error " .. tostring(err), 25, VERMILION_NOTIFY_ERROR) 
 			end
 		else 
-			Vermilion:SendNotify(vplayer, "No such command '" .. commandName .. "'", 5, NOTIFY_ERROR)
+			logFunc("No such command '" .. commandName .. "'", VERMILION_NOTIFY_ERROR)
 		end
 		return ""
 	end
+end
+
+Vermilion:RegisterHook("PlayerSay", "Say1", function(vplayer, text, teamChat)
+	return Vermilion:HandleChat(vplayer, text, vplayer, false)
 end)

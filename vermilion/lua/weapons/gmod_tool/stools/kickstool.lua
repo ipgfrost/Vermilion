@@ -19,7 +19,7 @@
 
 -- This tool needs a rethink...
 
-TOOL.Category = "Vermilion"
+TOOL.Category = "Admin"
 TOOL.Name = "Kick"
 TOOL.Tab = "Vermilion"
 TOOL.Command = nil
@@ -40,12 +40,12 @@ function TOOL:LeftClick( trace )
 	if(trace.Entity) then
 		if(trace.Entity:IsPlayer()) then 
 			if(SERVER) then
-				if(Vermilion:HasPermissionVerboseChat(self:GetOwner(), "kick")) then
+				if(Vermilion:HasPermissionError(self:GetOwner(), "kick")) then
 					if(trace.Entity:IsPlayer()) then
 						local trank = Vermilion:LookupRank(Vermilion:GetPlayer(trace.Entity)['rank'])
 						local prank = Vermilion:LookupRank(Vermilion:GetPlayer(self:GetOwner())['rank'])
 						if(trank < prank) then
-							Vermilion:SendNotify(self:GetOwner(), "This player has a higher rank than you.", 10, NOTIFY_ERROR)
+							Vermilion:SendNotify(self:GetOwner(), "This player has a higher rank than you.", 10, VERMILION_NOTIFY_ERROR)
 							return
 						end
 					end

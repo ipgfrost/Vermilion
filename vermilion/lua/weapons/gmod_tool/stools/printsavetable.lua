@@ -17,16 +17,14 @@
  in any way, nor claims to be so. 
 ]]
 
--- This tool needs a rethink...
-
-TOOL.Category = "Vermilion"
+TOOL.Category = "Vermilion Dev Toolkit"
 TOOL.Name = "Save Table"
 TOOL.Tab = "Vermilion"
 TOOL.Command = nil
 TOOL.ConfigName = ""
 
 if(CLIENT) then
-	language.Add("tool.printsavetable.name", "Save Table Tool")
+	language.Add("tool.printsavetable.name", "Save Table Tool (Vermilion Dev Toolkit)")
 	language.Add("tool.printsavetable.desc", "Print an entity save table")
 	language.Add("tool.printsavetable.0", "Left Click to print the save table")
 end

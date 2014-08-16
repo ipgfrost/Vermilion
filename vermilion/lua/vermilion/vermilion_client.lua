@@ -23,41 +23,13 @@ Vermilion.Activated = false
 CreateClientConVar("vermilion_alert_sounds", 1, true, false)
 
 
-
--- Networking
-net.Receive("Vermilion_Hint", function(len)
-	local text = net.ReadString()
-	local duration = tonumber(net.ReadString())
-	local notifyType = tonumber(net.ReadString())
-	notification.AddLegacy( text, notifyType, duration )
-	if(notifyType == NOTIFY_ERROR and GetConVarNumber("vermilion_alert_sounds") == 1) then
-		sound.PlayFile("sound/alarms/klaxon1.wav", "noplay", function(station, errorID)
-			if(IsValid(station)) then
-				station:SetVolume(0.1)
-				station:Play()
-			else
-				print(errorID)
-			end
-		end)
-	end
-	if(notifyType == NOTIFY_GENERIC and GetConVarNumber("vermilion_alert_sounds") == 1) then
-		sound.PlayFile("sound/buttons/lever5.wav", "noplay", function(station, errorID)
-			if(IsValid(station)) then
-				station:SetVolume(0.1)
-				station:Play()
-			else
-				print(errorID)
-			end
-		end)
-	end
-end)
-
 net.Receive("Vermilion_Client_Activate", function(len)
 	if(Vermilion.Activated) then
-		Vermilion.Log("Got a second activation attempt from the server! Ignoring!")
+		Vermilion.Log(Vermilion.Lang.DualActivation)
 		return
 	end
 	Vermilion.Activated = true
+	Vermilion.InfoStores = net.ReadTable()
 	Vermilion:LoadExtensions()
 end)
 
@@ -71,10 +43,17 @@ net.Receive("VActivePlayers", function(len)
 end)
 
 net.Receive("VRanksList", function(len)
-	hook.Call("Vermilion_RanksList", nil, net.ReadTable())
+	hook.Call("VRanksList", nil, net.ReadTable())
 end)
 
 net.Receive("VWeaponsList", function(len)
-	hook.Call("Vermilion_WeaponsList", nil, net.ReadTable())
+	hook.Call("VWeaponsList", nil, net.ReadTable())
 end)
 
+net.Receive("VEntsList", function(len)
+	hook.Call("VEntsList", nil, net.ReadTable())
+end)
+
+Vermilion:RegisterHook("ChatText", "HideJoin", function(index, name, text, typ)
+	if(typ == "joinleave") then return true end
+end)

@@ -24,32 +24,21 @@ Vermilion.internal = {}
 
 Vermilion.EVENT_EXT_LOADED = "Vermilion_LoadedEXT"
 
-Vermilion.Constants = {
-	['default_file_ext'] = ".txt",
-	['users_file_name'] = "users",
-	['permissions_file_name'] = "permissions",
-	['rankings_file_name'] = "rankings",
-	['settings_file_name'] = "settings"	
-}
 
 
 -- Internal logging function
 function Vermilion.Log( str ) 
-	print("Vermilion: " .. tostring(str))
+	print("[Vermilion] " .. tostring(str))
 	file.Append("vermilion/vermilion_client_log.txt", util.DateStamp() .. tostring(str) .. "\n")
 end
 
 local preloadFiles = {
 	"vermilion/crimson_gmod.lua",
 	"vermilion/vermilion_shared.lua",
-	"vermilion/vermilion_commands_client.lua",
+	"vermilion/vermilion_config_client.lua",
 	"vermilion/vermilion_client.lua"
 }
-if(not game.SinglePlayer()) then
-	for i, luaFile in pairs(preloadFiles) do
-		include(luaFile)
-	end
-	Vermilion.Log("Started in " .. tostring(math.Round(os.clock() - startTime, 4)) .. "ms!")
-else
-	Vermilion.Log("Not starting on singleplayer game!")
+for i, luaFile in pairs(preloadFiles) do
+	include(luaFile)
 end
+Vermilion.Log("Started in " .. tostring(math.Round(os.clock() - startTime, 4)) .. "ms!")
