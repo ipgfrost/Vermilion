@@ -71,10 +71,9 @@ end
 
 function EXTENSION:InitClient()
 	
-	self:NetHook("VNotification", function()
-		local text = net.ReadString()
-		local typ = tonumber(net.ReadString())
-		local time = tonumber(net.ReadString())
+	function EXTENSION:AddNotify(text, time, typ)
+		time = time or 5
+		typ = typ or NOTIFY_GENERIC
 		table.insert(EXTENSION.Notifications, {Text = "[Vermilion] " .. text, Type = typ, Time = os.time() + time})
 		if(typ == NOTIFY_ERROR and GetConVarNumber("vermilion_alert_sounds") == 1) then
 			sound.PlayFile("sound/alarms/klaxon1.wav", "noplay", function(station, errorID)
@@ -106,6 +105,13 @@ function EXTENSION:InitClient()
 				end
 			end)
 		end
+	end
+	
+	self:NetHook("VNotification", function()
+		local text = net.ReadString()
+		local typ = tonumber(net.ReadString())
+		local time = tonumber(net.ReadString())
+		EXTENSION:AddNotify(text, time, typ)
 	end)
 	
 	self:AddHook("HUDPaint", function()
@@ -113,34 +119,30 @@ function EXTENSION:InitClient()
 		local deadNotifications = {}
 		local ypos = 250
 		for i,k in pairs(EXTENSION.Notifications) do
-			--if(k.Time < os.time()) then
-			--	table.insert(deadNotifications, k)
-			--else
-				if(k.Offset == nil) then
-					local w = surface.GetTextSize(k.Text)
-					w = w + 22
-					k.Offset = w
-					k.MaxOffset = w
-				end
-				local w,h = surface.GetTextSize(k.Text)
-				if(k.Type == 0) then -- generic (green)
-					surface.SetDrawColor(Color(0, 255, 0))
-				elseif(k.Type == 3) then -- info (blue)
-					surface.SetDrawColor(Color(0, 0, 255))
-				elseif(k.Type == 1) then -- error (red)
-					surface.SetDrawColor(Color(255, 0, 0))
-				end
-				surface.DrawRect(ScrW() - 20 - 2 - w + k.Offset, ypos, w + 20, h + 14)
-				surface.SetDrawColor(Color(255, 255, 255))
-				surface.DrawRect(ScrW() - 20 - w + k.Offset, ypos + 2, w + 16, h + 10)
-				surface.SetTextColor(Color(0, 0, 0))
-				surface.SetTextPos(ScrW() - 15 - w + k.Offset, ypos + 7)
-				surface.DrawText(k.Text)
-				if(k.Offset > 0 and k.Time > os.time()) then k.Offset = k.Offset - 5 elseif(k.Time > os.time()) then k.Offset = 0 end
-				if(k.Offset < k.MaxOffset and k.Time < os.time()) then k.Offset = k.Offset + 5 end
-				if(k.Offset >= k.MaxOffset and k.Time < os.time()) then table.insert(deadNotifications, k) end
-				ypos = ypos + h + 20
-			--end
+			if(k.Offset == nil) then
+				local w = surface.GetTextSize(k.Text)
+				w = w + 22
+				k.Offset = w
+				k.MaxOffset = w
+			end
+			local w,h = surface.GetTextSize(k.Text)
+			if(k.Type == 0) then -- generic (green)
+				surface.SetDrawColor(Color(0, 255, 0))
+			elseif(k.Type == 3) then -- info (blue)
+				surface.SetDrawColor(Color(0, 0, 255))
+			elseif(k.Type == 1) then -- error (red)
+				surface.SetDrawColor(Color(255, 0, 0))
+			end
+			surface.DrawRect(ScrW() - 20 - 2 - w + k.Offset, ypos, w + 20, h + 14)
+			surface.SetDrawColor(Color(255, 255, 255))
+			surface.DrawRect(ScrW() - 20 - w + k.Offset, ypos + 2, w + 16, h + 10)
+			surface.SetTextColor(Color(0, 0, 0))
+			surface.SetTextPos(ScrW() - 15 - w + k.Offset, ypos + 7)
+			surface.DrawText(k.Text)
+			if(k.Offset > 0 and k.Time > os.time()) then k.Offset = k.Offset - 5 elseif(k.Time > os.time()) then k.Offset = 0 end
+			if(k.Offset < k.MaxOffset and k.Time < os.time()) then k.Offset = k.Offset + 5 end
+			if(k.Offset >= k.MaxOffset and k.Time < os.time()) then table.insert(deadNotifications, k) end
+			ypos = ypos + h + 20
 		end
 		for i,k in pairs(deadNotifications) do
 			table.RemoveByValue(EXTENSION.Notifications, k)

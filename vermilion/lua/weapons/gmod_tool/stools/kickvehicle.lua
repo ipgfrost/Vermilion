@@ -36,10 +36,8 @@ include("vermilion/crimson_gmod.lua")
 function TOOL:LeftClick( trace )
 	if(trace.Entity) then
 		if(trace.Entity:IsVehicle()) then 
-			if(SERVER and trace.Entity:GetDriver() != nil and trace.Entity:GetDriver():IsPlayer()) then 
-				local trank = Vermilion:LookupRank(Vermilion:GetPlayer(trace.Entity:GetDriver())['rank'])
-				local prank = Vermilion:LookupRank(Vermilion:GetPlayer(self:GetOwner())['rank'])
-				if(trank < prank) then
+			if(SERVER and trace.Entity:GetDriver() != nil and trace.Entity:GetDriver():IsPlayer()) then
+				if(not Vermilion:CalcImmunity(self:GetOwner(), trace.Entity)) then
 					Vermilion:SendNotify(self:GetOwner(), "This player has a higher rank than you.", 10, VERMILION_NOTIFY_ERROR)
 					return
 				end

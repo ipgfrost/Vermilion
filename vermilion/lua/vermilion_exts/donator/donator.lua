@@ -46,18 +46,18 @@ EXTENSION.NetworkStrings = {
 function EXTENSION:InitServer()
 	
 	self:AddHook("PlayerInitialSpawn", function(vplayer)
-		if(Vermilion:GetSetting("promoted_donators", nil) == nil) then Vermilion:SetSetting("promoted_donators", {}) end
-		if(table.HasValue(Vermilion:GetSetting("promoted_donators", {}), vplayer:SteamID())) then return end
-		if(Vermilion:GetSetting("donator_mode_enabled", false)) then
-			http.Fetch(string.Replace(Vermilion:GetSetting("donator_url", nil), "%steamid%", vplayer:SteamID()), function(body, len, headers, code)
+		if(EXTENSION:GetData("promoted_donators", nil) == nil) then EXTENSION:SetData("promoted_donators", {}) end
+		if(table.HasValue(EXTENSION:GetData("promoted_donators", {}), vplayer:SteamID())) then return end
+		if(EXTENSION:GetData("donator_mode_enabled", false)) then
+			http.Fetch(string.Replace(EXTENSION:GetData("donator_url", nil), "%steamid%", vplayer:SteamID()), function(body, len, headers, code)
 				local tab = util.JSONToTable(body)
 				if(tab.status == "failed") then
 					Vermilion.Log("Failed to obtain donator information. Server query failed.")
 				else
 					if(tab.query_result) then
-						table.insert(Vermilion:GetSetting("promoted_donators", {}), vplayer:SteamID())
+						table.insert(EXTENSION:GetData("promoted_donators", {}), vplayer:SteamID())
 						if(tab.rank_promote) then
-							Vermilion:SetRank(vplayer, tab.rank_promote)
+							Vermilion:GetUser(vplayer):SetRank(tab.rank_promote)
 						end
 						if(tab.amount) then
 							Vermilion:BroadcastNotify(vplayer:GetName() .. " is now a donator after donating " .. tab.amount .. "!")
@@ -72,16 +72,16 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VUpdateDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
-			Vermilion:SetSetting("donator_mode_enabled", tobool(net.ReadString()))
-			Vermilion:SetSetting("donator_url", net.ReadString())
+			EXTENSION:SetData("donator_mode_enabled", tobool(net.ReadString()))
+			EXTENSION:SetData("donator_url", net.ReadString())
 		end
 	end)
 	
 	self:NetHook("VGetDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
 			net.Start("VGetDonatorMode")
-			net.WriteString(tostring(Vermilion:GetSetting("donator_mode_enabled", false)))
-			net.WriteString(Vermilion:GetSetting("donator_url", ""))
+			net.WriteString(tostring(EXTENSION:GetData("donator_mode_enabled", false)))
+			net.WriteString(EXTENSION:GetData("donator_url", ""))
 			net.Send(vplayer)
 		end
 	end)

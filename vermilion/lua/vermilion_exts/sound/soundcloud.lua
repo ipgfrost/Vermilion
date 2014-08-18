@@ -23,8 +23,6 @@ EXTENSION.SoundCloud = {}
 
 EXTENSION.SoundCloud.ClientID = "723bb3b64d04057d0c11ae48cc57ab80"
 
-EXTENSION.SoundCloud.Playlists = {}
-
 function EXTENSION.SoundCloud.url_encode(str)
 	if (str) then
 		str = string.gsub (str, "\n", "\r\n")
@@ -47,22 +45,6 @@ function EXTENSION.SoundCloud:SearchTracks(query, callback)
 	end)
 end
 
-function EXTENSION.SoundCloud:LoadSettings()
-	self.Playlists = Vermilion:GetSetting("soundcloud_playlists", {})
-	if(table.Count(self.Playlists) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-end
-
-function EXTENSION.SoundCloud:SaveSettings()
-	Vermilion:SetSetting("soundcloud_playlists", EXTENSION.SoundCloud.Playlists)
-end
-
-function EXTENSION.SoundCloud:ResetSettings()
-	self.Playlists = {}
-end
-
 function EXTENSION:SoundCloudInitServer()
 	resource.AddSingleFile("materials/vermilion/sc_logo.png")
 
@@ -75,7 +57,7 @@ function EXTENSION:SoundCloudInitServer()
 	function EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 		net.Start("VSCGetAllPlaylists")
 		local tab = {}
-		for i,k in pairs(EXTENSION.SoundCloud.Playlists) do
+		for i,k in pairs(EXTENSION:GetData("soundcloud_playlists", {}, true)) do
 			table.insert(tab, { Name = k.Name, Owner = k.Owner, Tracks = table.Count(k.Tracks), ID = i })
 		end
 		net.WriteTable(tab)
@@ -84,20 +66,20 @@ function EXTENSION:SoundCloudInitServer()
 	
 	self:NetHook("VSCNewPlaylist", function(vplayer)
 		local name = net.ReadString()
-		for i,k in pairs(EXTENSION.SoundCloud.Playlists) do
+		for i,k in pairs(EXTENSION:GetData("soundcloud_playlists", {}, true)) do
 			if(k.Name == name) then
 				Vermilion:SendMessageBox(vplayer, "Playlist already exists!")
 				return
 			end
 		end
-		table.insert(EXTENSION.SoundCloud.Playlists, { Name = name, Owner = vplayer:SteamID(), Tracks = {} })
+		table.insert(EXTENSION:GetData("soundcloud_playlists", {}, true), { Name = name, Owner = vplayer:SteamID(), Tracks = {} })
 		EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 	end)
 	
 	self:NetHook("VSCGetPlaylist", function(vplayer)
 		local playlistId = tonumber(net.ReadString())
 		net.Start("VSCGetPlaylist")
-		net.WriteTable(EXTENSION.SoundCloud.Playlists[playlistId])
+		net.WriteTable(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId])
 		net.Send(vplayer)
 	end)
 	
@@ -107,21 +89,21 @@ function EXTENSION:SoundCloudInitServer()
 	
 	self:NetHook("VSCSetPlaylist", function(vplayer)
 		local playlistId = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistId] == nil) then
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId] == nil) then
 			return
 		end
-		if(EXTENSION.SoundCloud.Playlists[playlistId].Owner != vplayer:SteamID()) then
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId].Owner != vplayer:SteamID()) then
 			return
 		end
-		EXTENSION.SoundCloud.Playlists[playlistId] = net.ReadTable()
+		EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId] = net.ReadTable()
 		EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 	end)
 	
 	self:NetHook("VSCDeletePlaylist", function(vplayer)
 		local playlistid = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistid] == nil) then return end
-		if(EXTENSION.SoundCloud.Playlists[playlistid].Owner != vplayer:SteamID()) then return end
-		EXTENSION.SoundCloud.Playlists[playlistid] = nil
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid] == nil) then return end
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Owner != vplayer:SteamID()) then return end
+		EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid] = nil
 		EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 	end)
 	
@@ -130,34 +112,34 @@ function EXTENSION:SoundCloudInitServer()
 			return
 		end
 		local playlistId = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistId] == nil) then
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId] == nil) then
 			return
 		end
 		net.Start("VSCPlayPlaylist")
-		net.WriteTable(EXTENSION.SoundCloud.Playlists[playlistId].Tracks)
+		net.WriteTable(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId].Tracks)
 		net.Broadcast()
 	end)
 	
 	self:NetHook("VSCAddToPlaylist", function(vplayer)
 		local playlistId = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistId] == nil) then
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId] == nil) then
 			return
 		end
-		if(EXTENSION.SoundCloud.Playlists[playlistId].Owner != vplayer:SteamID()) then
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId].Owner != vplayer:SteamID()) then
 			return
 		end
-		table.insert(EXTENSION.SoundCloud.Playlists[playlistId].Tracks, { Title = net.ReadString(), Uploader = net.ReadString(), UploadDate = net.ReadString(), StreamURL = net.ReadString() })
+		table.insert(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistId].Tracks, { Title = net.ReadString(), Uploader = net.ReadString(), UploadDate = net.ReadString(), StreamURL = net.ReadString() })
 		EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 	end)
 	
 	self:NetHook("VSCRemoveFromPlaylist", function(vplayer)
 		local playlistid = tonumber(net.ReadString())
 		local trackIndex = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistid] == nil) then return end
-		if(EXTENSION.SoundCloud.Playlists[playlistid].Owner != vplayer:SteamID()) then return end
-		table.remove(EXTENSION.SoundCloud.Playlists[playlistid].Tracks, trackIndex)
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid] == nil) then return end
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Owner != vplayer:SteamID()) then return end
+		table.remove(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Tracks, trackIndex)
 		net.Start("VSCGetPlaylistContent")
-		net.WriteTable(EXTENSION.SoundCloud.Playlists[playlistid])
+		net.WriteTable(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid])
 		net.Send(vplayer)
 		EXTENSION:UpdateSoundCloudPlaylists(vplayer)
 	end)
@@ -166,33 +148,27 @@ function EXTENSION:SoundCloudInitServer()
 		local playlistid = tonumber(net.ReadString())
 		local trackIndex = tonumber(net.ReadString())
 		local dir = net.ReadString()
-		if(EXTENSION.SoundCloud.Playlists[playlistid] == nil) then return end
-		if(EXTENSION.SoundCloud.Playlists[playlistid].Owner != vplayer:SteamID()) then return end
-		local trackinfo = EXTENSION.SoundCloud.Playlists[playlistid].Tracks[trackIndex]
-		table.remove(EXTENSION.SoundCloud.Playlists[playlistid].Tracks, trackIndex)
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid] == nil) then return end
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Owner != vplayer:SteamID()) then return end
+		local trackinfo = EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Tracks[trackIndex]
+		table.remove(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Tracks, trackIndex)
 		if(dir == "UP") then
-			table.insert(EXTENSION.SoundCloud.Playlists[playlistid].Tracks, trackIndex - 1, trackinfo)
+			table.insert(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Tracks, trackIndex - 1, trackinfo)
 		elseif(dir == "DOWN") then
-			table.insert(EXTENSION.SoundCloud.Playlists[playlistid].Tracks, trackIndex + 1, trackinfo)
+			table.insert(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid].Tracks, trackIndex + 1, trackinfo)
 		end
 		net.Start("VSCGetPlaylistContent")
-		net.WriteTable(EXTENSION.SoundCloud.Playlists[playlistid])
+		net.WriteTable(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid])
 		net.Send(vplayer)
 	end)
 	
 	self:NetHook("VSCGetPlaylistContent", function(vplayer)
 		local playlistid = tonumber(net.ReadString())
-		if(EXTENSION.SoundCloud.Playlists[playlistid] == nil) then return end
+		if(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid] == nil) then return end
 		net.Start("VSCGetPlaylistContent")
-		net.WriteTable(EXTENSION.SoundCloud.Playlists[playlistid])
+		net.WriteTable(EXTENSION:GetData("soundcloud_playlists", {}, true)[playlistid])
 		net.Send(vplayer)
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "soundcloud_save", function()
-		EXTENSION.SoundCloud:SaveSettings()
-	end)
-	
-	EXTENSION.SoundCloud:LoadSettings()
 end
 
 function EXTENSION:SoundCloudInitClient()

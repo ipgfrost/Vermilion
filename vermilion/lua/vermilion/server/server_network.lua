@@ -18,7 +18,6 @@
 ]]
 
 local networkStrings = {
-	"Vermilion_Hint",
 	"Vermilion_Sound",
 	"Vermilion_Client_Activate",
 	"VActivePlayers",
@@ -37,12 +36,13 @@ function Vermilion.internal:UpdateActivePlayers(vplayer)
 	if(vplayer == nil) then
 		vplayer = player.GetAll()
 	end
-	net.Start("VActivePlayers")
 	local activePlayers = {}
 	for i,cplayer in pairs(player.GetAll()) do
-		local playerDat = Vermilion:GetPlayer(cplayer)
-		table.insert(activePlayers, { cplayer:GetName(), cplayer:SteamID(), playerDat['rank'] } )
+		local playerDat = Vermilion:GetUser(cplayer)
+		table.insert(activePlayers, { cplayer:GetName(), cplayer:SteamID(), playerDat:GetRank().Name } )
 	end
+	
+	net.Start("VActivePlayers")
 	net.WriteTable(activePlayers)
 	net.Send(vplayer)
 end
@@ -53,6 +53,47 @@ end)
 
 Vermilion:RegisterHook("PlayerConnect", "ActivePlayersUpdate", function()
 	Vermilion.internal:UpdateActivePlayers()
+end)
+
+function Vermilion:SendWeaponsList(vplayer)
+	local tab = {}
+	for i,k in pairs(list.Get("Weapon")) do
+		table.insert(tab, { Class = i, PrintName = k.PrintName })
+	end
+	
+	net.Start("VWeaponsList")
+	net.WriteTable(tab)
+	net.Send(vplayer)
+end
+
+function Vermilion:SendRanksList(vplayer)
+	local ranksTab = {}
+	for i,k in pairs(Vermilion.Settings.Ranks) do
+		local isDefault = "No"
+		if(Vermilion:GetSetting("default_rank", "player") == k.Name) then
+			isDefault = "Yes"
+		end
+		table.insert(ranksTab, { k.Name, isDefault })
+	end
+	
+	net.Start("VRanksList")
+	net.WriteTable(ranksTab)
+	net.Send(vplayer)
+end
+
+function Vermilion:SendEntsList(vplayer)
+	local tab = {}
+	for i,k in pairs(list.Get("SpawnableEntities")) do
+		table.insert(tab, { Class = i, PrintName = k.PrintName })
+	end
+	
+	net.Start("VEntsList")
+	net.WriteTable(tab)
+	net.Send(vplayer)
+end
+
+net.Receive("VPopulateLists", function(len, vplayer)
+	
 end)
 
 net.Receive("VWeaponsList", function(len, vplayer)
@@ -68,12 +109,12 @@ end)
 net.Receive("VRanksList", function(len, vplayer)
 	net.Start("VRanksList")
 	local ranksTab = {}
-	for i,k in pairs(Vermilion.Ranks) do
+	for i,k in pairs(Vermilion.Settings.Ranks) do
 		local isDefault = "No"
-		if(Vermilion:GetSetting("default_rank", "player") == k) then
+		if(Vermilion:GetSetting("default_rank", "player") == k.Name) then
 			isDefault = "Yes"
 		end
-		table.insert(ranksTab, { k, isDefault })
+		table.insert(ranksTab, { k.Name, isDefault })
 	end
 	net.WriteTable(ranksTab)
 	net.Send(vplayer)

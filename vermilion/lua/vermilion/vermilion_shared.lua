@@ -22,7 +22,7 @@ include("vermilion/lang/vermilion_lang_engb.lua")
 include("vermilion/vermilion_globals.lua")
 
 function Vermilion.GetVersion()
-	return "1.2.2e"
+	return "1.4.0a"
 end
 
 Vermilion.Utility = {}
@@ -80,29 +80,14 @@ end
 function Vermilion:RegisterExtension(extension)
 	self.Extensions[extension.ID] = extension
 	if(extension.Permissions != nil and SERVER) then
-		for i,permission in pairs(extension.Permissions) do
-			local alreadyHas = false
-			for i1,knownPermission in pairs(self.PermissionsList) do
-				if(knownPermission == permission) then
-					alreadyHas = true
-					break
-				end
-			end
-			if(not alreadyHas) then table.insert(self.PermissionsList, permission) end
-		end
+		Crimson.Merge(self.AllPermissions, extension.Permissions)
 	end
 	if(extension.RankPermissions != nil and SERVER) then
 		for i, rank in pairs(extension.RankPermissions) do
-			local rankID = self:LookupRank(rank[1])
-			for i1, permission in pairs(rank[2]) do
-				local alreadyHas = false 
-				for i,knownPermission in pairs(self.DefaultRankPerms[rankID][2]) do
-					if(knownPermission == permission) then
-						alreadyHas = true
-						break
-					end
+			for i1,k1 in pairs(Vermilion.DefaultPermissionSettings) do
+				if(k1[1] == rank[1]) then
+					Crimson.Merge(k1[2], rank[2])
 				end
-				if(not alreadyHas) then table.insert(self.DefaultRankPerms[rankID][2], permission) end
 			end
 		end
 	end
@@ -172,6 +157,20 @@ function Vermilion:MakeExtensionBase()
 	function base:InitServer() end
 	function base:InitShared() end
 	function base:Destroy() end
+	
+	function base:GetData(name, default, set)
+		if(Vermilion.Settings.ModuleData[self.ID] == nil) then Vermilion.Settings.ModuleData[self.ID] = {} end
+		if(Vermilion.Settings.ModuleData[self.ID][name] == nil) then
+			if(set) then self:SetData(name, default) end
+			return default
+		end
+		return Vermilion.Settings.ModuleData[self.ID][name]
+	end
+	
+	function base:SetData(name, value)
+		if(Vermilion.Settings.ModuleData[self.ID] == nil) then Vermilion.Settings.ModuleData[self.ID] = {} end
+		Vermilion.Settings.ModuleData[self.ID][name] = value
+	end
 	
 	function base:Localise(id)
 		if(Vermilion.Lang[id] != nil) then return Vermilion.Lang[id] end
@@ -472,6 +471,8 @@ else
 	end)
 	
 	Vermilion.ChatTabSelected = 0
+	Vermilion.ChatBGW = 0
+	Vermilion.ChatBGH = 0
 	
 	Vermilion:RegisterHook("OnChatTab", "VInsertPrediction", function()
 		if(Vermilion.ChatPredictions != nil and table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatTabSelected == 0) then
@@ -491,7 +492,9 @@ else
 			if(Vermilion:GetExtension("chatbox") != nil and GetConVarNumber("vermilion_replace_chat") == 1) then
 				text = "Press the right arrow key to complete the command with the one at the top of the list."
 			end
+			draw.RoundedBox(2, 545, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatBGW + 10, Vermilion.ChatBGH + 5, Color(0, 0, 0, 128))
 			draw.SimpleText(text, "Default", 550, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+			Vermilion.ChatBGH = 0
 			for i,k in pairs(Vermilion.ChatPredictions) do
 				local text = k.Name
 				if(table.Count(Vermilion.ChatPredictions) <= 8) then
@@ -502,12 +505,14 @@ else
 				local w,h = draw.SimpleText(text, "Default", 550 + xpos, select(2, chat.GetChatBoxPos()) + pos, colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 				if(maxw < w) then maxw = w end
 				pos = pos + h + 5
+				if(pos > Vermilion.ChatBGH) then Vermilion.ChatBGH = pos end
 				if(pos + select(2, chat.GetChatBoxPos()) + 20 >= ScrH()) then
 					xpos = xpos + maxw + 10
 					maxw = 0
 					pos = 0
 				end
 			end
+			Vermilion.ChatBGW = xpos + maxw
 		end
 	end)
 	

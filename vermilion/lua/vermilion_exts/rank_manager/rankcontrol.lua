@@ -56,59 +56,52 @@ EXTENSION.EditingRank = ""
 EXTENSION.UnsavedRankChanges = false
 
 function EXTENSION:InitServer()
-	Vermilion:AddChatCommand("resetranks", function(sender, text)
-		if(Vermilion:HasPermissionError(sender, "rank_management")) then
-			Vermilion:ResetPermissions()
-			Vermilion:SavePermissions()
-			Vermilion:ResetRanks()
-			Vermilion:SaveRanks()
-			Vermilion:SendNotify(sender, "Ranks reset to defaults!")
-		end
-	end)
 	
 	Vermilion:AddChatCommand("getrank", function(sender, text)
 		if(table.Count(text) == 0) then
-			Vermilion:SendNotify(sender, tostring(Vermilion:GetRank(sender)) .. " => " .. tostring(Vermilion.Ranks[Vermilion:GetRank(sender)]))
+			Vermilion:SendNotify(sender, Vermilion:GetUser(sender):GetRank().Name)
 			return
 		end
 		local targetPlayer = Crimson.LookupPlayerByName(text[1])
 		if(targetPlayer == nil) then
-			Vermilion:SendNotify(sender, "Player does not exist!", VERMILION_NOTIFY_ERROR)
+			Vermilion:SendNotify(sender, Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
 		end
-		Vermilion:SendNotify(sender, tostring(Vermilion:GetRank(targetPlayer)) .. " => " .. tostring(Vermilion.Ranks[Vermilion:GetRank(targetPlayer)]))
+		if(not Vermilion:HasUser(text[1])) then
+			Vermilion:SendNotify(sender, Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			return
+		end
+		Vermilion:SendNotify(sender, Vermilion:GetUser(targetPlayer):GetRank().Name)
 	end, "[player]")
 	
 	Vermilion:AddChatCommand("setrank", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "rank_management")) then
 			if(table.Count(text) == 1) then
-				if(Vermilion:LookupRank(rank) == VERMILION_BAD_RANK) then
+				if(not Vermilion:HasRank(text[1])) then
 					log("No such rank!", VERMILION_NOTIFY_ERROR)
 					return
 				end
-				Vermilion:SetRank(sender, text[1])
+				Vermilion:GetUser(sender):SetRank(text[1])
 				return
 			end
-			if(Vermilion:LookupRank(text[2]) == VERMILION_BAD_RANK) then
+			if(not Vermilion:HasRank(text[2])) then
 				log("No such rank!", VERMILION_NOTIFY_ERROR)
 				return
 			end
 			local targetPlayer = Crimson.LookupPlayerByName(text[1])
 			if(targetPlayer == nil) then
-				local targetPlayerOffline = Vermilion:GetPlayer(text[1])
+				local targetPlayerOffline = Vermilion:GetUser(text[1])
 				if(targetPlayerOffline == nil) then
 					log("Player does not exist!", VERMILION_NOTIFY_ERROR)
 				else
-					targetPlayerOffline["rank"] = text[2]
-					Vermilion:SaveUserStore()
+					targetPlayerOffline:SetRank(text[2])
 					log("Rank updated!")
 				end
 				return
 			end
-			Vermilion:SetRank(targetPlayer, text[2])
-			debug.Trace()
+			Vermilion:GetUser(targetPlayer):SetRank(text[2])
 			log("Rank updated!")
-			Vermilion:SendNotify(targetPlayer, "Your rank is now " .. text[table.Count(text)] .. "!")
+			Vermilion:SendNotify(targetPlayer, "Your rank is now " .. text[2] .. "!")
 		end
 	end, "[player] <rank>")
 	
@@ -118,26 +111,26 @@ function EXTENSION:InitServer()
 				log("Syntax: !setrank_steamid <steamid> <rank>", VERMILION_NOTIFY_ERROR)
 				return
 			end
-			local tplayerdata = Vermilion:GetPlayerBySteamID(text[1])
+			local tplayerdata = Vermilion:GetUserSteamID(text[1])
 			if(tplayerdata == nil) then
-				if(Vermilion:LookupRank(text[2]) == VERMILION_BAD_RANK) then
+				if(not Vermilion:HasRank(text[2])) then
 					log("No such rank!", VERMILION_NOTIFY_ERROR)
 				else
-					tplayerdata["rank"] = text[2]
+					tplayerdata:SetRank(text[2])
 					log("Rank updated!")
 				end
 			else
 				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			end
 		end
-	end)
+	end, "<steamid> <rank>")
 	
 	self:NetHook("VSetRankUser", function(vplayer)
 		local steamID = net.ReadString()
 		local rank = net.ReadString()
 		
 		if(Vermilion:HasPermission(vplayer, "rank_management")) then
-			if(Vermilion:LookupRank(rank) == VERMILION_BAD_RANK) then
+			if(not Vermilion:HasRank(rank)) then
 				Vermilion:SendMessageBox(vplayer, "This rank doesn't exist!")
 				return
 			end
@@ -146,11 +139,11 @@ function EXTENSION:InitServer()
 				Vermilion:SendMessageBox(vplayer, "Player does not exist!")
 				return
 			end
-			if(tplayer == vplayer and Vermilion:GetRank(vplayer) == Vermilion:LookupRank("owner") and Vermilion:CountPlayersInRank("owner") == 1) then
+			if(tplayer == vplayer and Vermilion:GetUser(vplayer):GetRank().Name == "owner" and Vermilion:CountPlayersInRank("owner") == 1) then
 				Vermilion:SendMessageBox(vplayer, "You cannot demote yourself because you are the only owner!")
 				return
 			end
-			Vermilion:SetRank(tplayer, rank)
+			Vermilion:GetUser(tplayer):SetRank(rank)
 			Vermilion:SendNotify(tplayer, "Your rank is now " .. rank .. "!")
 		else
 			Vermilion:SendMessageBox(vplayer, "You do not have permission to do this!")
@@ -159,7 +152,7 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VPermissionsList", function(vplayer)
 		net.Start("VPermissionsList")
-		net.WriteTable(Vermilion.PermissionsList) -- Replace this with a "nice" permissions list.
+		net.WriteTable(Vermilion.AllPermissions) -- Replace this with a "nice" permissions list.
 		net.Send(vplayer)
 	end)
 	
@@ -167,14 +160,12 @@ function EXTENSION:InitServer()
 		net.Start("VRankPermissions")
 		local tab = {}
 		local trank = net.ReadString()
-		for i,k in pairs(Vermilion.RankPerms) do
-			if(k[1] == trank) then
-				for i1,k1 in pairs(k[2]) do
-					table.insert(tab, k1)
-				end
-			end
+		if(not Vermilion:HasRank(trank)) then
+			net.WriteTable({})
+			net.Send(vplayer)
+			return
 		end
-		net.WriteTable(tab)
+		net.WriteTable(Vermilion:GetRankData(trank).Permissions)
 		net.Send(vplayer)
 	end)
 	
@@ -182,26 +173,43 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermission(vplayer, "rank_management")) then
 			local tab = net.ReadTable()
 			Vermilion.Log("Writing ranks...")
-			Vermilion.Ranks = {}
+			
+			-- convert the data to the standard rank format
+			local ntab = {}
 			for i,k in ipairs(tab) do
-				Vermilion.Log("Writing rank: " .. k[1])
-				table.insert(Vermilion.Ranks, k[1])
-				if(k[3] == "Yes") then
-					Vermilion:SetSetting("default_rank", k[1])
-				end
-				local exists = false
-				for i1, k1 in pairs(Vermilion.RankPerms) do
-					if(k1[1] == k[1]) then
-						exists = true
+				if(k[3] == "Yes") then Vermilion:SetSetting("default_rank", k[1]) end
+				table.insert(ntab, { Name = k[1], Permissions = {}, Protected = k[1] == "owner" })
+			end
+			
+			-- remove duplicates
+			for i,k in pairs(ntab) do
+				for i1,k1 in pairs(ntab) do
+					if(k.Name == k1.Name and k != k1) then
+						table.RemoveByValue(k)
 						break
 					end
 				end
-				if(not exists) then 
-					table.insert(Vermilion.RankPerms, tonumber(k[2]), {k[1], { "blank" }})
+			end
+			
+			-- merge the existing permissions into the new table
+			for i,k in ipairs(Vermilion.Settings.Ranks) do
+				for i1,k1 in ipairs(ntab) do
+					if(k.Name == k1.Name) then
+						k1.Permissions = k.Permissions
+					end
 				end
 			end
-			Vermilion:SaveRanks()
-			Vermilion:SavePermissions()
+			
+			Vermilion.Settings.Ranks = ntab
+			
+			-- move all players that were in a rank that was deleted into the default rank.
+			for i,k in pairs(Vermilion.Settings.Users) do
+				if(not Vermilion:HasRank(k.Rank)) then
+					Vermilion:GetUser(k.Name):SetRank(Vermilion:GetSetting("default_rank", "player"))
+				end
+			end
+			
+			
 		else
 			Vermilion:SendMessageBox(vplayer, "You do not have permission to do this!")
 		end
@@ -212,13 +220,12 @@ function EXTENSION:InitServer()
 			local rank = net.ReadString()
 			local ptab = net.ReadTable()
 			
-			if(Vermilion:LookupRank(rank) == VERMILION_BAD_RANK) then
+			if(not Vermilion:HasRank(rank)) then
 				Vermilion:SendMessageBox(vplayer, "Rank does not exist!")
 				return
 			end
 			
-			Vermilion.RankPerms[Vermilion:LookupRank(rank)][2] = ptab
-			Vermilion:SavePermissions()
+			Vermilion:GetRankData(rank).Permissions = ptab
 			
 			for i,vplayer in pairs(player.GetAll()) do
 				vplayer:SetNWBool("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
@@ -400,7 +407,7 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Cannot move multiple ranks!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
+				if(ranksList:GetSelected()[1]:GetValue(1) == "owner") then
 					Crimson:CreateErrorDialog("Cannot move this rank; it is a protected rank!")
 					return
 				end
@@ -447,12 +454,12 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Cannot move multiple ranks!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
+				if(ranksList:GetSelected()[1]:GetValue(1) == "owner") then
 					Crimson:CreateErrorDialog("Cannot move this rank; it is a protected rank!")
 					return
 				end
-				if(tonumber(ranksList:GetSelected()[1]:GetValue(2)) == table.Count(ranksList:GetLines()) - 1) then
-					Crimson:CreateErrorDialog("Cannot move this rank here; it is interfering with a protected rank!")
+				if(tonumber(ranksList:GetSelected()[1]:GetValue(2)) == table.Count(ranksList:GetLines())) then
+					Crimson:CreateErrorDialog("Cannot move this rank here; it is at the end of the table!")
 					return
 				end
 				local targetIndex = tonumber(ranksList:GetSelected()[1]:GetValue(2)) + 1
@@ -493,7 +500,7 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a rank to remove!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
+				if(ranksList:GetSelected()[1]:GetValue(1) == "owner") then
 					Crimson:CreateErrorDialog("Cannot delete this rank; it is a protected rank!")
 					return
 				end

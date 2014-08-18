@@ -520,3 +520,13 @@ function Crimson.PrintTable ( t, indent, done, log )
 	end
 
 end
+
+function Crimson.Merge(destination, source)
+	for i,k in pairs(source) do
+		local has = false
+		for i1,k1 in pairs(destination) do
+			if(k1 == k) then has = true break end
+		end
+		if(not has) then table.insert(destination, k) end
+	end
+end

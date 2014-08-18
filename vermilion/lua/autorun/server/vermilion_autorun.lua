@@ -29,7 +29,7 @@ local preloadFiles = {
 	"autorun/server/von.lua",
 	"vermilion/crimson_gmod.lua",
 	"vermilion/vermilion_shared.lua",
-	"vermilion/vermilion_config.lua",
+	"vermilion/vermilion_config_2.lua",
 	"vermilion/vermilion_server.lua"
 }
 

@@ -40,7 +40,6 @@ EXTENSION.NetworkStrings = {
 	"VSetLoadoutDisabled"
 }
 
-EXTENSION.RankLimits = {}
 EXTENSION.EditingRank = ""
 
 EXTENSION.DefaultLoadout = {
@@ -59,28 +58,22 @@ EXTENSION.DefaultLoadout = {
 	"weapon_smg1" -- SMG
 }
 
-function EXTENSION:LoadSettings()
-	self.RankLimits = Vermilion:GetSetting("loadouts", {})
-	if(table.Count(self.RankLimits) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-end
-
-function EXTENSION:SaveSettings()
-	Vermilion:SetSetting("loadouts", self.RankLimits)
-end
-
-function EXTENSION:ResetSettings()
+function EXTENSION:BuildDefaults()
 	local tab = {}
-	for i,rank in pairs(Vermilion.Ranks) do
-		tab[rank] = self.DefaultLoadout
+	for i,k in pairs(Vermilion.Settings.Ranks) do
+		tab[k.Name] = table.Copy(EXTENSION.DefaultLoadout)
 	end
-	self.RankLimits = tab
+	return tab
 end
 
 function EXTENSION:InitServer()
 	
+	function EXTENSION:GetLoadout(rank)
+		if(not Vermilion:HasRank(rank)) then
+			return {}
+		end
+		return EXTENSION:GetData("loadouts", EXTENSION:BuildDefaults(), true)[rank] or {}
+	end
 	
 	self:NetHook("VRankLoadoutSave", function(vplayer)
 		if(not Vermilion:HasPermission(vplayer, "loadout_management")) then
@@ -88,8 +81,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		local tab = net.ReadTable()
-		EXTENSION.RankLimits[rnk] = tab
-		EXTENSION:SaveSettings()
+		EXTENSION:GetData("loadouts", EXTENSION:BuildDefaults(), true)[rnk] = tab
 	end)
 	
 	self:NetHook("VRankLoadoutLoad", function(vplayer)
@@ -98,7 +90,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		
-		local tab = EXTENSION.RankLimits[rnk]
+		local tab = EXTENSION:GetData("loadouts", EXTENSION:BuildDefaults(), true)[rnk]
 		if(not tab) then
 			tab = {}
 		end
@@ -107,7 +99,7 @@ function EXTENSION:InitServer()
 		net.Send(vplayer)
 	end)
 	self:AddHook("PlayerLoadout", function(ply)
-		if(Vermilion:GetSetting("disable_loadout_on_non_sandbox", true) and engine.ActiveGamemode() != "sandbox") then return end -- allow the gamemode to define the loadout.
+		if(EXTENSION:GetData("disable_loadout_on_non_sandbox", true) and engine.ActiveGamemode() != "sandbox") then return end -- allow the gamemode to define the loadout.
 		ply:RemoveAllAmmo()
 		if (cvars.Bool("sbox_weapons", true)) then
 			ply:GiveAmmo(256, "Pistol", true)
@@ -119,7 +111,7 @@ function EXTENSION:InitServer()
 			ply:GiveAmmo(6, "AR2AltFire", true)
 			ply:GiveAmmo(100, "AR2", true)
 		end
-		for i,weapon in pairs(EXTENSION.RankLimits[Vermilion.Ranks[Vermilion:GetRank(ply)]]) do
+		for i,weapon in pairs(EXTENSION:GetLoadout(Vermilion:GetUser(ply):GetRank().Name)) do
 			ply:Give(weapon)
 		end
 		ply:SwitchToDefaultWeapon()
@@ -129,26 +121,20 @@ function EXTENSION:InitServer()
 	self:NetHook("VGetLoadoutDisabled", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "loadout_management")) then
 			net.Start("VGetLoadoutDisabled")
-			net.WriteString(tostring(Vermilion:GetSetting("disable_loadout_on_non_sandbox", true)))
+			net.WriteString(tostring(EXTENSION:GetData("disable_loadout_on_non_sandbox", true)))
 			net.Send(vplayer)
 		end
 	end)
 	
 	self:NetHook("VSetLoadoutDisabled", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "loadout_management")) then
-			Vermilion:SetSetting("disable_loadout_on_non_sandbox", tobool(net.ReadString()))
+			EXTENSION:SetData("disable_loadout_on_non_sandbox", tobool(net.ReadString()))
 		end
 	end)
 	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("loadout", "loadout_management")
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "loadout_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
 end
 
 
@@ -169,7 +155,7 @@ function EXTENSION:InitClient()
 		end
 		EXTENSION.AllWeaponsList:Clear()
 		for i,k in pairs(tab) do
-			EXTENSION.AllWeaponsList:AddLine(k.PrintName).WeaponClass = k.ClassName
+			EXTENSION.AllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
 		end
 	end)
 	
@@ -280,8 +266,6 @@ function EXTENSION:InitClient()
 				guiRankPermissionsList:Clear()
 				EXTENSION.EditingRank = ""
 				blockedWeaponsLabel:SetText("Loadout")
-				blockedWeaponsLabel:SizeToContents()
-				blockedWeaponsLabel:SetPos(110 - (blockedWeaponsLabel:GetWide() / 2), 230)
 			end)
 			saveRankPermissionsButton:SetPos(270, 500)
 			saveRankPermissionsButton:SetSize(245, 30)

@@ -40,7 +40,6 @@ EXTENSION.NetworkStrings = {
 	"VRankToolsSave"
 }
 
-EXTENSION.RankLimits = {}
 EXTENSION.EditingRank = ""
 
 function EXTENSION:GetToolgunToolName(name)
@@ -64,21 +63,19 @@ function EXTENSION:InitServer()
 	end)
 	self:NetHook("VRankToolsSave", function(vplayer)
 		if(not Vermilion:HasPermission(vplayer, "toollimit_management")) then
-			print(vplayer:GetName() .. "no permissions")
 			return
 		end
 		local rnk = net.ReadString()
 		local tab = net.ReadTable()
 		
-		EXTENSION.RankLimits[rnk] = tab
-		EXTENSION:SaveSettings()
+		EXTENSION:GetData("tool_gun_limits", {}, true)[rnk] = tab
 	end)
 	self:NetHook("VRankToolsLoad", function(vplayer)
 		if(not Vermilion:HasPermission(vplayer, "toollimit_management")) then
 			return
 		end
 		local rnk = net.ReadString()
-		local tab = EXTENSION.RankLimits[rnk]
+		local tab = EXTENSION:GetData("tool_gun_limits", {}, true)[rnk]
 		if(not tab) then
 			tab = {}
 		end
@@ -91,11 +88,11 @@ function EXTENSION:InitServer()
 		if(tr.Hit and IsValid(tr.Entity) and tr.Entity:IsPlayer()) then
 			return Vermilion:HasPermissionError(vplayer, "toolgun_players")
 		end
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("tool_gun_limits", {}, true)[pRank] == nil) then
 			return
 		end
-		if(table.HasValue(EXTENSION.RankLimits[pRank], tool)) then
+		if(table.HasValue(EXTENSION:GetData("tool_gun_limits", {}, true)[pRank], tool)) then
 			Vermilion:SendNotify(vplayer, "You cannot use this tool!", VERMILION_NOTIFY_ERROR)
 			return false
 		end
@@ -110,28 +107,6 @@ function EXTENSION:InitServer()
 			end
 		end)
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "toollimit_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
-end
-
-function EXTENSION:LoadSettings()
-	self.RankLimits = Vermilion:GetSetting("tool_gun_limits", {})
-	if(table.Count(self.RankLimits) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-end
-
-function EXTENSION:SaveSettings()
-	Vermilion:SetSetting("tool_gun_limits", self.RankLimits)
-end
-
-function EXTENSION:ResetSettings()
-	self.RankLimits = {}
 end
 
 function EXTENSION:InitClient()

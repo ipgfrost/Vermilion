@@ -32,7 +32,6 @@ EXTENSION.NetworkStrings = {
 	"VRankEntsSave"
 }
 
-EXTENSION.RankLimits = {}
 EXTENSION.EditingRank = ""
 
 function EXTENSION:InitServer()
@@ -43,8 +42,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		local tab = net.ReadTable()
-		EXTENSION.RankLimits[rnk] = tab
-		EXTENSION:SaveSettings()
+		EXTENSION:GetData("entity_limits", {}, true)[rnk] = tab
 	end)
 	
 	self:NetHook("VRankEntsLoad", function(vplayer)
@@ -53,7 +51,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		
-		local tab = EXTENSION.RankLimits[rnk]
+		local tab = EXTENSION:GetData("entity_limits", {}, true)[rnk]
 		if(not tab) then
 			tab = {}
 		end
@@ -63,11 +61,11 @@ function EXTENSION:InitServer()
 	end)
 	
 	self:AddHook("VPlayerSpawnSENT", "SentOverride", function(vplayer, class)
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("entity_limits", {}, true)[pRank] == nil) then
 			return
 		end
-		if(table.HasValue(EXTENSION.RankLimits[pRank], class)) then
+		if(table.HasValue(EXTENSION:GetData("entity_limits", {}, true)[pRank], class)) then
 			Vermilion:SendNotify(vplayer, "You cannot spawn this entity!", VERMILION_NOTIFY_ERROR)
 			return false
 		end
@@ -75,12 +73,6 @@ function EXTENSION:InitServer()
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("ent_control", "entlimit_management")
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "entlimit_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
 end
 
 function EXTENSION:LoadSettings()

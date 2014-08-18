@@ -37,7 +37,7 @@ EXTENSION.Skyboxes = {}
 EXTENSION.Point1 = {}
 
 function EXTENSION:LoadSettings()
-	local rawskyboxes = Vermilion:GetSetting("skyboxes", {})
+	local rawskyboxes = self:GetData("skyboxes", {})
 	if(table.Count(rawskyboxes) == 0) then 
 		self:ResetSettings()
 		self:SaveSettings()
@@ -52,7 +52,7 @@ function EXTENSION:SaveSettings()
 	for i,k in pairs(self.Skyboxes) do
 		rawskyboxes[i] = { k.p1.x, k.p1.y, k.p1.z, k.p2.x, k.p2.y, k.p2.z }
 	end
-	Vermilion:SetSetting("skyboxes", rawskyboxes)
+	self:SetData("skyboxes", rawskyboxes)
 end
 
 function EXTENSION:ResetSettings()
@@ -129,32 +129,32 @@ function EXTENSION:InitServer()
 						entsRemoved = entsRemoved + 1
 					end
 					if(k:IsPlayer()) then
-						if(not Vermilion:HasPermission(k, "skybox_protect") or true) then k:Spawn() Vermilion:SendNotify(k, "Please stay out of the skybox!", VERMILION_NOTIFY_ERROR) end
+						if(not Vermilion:HasPermission(k, "skybox_protect")) then k:Spawn() Vermilion:SendNotify(k, "Please stay out of the skybox!", VERMILION_NOTIFY_ERROR) end
 					end
 				end
-				if(entsRemoved > 0) then Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("skybox_protect"), "Removed " .. tostring(entsRemoved) .. " from the skybox.", VERMILION_NOTIFY_HINT) end
+				if(entsRemoved > 0) then Vermilion:SendNotify(Vermilion:GetUsersWithPermission("skybox_protect"), "Removed " .. tostring(entsRemoved) .. " items from the skybox.", VERMILION_NOTIFY_HINT) end
 			end
 		end)
 	end
 	
-	if(Vermilion:GetSetting("protect_skybox", false)) then
+	if(EXTENSION:GetData("protect_skybox", false)) then
 		buildTimer()
 	end
 	
 	self:NetHook("VUpdateSkyboxProtector", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "skybox_protect")) then
-			Vermilion:SetSetting("protect_skybox", tobool(net.ReadString()))
-			if(Vermilion:GetSetting("protect_skybox", false)) then buildTimer() end
+			EXTENSION:SetData("protect_skybox", tobool(net.ReadString()))
+			if(EXTENSION:GetData("protect_skybox", false)) then buildTimer() else timer.Destroy("Vermilion_Skyboxes") end
 		end
 	end)
 	
 	self:NetHook("VGetSkyboxProtectorSettings", function(vplayer)
 		net.Start("VGetSkyboxProtectorSettings")
-		net.WriteString(tostring(Vermilion:GetSetting("protect_skybox", false)))
+		net.WriteString(tostring(EXTENSION:GetData("protect_skybox", false)))
 		net.Send(vplayer)
 	end)
 	
-	self:AddHook("Vermilion-SaveConfigs", "skybox_save", function()
+	self:AddHook("Vermilion-Pre-Shutdown", "skybox_save", function()
 		EXTENSION:SaveSettings()
 	end)
 	

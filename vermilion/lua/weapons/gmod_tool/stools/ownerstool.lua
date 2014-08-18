@@ -36,12 +36,12 @@ end
 function TOOL:LeftClick( trace )
 	if(trace.Entity and not trace.Entity:IsWorld()) then
 		if(SERVER) then
-			local tplayer = Vermilion:GetPlayerBySteamID(trace.Entity.Vermilion_Owner)
+			local tplayer = Vermilion:GetUserSteamID(trace.Entity.Vermilion_Owner)
 			if(tplayer == nil) then
 				Vermilion:SendNotify(self:GetOwner(), "This prop doesn't have an owner.", VERMILION_NOTIFY_HINT)
 				return
 			end
-			Vermilion:SendNotify(self:GetOwner(), "Owner: " .. tplayer.name, 5, VERMILION_NOTIFY_HINT)
+			Vermilion:SendNotify(self:GetOwner(), "Owner: " .. tplayer.Name, 5, VERMILION_NOTIFY_HINT)
 		end
 	end
 	return true

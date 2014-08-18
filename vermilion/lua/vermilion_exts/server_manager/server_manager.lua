@@ -114,7 +114,51 @@ EXTENSION.NetworkStrings = {
 }
 
 function EXTENSION:InitServer()
+	
+	local META = FindMetaTable("Player")
+	
+	function META:IsAdmin()
+		if(CLIENT) then
+			return self:GetNWBool("Vermilion_Identify_Admin", false)
+		end
+		return Vermilion:HasPermission(self, "identify_as_admin")
+	end
 
+
+	if(META.Vermilion_Lock == nil) then META.Vermilion_Lock = META.Lock end
+	function META:Lock()
+		if(not Vermilion:HasPermission(self, "lock_immunity") or not EXTENSION:GetData("enable_lock_immunity", true)) then
+			self:Vermilion_Lock()
+		end
+	end
+
+	if(META.Vermilion_Freeze == nil) then META.Vermilion_Freeze = META.Freeze end
+	function META:Freeze( freeze )
+		if(not Vermilion:HasPermission(self, "lock_immunity") or not EXTENSION:GetData("enable_lock_immunity", true)) then
+			self:Vermilion_Freeze( freeze )
+		end
+	end
+
+	if(META.Vermilion_Kill == nil) then META.Vermilion_Kill = META.Kill end
+	function META:Kill()
+		if(not Vermilion:HasPermission(self, "kill_immunity") or not EXTENSION:GetData("enable_kill_immunity", true)) then
+			self:Vermilion_Kill()
+		end
+	end
+
+	if(META.Vermilion_KillSilent == nil) then META.Vermilion_KillSilent = META.KillSilent end
+	function META:KillSilent()
+		if(not Vermilion:HasPermission(self, "kill_immunity") or not EXTENSION:GetData("enable_kill_immunity", true)) then
+			self:Vermilion_KillSilent()
+		end
+	end
+
+	if(META.Vermilion_Kick == nil) then META.Vermilion_Kick = META.Kick end
+	function META:Kick(reason)
+		if(not Vermilion:HasPermission(self, "kick_immunity") or not EXTENSION:GetData("enable_kick_immunity", true)) then
+			self:Vermilion_Kick(reason)
+		end
+	end
 	
 	Vermilion:AddChatCommand("broadcast", function(sender, text)
 		if(Vermilion:HasPermissionError(sender, "broadcast_hint")) then
@@ -129,16 +173,13 @@ function EXTENSION:InitServer()
 			Vermilion:SendNotify(sender, str .. " has been added to the client resources!")
 		end
 	end, "<resource path>")
-
-	
-	local META = FindMetaTable("Player")
 	
 	timer.Simple(1, function() -- This timer allows Vermilion to overwrite other addons by "waiting" for them to overwrite the function, then subsequently overwriting it after 1 second.
 		if(META.Vermilion_CheckLimit == nil) then
 			META.Vermilion_CheckLimit = META.CheckLimit
 		end
 		function META:CheckLimit(str)
-			if(not Vermilion:GetSetting("enable_limit_remover", true)) then
+			if(not EXTENSION:GetData("enable_limit_remover", true)) then
 				return self:Vermilion_CheckLimit(str)
 			end
 			if(Vermilion:HasPermission(self, "no_spawn_restrictions")) then
@@ -150,10 +191,10 @@ function EXTENSION:InitServer()
 	
 	
 	self:AddHook("EntityTakeDamage", "V_PlayerHurt", function(target, dmg)
-		if(not Vermilion:GetSetting("enable_no_damage", true)) then return end
+		if(not EXTENSION:GetData("enable_no_damage", true)) then return end
 		if(not target:IsPlayer()) then return end
 		if(not Vermilion:HasPermission(target, "no_damage")) then return end
-		if(Vermilion:GetSetting("global_no_damage", false)) then
+		if(EXTENSION:GetData("global_no_damage", false)) then
 			dmg:ScaleDamage(0)
 			return dmg
 		end
@@ -165,7 +206,7 @@ function EXTENSION:InitServer()
 	
 	
 	self:AddHook("Tick", "V_BulletReload", function(vent, dTab)
-		if(not Vermilion:GetSetting("unlimited_ammo", true)) then return end
+		if(not EXTENSION:GetData("unlimited_ammo", true)) then return end
 		for i,vplayer in pairs(player.GetAll()) do
 			if(Vermilion:HasPermission(vplayer, "unlimited_ammo")) then
 				if(IsValid(vplayer:GetActiveWeapon())) then
@@ -188,7 +229,7 @@ function EXTENSION:InitServer()
 	
 	
 	self:AddHook("PlayerSwitchFlashlight", "LockFlashlight", function(vplayer, enabled)
-		if(enabled and Vermilion:GetSetting("flashlight_control", true)) then
+		if(enabled and EXTENSION:GetData("flashlight_control", true)) then
 			if(not Vermilion:HasPermission(vplayer, "flashlight")) then
 				return false
 			end
@@ -197,26 +238,26 @@ function EXTENSION:InitServer()
 	
 	
 	self:AddHook("PlayerNoClip", "LockNoclip", function(vplayer, enabled)
-		if(enabled and Vermilion:GetSetting("noclip_control", true)) then
+		if(enabled and EXTENSION:GetData("noclip_control", true)) then
 			if(not Vermilion:HasPermission(vplayer, "noclip")) then
 				return false
 			end
 		end
-		if(Vermilion:GetSetting("force_noclip_permissions", true)) then
+		if(EXTENSION:GetData("force_noclip_permissions", true)) then
 			return true
 		end
 	end)
 	
 	
 	self:AddHook("PlayerSpray", "LockSpray", function(vplayer)
-		if(not Vermilion:HasPermission(vplayer, "spray") and Vermilion:GetSetting("spray_control", true)) then
+		if(not Vermilion:HasPermission(vplayer, "spray") and EXTENSION:GetData("spray_control", true)) then
 			return false
 		end
 	end)
 	
 	
 	self:AddHook("PlayerCanHearPlayersVoice", "LockVOIP", function(listener, talker)
-		if(not Vermilion:GetSetting("voip_control", true)) then return end
+		if(not EXTENSION:GetData("voip_control", true)) then return end
 		if(not Vermilion:HasPermission(talker, "use_voip")) then
 			return false
 		end
@@ -227,10 +268,10 @@ function EXTENSION:InitServer()
 	
 	
 	self:AddHook("GetFallDamage", "Vermilion_FallDamage", function(vplayer, speed)
-		if(not Vermilion:GetSetting("disable_fall_damage", true)) then
+		if(not EXTENSION:GetData("disable_fall_damage", true)) then
 			return
 		end
-		if(Vermilion:GetSetting("global_no_fall_damage", false)) then
+		if(EXTENSION:GetData("global_no_fall_damage", false)) then
 			return 0
 		end
 		if(Vermilion:HasPermission(vplayer, "no_fall_damage")) then
@@ -269,18 +310,19 @@ function EXTENSION:InitServer()
 	self:NetHook("VServerGetProperties", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "server_manage")) then
 			net.Start("VServerGetProperties")
-			net.WriteString(tostring(Vermilion:GetSetting("unlimited_ammo", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("enable_limit_remover", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("enable_no_damage", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("flashlight_control", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("noclip_control", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("spray_control", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("voip_control", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("enable_lock_immunity", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("enable_kill_immunity", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("enable_kick_immunity", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("disable_fall_damage", true)))
-			net.WriteString(tostring(Vermilion:GetSetting("force_noclip_permissions", true)))
+			net.WriteString(tostring(EXTENSION:GetData("unlimited_ammo", true)))
+			net.WriteString(tostring(EXTENSION:GetData("enable_limit_remover", true)))
+			net.WriteString(tostring(EXTENSION:GetData("enable_no_damage", true)))
+			net.WriteString(tostring(EXTENSION:GetData("flashlight_control", true)))
+			net.WriteString(tostring(EXTENSION:GetData("noclip_control", true)))
+			net.WriteString(tostring(EXTENSION:GetData("spray_control", true)))
+			net.WriteString(tostring(EXTENSION:GetData("voip_control", true)))
+			net.WriteString(tostring(EXTENSION:GetData("enable_lock_immunity", true)))
+			net.WriteString(tostring(EXTENSION:GetData("enable_kill_immunity", true)))
+			net.WriteString(tostring(EXTENSION:GetData("enable_kick_immunity", true)))
+			net.WriteString(tostring(EXTENSION:GetData("disable_fall_damage", true)))
+			net.WriteString(tostring(EXTENSION:GetData("force_noclip_permissions", true)))
+			net.WriteString(tostring(EXTENSION:GetData("disable_owner_nag", false)))
 			net.Send(vplayer)
 		end
 	end)
@@ -288,30 +330,31 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VServerUpdate", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "server_manage")) then
-			Vermilion:SetSetting("unlimited_ammo", tobool(net.ReadString()))
-			Vermilion:SetSetting("enable_limit_remover", tobool(net.ReadString()))
-			Vermilion:SetSetting("enable_no_damage", tobool(net.ReadString()))
-			Vermilion:SetSetting("flashlight_Control", tobool(net.ReadString()))
-			Vermilion:SetSetting("noclip_control", tobool(net.ReadString()))
-			Vermilion:SetSetting("spray_control", tobool(net.ReadString()))
-			Vermilion:SetSetting("voip_control", tobool(net.ReadString()))
-			Vermilion:SetSetting("enable_lock_immunity", tobool(net.ReadString()))
-			Vermilion:SetSetting("enable_kill_immunity", tobool(net.ReadString()))
-			Vermilion:SetSetting("enable_kick_immunity", tobool(net.ReadString()))
-			Vermilion:SetSetting("disable_fall_damage", tobool(net.ReadString()))
-			Vermilion:SetSetting("force_noclip_permissions", tobool(net.ReadString()))
+			EXTENSION:SetData("unlimited_ammo", tobool(net.ReadString()))
+			EXTENSION:SetData("enable_limit_remover", tobool(net.ReadString()))
+			EXTENSION:SetData("enable_no_damage", tobool(net.ReadString()))
+			EXTENSION:SetData("flashlight_Control", tobool(net.ReadString()))
+			EXTENSION:SetData("noclip_control", tobool(net.ReadString()))
+			EXTENSION:SetData("spray_control", tobool(net.ReadString()))
+			EXTENSION:SetData("voip_control", tobool(net.ReadString()))
+			EXTENSION:SetData("enable_lock_immunity", tobool(net.ReadString()))
+			EXTENSION:SetData("enable_kill_immunity", tobool(net.ReadString()))
+			EXTENSION:SetData("enable_kick_immunity", tobool(net.ReadString()))
+			EXTENSION:SetData("disable_fall_damage", tobool(net.ReadString()))
+			EXTENSION:SetData("force_noclip_permissions", tobool(net.ReadString()))
+			EXTENSION:SetData("disable_owner_nag", tobool(net.ReadString()))
 		end
 	end)
 	
 	self:NetHook("VGetMOTD", function(vplayer)
 		net.Start("VGetMOTD")
-		net.WriteString(Vermilion:GetSetting("motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!"))
+		net.WriteString(EXTENSION:GetData("motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!"))
 		net.Send(vplayer)
 	end)
 	
 	self:NetHook("VUpdateMOTD", function(vplayer)
 		if(Vermilion:HasPermissionError(vplayer, "server_manage")) then
-			Vermilion:SetSetting("motd", net.ReadString())
+			EXTENSION:SetData("motd", net.ReadString())
 		end
 	end)
 	
@@ -351,6 +394,7 @@ function EXTENSION:InitClient()
 		EXTENSION.kickImmunity:SetValue( tobool(net.ReadString()) )
 		EXTENSION.fallDamage:SetValue( tobool(net.ReadString()) )
 		EXTENSION.forceNoclip:SetValue( tobool(net.ReadString()) )
+		EXTENSION.disableOwnerNag:SetValue( tobool(net.ReadString()) )
 	end)
 	
 	
@@ -386,6 +430,7 @@ function EXTENSION:InitClient()
 				net.WriteString(tostring(EXTENSION.kickImmunity:GetChecked()))
 				net.WriteString(tostring(EXTENSION.fallDamage:GetChecked()))
 				net.WriteString(tostring(EXTENSION.forceNoclip:GetChecked()))
+				net.WriteString(tostring(EXTENSION.disableOwnerNag:GetChecked()))
 				net.SendToServer()
 			end
 			
@@ -527,6 +572,16 @@ function EXTENSION:InitClient()
 			EXTENSION.forceNoclip:SetDark(true)
 			EXTENSION.forceNoclip:SizeToContents()
 			EXTENSION.forceNoclip.OnChange = function(self, val)
+				updateServer()
+			end
+			
+			EXTENSION.disableOwnerNag = vgui.Create("DCheckBoxLabel")
+			EXTENSION.disableOwnerNag:SetText("Disable 'no owner' alert on join.")
+			EXTENSION.disableOwnerNag:SetParent(panel)
+			EXTENSION.disableOwnerNag:SetPos(10, 250)
+			EXTENSION.disableOwnerNag:SetDark(true)
+			EXTENSION.disableOwnerNag:SizeToContents()
+			EXTENSION.disableOwnerNag.OnChange = function(self, val)
 				updateServer()
 			end
 			

@@ -80,7 +80,7 @@ function EXTENSION:InitServer()
 				Name = k:GetName(),
 				SteamID = k:SteamID(),
 				KDR = kdrtext,
-				Rank = string.SetChar(Vermilion.Ranks[Vermilion:GetRank(k)], 1, string.upper(string.GetChar(Vermilion.Ranks[Vermilion:GetRank(k)], 1))),
+				Rank = string.SetChar(Vermilion:GetUser(k):GetRank().Name, 1, string.upper(string.GetChar(Vermilion:GetUser(k):GetRank().Name, 1))),
 				TimeConnected = 0
 			}
 			table.insert(gdata, data)
@@ -159,6 +159,10 @@ function EXTENSION:InitClient()
 			if(not IsValid(vplayer)) then vplayer = Crimson.LookupPlayerByName(k.Name) end
 			if(IsValid(vplayer)) then
 				local ln = EXTENSION.PlayerList:AddLine(vplayer:GetName(), k.SteamID, k.KDR, vplayer:Ping(), k.Rank, k.TimeConnected)
+				
+				for i1,k1 in pairs(ln.Columns) do
+					k1:SetContentAlignment(5)
+				end
 				
 				ln.OnRightClick = function()
 					local conmenu = DermaMenu()

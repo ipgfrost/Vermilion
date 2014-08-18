@@ -56,24 +56,6 @@ EXTENSION.NetworkStrings = {
 	"VKickPlayer"
 }
 
-EXTENSION.Bans = {}
-
-function EXTENSION:LoadBans()
-	self.Bans = Vermilion:GetSetting("bans", {})
-	if(table.Count(self.Bans) == 0) then 
-		self:ResetBans()
-		self:SaveBans()
-	end
-end
-
-function EXTENSION:SaveBans()
-	Vermilion:SetSetting("bans", self.Bans)
-end
-
-function EXTENSION:ResetBans()
-	self.Bans = {}
-end
-
 --[[
 	Ban a player and unban them using a unix timestamp.
 ]]--
@@ -230,8 +212,7 @@ function Vermilion:BanPlayerFor(vplayer, vplayerBanner, reason, years, months, w
 	self:BroadcastNotify(str .. timestr .. " with reason: " .. reason, VERMILION_NOTIFY_ERROR)
 	
 	-- steamid, reason, expiry time, banner
-	table.insert(EXTENSION.Bans, { vplayer:SteamID(), reason, os.time() + time, vplayerBanner:GetName() } )
-	self:SetRank(vplayer, "banned")	
+	table.insert(EXTENSION:GetData("bans", {}, true), { vplayer:SteamID(), reason, os.time() + time, vplayerBanner:GetName() } )
 	vplayer:Kick("Banned from server for " .. timestr .. ": " .. reason)
 	
 	
@@ -248,22 +229,22 @@ function Vermilion:UnbanPlayer(steamid, unbanner)
 		end
 	end
 	local idxToRemove = {}
-	for i,k in pairs(EXTENSION.Bans) do
+	for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
 		if(k[1] == steamid) then
-			local playerName = self:GetPlayerBySteamID(k[1])['name']
+			local playerName = self:GetUserSteamID(k[1]).Name
 			self:BroadcastNotify(playerName .. " has been unbanned by " .. unbanner:GetName(), VERMILION_NOTIFY_ERROR)
 			table.insert(idxToRemove, i)
-			self:GetPlayerBySteamID(k[1])['rank'] = self:GetSetting("default_rank", "player")
+			self:GetUserSteamID(k[1]):SetRank(self:GetSetting("default_rank", "player"))
 			break
 		end
 	end
 	for i,k in pairs(idxToRemove) do
-		table.remove(EXTENSION.Bans, k)
+		table.remove(EXTENSION:GetData("bans", {}, true), k)
 	end
 end
 
 function Vermilion:IsSteamIDBanned(steamid)
-	for i,k in pairs(EXTENSION.Bans) do
+	for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
 		if(k[1] == steamid) then
 			return true
 		end
@@ -281,7 +262,7 @@ function EXTENSION:InitServer()
 			end
 			local tplayer = Crimson.LookupPlayerByName(text[1])
 			if(not IsValid(tplayer)) then
-				log("This player does not exist!", VERMILION_NOTIFY_ERROR)
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 				return
 			end
 			local time = 60
@@ -304,8 +285,8 @@ function EXTENSION:InitServer()
 				log("Syntax: !unban <player>", VERMILION_NOTIFY_ERROR)
 				return
 			end
-			if(Vermilion:PlayerWithNameExists(text[1])) then
-				Vermilion:UnbanPlayer(Vermilion:GetPlayerSteamID(text[1]), sender)
+			if(Vermilion:HasUser(text[1])) then
+				Vermilion:UnbanPlayer(Vermilion:GetUser(text[1]).SteamID, sender)
 			else
 				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			end
@@ -333,8 +314,8 @@ function EXTENSION:InitServer()
 	self:NetHook("VBannedPlayersList", function(vplayer)
 		net.Start("VBannedPlayersList")
 		local tab = {}
-		for i,k in pairs(EXTENSION.Bans) do
-			table.insert(tab, {Vermilion:GetPlayerBySteamID(k[1])['name'], k[1], k[2], os.date("%c", k[3]), k[4]})
+		for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
+			table.insert(tab, {Vermilion:GetUserSteamID(k[1]).Name, k[1], k[2], os.date("%c", k[3]), k[4]})
 		end
 		net.WriteTable(tab)
 		net.Send(vplayer)
@@ -362,10 +343,9 @@ function EXTENSION:InitServer()
 	self:NetHook("VUnbanPlayer", function(vplayer)
 		if(Vermilion:HasPermissionError(vplayer, "unban")) then
 			local steamid = net.ReadString()
-			local playerData = Vermilion:GetPlayerBySteamID(steamid)
+			local playerData = Vermilion:GetUserSteamID(steamid)
 			if(playerData != nil) then
 				Vermilion:UnbanPlayer(steamid, vplayer)
-				Vermilion:SaveUserStore()
 			else
 				Vermilion:SendNotify(vplayer, Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			end
@@ -390,19 +370,19 @@ function EXTENSION:InitServer()
 	
 	self:AddHook("CheckPassword", "CheckBanned", function( steamID, ip, svPassword, clPassword, name )
 		local idxToRemove = {}
-		for i,k in pairs(EXTENSION.Bans) do
+		for i,k in pairs(EXTENSION:GetData("bans", {})) do
 			if(os.time() > k[3]) then
-				local playerName = Vermilion:GetPlayerBySteamID(k[1])['name']
+				local playerName = Vermilion:GetUserSteamID(k[1])['name']
 				Vermilion:BroadcastNotify(playerName .. " has been unbanned because their ban has expired!", 10, VERMILION_NOTIFY_ERROR)
 				table.insert(idxToRemove, i)
-				Vermilion:GetPlayerBySteamID(k[1])['rank'] = Vermilion:GetSetting("default_rank", "player")
+				Vermilion:GetUserSteamID(k[1]):SetRank(Vermilion:GetSetting("default_rank", "player"))
 			end
 		end
 		for i,k in pairs(idxToRemove) do
-			table.remove(EXTENSION.Bans, k)
+			table.remove(EXTENSION:GetData("bans", {}), k)
 		end
 		if(Vermilion:IsSteamIDBanned(util.SteamIDFrom64(steamID))) then
-			Vermilion:SendNotify(Vermilion:GetAllPlayersWithPermission("ban_management"), "Warning: " .. name .. " has attempted to join the server!", VERMILION_NOTIFY_ERROR)
+			Vermilion:SendNotify(Vermilion:GetUsersWithPermission("ban_management"), "Warning: " .. name .. " has attempted to join the server!", VERMILION_NOTIFY_ERROR)
 			return false, "You are banned from this server!"
 		end
 	end)
@@ -413,12 +393,6 @@ function EXTENSION:InitServer()
 	end)
 	
 	
-	self:AddHook("Vermilion-SaveConfigs", "bans_save", function()
-		EXTENSION:SaveBans()
-	end)
-	
-	
-	self:LoadBans()
 end
 
 function EXTENSION:InitClient()

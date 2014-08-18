@@ -34,30 +34,6 @@ EXTENSION.PermissionDefinitions = {
 	["remove_warp"] = "This player is able to remove a warp.",
 	["warp"] = "This player is able to use the warp command. Note that the player cannot be warped themselves unless they have the can_be_warped permission."
 }
-EXTENSION.Warps = {}
-
-function EXTENSION:LoadSettings()
-	local stab = Vermilion:GetSetting("warps", {})
-	if(table.Count(stab) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-	for i,k in pairs(stab) do
-		self.Warps[i] = Vector(k[1], k[2], k[3])
-	end
-end
-
-function EXTENSION:SaveSettings()
-	local stab = {}
-	for i,k in pairs(self.Warps) do
-		stab[i] = { k.x, k.y, k.z }
-	end
-	Vermilion:SetSetting("warps", stab)
-end
-
-function EXTENSION:ResetSettings()
-	self.Warps = {}
-end
 
 function EXTENSION:InitServer()
 	
@@ -70,12 +46,12 @@ function EXTENSION:InitServer()
 			log("Syntax: !addwarp <name>", VERMILION_NOTIFY_ERROR)
 			return
 		end
-		if (EXTENSION.Warps[text[1]] != nil) then
+		if (EXTENSION:GetData("warps", {}, true)[text[1]] != nil) then
 			log("A warp with that name already exists.", VERMILION_NOTIFY_ERROR)
 			return
 		end
 		log("Added warp '" .. text[1] .. "'")
-		EXTENSION.Warps[text[1]] = sender:GetPos()
+		EXTENSION:GetData("warps", {}, true)[text[1]] = sender:GetPos()
 	end, "<name>")
 
 	Vermilion:AddChatCommand("removewarp", function(sender, text, log)
@@ -87,20 +63,19 @@ function EXTENSION:InitServer()
 			log("Syntax: !removewarp <name>", VERMILION_NOTIFY_ERROR)
 			return
 		end
-		if(EXTENSION.Warps[text[1]] == nil) then
+		if(EXTENSION:GetData("warps", {}, true)[text[1]] == nil) then
 			log("That warp doesn't exist.", VERMILION_NOTIFY_ERROR)
 			return
 		end
-		EXTENSION.Warps[text[1]] = nil
+		EXTENSION:GetData("warps", {}, true)[text[1]] = nil
 		log("Removed warp '" .. text[1] .. "'")
 	end, "<name>")
 	
 	Vermilion:AddChatCommand("listwarps", function(sender, text, log)
 		local str = ""
 		local idx = 1
-		for i,k in pairs(EXTENSION.Warps) do
-			print(tostring(idx) .. " == " .. tostring(table.Count(EXTENSION.Warps)))
-			if(idx == table.Count(EXTENSION.Warps)) then
+		for i,k in pairs(EXTENSION:GetData("warps", {}, true)) do
+			if(idx == table.Count(EXTENSION:GetData("warps", {}, true))) then
 				str = str .. i
 			else
 				str = str .. i .. ", "
@@ -124,7 +99,7 @@ function EXTENSION:InitServer()
 			if(not Vermilion:HasPermissionError(sender, "can_be_warped") or not Vermilion:HasPermissionError(sender, "warp")) then
 				return
 			end
-			local position = EXTENSION.Warps[text[1]]
+			local position = EXTENSION:GetData("warps", {}, true)[text[1]]
 			if(position == nil) then
 				log("Warp does not exist!", VERMILION_NOTIFY_ERROR)
 				return
@@ -146,7 +121,7 @@ function EXTENSION:InitServer()
 				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 				return
 			end
-			local position = EXTENSION.Warps[text[2]]
+			local position = EXTENSION:GetData("warps", {}, true)[text[2]]
 			if(position == nil) then
 				log("Warp does not exist!", VERMILION_NOTIFY_ERROR)
 				return
@@ -159,12 +134,6 @@ function EXTENSION:InitServer()
 
 
 	end, "[player] <warp>")
-
-	self:AddHook("Vermilion-SaveConfigs", "warps_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
 end
 
 function EXTENSION:InitClient()

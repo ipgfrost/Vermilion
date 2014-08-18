@@ -54,19 +54,21 @@ function EXTENSION:RegisterEffect(name, func, events)
 end
 
 function EXTENSION:NewZone(c1, c2, name, owner)
-	self.Zones[name] = { Bound = Crimson.CBound(c1, c2), Effects = { }, Owner = owner, ActivePlayers = {}, ActiveObjects = {} }
+	self.Zones[name] = { Bound = Crimson.CBound(c1, c2), Effects = { }, Owner = owner, ActivePlayers = {}, ActiveObjects = {}, Map = game.GetMap() }
 	self:UpdateClients()
 end
 
 function EXTENSION:GetZonesWithEffect(effect)
-	return Crimson.FindInTable(self.Zones, function(k) return table.HasValue(k.Effects, effect) end)
+	return Crimson.FindInTable(self.Zones, function(k) return table.HasValue(k.Effects, effect) and k.Map == game.GetMap() end)
 end
 
 function EXTENSION:UpdateClients(client)
 	net.Start("VUpdateBlocks")
 	local stab = {}
 	for i,k in pairs(EXTENSION.Zones) do
-		table.insert(stab, {k.Bound.p1, k.Bound.p2})
+		if(k.Map == game.GetMap()) then
+			table.insert(stab, {k.Bound.p1, k.Bound.p2})
+		end
 	end
 	net.WriteTable(stab)
 	if(not client) then 
@@ -77,7 +79,7 @@ function EXTENSION:UpdateClients(client)
 end
 
 function EXTENSION:LoadSettings()
-	local stab = Vermilion:GetSetting("zones", {})
+	local stab = self:GetData("zones", {})
 	if(table.Count(stab) == 0) then 
 		self:ResetSettings()
 		self:SaveSettings()
@@ -85,16 +87,16 @@ function EXTENSION:LoadSettings()
 	for i,k in pairs(stab) do
 		local v1 = Vector(k[1][1], k[1][2], k[1][3])
 		local v2 = Vector(k[2][1], k[2][2], k[2][3])
-		self.Zones[i] = { Bound = Crimson.CBound(v1, v2), Effects = k[3], Owner = k[4], ActivePlayers = {}, ActiveObjects = {} }
+		self.Zones[i] = { Bound = Crimson.CBound(v1, v2), Effects = k[3], Owner = k[4], ActivePlayers = {}, ActiveObjects = {}, Map = k[5] }
 	end
 end
 
 function EXTENSION:SaveSettings()
 	local stab = {}
 	for i,k in pairs(self.Zones) do
-		stab[i] = { { k.Bound.p1.x, k.Bound.p1.y, k.Bound.p1.z }, { k.Bound.p2.x, k.Bound.p2.y, k.Bound.p2.z }, k.Effects, k.Owner }
+		stab[i] = { { k.Bound.p1.x, k.Bound.p1.y, k.Bound.p1.z }, { k.Bound.p2.x, k.Bound.p2.y, k.Bound.p2.z }, k.Effects, k.Owner, k.Map }
 	end
-	Vermilion:SetSetting("zones", stab)
+	self:SetData("zones", stab)
 end
 
 function EXTENSION:ResetSettings()
@@ -346,6 +348,10 @@ function EXTENSION:InitServer()
 			log("This zone does not exist!", VERMILION_NOTIFY_ERROR)
 			return
 		end
+		if(EXTENSION.Zones[text[1]].Map != game.GetMap() and EXTENSION.Zones[text[1]].Map != nil) then
+			log("This zone is not active in this map.", VERMILION_NOTIFY_ERROR)
+			return
+		end
 		if(table.HasValue(EXTENSION.Zones[text[1]].Effects, text[2])) then
 			log("This zone already has this mode enabled!", VERMILION_NOTIFY_ERROR)
 			return
@@ -366,6 +372,10 @@ function EXTENSION:InitServer()
 		end
 		if(EXTENSION.Zones[text[1]] == nil) then
 			log("This zone does not exist!", VERMILION_NOTIFY_ERROR)
+			return
+		end
+		if(EXTENSION.Zones[text[1]].Map != game.GetMap() and EXTENSION.Zones[text[1]].Map != nil) then
+			log("This zone is not active in this map.", VERMILION_NOTIFY_ERROR)
 			return
 		end
 		if(EXTENSION.EffectDefinitions[text[2]] == nil) then
@@ -400,6 +410,10 @@ function EXTENSION:InitServer()
 			log("This zone does not exist!", VERMILION_NOTIFY_ERROR)
 			return
 		end
+		if(EXTENSION.Zones[text[1]].Map != game.GetMap() and EXTENSION.Zones[text[1]].Map != nil) then
+			log("This zone is not active in this map.", VERMILION_NOTIFY_ERROR)
+			return
+		end
 		log("Active modes on this zone:")
 		for i,k in pairs(EXTENSION.Zones[text[1]].Effects) do
 			log(k)
@@ -413,6 +427,10 @@ function EXTENSION:InitServer()
 			log("Zone does not exist!", VERMILION_NOTIFY_ERROR)
 			return
 		end
+		if(EXTENSION.Zones[text[1]].Map != game.GetMap() and EXTENSION.Zones[text[1]].Map != nil) then
+			log("This zone is not active in this map.", VERMILION_NOTIFY_ERROR)
+			return
+		end
 		EXTENSION.Zones[text[1]] = nil
 		log("Zone removed!")
 		EXTENSION:UpdateClients()
@@ -422,7 +440,11 @@ function EXTENSION:InitServer()
 		if(not Vermilion:HasPermissionError(sender, "zone_manager")) then return end
 		log("Active zones:")
 		for i,k in pairs(EXTENSION.Zones) do
-			log(i)
+			if(k.Map == game.GetMap()) then
+				log(i)
+			else
+				log(i .. " (not active in this map)")
+			end
 		end
 	end)
 	
@@ -481,7 +503,7 @@ function EXTENSION:InitServer()
 		end
 	end, "[name]")
 	
-	self:AddHook("Vermilion-SaveConfigs", "zone_save", function()
+	self:AddHook("Vermilion-Pre-Shutdown", "zone_save", function()
 		EXTENSION:SaveSettings()
 	end)
 	

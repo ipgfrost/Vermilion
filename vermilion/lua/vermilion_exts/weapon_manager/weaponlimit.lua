@@ -40,7 +40,6 @@ EXTENSION.NetworkStrings = {
 	"VRankWeaponsSave"
 }
 
-EXTENSION.RankLimits = {}
 EXTENSION.EditingRank = ""
 
 function EXTENSION:InitServer()
@@ -51,8 +50,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		local tab = net.ReadTable()
-		EXTENSION.RankLimits[rnk] = tab
-		EXTENSION:SaveSettings()
+		EXTENSION:GetData("weapon_limits", {}, true)[rnk] = tab
 	end)
 	
 	self:NetHook("VRankWeaponsLoad", function(vplayer)
@@ -61,7 +59,7 @@ function EXTENSION:InitServer()
 		end
 		local rnk = net.ReadString()
 		
-		local tab = EXTENSION.RankLimits[rnk]
+		local tab = EXTENSION:GetData("weapon_limits", {}, true)[rnk]
 		if(not tab) then
 			tab = {}
 		end
@@ -74,11 +72,11 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermission(vplayer, "give_all_sweps")) then
 			return true
 		end
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("weapon_limits", {}, true)[pRank] == nil) then
 			return
 		end
-		if(table.HasValue(EXTENSION.RankLimits[pRank], weapon)) then
+		if(table.HasValue(EXTENSION:GetData("weapon_limits", {}, true)[pRank], weapon)) then
 			Vermilion:SendNotify(vplayer, "You cannot spawn this weapon!", VERMILION_NOTIFY_ERROR)
 			return false
 		end
@@ -88,20 +86,20 @@ function EXTENSION:InitServer()
 			return true
 		end
 		local wepclass = weapon:GetClass()
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then return end
-		if(table.HasValue(EXTENSION.RankLimits[pRank], wepclass)) then return false end
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("weapon_limits", {}, true)[pRank] == nil) then return end
+		if(table.HasValue(EXTENSION:GetData("weapon_limits", {}, true)[pRank], wepclass)) then return false end
 	end)
 	self:AddHook("PlayerSwitchWeapon", function(vplayer, old, new)
 		if(Vermilion:HasPermission(vplayer, "give_all_sweps")) then
 			return
 		end
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("weapon_limits", {}, true)[pRank] == nil) then
 			return
 		end
 		for i,k in pairs(vplayer:GetWeapons()) do
-			if(table.HasValue(EXTENSION.RankLimits[pRank], k:GetClass())) then
+			if(table.HasValue(EXTENSION:GetData("weapon_limits", {}, true)[pRank], k:GetClass())) then
 				vplayer:StripWeapon(k:GetClass())
 			end
 		end
@@ -110,12 +108,12 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermission(vplayer, "give_all_sweps")) then
 			return
 		end
-		local pRank = Vermilion:GetPlayer(vplayer)['rank']
-		if(EXTENSION.RankLimits[pRank] == nil) then
+		local pRank = Vermilion:GetUser(vplayer):GetRank().Name
+		if(EXTENSION:GetData("weapon_limits", {}, true)[pRank] == nil) then
 			return
 		end
 		for i,k in pairs(vplayer:GetWeapons()) do
-			if(table.HasValue(EXTENSION.RankLimits[pRank], k:GetClass())) then
+			if(table.HasValue(EXTENSION:GetData("weapon_limits", {}, true)[pRank], k:GetClass())) then
 				vplayer:StripWeapon(k:GetClass())
 			end
 		end
@@ -124,28 +122,6 @@ function EXTENSION:InitServer()
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("wep_control", "weplimit_management")
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "weaponlimit_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
-end
-
-function EXTENSION:LoadSettings()
-	self.RankLimits = Vermilion:GetSetting("weapon_limits", {})
-	if(table.Count(self.RankLimits) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-end
-
-function EXTENSION:SaveSettings()
-	Vermilion:SetSetting("weapon_limits", self.RankLimits)
-end
-
-function EXTENSION:ResetSettings()
-	self.RankLimits = {}
 end
 
 function EXTENSION:InitClient()

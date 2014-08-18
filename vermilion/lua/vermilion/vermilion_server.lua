@@ -97,18 +97,18 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 		net.Send(vplayer)
 	end)
 	if(Vermilion:GetExtension("geoip") != nil and not vplayer:IsBot()) then
-		if(Vermilion:GetPlayer(vplayer) == nil) then
+		if(not Vermilion:HasUser(vplayer)) then
 			Vermilion.GetGeoIPForPlayer(vplayer, function(tab)
 				Vermilion:BroadcastNotify(string.format(Vermilion.Lang.JoinedServerFirstGeoIP, vplayer:GetName(), tab['country_name']))
 				vplayer.Vermilion_Location = tab['country_code']
 				vplayer:SetNWString("Country_Code", tab['country_code'])
 			end)
-			Vermilion:AddPlayer(vplayer)
-			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetPlayer(vplayer)['rank'])
+			Vermilion:AddUser(vplayer:GetName(), vplayer:SteamID())
+			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
 			vplayer:SetNWString("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
 			if(not Vermilion:OwnerExists() and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
 				Vermilion.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
-				Vermilion.UserStore[vplayer:SteamID()]['rank'] = "owner"
+				Vermilion:GetUser(vplayer):SetRank("owner")
 			end
 		else
 			Vermilion.GetGeoIPForPlayer(vplayer, function(tab)
@@ -116,35 +116,35 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 				vplayer.Vermilion_Location = tab['country_code']
 				vplayer:SetNWString("Country_Code", tab['country_code'])
 			end)
-			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetPlayer(vplayer)['rank'])
+			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
 			vplayer:SetNWString("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
 			if(not Vermilion:OwnerExists() and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
 				Vermilion.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
-				Vermilion.UserStore[vplayer:SteamID()]['rank'] = "owner"
+				Vermilion:GetUser(vplayer):SetRank("owner")
 			end
 		end
 	else
-		if(Vermilion:GetPlayer(vplayer) == nil) then
+		if(not Vermilion:HasUser(vplayer)) then
 			Vermilion:BroadcastNotify(string.format(Vermilion.Lang.JoinedServerFirst, vplayer:GetName()))
-			Vermilion:AddPlayer(vplayer)
-			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetPlayer(vplayer)['rank'])
+			Vermilion:AddUser(vplayer:GetName(), vplayer:SteamID())
+			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
 			vplayer:SetNWBool("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
 			if(not Vermilion:OwnerExists() and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
 				Vermilion.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
-				Vermilion.UserStore[vplayer:SteamID()]['rank'] = "owner"
+				Vermilion:GetUser(vplayer):SetRank("owner")
 			end
 		else
 			if(not Vermilion:OwnerExists() and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
 				Vermilion.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
-				Vermilion.UserStore[vplayer:SteamID()]['rank'] = "owner"
+				Vermilion:GetUser(vplayer):SetRank("owner")
 			end
 			Vermilion:BroadcastNotify(string.format(Vermilion.Lang.JoinedServer, vplayer:GetName()))
-			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetPlayer(vplayer)['rank'])
+			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
 			vplayer:SetNWBool("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
 		end
 	end
 	
-	local motd = Vermilion:GetSetting("motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!")
+	local motd = Vermilion:GetModuleData("server_manager", "motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!")
 	for i,k in pairs(Vermilion.MOTDKeywords) do
 		if(string.find(motd, "%" .. i .. "%", 1, true)) then
 			motd = string.Replace(motd, "%" .. i .. "%", tostring(k.Function(vplayer)))
@@ -153,6 +153,10 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 	
 	
 	timer.Simple(2, function()
+		if(not Vermilion:OwnerExists() and not Vermilion:GetModuleData("server_manager", "disable_owner_nag", false)) then
+			Vermilion:SendNotify(vplayer, "No owner exists for this server!", 15, VERMILION_NOTIFY_ERROR)
+			Vermilion:SendNotify(vplayer, "If you are the owner of the server, please type 'vermilion_setrank \"" .. vplayer:GetName() .. "\" owner' into the DEDICATED SERVER console!", 15, VERMILION_NOTIFY_ERROR) 
+		end
 		for i,k in pairs(string.Explode("\n", motd)) do
 			Vermilion:SendNotify(vplayer, k, 10)
 		end

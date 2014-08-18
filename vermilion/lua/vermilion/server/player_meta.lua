@@ -32,52 +32,6 @@ function META:Vermilion_IsOwner()
 	return Vermilion:IsOwner(self)
 end
 
---[[
-	This needs to be replicated onto the client.
-]]--
-function META:IsAdmin()
-	if(CLIENT) then
-		return self:GetNWBool("Vermilion_Identify_Admin", false)
-	end
-	return Vermilion:HasPermission(self, "identify_as_admin")
-end
-
-
-if(META.Vermilion_Lock == nil) then META.Vermilion_Lock = META.Lock end
-function META:Lock()
-	if(not Vermilion:HasPermission(self, "lock_immunity") or not Vermilion:GetSetting("enable_lock_immunity", true)) then
-		self:Vermilion_Lock()
-	end
-end
-
-if(META.Vermilion_Freeze == nil) then META.Vermilion_Freeze = META.Freeze end
-function META:Freeze( freeze )
-	if(not Vermilion:HasPermission(self, "lock_immunity") or not Vermilion:GetSetting("enable_lock_immunity", true)) then
-		self:Vermilion_Freeze( freeze )
-	end
-end
-
-if(META.Vermilion_Kill == nil) then META.Vermilion_Kill = META.Kill end
-function META:Kill()
-	if(not Vermilion:HasPermission(self, "kill_immunity") or not Vermilion:GetSetting("enable_kill_immunity", true)) then
-		self:Vermilion_Kill()
-	end
-end
-
-if(META.Vermilion_KillSilent == nil) then META.Vermilion_KillSilent = META.KillSilent end
-function META:KillSilent()
-	if(not Vermilion:HasPermission(self, "kill_immunity") or not Vermilion:GetSetting("enable_kill_immunity", true)) then
-		self:Vermilion_KillSilent()
-	end
-end
-
-if(META.Vermilion_Kick == nil) then META.Vermilion_Kick = META.Kick end
-function META:Kick(reason)
-	if(not Vermilion:HasPermission(self, "kick_immunity") or not Vermilion:GetSetting("enable_kick_immunity", true)) then
-		self:Vermilion_Kick(reason)
-	end
-end
-
 function META:Ban()
 	Vermilion.Log("Warning: standard ban attempted!")
 end

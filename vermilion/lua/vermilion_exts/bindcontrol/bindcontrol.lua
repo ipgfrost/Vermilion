@@ -35,34 +35,16 @@ EXTENSION.NetworkStrings = {
 }
 EXTENSION.EditingRank = ""
 
--- Server side list
-EXTENSION.GlobalBans = {}
-
 -- Client side list
 EXTENSION.BannedBinds = {}
 
-function EXTENSION:LoadSettings()
-	self.GlobalBans = Vermilion:GetSetting("blocked_binds", {})
-	if(table.Count(self.GlobalBans) == 0) then 
-		self:ResetSettings()
-		self:SaveSettings()
-	end
-end
-
-function EXTENSION:SaveSettings()
-	Vermilion:SetSetting("blocked_binds", self.GlobalBans)
-end
-
-function EXTENSION:ResetSettings()
-	EXTENSION.GlobalBans = {}
-end
 
 function EXTENSION:BroadcastNewBinds()
 	for i,k in pairs(player.GetAll()) do
 		net.Start("VBindBlockUpdate")
 		local tab = {}
-		for i,k1 in pairs(self.GlobalBans) do
-			if(k1[1] == Vermilion.Ranks[Vermilion:GetRank(k)]) then
+		for i,k1 in pairs(self:GetData("blocked_binds", {}, true)) do
+			if(k1[1] == Vermilion:GetUser(k):GetRank().Name) then
 				tab = k1[2]
 				break
 			end
@@ -77,8 +59,8 @@ function EXTENSION:InitServer()
 	self:NetHook("VBindBlockUpdate", function(vplayer)
 		net.Start("VBindBlockUpdate")
 		local tab = {}
-		for i,k in pairs(EXTENSION.GlobalBans) do
-			if(k[1] == Vermilion.Ranks[Vermilion:GetRank(vplayer)]) then
+		for i,k in pairs(EXTENSION:GetData("blocked_binds", {}, true)) do
+			if(k[1] == Vermilion:GetUser(vplayer):GetRank().Name) then
 				tab = k[2]
 				break
 			end
@@ -89,10 +71,10 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VBindListLoad", function(vplayer)
 		local rank = net.ReadString()
-		if(Vermilion:LookupRank(rank) == VERMILION_BAD_RANK) then
+		if(not Vermilion:HasRank(rank)) then
 			return -- bad rank name
 		end
-		for i,k in pairs(EXTENSION.GlobalBans) do
+		for i,k in pairs(EXTENSION:GetData("blocked_binds", {}, true)) do
 			if(k[1] == rank) then
 				net.Start("VBindListLoad")
 				net.WriteTable(k[2])
@@ -107,11 +89,11 @@ function EXTENSION:InitServer()
 			local rank = net.ReadString()
 			local tab = net.ReadTable()
 			
-			if(Vermilion:LookupRank(rank) == VERMILION_BAD_RANK) then
+			if(not Vermilion:HasRank(rank)) then
 				return -- bad rank name
 			end
 			
-			for i,k in pairs(EXTENSION.GlobalBans) do
+			for i,k in pairs(EXTENSION:GetData("blocked_binds", {}, true)) do
 				if(k[1] == rank) then
 					k[2] = tab
 					EXTENSION:BroadcastNewBinds()
@@ -119,7 +101,7 @@ function EXTENSION:InitServer()
 				end
 			end
 			
-			table.insert(EXTENSION.GlobalBans, { rank, tab })
+			table.insert(EXTENSION:GetData("blocked_binds", {}, true), { rank, tab })
 			EXTENSION:BroadcastNewBinds()
 		end
 	end)
@@ -127,8 +109,8 @@ function EXTENSION:InitServer()
 	concommand.Add("update_bind_blocks", function(sender)
 		net.Start("VBindBlockUpdate")
 		local tab = {}
-		for i,k in pairs(EXTENSION.GlobalBans) do
-			if(k[1] == Vermilion.Ranks[Vermilion:GetRank(sender)]) then
+		for i,k in pairs(EXTENSION:GetData("blocked_binds", {}, true)) do
+			if(k[1] == Vermilion:GetUser(k):GetRank().Name) then
 				tab = k[2]
 				break
 			end
@@ -140,12 +122,6 @@ function EXTENSION:InitServer()
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("binds", "bind_control")
 	end)
-	
-	self:AddHook("Vermilion-SaveConfigs", "bind_save", function()
-		EXTENSION:SaveSettings()
-	end)
-	
-	EXTENSION:LoadSettings()
 end
 
 function EXTENSION:InitClient()

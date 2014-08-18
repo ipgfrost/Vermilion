@@ -526,7 +526,8 @@ function Vermilion:OwnerExists()
 end
 
 concommand.Add("vermilion_dump_settings", function(sender)
-	Crimson.PrintTable(Vermilion.Settings, nil, nil, function(text) sender:PrintMessage(HUD_PRINTCONSOLE, text) end)
+	PrintTable(Vermilion.Settings)
+	--Crimson.PrintTable(Vermilion.Settings, nil, nil, function(text) sender:PrintMessage(HUD_PRINTCONSOLE, text) end)
 end)
 
 Vermilion:LoadSettings()

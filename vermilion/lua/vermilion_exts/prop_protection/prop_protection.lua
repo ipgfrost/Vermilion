@@ -143,21 +143,21 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VUpdatePropProtectionSettings", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_prop_protection")) then
-			Vermilion:SetSetting("prop_protect_use", tobool(net.ReadString()))
-			Vermilion:SetSetting("prop_protect_physgun", tobool(net.ReadString()))
-			Vermilion:SetSetting("prop_protect_gravgun", tobool(net.ReadString()))
-			Vermilion:SetSetting("prop_protect_toolgun", tobool(net.ReadString()))
-			Vermilion:SetSetting("prop_protect_world", tobool(net.ReadString()))
+			EXTENSION:SetData("prop_protect_use", tobool(net.ReadString()))
+			EXTENSION:SetData("prop_protect_physgun", tobool(net.ReadString()))
+			EXTENSION:SetData("prop_protect_gravgun", tobool(net.ReadString()))
+			EXTENSION:SetData("prop_protect_toolgun", tobool(net.ReadString()))
+			EXTENSION:SetData("prop_protect_world", tobool(net.ReadString()))
 		end
 	end)
 	
 	self:NetHook("VGetPropProtectionSettings", function(vplayer)
 		net.Start("VGetPropProtectionSettings")
-		net.WriteString(tostring(Vermilion:GetSetting("prop_protect_use", true)))
-		net.WriteString(tostring(Vermilion:GetSetting("prop_protect_physgun", true)))
-		net.WriteString(tostring(Vermilion:GetSetting("prop_protect_gravgun", true)))
-		net.WriteString(tostring(Vermilion:GetSetting("prop_protect_toolgun", true)))
-		net.WriteString(tostring(Vermilion:GetSetting("prop_protect_world", true)))
+		net.WriteString(tostring(EXTENSION:GetData("prop_protect_use", true)))
+		net.WriteString(tostring(EXTENSION:GetData("prop_protect_physgun", true)))
+		net.WriteString(tostring(EXTENSION:GetData("prop_protect_gravgun", true)))
+		net.WriteString(tostring(EXTENSION:GetData("prop_protect_toolgun", true)))
+		net.WriteString(tostring(EXTENSION:GetData("prop_protect_world", true)))
 		net.Send(vplayer)
 	end)
 	
@@ -265,11 +265,11 @@ end
 
 function EXTENSION:CanTool(vplayer, ent, tool)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return true end
-	if(ent:CreatedByMap() and Vermilion:GetSetting("prop_protect_world", true)) then 
+	if(ent:CreatedByMap() and EXTENSION:GetData("prop_protect_world", true)) then 
 		Vermilion:SendNotify(vplayer, "You can't use the toolgun on a map entity!", VERMILION_NOTIFY_ERROR)
 		return false
 	end
-	if(not Vermilion:HasPermission(vplayer, "toolgun_all")) then
+	if(not Vermilion:HasPermission(vplayer, "toolgun_all") and EXTENSION:GetData("prop_protect_toolgun", true)) then
 		if(ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "toolgun_others")) then
 			Vermilion:SendNotify(vplayer, "You cannot use the toolgun on this!", VERMILION_NOTIFY_ERROR)
 			return false
@@ -284,7 +284,7 @@ end
 
 function EXTENSION:CanGravGunPickup( vplayer, ent )
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
-	if(not Vermilion:HasPermission(vplayer, "grav_gun_pickup_all")) then
+	if(not Vermilion:HasPermission(vplayer, "grav_gun_pickup_all") and EXTENSION:GetData("prop_protect_gravgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_pickup_own")) then return false end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_pickup_others")) then return false end
 	end
@@ -293,7 +293,7 @@ end
 
 function EXTENSION:CanGravGunPunt( vplayer, ent )
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
-	if(not Vermilion:HasPermission(vplayer, "grav_gun_punt_all")) then
+	if(not Vermilion:HasPermission(vplayer, "grav_gun_punt_all") and EXTENSION:GetData("prop_protect_gravgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_punt_own")) then return false end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_punt_others")) then return false end
 	end
@@ -302,13 +302,13 @@ end
 
 function EXTENSION:CanPhysgun( vplayer, ent )
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
-	if(ent:CreatedByMap() and Vermilion:GetSetting("prop_protect_world", true)) then 
+	if(ent:CreatedByMap() and EXTENSION:GetData("prop_protect_world", true)) then 
 		Vermilion:SendNotify(vplayer, "You can't use the physgun on a map entity!", VERMILION_NOTIFY_ERROR)
 		return false
 	end
 	if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then return true end
 	if(ent:GetPersistent() and Vermilion:HasPermission(vplayer, "physgun_persist")) then return true end
-	if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all") and ent.Vermilion_Owner != nil) then
+	if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all") and ent.Vermilion_Owner != nil and EXTENSION:GetData("prop_protect_physgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
 			return false
 		elseif (ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_others")) then
@@ -319,7 +319,7 @@ end
 
 function EXTENSION:CanUse(vplayer, ent)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
-	if(not Vermilion:HasPermission(vplayer, "use_all")) then
+	if(not Vermilion:HasPermission(vplayer, "use_all") and EXTENSION:GetData("prop_protect_use", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "use_own")) then return false end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "use_others")) then return false end
 	end

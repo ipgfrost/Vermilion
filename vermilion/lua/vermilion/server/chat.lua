@@ -20,9 +20,6 @@
 Vermilion.ChatCommands = {}
 Vermilion.ChatAliases = {}
 
-
-
-
 --[[ 
 	Add a chat command to the Vermilion interpreter
 	
@@ -43,6 +40,12 @@ function Vermilion:AddChatCommand(activator, func, syntax)
 	end, nil, "This command can also be run by typing !" .. activator .. " into the chat.")
 end
 
+--[[
+	Create a command that redirects to another command.
+	
+	@param alias (string) - the new command name
+	@param command (string) - the command to redirect to
+]]--
 function Vermilion:AliasChatCommand(alias, command)
 	if(self.ChatAliases[alias] != nil) then
 		self.Log("Chat alias " .. alias .. " has been overwritten!")
@@ -100,6 +103,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole)
 				logFunc("Command failed with an error " .. tostring(err), 25, VERMILION_NOTIFY_ERROR) 
 			end
 		else 
+			if(commandName == nil) then commandName = "" end
 			logFunc("No such command '" .. commandName .. "'", VERMILION_NOTIFY_ERROR)
 		end
 		return ""
