@@ -23,10 +23,27 @@ EXTENSION.ID = "killcommands"
 EXTENSION.Description = "Provides commands to kill people"
 EXTENSION.Author = "Jacob Forsyth"
 EXTENSION.Permissions = {
-	"punishment"
+	"flatten",
+	"lock_player",
+	"unlock_player",
+	"kill_player",
+	"ragdoll_player",
+	"strip_ammo",
+	"roulette",
+	"set_health",
+	"explode"
 }
 EXTENSION.PermissionDefinitions = {
-	["punishment"] = "This player can use the punishment/kill commands. Note that this is a deprecated permission and will be removed in a future release."
+	["punishment"] = "This permission has been removed.",
+	["flatten"] = "This player can use the flatten chat command and any features derived from it.",
+	["lock_player"] = "This player can use the lockplayer chat command and any features derived from it.",
+	["unlock_player"] = "This player can use the unlockplayer chat command and any features derived from it.",
+	["kill_player"] = "This player can use the assassinate chat command and any features derived from it.",
+	["ragdoll_player"] = "This player can use the ragdoll chat command and any features derived from it.",
+	["strip_ammo"] = "This player can use the stripammo chat command and any features derived from it.",
+	["roulette"] = "This player can use the roulette chat command and any features derived from it.",
+	["set_health"] = "This player can use the health chat command and any features derived from it.",
+	["explode"] = "This player can use the explode chat command and any features derived from it."
 }
 
 function EXTENSION:InitServer()
@@ -35,7 +52,7 @@ function EXTENSION:InitServer()
 			local ext = Vermilion:GetExtension("players")
 			
 			ext:AddCommand("Flatten", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("flatten")
 			end, function(vplayer)
 				local SpawnLocation = vplayer:GetPos() + Vector(0,0,250)
 				local model = "models/props_c17/column02a.mdl"
@@ -58,60 +75,72 @@ function EXTENSION:InitServer()
 			
 			
 			ext:AddCommand("Lock", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("lock_player")
 			end, function(vplayer)
 				vplayer:Lock()
 			end)
 			
 			
 			ext:AddCommand("Unlock", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("unlock_player")
 			end, function(vplayer)
 				vplayer:UnLock()
 			end)
 			
 			
 			ext:AddCommand("Assassinate", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("kill_player")
 			end, function(vplayer)
 				vplayer:KillSilent()
 			end)
 			
 			
 			ext:AddCommand("Ragdoll", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("ragdoll_player")
 			end, function(vplayer)
 				vplayer:Vermilion_DoRagdoll()
 			end)
 			
 			
 			ext:AddCommand("Strip Ammo", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("strip_ammo")
 			end, function(vplayer)
 				vplayer:RemoveAllAmmo()
 			end)
 			
 			
 			ext:AddCommand("Roulette", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("roulette")
 			end, function(players)
 				
 			end, true)
 			
 			ext:AddCommand("Launch", function(sender, players)
-				return sender:HasPermission("punishment")
+				return sender:HasPermission("launch_player")
 			end, function(vplayer)
 				local phys = vplayer:GetPhysicsObject()
 				phys:ApplyForceCenter(Vector(0,0,5000))
+			end)
+			
+			ext:AddCommand("Explode", function(sender, players)
+				return sender:HasPermission("explode")
+			end, function(vplayer)
+				local explode = ents.Create("env_explosion")
+				explode:SetPos(vplayer:GetPos())
+				explode:Spawn()
+				explode:SetKeyValue("iMagnitude", "20")
+				explode:Fire("Explode", 0, 0)
+				explode:EmitSound("weapon_AWP.Single", 400, 400)
+				util.BlastDamage(explode, explode, explode:GetPos(), 20, 100)
 			end)
 		end
 	end)
 
 	Vermilion:AddChatCommand("lockplayer", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "lock_player") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
@@ -119,12 +148,24 @@ function EXTENSION:InitServer()
 		tplayer:Lock()
 		Vermilion:BroadcastNotify( tplayer:GetName() .. " was locked by " .. sender:GetName())
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("lockplayer", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 	Vermilion:AddChatCommand("unlockplayer", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "unlock_player") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
@@ -132,37 +173,76 @@ function EXTENSION:InitServer()
 		tplayer:UnLock()
 		Vermilion:BroadcastNotify( tplayer:GetName() .. " was unlocked by " .. sender:GetName())
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("unlockplayer", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 	Vermilion:AddChatCommand("assassinate", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "kill_player") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
 		end
 		tplayer:KillSilent()
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("assassinate", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 	Vermilion:AddChatCommand("ragdoll", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "ragdoll_player") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		if(table.Count(text) < 1) then
+			log("Syntax: !ragdoll <player>")
+			return
+		end
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
 		end
-		vplayer:Vermilion_DoRagdoll()
-		Vermilion:SendNotify(tplayer, "You have been turned into a ragdoll")
+		tplayer:Vermilion_DoRagdoll()
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("ragdoll", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
-	Vermilion:AddChatCommand("removeammo", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+	Vermilion:AddChatCommand("stripammo", function(sender, text, log)
+		if( not Vermilion:HasPermissionError(sender, "strip_ammo") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 			return
@@ -170,15 +250,27 @@ function EXTENSION:InitServer()
 		tplayer:RemoveAllAmmo()
 		Vermilion:SendNotify(tplayer, "Your ammo was removed by " .. sender:GetName())
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("stripammo", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
-
+	-- get rid of this, it's a complete mess.
 	Vermilion:AddChatCommand("roulette", function(sender, text, log)
-		if(not Vermilion:HasPermissionError(sender, "punishment")) then
+		if(not Vermilion:HasPermissionError(sender, "roulette")) then
 			return
 		end
 
 		if(text[1] != "ALL") then
-			local tplayer = Crimson.LookupPlayerByName(text[1])
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
 			if(not tplayer) then
 				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 				return
@@ -193,14 +285,14 @@ function EXTENSION:InitServer()
 
 			local Index = math.random(1, Length)
 
-			local tplayer = Crimson.LookupPlayerByName(text[Index])
+			local tplayer = Crimson.LookupPlayerByName(text[Index], false)
 
 			for i,k in pairs(text) do
-				Vermilion:SendNotify(Crimson.LookupPlayerByName(k), "The players who are part of this roulette are: " .. table.concat(text, ", ", 1, Length) )
+				Vermilion:SendNotify(Crimson.LookupPlayerByName(k, false), "The players who are part of this roulette are: " .. table.concat(text, ", ", 1, Length) )
 			end
 
 			for i,k in pairs(text) do
-				Vermilion:SendNotify(Crimson.LookupPlayerByName(k), "The player who is going to die is... " .. tplayer:GetName())
+				Vermilion:SendNotify(Crimson.LookupPlayerByName(k, false), "The player who is going to die is... " .. tplayer:GetName())
 			end
 
 			timer.Simple(3, function()
@@ -237,11 +329,11 @@ function EXTENSION:InitServer()
 	end, "[players]/ALL")
 
 	Vermilion:AddChatCommand("flatten", function(sender, text, log)
-		if(not Vermilion:HasPermissionError(sender, "punishment")) then
+		if(not Vermilion:HasPermissionError(sender, "flatten")) then
 			return
 		end
 
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 		
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
@@ -272,12 +364,24 @@ function EXTENSION:InitServer()
 		end)
 
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("flatten", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 	Vermilion:AddChatCommand("launch", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "launch_player") ) then
 			return
 		end
-		local tplayer = Crimson.LookupPlayerByName(text[1])
+		local tplayer = Crimson.LookupPlayerByName(text[1], false)
 
 		if(!tplayer) then
 			log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
@@ -288,12 +392,22 @@ function EXTENSION:InitServer()
 		phys:ApplyForceCenter(Vector(0,0,5000000))
 	end, "<player>")
 
-
+	Vermilion:AddChatPredictor("launch", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 	
 
 
 	Vermilion:AddChatCommand("health", function(sender, text, log)
-		if( not Vermilion:HasPermissionError(sender, "punishment") ) then
+		if( not Vermilion:HasPermissionError(sender, "set_health") ) then
 			return
 		end
 		
@@ -304,7 +418,7 @@ function EXTENSION:InitServer()
 		
 		local target = sender
 		if(table.Count(text) > 1) then
-			local tplayer = Crimson.LookupPlayerByName(text[1])
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
 			if(tplayer == nil) then
 				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
 				return
@@ -328,7 +442,51 @@ function EXTENSION:InitServer()
 		
 		log("Set health to " .. tostring(health))
 	end, "[player] <health>")
+	
+	Vermilion:AddChatPredictor("health", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("explode", function(sender, text, log)
+		if(table.Count(text) < 1) then
+			log("Syntax: !explode <player>", VERMILION_NOTIFY_ERROR)
+		else
+			if(Vermilion:HasPermissionError(vplayer, "explode")) then
+				local tplayer = Crimson.LookupPlayerByName(text[1], false)
+				if(not IsValid(tplayer)) then
+					log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+					return
+				end
+				local explode = ents.Create("env_explosion")
+				explode:SetPos(tplayer:GetPos())
+				explode:Spawn()
+				explode:SetKeyValue("iMagnitude", "20")
+				explode:Fire("Explode", 0, 0)
+				explode:EmitSound("weapon_AWP.Single", 400, 400)
+				util.BlastDamage(explode, explode, explode:GetPos(), 20, 100)
+			end
+		end
+	end, "<player>")
 
+	Vermilion:AddChatPredictor("explode", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 
 end

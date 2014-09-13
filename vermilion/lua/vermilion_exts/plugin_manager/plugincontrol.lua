@@ -109,6 +109,18 @@ function EXTENSION:InitServer()
 		end
 	end, "<extension id>/*")
 	
+	Vermilion:AddChatPredictor("reloadext", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(Vermilion.Extensions) do
+				if(string.StartWith(string.lower(k.ID), string.lower(current))) then
+					table.insert(tab, k.ID)
+				end
+			end
+			return tab
+		end
+	end)
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("extension_control", nil)
 	end)

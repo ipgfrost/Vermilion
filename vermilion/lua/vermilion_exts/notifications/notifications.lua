@@ -70,11 +70,50 @@ function EXTENSION:InitServer()
 end
 
 function EXTENSION:InitClient()
+
+	CreateClientConVar("vermilion_redirect_notify", 0, true, false)
+
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, function()
+		if(Vermilion:GetExtension("dermainterface") != nil) then
+			Vermilion:AddClientOption("Redirect notifications to chat", "vermilion_redirect_notify")
+		end
+	end)
 	
-	function EXTENSION:AddNotify(text, time, typ)
+	function EXTENSION:AddNotify(text, time, typ, force)
 		time = time or 5
 		typ = typ or NOTIFY_GENERIC
-		table.insert(EXTENSION.Notifications, {Text = "[Vermilion] " .. text, Type = typ, Time = os.time() + time})
+		local uid = nil
+		if(GetConVarNumber("vermilion_redirect_notify") == 1 and not force) then
+			local text1 = text
+			if(not string.StartWith(text, "[Vermilion] ")) then
+				text1 = "[Vermilion] " .. text1
+			end
+			if(typ == NOTIFY_GENERIC) then
+				chat.AddText(Color(0, 255, 0), text1)
+			elseif(typ == NOTIFY_ERROR) then
+				chat.AddText(Color(255, 0, 0), text1)
+			elseif(typ == NOTIFY_HINT) then
+				chat.AddText(Color(0, 0, 255), text1)
+			end
+		else
+			local sptext = {}
+			local str1 = ""
+			for i,k in pairs(string.Explode(" ", "[Vermilion] " .. text)) do
+				if(string.len(str1 .. " " .. k) >= 100) then
+					table.insert(sptext, string.Trim(str1))
+					str1 = ""
+				end
+				str1 = str1 .. " " .. k
+			end
+			table.insert(sptext, string.Trim(str1))
+			local sptext1 = {}
+			for i,k in pairs(sptext) do
+				if(k != nil and k != "") then table.insert(sptext1, k) end
+			end
+			local text1 = table.concat(sptext, "\n")
+			uid = util.CRC(tostring(math.random()))
+			table.insert(self.Notifications, {Text = text1, Type = typ, Time = os.time() + time, UID = uid})
+		end
 		if(typ == NOTIFY_ERROR and GetConVarNumber("vermilion_alert_sounds") == 1) then
 			sound.PlayFile("sound/alarms/klaxon1.wav", "noplay", function(station, errorID)
 				if(IsValid(station)) then
@@ -104,6 +143,13 @@ function EXTENSION:InitClient()
 					print(errorID)
 				end
 			end)
+		end
+		return uid
+	end
+	
+	function EXTENSION:CancelNotify(uid)
+		for i,k in pairs(EXTENSION.Notifications) do
+			if(k.UID == uid) then k.Time = 0 end
 		end
 	end
 	
@@ -137,8 +183,10 @@ function EXTENSION:InitClient()
 			surface.SetDrawColor(Color(255, 255, 255))
 			surface.DrawRect(ScrW() - 20 - w + k.Offset, ypos + 2, w + 16, h + 10)
 			surface.SetTextColor(Color(0, 0, 0))
-			surface.SetTextPos(ScrW() - 15 - w + k.Offset, ypos + 7)
-			surface.DrawText(k.Text)
+			for i1,k1 in pairs(string.Explode("\n", k.Text)) do
+				surface.SetTextPos(ScrW() - 15 - w + k.Offset, ypos + 7 + ((i1 - 1) * 14))
+				surface.DrawText(k1)
+			end
 			if(k.Offset > 0 and k.Time > os.time()) then k.Offset = k.Offset - 5 elseif(k.Time > os.time()) then k.Offset = 0 end
 			if(k.Offset < k.MaxOffset and k.Time < os.time()) then k.Offset = k.Offset + 5 end
 			if(k.Offset >= k.MaxOffset and k.Time < os.time()) then table.insert(deadNotifications, k) end

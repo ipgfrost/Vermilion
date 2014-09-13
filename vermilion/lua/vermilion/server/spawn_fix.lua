@@ -17,6 +17,8 @@
  in any way, nor claims to be so. 
 ]]
 
+CreateConVar("vermilion_spawn_debug", 0, FCVAR_GAMEDLL, "")
+
 duplicator.RegisterEntityModifier("Vermilion_Owner", function(vplayer, entity, data)
 	entity.Vermilion_Owner = data.Owner
 end)
@@ -27,7 +29,7 @@ local setOwnerFunc = function(vplayer, model, entity)
 		tEnt = model
 	end
 	if(tEnt) then
-		local result = hook.Call("CPPIAssignOwnership", nil, vplayer, tEnt)
+		local result = hook.Run("CPPIAssignOwnership", vplayer, tEnt)
 		if(result == nil) then
 			tEnt.Vermilion_Owner = vplayer:SteamID()
 			tEnt:SetNWString("Vermilion_Owner", vplayer:SteamID())
@@ -64,85 +66,131 @@ end
 
 local function SpawnLimitHitFunc(vplayer, vtype)
 	if(not IsValid(vplayer)) then return end
-	local notLimitHit = vplayer:CheckLimit(vtype)
-	if(notLimitHit == true) then
-		return true
-	end
+	return vplayer:CheckLimit(vtype)
 end
 
 Vermilion:RegisterHook("PlayerSpawnProp", "Vermilion_GMFixProp", function(vplayer, model)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. model)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. model)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_prop")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnProp", nil, vplayer, model)
+	local result = hook.Run("VPlayerSpawnProp", vplayer, model)
 	if(result == nil) then result = true end
 	return SpawnLimitHitFunc(vplayer, "props") and result
 end)
 
 Vermilion:RegisterHook("PlayerSpawnRagdoll", "Vermilion_GMFixRagdoll", function(vplayer, model)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. model)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. model)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_ragdoll")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnRagdoll", nil, vplayer, model)
+	local result = hook.Run("VPlayerSpawnRagdoll", vplayer, model)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "ragdolls") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "ragdolls")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnEffect", "Vermilion_GMFixEffect", function(vplayer, model)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. model)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. model)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_effect")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnEffect", nil, vplayer, model)
+	local result = hook.Run("VPlayerSpawnEffect", vplayer, model)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "effects") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "effects")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnVehicle", "Vermilion_GMFixVehicle", function(vplayer, model, vehicle, tab)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		PrintTable(tab)
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. tab.Name .. " (" .. tab.Class .. ")")
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. tab.Name .. " (" .. tab.Class .. ")")
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_vehicle")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnVehicle", nil, vplayer, model, vehicle, tab)
+	local result = hook.Run("VPlayerSpawnVehicle", vplayer, model, vehicle, tab)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "vehicles") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "vehicles")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSWEP", "Vermilion_GMFixSWEP", function(vplayer, swepName, swepTab)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. swepName)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. swepName)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_weapon")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnSWEP", nil, vplayer, swepName, swepTab)
+	local result = hook.Run("VPlayerSpawnSWEP", vplayer, swepName, swepTab)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "sents") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "sents")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnSENT", "Vermilion_GMFixSENT", function(vplayer, name)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. name)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. name)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_entity")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnSENT", nil, vplayer, name)
+	local result = hook.Run("VPlayerSpawnSENT", vplayer, name)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "sents") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "sents")
 end)
 
 Vermilion:RegisterHook("PlayerSpawnNPC", "Vermilion_GMFixNPC", function(vplayer, npc_typ, equipment)
+	if(GetConVarNumber("vermilion_spawn_debug") > 0) then
+		Vermilion.Log(vplayer:GetName() .. " spawned a " .. npc_typ)
+		for i,k in pairs(player.GetAll()) do
+			k:ChatPrint(vplayer:GetName() .. " spawned a " .. npc_typ)
+		end
+	end
 	if(not Vermilion:HasPermission(vplayer, "spawn_all")) then
 		if(not Vermilion:HasPermission(vplayer, "spawn_npc")) then
 			return false
 		end
 	end
-	local result = hook.Call("VPlayerSpawnNPC", nil, vplayer, npc_typ, equipment)
+	local result = hook.Run("VPlayerSpawnNPC", vplayer, npc_typ, equipment)
 	if(result == nil) then result = true end
-	return SpawnLimitHitFunc(vplayer, "npcs") and result
+	if(not result) then return false end
+	return SpawnLimitHitFunc(vplayer, "npcs")
 end)

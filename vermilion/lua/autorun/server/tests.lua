@@ -3,3 +3,7 @@ concommand.Add("dump_von", function(vplayer, cmd, args, fullstring)
 	PrintTable(test)
 	print(test)
 end)
+
+concommand.Add("funcinfo", function(vplayer, cmd, args, fullstring)
+	PrintTable(debug.getinfo(MsgC))
+end)

@@ -31,6 +31,9 @@ net.Receive("Vermilion_Client_Activate", function(len)
 	Vermilion.Activated = true
 	Vermilion.InfoStores = net.ReadTable()
 	Vermilion:LoadExtensions()
+	if(input.LookupBinding("vermilion_menu") == nil) then
+		Vermilion:GetExtension("notifications"):AddNotify("Please bind a key to \"vermlion_menu\"!\n\nYou can do this by opening the console and typing \"bind <key> vermilion_menu\"", 15, NOTIFY_GENERIC)
+	end
 end)
 
 
@@ -56,4 +59,32 @@ end)
 
 Vermilion:RegisterHook("ChatText", "HideJoin", function(index, name, text, typ)
 	if(typ == "joinleave") then return true end
+end)
+
+net.Receive("VHTMLMOTD", function()
+	local isurl = tobool(net.ReadString())
+	local html = net.ReadString()
+	local frame = Crimson.CreateFrame({
+		size = { 800, 600 },
+		pos  = { (ScrW() - 800) / 2, (ScrH() - 600) / 2 },
+		closeBtn = true,
+		draggable = true,
+		title = "MOTD",
+		bgBlur = true
+	})
+	
+	frame:MakePopup()
+	frame:DoModal()
+	frame:SetAutoDelete(true)
+	
+	local dhtml = vgui.Create("DHTML")
+	dhtml:SetPos(0, 20)
+	dhtml:SetSize(800, 580)
+	dhtml:SetParent(frame)
+	
+	if(isurl) then
+		dhtml:OpenURL(html)
+	else
+		dhtml:SetHTML(html)
+	end
 end)

@@ -42,14 +42,19 @@ end
 
 function META:Vermilion_DoRagdoll()
 	if(not self.Vermilion_Ragdoll and self:Alive()) then
-		self:DrawViewModel(false)
-		self:StripWeapons()
+		
 		
 		local ragdoll = ents.Create("prop_ragdoll")
 		ragdoll:SetModel(self:GetModel())
 		ragdoll:SetPos(self:GetPos())
+		ragdoll:SetAngles(self:GetAngles())
+		//ragdoll:SetColor(self:GetPlayerColor())
 		ragdoll:Spawn()
 		ragdoll:Activate()
+		ragdoll:GetPhysicsObject():ApplyForceCenter(self:GetPhysicsObject():GetVelocity() * 5000)
+		
+		self:DrawViewModel(false)
+		self:StripWeapons()
 		
 		self:Spectate(OBS_MODE_CHASE)
 		self:SpectateEntity(ragdoll)
@@ -58,9 +63,13 @@ function META:Vermilion_DoRagdoll()
 	else
 		self:SetNoTarget(false)
 		self:SetParent()
+		local movepos = self.Vermilion_Ragdoll:GetPos()
+		local facepos = self.Vermilion_Ragdoll:GetAngles()
 		self.Vermilion_Ragdoll:Remove()
 		self.Vermilion_Ragdoll = nil
 		self:Spawn()
+		self:SetPos(movepos)
+		self:SetAngles(facepos)
 	end
 end
 

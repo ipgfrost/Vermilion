@@ -55,6 +55,26 @@ Vermilion:AddChatCommand("vox", function(sender, text)
 	end
 end, "<words to speak>")
 
+local voxcache = {}
+
+Vermilion:AddChatPredictor("vox", function(pos, current)
+	if(table.Count(voxcache) == 0) then
+		local a,b = file.Find("sound/vox/*.wav", "GAME")
+		for i,k in pairs(a) do
+			if(string.StartWith(k, "_")) then continue end
+			table.insert(voxcache, string.StripExtension(k))
+		end
+	end
+	if(string.len(current) < 1) then return end
+	local tab = {}
+	for i,k in pairs(voxcache) do
+		if(string.StartWith(string.lower(k), string.lower(current))) then
+			table.insert(tab, k)
+		end
+	end
+	return tab
+end)
+
 local words = {"one ", "two ", "three ", "four ", "five ", "six ", "seven ", "eight ", "nine "}
 local levels = {"thousand ", "million ", "billion ", "trillion ", "quadrillion ", "quintillion ", "sextillion ", "septillion ", "octillion ", [0] = ""}
 local iwords = {"ten ", "twenty ", "thirty ", "fourty ", "fifty ", "sixty ", "seventy ", "eighty ", "ninety "}

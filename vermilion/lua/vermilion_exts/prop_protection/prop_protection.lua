@@ -114,10 +114,6 @@ function EXTENSION:InitServer()
 		return EXTENSION:CanPhysgun( vplayer, ent )
 	end)
 	
-	self:AddHook("CanPlayerUnfreeze", function(vplayer, ent)
-		if(not EXTENSION:CanPhysgun( vplayer, ent )) then return false end
-	end)
-	
 	self:AddHook("CanTool", function(vplayer, tr, tool)
 		if(tr.Hit and tr.Entity != nil and not EXTENSION:CanTool(vplayer, tr.Entity, tool)) then print("NO TOOL") return false end
 	end)
@@ -161,15 +157,28 @@ function EXTENSION:InitServer()
 		net.Send(vplayer)
 	end)
 	
+	function EXTENSION:GetAllPropsOwnedByUser(vplayer)
+		if(not IsValid(vplayer)) then return {} end
+		local tab = {}
+		for i,k in pairs(ents.GetAll()) do
+			if(IsValid(k)) then
+				if(k.Vermilion_Owner == vplayer:SteamID()) then
+					table.insert(tab, k)
+				end
+			end
+		end
+		return tab
+	end
+	
 end
 
 function EXTENSION:InitClient()
 	self:NetHook("VShowProps", function()
 		EXTENSION.ShowingProps = not EXTENSION.ShowingProps
 		if(EXTENSION.ShowingProps) then
-			Vermilion:AddNotify("Highlighting your props...")
+			Vermilion:GetExtension("notifications"):AddNotify("Highlighting your props...")
 		else
-			Vermilion:AddNotify("Not highlighting your props any more!")
+			Vermilion:GetExtension("notifications"):AddNotify("Not highlighting your props any more!")
 		end
 	end)
 

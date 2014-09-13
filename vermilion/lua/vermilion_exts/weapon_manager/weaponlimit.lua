@@ -142,6 +142,7 @@ function EXTENSION:InitClient()
 		if(not IsValid(EXTENSION.AllWeaponsList)) then
 			return
 		end
+		EXTENSION.WeaponCache = tab
 		EXTENSION.AllWeaponsList:Clear()
 		for i,k in pairs(tab) do
 			EXTENSION.AllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
@@ -157,7 +158,7 @@ function EXTENSION:InitClient()
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
 			local name = Vermilion.Utility.GetWeaponName(k)
-			EXTENSION.RankPermissionsList:AddLine(name).Class = k
+			EXTENSION.RankPermissionsList:AddLine(name).WeaponClass = k
 		end
 	end)
 	
@@ -198,11 +199,39 @@ function EXTENSION:InitClient()
 			local guiAllWeaponsList = Crimson.CreateList({ "Name" })
 			guiAllWeaponsList:SetParent(panel)
 			guiAllWeaponsList:SetPos(525, 250)
-			guiAllWeaponsList:SetSize(250, 280)
+			guiAllWeaponsList:SetSize(250, 250)
 			EXTENSION.AllWeaponsList = guiAllWeaponsList
 			
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Weapons")
 			allWeaponsLabel:SetParent(panel)
+			
+			local searchBox = vgui.Create("DTextEntry")
+			searchBox:SetParent(panel)
+			searchBox:SetPos(525, 510)
+			searchBox:SetSize(250, 25)
+			searchBox:SetUpdateOnType(true)
+			function searchBox:OnChange()
+				local val = searchBox:GetValue()
+				if(val == "" or val == nil) then
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.WeaponCache) do
+						guiAllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
+					end
+				else
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.WeaponCache) do
+						if(string.find(string.lower(k.PrintName), string.lower(val))) then
+							guiAllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
+						end
+					end
+				end
+			end
+			
+			local searchLogo = vgui.Create("DImage")
+			searchLogo:SetParent(searchBox)
+			searchLogo:SetPos(searchBox:GetWide() - 25, 5)
+			searchLogo:SetImage("icon16/magnifier.png")
+			searchLogo:SizeToContents()
 			
 			--[[
 				Load rank weapon blocklist button

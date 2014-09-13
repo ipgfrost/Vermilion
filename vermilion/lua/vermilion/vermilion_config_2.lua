@@ -44,6 +44,11 @@ end
 function userFuncs:SetRank(rank)
 	if(Vermilion:HasRank(rank)) then
 		self.Rank = rank
+		local vplayer = Crimson.LookupPlayerBySteamID(self.SteamID)
+		if(not IsValid(vplayer)) then return end
+		Vermilion:SendNotify(vplayer, "Your rank is now " .. rank .. "!")
+		vplayer:SetNWString("Vermilion_Rank", self:GetRank().Name)
+		vplayer:SetNWString("Vermilion_Identify_Admin", self:GetRank():HasPermission("identify_as_admin"))
 	end
 end
 
@@ -158,7 +163,8 @@ function Vermilion:AddUser(name, steamid, rank)
 		SteamID = steamid,
 		Rank = rank,
 		Permissions = {},
-		Country = "N/A",
+		CountryCode = "N/A",
+		CountryName = "N/A",
 		Playtime = 0,
 		Kills = 0,
 		Deaths = 0,
@@ -216,7 +222,7 @@ end
 
 function Vermilion:GetUserSteamID(steamid)
 	if(not self:HasUserSteamID(steamid)) then
-		self.Log("Attempt to get user data for non-existent user '" .. steamid .. "' failed!")
+		self.Log("Attempt to get user data for non-existent user '" .. tostring(steamid) .. "' failed!")
 		return
 	end
 	for i,k in pairs(self.Settings.Users) do
@@ -455,6 +461,13 @@ Vermilion:LoadSettings()
 
 concommand.Add("vermilion_dump_settings", function()
 	PrintTable(Vermilion.Settings)
+end)
+
+timer.Create("V-UpdatePlaytime", 5, 0, function()
+	for i,k in pairs(player.GetHumans()) do
+		local vdata = Vermilion:GetUser(k)
+		vdata.Playtime = vdata.Playtime + 5
+	end
 end)
 
 Vermilion:RegisterHook("ShutDown", "V-CFG-Save", function()

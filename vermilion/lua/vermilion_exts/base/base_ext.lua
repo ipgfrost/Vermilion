@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2014 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -20,7 +20,7 @@
 local EXTENSION = Vermilion:MakeExtensionBase()
 EXTENSION.Name = "Base"
 EXTENSION.ID = "base"
-EXTENSION.Description = "Insert Text Here"
+EXTENSION.Description = "Something"
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 

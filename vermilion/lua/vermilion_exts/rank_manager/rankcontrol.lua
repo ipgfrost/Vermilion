@@ -74,6 +74,18 @@ function EXTENSION:InitServer()
 		Vermilion:SendNotify(sender, Vermilion:GetUser(targetPlayer):GetRank().Name)
 	end, "[player]")
 	
+	Vermilion:AddChatPredictor("getrank", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(k:GetName(), current)) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
 	Vermilion:AddChatCommand("setrank", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "rank_management")) then
 			if(table.Count(text) == 1) then
@@ -101,9 +113,30 @@ function EXTENSION:InitServer()
 			end
 			Vermilion:GetUser(targetPlayer):SetRank(text[2])
 			log("Rank updated!")
-			Vermilion:SendNotify(targetPlayer, "Your rank is now " .. text[2] .. "!")
+			--Vermilion:SendNotify(targetPlayer, "Your rank is now " .. text[2] .. "!")
 		end
 	end, "[player] <rank>")
+	
+	Vermilion:AddChatPredictor("setrank", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+		if(pos == 2) then
+			local tab = {}
+			for i,k in pairs(Vermilion.Settings.Ranks) do
+				if(string.StartWith(string.lower(k.Name), string.lower(current))) then
+					table.insert(tab, k.Name)
+				end
+			end
+			return tab
+		end
+	end)
 	
 	Vermilion:AddChatCommand("setrank_steamid", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "rank_management", log)) then
@@ -144,7 +177,6 @@ function EXTENSION:InitServer()
 				return
 			end
 			Vermilion:GetUser(tplayer):SetRank(rank)
-			Vermilion:SendNotify(tplayer, "Your rank is now " .. rank .. "!")
 		else
 			Vermilion:SendMessageBox(vplayer, "You do not have permission to do this!")
 		end
@@ -165,7 +197,16 @@ function EXTENSION:InitServer()
 			net.Send(vplayer)
 			return
 		end
-		net.WriteTable(Vermilion:GetRankData(trank).Permissions)
+		for i,k in pairs(Vermilion:GetRankData(trank).Permissions) do
+			local owner = "Vermilion"
+			for i1,k1 in pairs(Vermilion.AllPermissions) do
+				if(k1.Permission == k) then
+					owner = k1.Owner
+				end
+			end
+			table.insert(tab, { Owner = owner, Permission = k })
+		end
+		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
 	
@@ -304,7 +345,7 @@ function EXTENSION:InitClient()
 		EXTENSION.AllPermissionsList:Clear()
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
-			local ln = EXTENSION.AllPermissionsList:AddLine(k)
+			local ln = EXTENSION.AllPermissionsList:AddLine(k.Permission, k.Owner)
 			ln.OnRightClick = function()
 				local conmenu = DermaMenu()
 				conmenu:SetParent(ln)
@@ -333,7 +374,7 @@ function EXTENSION:InitClient()
 		EXTENSION.RankPermissionsList:Clear()
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
-			local ln = EXTENSION.RankPermissionsList:AddLine(k)
+			local ln = EXTENSION.RankPermissionsList:AddLine(k.Permission, k.Owner)
 			ln.OnRightClick = function()
 				local conmenu = DermaMenu()
 				conmenu:SetParent(ln)
@@ -651,10 +692,10 @@ function EXTENSION:InitClient()
 			
 			
 			
-			local guiRankPermissionsList = Crimson.CreateList({ "Name" })
+			local guiRankPermissionsList = Crimson.CreateList({ "Name", "Owner" })
 			guiRankPermissionsList:SetParent(panel)
 			guiRankPermissionsList:SetPos(10, 250)
-			guiRankPermissionsList:SetSize(250, 280)
+			guiRankPermissionsList:SetSize(300, 280)
 			EXTENSION.RankPermissionsList = guiRankPermissionsList
 			
 			local rankPermissionsLabel = Crimson:CreateHeaderLabel(guiRankPermissionsList, "Rank Permissions")
@@ -662,10 +703,10 @@ function EXTENSION:InitClient()
 			
 			
 			
-			local guiAllPermissionsList = Crimson.CreateList({ "Name" })
+			local guiAllPermissionsList = Crimson.CreateList({ "Name", "Owner" })
 			guiAllPermissionsList:SetParent(panel)
-			guiAllPermissionsList:SetPos(525, 250)
-			guiAllPermissionsList:SetSize(250, 280)
+			guiAllPermissionsList:SetPos(475, 250)
+			guiAllPermissionsList:SetSize(300, 280)
 			EXTENSION.AllPermissionsList = guiAllPermissionsList
 			
 			local allPermissionsLabel = Crimson:CreateHeaderLabel(guiAllPermissionsList, "All Permissions")
@@ -687,11 +728,11 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllPermissionsList:GetSelected()) do
-					guiRankPermissionsList:AddLine(k:GetValue(1))
+					guiRankPermissionsList:AddLine(k:GetValue(1), k:GetValue(2))
 				end
 			end)
-			giveRankPermissionButton:SetPos(270, 350)
-			giveRankPermissionButton:SetSize(245, 30)
+			giveRankPermissionButton:SetPos(320, 350)
+			giveRankPermissionButton:SetSize(145, 30)
 			giveRankPermissionButton:SetParent(panel)
 			
 			
@@ -708,7 +749,7 @@ function EXTENSION:InitClient()
 				local tab = {}
 				for i,k in ipairs(guiRankPermissionsList:GetLines()) do
 					if(not k:IsSelected()) then
-						table.insert(tab, k:GetValue(1))
+						table.insert(tab, k:GetValue(1), k:GetValue(2))
 					end
 				end
 				guiRankPermissionsList:Clear()
@@ -716,8 +757,8 @@ function EXTENSION:InitClient()
 					guiRankPermissionsList:AddLine(k)
 				end
 			end)
-			removeRankPermissionButton:SetPos(270, 390)
-			removeRankPermissionButton:SetSize(245, 30)
+			removeRankPermissionButton:SetPos(320, 390)
+			removeRankPermissionButton:SetSize(145, 30)
 			removeRankPermissionButton:SetParent(panel)
 			
 			
@@ -749,8 +790,8 @@ function EXTENSION:InitClient()
 				rankPermissionsLabel:SetText("Rank Permissions - " .. ranksList:GetSelected()[1]:GetValue(1))
 				EXTENSION.EditingRank = ranksList:GetSelected()[1]:GetValue(1)
 			end)
-			loadRankPermissionsButton:SetPos(270, 250)
-			loadRankPermissionsButton:SetSize(245, 30)
+			loadRankPermissionsButton:SetPos(320, 250)
+			loadRankPermissionsButton:SetSize(145, 30)
 			loadRankPermissionsButton:SetParent(panel)
 			
 			
@@ -776,8 +817,8 @@ function EXTENSION:InitClient()
 				EXTENSION.EditingRank = ""
 				rankPermissionsLabel:SetText("Rank Permissions")
 			end)
-			saveRankPermissionsButton:SetPos(270, 500)
-			saveRankPermissionsButton:SetSize(245, 30)
+			saveRankPermissionsButton:SetPos(320, 500)
+			saveRankPermissionsButton:SetSize(145, 30)
 			saveRankPermissionsButton:SetParent(panel)
 			
 			

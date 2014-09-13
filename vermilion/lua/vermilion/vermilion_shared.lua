@@ -22,7 +22,7 @@ include("vermilion/lang/vermilion_lang_engb.lua")
 include("vermilion/vermilion_globals.lua")
 
 function Vermilion.GetVersion()
-	return "1.4.0a"
+	return "1.8.0"
 end
 
 Vermilion.Utility = {}
@@ -80,7 +80,11 @@ end
 function Vermilion:RegisterExtension(extension)
 	self.Extensions[extension.ID] = extension
 	if(extension.Permissions != nil and SERVER) then
-		Crimson.Merge(self.AllPermissions, extension.Permissions)
+		local tab = {}
+		for i,k in pairs(extension.Permissions) do
+			table.insert(tab, {Owner = extension.Name, Permission = k})
+		end
+		Crimson.Merge(self.AllPermissions, tab)
 	end
 	if(extension.RankPermissions != nil and SERVER) then
 		for i, rank in pairs(extension.RankPermissions) do
@@ -157,6 +161,15 @@ function Vermilion:MakeExtensionBase()
 	function base:InitServer() end
 	function base:InitShared() end
 	function base:Destroy() end
+	
+	function base:FindData(name, default)
+		local dataTable = {}
+		if(Vermilion.Settings.ModuleData[self.ID] == nil) then Vermilion.Settings.ModuleData[self.ID] = {} end
+		for i,k in pairs(Vermilion.Settings.ModuleData[self.ID]) do
+			if(string.find(i, name)) then dataTable[i] = k end
+		end
+		return dataTable
+	end
 	
 	function base:GetData(name, default, set)
 		if(Vermilion.Settings.ModuleData[self.ID] == nil) then Vermilion.Settings.ModuleData[self.ID] = {} end
@@ -419,15 +432,65 @@ if(SERVER) then
 	
 	net.Receive("VChatPrediction", function(len, vplayer)
 		local current = net.ReadString()
+		local command = string.Trim(string.sub(current, 1, string.find(current, " ") or nil))
 		local response = {}
 		for i,k in pairs(Vermilion.ChatCommands) do
-			if(string.StartWith(i, current)) then
+			if(string.find(current, " ")) then
+				if(command == i) then
+					table.insert(response, { Name = i, Syntax = k.Syntax })
+				end
+			elseif(string.StartWith(i, command)) then
 				table.insert(response, { Name = i, Syntax = k.Syntax })
 			end
 		end
 		for i,k in pairs(Vermilion.ChatAliases) do
-			if(string.StartWith(i, current)) then
-				table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ")" })
+			if(string.find(current, " ")) then
+				if(command == i) then
+					table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. Vermilion.ChatCommands[k].Syntax })
+				end
+			elseif(string.StartWith(i, command)) then
+				table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. Vermilion.ChatCommands[k].Syntax })
+			end
+		end
+		local predictor = nil
+		if(Vermilion.ChatAliases[command] != nil) then
+			predictor = Vermilion.ChatPredictors[Vermilion.ChatAliases[command]]
+		else
+			predictor = Vermilion.ChatPredictors[command]
+		end
+		if(string.find(current, " ") and predictor != nil) then
+			local commandText = current
+			local parts = string.Explode(" ", commandText, false)
+			local parts2 = {}
+			local part = ""
+			local isQuoted = false
+			for i,k in pairs(parts) do
+				if(isQuoted and string.find(k, "\"")) then
+					table.insert(parts2, string.Replace(part .. " " .. k, "\"", ""))
+					isQuoted = false
+					part = ""
+				elseif(not isQuoted and string.find(k, "\"")) then
+					part = k
+					isQuoted = true
+				elseif(isQuoted) then
+					part = part .. " " .. k
+				else
+					table.insert(parts2, k)
+				end
+			end
+			if(isQuoted) then table.insert(parts2, string.Replace(part, "\"", "")) end
+			parts = {}
+			for i,k in pairs(parts2) do
+				--if(k != nil and k != "") then
+					table.insert(parts, k)
+				--end
+			end
+			table.remove(parts, 1)
+			local dataTable = predictor(table.Count(parts), parts[table.Count(parts)], parts)
+			if(dataTable != nil) then
+				for i,k in pairs(dataTable) do
+					table.insert(response, { Name = k, Syntax = "" }) 
+				end
 			end
 		end
 		net.Start("VChatPrediction")
@@ -475,6 +538,36 @@ else
 	Vermilion.ChatBGH = 0
 	
 	Vermilion:RegisterHook("OnChatTab", "VInsertPrediction", function()
+		if(Vermilion.ChatPredictions != nil and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
+			local commandText = Vermilion.CurrentChatText
+			local parts = string.Explode(" ", commandText, false)
+			local parts2 = {}
+			local part = ""
+			local isQuoted = false
+			for i,k in pairs(parts) do
+				if(isQuoted and string.find(k, "\"")) then
+					table.insert(parts2, string.Replace(part .. " " .. k, "\"", ""))
+					isQuoted = false
+					part = ""
+				elseif(not isQuoted and string.find(k, "\"")) then
+					part = k
+					isQuoted = true
+				elseif(isQuoted) then
+					part = part .. " " .. k
+				else
+					table.insert(parts2, k)
+				end
+			end
+			if(isQuoted) then table.insert(parts2, string.Replace(part, "\"", "")) end
+			parts = {}
+			for i,k in pairs(parts2) do
+				--if(k != nil and k != "") then
+					table.insert(parts, k)
+				--end
+			end
+			parts[table.Count(parts)] = Vermilion.ChatPredictions[2].Name
+			return table.concat(parts, " ", 1)
+		end
 		if(Vermilion.ChatPredictions != nil and table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatTabSelected == 0) then
 			return "!" .. Vermilion.ChatPredictions[1].Name .. " "
 		end
@@ -492,17 +585,24 @@ else
 			if(Vermilion:GetExtension("chatbox") != nil and GetConVarNumber("vermilion_replace_chat") == 1) then
 				text = "Press the right arrow key to complete the command with the one at the top of the list."
 			end
-			draw.RoundedBox(2, 545, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatBGW + 10, Vermilion.ChatBGH + 5, Color(0, 0, 0, 128))
-			draw.SimpleText(text, "Default", 550, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+			local mapbx = math.Remap(545, 0, 1366, 0, ScrW())
+			local maptx = math.Remap(550, 0, 1366, 0, ScrW())
+
+			if(ScrW() > 1390) then
+				mapbx = mapbx + 100
+				maptx = maptx + 100
+			end
+			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatBGW + 10, Vermilion.ChatBGH + 5, Color(0, 0, 0, 128))
+			draw.SimpleText(text, "Default", maptx, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 			Vermilion.ChatBGH = 0
 			for i,k in pairs(Vermilion.ChatPredictions) do
 				local text = k.Name
-				if(table.Count(Vermilion.ChatPredictions) <= 8) then
+				if(table.Count(Vermilion.ChatPredictions) <= 8 or string.find(Vermilion.CurrentChatText, " ")) then
 					text = k.Name .. " " .. k.Syntax
 				end
 				local colour = Color(255, 255, 255)
 				if(i == Vermilion.ChatTabSelected) then colour = Color(255, 0, 0) end
-				local w,h = draw.SimpleText(text, "Default", 550 + xpos, select(2, chat.GetChatBoxPos()) + pos, colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+				local w,h = draw.SimpleText(text, "Default", maptx + xpos, select(2, chat.GetChatBoxPos()) + pos, colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 				if(maxw < w) then maxw = w end
 				pos = pos + h + 5
 				if(pos > Vermilion.ChatBGH) then Vermilion.ChatBGH = pos end
@@ -518,13 +618,14 @@ else
 	
 	Vermilion:RegisterHook("ChatTextChanged", "ChatPredict", function(chatText)
 		Vermilion.ChatTabSelected = 0
+		Vermilion.CurrentChatText = chatText
 		if(string.StartWith(chatText, Vermilion:GetSetting("chat_prefix", "!"))) then
 			net.Start("VChatPrediction")
 			local space = nil
 			if(string.find(chatText, " ")) then
 				space = string.find(chatText, " ") - 1
 			end
-			net.WriteString(string.sub(chatText, 2, space))
+			net.WriteString(string.sub(chatText, 2))
 			net.SendToServer()
 		else
 			Vermilion.ChatPredictions = nil

@@ -71,6 +71,18 @@ function EXTENSION:InitServer()
 		log("Removed warp '" .. text[1] .. "'")
 	end, "<name>")
 	
+	Vermilion:AddChatPredictor("removewarp", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION:GetData("warps", {}, true)) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+	end)
+	
 	Vermilion:AddChatCommand("listwarps", function(sender, text, log)
 		local str = ""
 		local idx = 1
@@ -134,6 +146,32 @@ function EXTENSION:InitServer()
 
 
 	end, "[player] <warp>")
+	
+	Vermilion:AddChatPredictor("warp", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION:GetData("warps", {}, true)) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i .. " (warp)")
+				end
+			end
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k), string.lower(current))) then
+					table.insert(tab, k .. " (player)")
+				end
+			end
+			return tab
+		end
+		if(pos == 2) then
+			local tab = {}
+			for i,k in pairs(EXTENSION:GetData("warps", {}, true)) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+	end)
 end
 
 function EXTENSION:InitClient()

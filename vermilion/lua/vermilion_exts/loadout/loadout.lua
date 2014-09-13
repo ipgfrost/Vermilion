@@ -154,6 +154,7 @@ function EXTENSION:InitClient()
 			return
 		end
 		EXTENSION.AllWeaponsList:Clear()
+		EXTENSION.WeaponsCache = tab
 		for i,k in pairs(tab) do
 			EXTENSION.AllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
 		end
@@ -216,13 +217,39 @@ function EXTENSION:InitClient()
 			local guiAllWeaponsList = Crimson.CreateList({ "Name" })
 			guiAllWeaponsList:SetParent(panel)
 			guiAllWeaponsList:SetPos(525, 250)
-			guiAllWeaponsList:SetSize(250, 280)			
+			guiAllWeaponsList:SetSize(250, 250)			
 			EXTENSION.AllWeaponsList = guiAllWeaponsList
 			
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Weapons")
 			allWeaponsLabel:SetParent(panel)
 			
+			local searchBox = vgui.Create("DTextEntry")
+			searchBox:SetParent(panel)
+			searchBox:SetPos(525, 510)
+			searchBox:SetSize(250, 25)
+			searchBox:SetUpdateOnType(true)
+			function searchBox:OnChange()
+				local val = searchBox:GetValue()
+				if(val == "" or val == nil) then
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.WeaponsCache) do
+						guiAllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
+					end
+				else
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.WeaponsCache) do
+						if(string.find(string.lower(k.PrintName), string.lower(val))) then
+							guiAllWeaponsList:AddLine(k.PrintName).WeaponClass = k.Class
+						end
+					end
+				end
+			end
 			
+			local searchLogo = vgui.Create("DImage")
+			searchLogo:SetParent(searchBox)
+			searchLogo:SetPos(searchBox:GetWide() - 25, 5)
+			searchLogo:SetImage("icon16/magnifier.png")
+			searchLogo:SizeToContents()
 			
 			local loadRankPermissionsButton = Crimson.CreateButton("Load Loadout", function(self)
 				if(table.Count(ranksList:GetSelected()) > 1) then
@@ -231,10 +258,6 @@ function EXTENSION:InitClient()
 				end
 				if(table.Count(ranksList:GetSelected()) == 0) then
 					Crimson:CreateErrorDialog("Must select a rank to load the loadout for!")
-					return
-				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "banned") then
-					Crimson:CreateErrorDialog("Cannot edit the loadout of this rank; it is a protected rank!")
 					return
 				end
 				net.Start("VRankLoadoutLoad")
@@ -296,7 +319,7 @@ function EXTENSION:InitClient()
 			
 			local removeRankPermissionButton = Crimson.CreateButton("Remove Weapon", function(self)
 				if(EXTENSION.EditingRank == "") then
-					Crimson:CreateErrorDialog("Must be editing a rank remove from the loadout!")
+					Crimson:CreateErrorDialog("Must be editing a rank to remove from the loadout!")
 					return
 				end
 				if(table.Count(guiRankPermissionsList:GetSelected()) == 0) then

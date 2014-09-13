@@ -1,0 +1,3 @@
+{
+	"initFile": "censor.lua"
+}

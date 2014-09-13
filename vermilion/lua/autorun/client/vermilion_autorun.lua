@@ -28,7 +28,7 @@ Vermilion.EVENT_EXT_LOADED = "Vermilion_LoadedEXT"
 
 -- Internal logging function
 function Vermilion.Log( str ) 
-	print("[Vermilion] " .. tostring(str))
+	print("[Vermilion - Client] " .. tostring(str))
 	file.Append("vermilion/vermilion_client_log.txt", util.DateStamp() .. tostring(str) .. "\n")
 end
 

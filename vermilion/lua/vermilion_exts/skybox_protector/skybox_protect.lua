@@ -167,7 +167,7 @@ function EXTENSION:InitClient()
 	end)
 
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("skybox_protect", "Skybox protector", "collision_on.png", "Protect the skybox from trolls", function(panel)
+		Vermilion:AddInterfaceTab("skybox_protect", "Skybox Protector", "collision_on.png", "Protect the skybox from trolls", function(panel)
 			local checkbox = vgui.Create("DCheckBoxLabel")
 			checkbox:SetPos(10, 10)
 			checkbox:SetText("Enable Skybox Protector")

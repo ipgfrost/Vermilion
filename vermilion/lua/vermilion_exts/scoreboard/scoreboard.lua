@@ -113,6 +113,20 @@ function EXTENSION:InitServer()
 					tplayer:Kill()
 				end
 			end
+		elseif(command == "lock") then
+			if(Vermilion:HasPermission(vplayer, "punishment")) then
+				local tplayer = net.ReadEntity()
+				if(IsValid(tplayer)) then
+					tplayer:Lock()
+				end
+			end
+		elseif(command == "unlock") then
+			if(Vermilion:HasPermission(vplayer, "punishment")) then
+				local tplayer = net.ReadEntity()
+				if(IsValid(tplayer)) then
+					tplayer:UnLock()
+				end
+			end
 		end
 	end)
 end
@@ -167,60 +181,94 @@ function EXTENSION:InitClient()
 				ln.OnRightClick = function()
 					local conmenu = DermaMenu()
 					conmenu:SetParent(ln)
-					
-					local adminmenu = conmenu:AddSubMenu("Administrate")
-					adminmenu:AddOption("Ban", function()
-						local bans = Vermilion:GetExtension("bans")
-						if(bans != nil) then
-							bans:CreateBanForPanel(k.SteamID)
-						end
-					end)
-					adminmenu:AddOption("Kick", function()
-						if(Vermilion:GetExtension("bans") != nil) then
-							net.Start("VKickPlayer")
-							net.WriteString(vplayer:SteamID())
-							net.WriteString("Kicked from Scoreboard")
+					if(LocalPlayer():IsAdmin()) then -- temp fix (the player will be able to click the buttons, but individual permissions will still be checked on the server).
+						local adminmenu = conmenu:AddSubMenu("Administrate")
+						adminmenu:AddOption("Ban", function()
+							local bans = Vermilion:GetExtension("bans")
+							if(bans != nil) then
+								bans:CreateBanForPanel(k.SteamID)
+							end
+						end):SetIcon("icon16/delete.png")
+						adminmenu:AddOption("Kick", function()
+							if(Vermilion:GetExtension("bans") != nil) then
+								net.Start("VKickPlayer")
+								net.WriteString(tostring(false))
+								net.WriteString(k.SteamID)
+								net.WriteString("Kicked from Scoreboard")
+								net.SendToServer()
+							end
+						end):SetIcon("icon16/disconnect.png")
+						adminmenu:AddOption("Kill", function()
+							net.Start("VScoreboardCommand")
+							net.WriteString("kill")
+							net.WriteEntity(vplayer)
 							net.SendToServer()
-						end
-					end)
-					adminmenu:AddOption("Kill", function()
-						net.Start("VScoreboardCommand")
-						net.WriteString("kill")
-						net.WriteEntity(vplayer)
-						net.SendToServer()
-					end)
-					adminmenu:AddOption("Give")
-					
-					local rankmenu = adminmenu:AddSubMenu("Set Rank")
-					
-					
-					adminmenu:AddOption("Set Health")
-					adminmenu:AddOption("Set Armour")
-					adminmenu:AddOption("Sudo")
-					
-					local lockmenu = adminmenu:AddSubMenu("Lock/Unlock")
-					lockmenu:AddOption("Lock")
-					lockmenu:AddOption("Unlock")
-					
-					adminmenu:AddOption("Reset KDR")
+						end):SetIcon("icon16/gun.png")
+						adminmenu:AddOption("Give", function()
+							Derma_Message("Not implemented.", "Warning", "OK")
+						end):SetIcon("icon16/add.png")
+						
+						local rankmenu = adminmenu:AddSubMenu("Set Rank")
+						rankmenu:AddOption("NOT IMPLEMENTED")
+						
+						adminmenu:AddOption("Set Health", function()
+							Derma_StringRequest("Enter Health Amount", "Enter a number to set the health of this player to.", "100", function(text)
+								if(tonumber(text) == nil) then
+									Derma_Message(text .. " is not a valid number!", "Invalid Input", "OK")
+									return
+								end
+								net.Start("VScoreboardCommand")
+								net.WriteString("sethealth")
+								net.WriteEntity(vplayer)
+								net.WriteString(text)
+								net.SendToServer()
+							end)
+						end):SetIcon("icon16/heart.png")
+						adminmenu:AddOption("Set Armour", function()
+							Derma_Message("Not implemented.", "Warning", "OK")
+						end):SetIcon("icon16/shield.png")
+						adminmenu:AddOption("Sudo", function()
+							Derma_Message("Not implemented.", "Warning", "OK")
+						end):SetIcon("icon16/transmit_blue.png")
+						
+						local lockmenu = adminmenu:AddSubMenu("Lock/Unlock")
+						lockmenu:AddOption("Lock", function()
+							net.Start("VScoreboardCommand")
+							net.WriteString("lock")
+							net.WriteEntity(vplayer)
+							net.SendToServer()
+						end):SetIcon("icon16/lock.png")
+						lockmenu:AddOption("Unlock", function()
+							net.Start("VScoreboardCommand")
+							net.WriteString("unlock")
+							net.WriteEntity(vplayer)
+							net.SendToServer()
+						end):SetIcon("icon16/lock_open.png")
+						
+						adminmenu:AddOption("Reset KDR", function()
+							Derma_Message("Not implemented.", "Warning", "OK")
+						end):SetIcon("icon16/award_star_delete.png")
+					end
 					
 					local ppmenu = conmenu:AddSubMenu("Prop protection")
 					local ppcmenu = ppmenu:AddSubMenu("Clear (admin only)")
-					ppcmenu:AddOption("Clear All")
-					ppcmenu:AddOption("Clear Props")
-					ppcmenu:AddOption("Clear SENTs")
-					ppcmenu:AddOption("Clear SWEPs")
-					ppcmenu:AddOption("Clear Vehicles")
-					ppcmenu:AddOption("Clear Ragdolls")
-					ppcmenu:AddOption("Clear Effects")
-					ppcmenu:AddOption("Clear NPCs")
-					ppmenu:AddOption("Request access to props")
+					ppcmenu:AddOption("Clear All"):SetIcon("icon16/world_delete.png")
+					ppcmenu:AddOption("Clear Props"):SetIcon("icon16/application_view_tile.png")
+					ppcmenu:AddOption("Clear SENTs"):SetIcon("icon16/bricks.png")
+					ppcmenu:AddOption("Clear SWEPs"):SetIcon("icon16/gun.png")
+					ppcmenu:AddOption("Clear Vehicles"):SetIcon("icon16/car.png")
+					ppcmenu:AddOption("Clear Ragdolls"):SetIcon("icon16/user_suit.png")
+					ppcmenu:AddOption("Clear Effects"):SetIcon("icon16/wand.png")
+					ppcmenu:AddOption("Clear NPCs"):SetIcon("icon16/user_female.png")
+					ppmenu:AddOption("Request access to props"):SetIcon("icon16/database_connect.png")
 					
-					conmenu:AddOption("Private Message")
+					conmenu:AddOption("Private Message"):SetIcon("icon16/user_comment.png")
 					conmenu:AddOption("Open Steam Profile", function()
 						if(IsValid(vplayer)) then vplayer:ShowProfile() end
-					end)
-					conmenu:AddOption("Open Vermilion Profile")
+					end):SetIcon("icon16/page_find.png")
+					conmenu:AddOption("Open Vermilion Profile", function()
+					
+					end):SetIcon("icon16/comment.png")
 					
 					conmenu:Open()
 				end

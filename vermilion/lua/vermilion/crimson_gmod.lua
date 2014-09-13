@@ -306,11 +306,34 @@ function Crimson.CreateList(cols, multiselect, sortable)
 	return lst
 end
 
-function Crimson.LookupPlayerByName(name)
-	for i,v in pairs(player.GetAll()) do
-		if(v:GetName() == name) then
-			return v
+function Crimson.LookupPlayerByName(name, casesensitive)
+	local results = {}
+	if(name == nil) then return nil end
+	if(casesensitive == nil) then casesensitive = true end
+	if(not casesensitive) then
+		for i,v in pairs(player.GetAll()) do
+			if(string.lower(v:GetName()) == string.lower(name)) then
+				table.insert(results, v)
+			end
 		end
+	else
+		for i,v in pairs(player.GetAll()) do
+			if(v:GetName() == name) then
+				table.insert(results, v)
+			end
+		end
+	end
+	if(table.Count(results) == 1) then
+		return results[1]
+	elseif(table.Count(results) > 1 and not casesensitive) then
+		print("Ambiguous search results for username '" .. name .. "'. Reverting to case sensitive search.")
+		for i,v in pairs(results) do
+			if(v:GetName() == name) then
+				return v
+			end
+		end
+	elseif(table.Count(results) > 1 and not casesensitive) then
+		print("Warning: ambiguous search results for username '" .. name .. "' even though using case sensitive search. Indicative of name hijacking.")
 	end
 	return nil
 end
@@ -343,9 +366,9 @@ function Crimson.SearchRecursively(searchdir, basedir, fileType)
 		for i1,k1 in pairs(f1) do 
 			if(string.EndsWith(k1, fileType)) then
 				if(string.StartWith(k1, basedir)) then
-					table.insert(files, k1)
+					table.insert(files, k .. "/" .. k1)
 				else
-					table.insert(files, basedir .. "/" .. k1)
+					table.insert(files, basedir .. "/" .. k .. "/" .. k1)
 				end
 			end
 		end

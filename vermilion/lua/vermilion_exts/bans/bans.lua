@@ -279,6 +279,20 @@ function EXTENSION:InitServer()
 		end
 	end, "<player> [time in minutes: default = 60] [reason: default = Because of reasons.]")
 	
+	Vermilion:AddChatPredictor("ban", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+		if(pos == 2) then return { "60" } end
+		if(pos == 3) then return { "Because of reasons." } end
+	end)
+	
 	Vermilion:AddChatCommand("unban", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "unban")) then
 			if(table.Count(text) < 1) then
@@ -292,6 +306,16 @@ function EXTENSION:InitServer()
 			end
 		end
 	end, "<player>")
+	
+	Vermilion:AddChatPredictor("unban", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
+				table.insert(tab, Vermilion:GetUser(text[1]).Name)
+			end
+			return tab
+		end
+	end)
 	
 	Vermilion:AddChatCommand("kick", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "kick")) then
@@ -310,6 +334,18 @@ function EXTENSION:InitServer()
 			end
 		end
 	end, "<player> [reason]")
+	
+	Vermilion:AddChatPredictor("kick", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 	self:NetHook("VBannedPlayersList", function(vplayer)
 		net.Start("VBannedPlayersList")
@@ -326,12 +362,16 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermissionError(vplayer, "ban")) then
 			local times = net.ReadTable()
 			local reason = net.ReadString()
-			local steamid = net.ReadString()
-			local tplayer = Crimson.LookupPlayerBySteamID(steamid)
-			if(Vermilion:HasPermission(tplayer, "ban_immunity")) then
-				return
+			local tplayer = nil
+			if(tobool(net.ReadString())) then
+				tplayer = net.ReadEntity()
+			else
+				tplayer = Crimson.LookupPlayerBySteamID(net.ReadString())
 			end
 			if(tplayer != nil) then
+				if(Vermilion:HasPermission(tplayer, "ban_immunity")) then
+					return
+				end
 				Vermilion:BanPlayerFor(tplayer, vplayer, reason, times[1], times[2], times[3], times[4], times[5], times[6], times[7])
 			else
 				Vermilion:SendNotify(vplayer, Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
@@ -355,9 +395,13 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VKickPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "kick")) then
-			local steamID = net.ReadString()
+			local tplayer = nil
+			if(tobool(net.ReadString())) then
+				tplayer = net.ReadEntity()
+			else
+				tplayer = Crimson.LookupPlayerBySteamID(net.ReadString())
+			end
 			local reason = net.ReadString()
-			local tplayer = Crimson.LookupPlayerBySteamID(steamID)
 			if(IsValid(tplayer)) then
 				Vermilion:BroadcastNotify(tplayer:GetName() .. " was kicked by " .. vplayer:GetName() .. ": " .. reason, 10, VERMILION_NOTIFY_ERROR)
 				tplayer:Kick("Kicked by " .. vplayer:GetName() .. ": " .. reason)
@@ -372,7 +416,7 @@ function EXTENSION:InitServer()
 		local idxToRemove = {}
 		for i,k in pairs(EXTENSION:GetData("bans", {})) do
 			if(os.time() > k[3]) then
-				local playerName = Vermilion:GetUserSteamID(k[1])['name']
+				local playerName = Vermilion:GetUserSteamID(k[1]).Name
 				Vermilion:BroadcastNotify(playerName .. " has been unbanned because their ban has expired!", 10, VERMILION_NOTIFY_ERROR)
 				table.insert(idxToRemove, i)
 				Vermilion:GetUserSteamID(k[1]):SetRank(Vermilion:GetSetting("default_rank", "player"))
@@ -526,7 +570,12 @@ function EXTENSION:InitClient()
 					net.Start("VBanPlayer")
 					net.WriteTable(times)
 					net.WriteString(text)
-					net.WriteString(k)
+					net.WriteString(tostring(isentity(k)))
+					if(isentity(k)) then
+						net.WriteEntity(k)
+					else
+						net.WriteString(k)
+					end
 					net.SendToServer()
 				end
 				net.Start("VBannedPlayersList")
@@ -642,6 +691,7 @@ function EXTENSION:InitClient()
 				Crimson:CreateTextInput("For what reason are you kicking this/these player(s)?", function(text)
 					for i,k in pairs(EXTENSION.ActivePlayerList:GetSelected()) do
 						net.Start("VKickPlayer")
+						net.WriteString(tostring(false))
 						net.WriteString(k:GetValue(2))
 						net.WriteString(text)
 						net.SendToServer()
@@ -688,6 +738,60 @@ function EXTENSION:InitClient()
 			net.SendToServer()
 		end, 3)
 	end)
+end
+
+function EXTENSION:InitShared()
+	
+	properties.Add( "vban",
+		{
+			MenuLabel = "Ban",
+			Order = 0,
+			MenuIcon = "icon16/delete.png",
+			Filter = function(self, ent, ply)
+				if(not IsValid(ent)) then return false end
+				if(not LocalPlayer():IsAdmin()) then return false end
+				if(not ent:IsPlayer()) then return false end
+				return true
+			end,
+			Action = function(self, ent)
+				if(LocalPlayer():IsAdmin()) then
+					EXTENSION:CreateBanForPanel(ent)
+				end
+			end,
+			Receive = function(self, length, ply)
+				
+			end
+		}
+	)
+	
+	properties.Add("vkick",
+		{
+			MenuLabel = "Kick",
+			Order = 1,
+			MenuIcon = "icon16/disconnect.png",
+			Filter = function(self, ent, ply)
+				if(not IsValid(ent)) then return false end
+				if(not LocalPlayer():IsAdmin()) then return false end
+				if(not ent:IsPlayer()) then return false end
+				return true
+			end,
+			Action = function(self, ent)
+				if(LocalPlayer():IsAdmin()) then
+					Crimson:CreateTextInput("For what reason are you kicking this player?", function(text)
+						net.Start("VKickPlayer")
+						net.WriteString(tostring(true))
+						net.WriteEntity(ent)
+						net.WriteString(text)
+						net.SendToServer()
+					end)
+				end
+			end,
+			Receive = function(self, length, ply)
+			
+			end
+		}
+	)
+	
 end
 
 Vermilion:RegisterExtension(EXTENSION)

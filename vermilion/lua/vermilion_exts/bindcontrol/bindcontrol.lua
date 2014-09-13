@@ -196,10 +196,6 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a rank to load the list of blocked binds for!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "banned") then
-					Crimson:CreateErrorDialog("Cannot edit the list of blocked binds for this rank; it is a protected rank!")
-					return
-				end
 				net.Start("VBindListLoad")
 				net.WriteString(ranksList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
@@ -244,7 +240,13 @@ function EXTENSION:InitClient()
 					if(string.find(result, "vermilion_menu")) then
 						Crimson:CreateErrorDialog("Cannot block the Vermilion Menu!")
 						return
-					end	
+					end
+					for i,k in pairs(guiRankPermissionsList:GetLines()) do
+						if(k:GetValue(1) == result) then
+							Crimson:CreateErrorDialog("Cannot add duplicate bind.")
+							return
+						end
+					end
 					guiRankPermissionsList:AddLine(result)
 				end)
 			end)

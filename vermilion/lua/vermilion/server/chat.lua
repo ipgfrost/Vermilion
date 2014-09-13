@@ -18,6 +18,7 @@
 ]]
 
 Vermilion.ChatCommands = {}
+Vermilion.ChatPredictors = {}
 Vermilion.ChatAliases = {}
 
 --[[ 
@@ -38,6 +39,10 @@ function Vermilion:AddChatCommand(activator, func, syntax)
 			Vermilion.Log("Command failed with an error: " .. tostring(err))
 		end
 	end, nil, "This command can also be run by typing !" .. activator .. " into the chat.")
+end
+
+function Vermilion:AddChatPredictor(activator, func)
+	self.ChatPredictors[activator] = func
 end
 
 --[[
@@ -85,6 +90,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole)
 				table.insert(parts2, k)
 			end
 		end
+		table.insert(parts2, string.Trim(string.Replace(part, "\"", "")))
 		parts = {}
 		for i,k in pairs(parts2) do
 			if(k != nil and k != "") then
@@ -105,6 +111,25 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole)
 		else 
 			if(commandName == nil) then commandName = "" end
 			logFunc("No such command '" .. commandName .. "'", VERMILION_NOTIFY_ERROR)
+			local percentages = {}
+			for i,k in pairs(Vermilion.ChatCommands) do
+				local actual = string.ToTable(i)
+				local typed = string.ToTable(commandName)
+				local correct = 0
+				for i1,k2 in ipairs(actual) do
+					if(typed[i1] == nil) then break end
+					if(string.lower(k2) == string.lower(typed[i1])) then
+						correct = correct + 1
+					end
+				end
+				table.insert(percentages, { Name = table.concat(actual), Percentage = (correct / table.Count(actual)) * 100})
+			end
+			table.SortByMember(percentages, "Percentage", false)
+			if(percentages[1].Percentage == 0) then return "" end
+			logFunc("Did you mean to type any of these?", 10, VERMILION_NOTIFY_ERROR)
+			for i=1,3,1 do
+				logFunc(percentages[i].Name, 10, VERMILION_NOTIFY_ERROR)
+			end
 		end
 		return ""
 	end

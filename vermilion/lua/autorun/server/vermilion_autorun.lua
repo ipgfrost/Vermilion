@@ -43,7 +43,7 @@ local csLuaFiles = {
 
 -- Internal logging function
 function Vermilion.Log( str ) 
-	print("[Vermilion] " .. tostring(str))
+	print("[Vermilion - Server] " .. tostring(str))
 	file.Append("vermilion/vermilion_server_log.txt", util.DateStamp() .. tostring(str) .. "\n")
 end
 

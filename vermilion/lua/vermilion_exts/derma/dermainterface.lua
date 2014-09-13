@@ -27,6 +27,7 @@ EXTENSION.Permissions = {
 }
 EXTENSION.Tabs = {}
 EXTENSION.ClientTabs = {}
+
 EXTENSION.ClientOptions = {
 	{ "Alert Sounds", "vermilion_alert_sounds" }
 }
@@ -97,7 +98,6 @@ function EXTENSION:InitClient()
 		title:SizeToContents()
 		title:SetPos((welcome:GetWide() / 2) - (title:GetWide() / 2), 50)
 		title:SetParent(welcome)
-		
 		
 		self.TabHolder:AddSheet("Welcome", welcome, "icon16/house.png", false, false, "Welcome")
 	end
@@ -199,6 +199,7 @@ function EXTENSION:InitClient()
 		if(EXTENSION.Tabs[tabName] != nil) then
 			self.Log("Warning: overwriting tab " .. tabName .. "!")
 		end
+		self.Log("Adding tab " .. tabName .. " with sorting priority " .. tostring(order))
 		EXTENSION.Tabs[tabName] = { tabNiceName, tabIcon, tabToolTip, tabPanelFunc, order }
 	end
 	

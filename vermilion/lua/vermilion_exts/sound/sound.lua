@@ -205,6 +205,18 @@ function EXTENSION:InitServer()
 		end
 	end, "[-stream <url>] [-file <path>] [-vol <number 0-100>] [-loop] [-targetplayer <player>]")
 	
+	--[[Vermilion:AddChatPredictor("playsound", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(k:GetName(), current)) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)]]
+	
 	Vermilion:AddChatCommand("stopsound", function(sender, text)
 		if(text[1] == "-targetplayer") then
 			local targetPlayer = Crimson.LookupPlayerByName(text[2])

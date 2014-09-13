@@ -45,6 +45,8 @@ for i,k in pairs(resources) do
 	resource.AddSingleFile(k)
 end
 
+util.AddNetworkString("VHTMLMOTD")
+
 Vermilion.MOTDKeywords = {}
 
 function Vermilion:AddMOTDKeyword(word, desc, replacementFunc)
@@ -102,6 +104,16 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 				Vermilion:BroadcastNotify(string.format(Vermilion.Lang.JoinedServerFirstGeoIP, vplayer:GetName(), tab['country_name']))
 				vplayer.Vermilion_Location = tab['country_code']
 				vplayer:SetNWString("Country_Code", tab['country_code'])
+				timer.Simple(5, function()
+					Vermilion:GetUser(vplayer).CountryCode = tab['country_code']
+					Vermilion:GetUser(vplayer).CountryName = tab['country_name']
+				end)
+			end, function() 
+				local vuser = Vermilion:GetUser(vplayer)
+				if(vuser != nil) then
+					vplayer.Vermilion_Location = vuser.CountryCode
+					vplayer:SetNWString("Country_Code", vuser.CountryCode)
+				end
 			end)
 			Vermilion:AddUser(vplayer:GetName(), vplayer:SteamID())
 			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
@@ -110,11 +122,22 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 				Vermilion.Log(string.format(Vermilion.Lang.SettingOwner, vplayer:GetName()))
 				Vermilion:GetUser(vplayer):SetRank("owner")
 			end
+			
 		else
 			Vermilion.GetGeoIPForPlayer(vplayer, function(tab)
 				Vermilion:BroadcastNotify(string.format(Vermilion.Lang.JoinedServerGeoIP, vplayer:GetName(), tab['country_name']))
 				vplayer.Vermilion_Location = tab['country_code']
 				vplayer:SetNWString("Country_Code", tab['country_code'])
+				timer.Simple(5, function()
+					Vermilion:GetUser(vplayer).CountryCode = tab['country_code']
+					Vermilion:GetUser(vplayer).CountryName = tab['country_name']
+				end)
+			end, function()
+				local vuser = Vermilion:GetUser(vplayer)
+				if(vuser != nil) then
+					vplayer.Vermilion_Location = vuser.CountryCode
+					vplayer:SetNWString("Country_Code", vuser.CountryCode)
+				end
 			end)
 			vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank().Name)
 			vplayer:SetNWString("Vermilion_Identify_Admin", Vermilion:HasPermission(vplayer, "identify_as_admin"))
@@ -144,24 +167,42 @@ Vermilion:RegisterHook("PlayerInitialSpawn", "Advertise", function(vplayer)
 		end
 	end
 	
+	
+	timer.Simple(2, function()
+		if(not Vermilion:OwnerExists() and not Vermilion:GetModuleData("server_manager", "disable_owner_nag", false)) then
+			Vermilion:SendNotify(vplayer, "No owner exists for this server!", 15, VERMILION_NOTIFY_ERROR)
+			Vermilion:SendNotify(vplayer, "If you are the owner of the server, please type 'vermilion_setrank \"" .. vplayer:GetName() .. "\" owner' into the DEDICATED SERVER console!", 15, VERMILION_NOTIFY_ERROR)
+			Vermilion:SendNotify(vplayer, "You can disable this notification in the Server Settings tab of the Vermilion Menu.", 15, VERMILION_NOTIFY_ERROR)
+		end
+		Vermilion:SendMOTD(vplayer)
+	end)
+end)
+
+function Vermilion:SendMOTD(vplayer)
 	local motd = Vermilion:GetModuleData("server_manager", "motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!")
+	if(Vermilion:GetModuleData("server_manager", "motdisurl", false)) then
+		net.Start("VHTMLMOTD")
+		net.WriteString(tostring(true))
+		net.WriteString(motd)
+		net.Send(vplayer)
+		return
+	end
 	for i,k in pairs(Vermilion.MOTDKeywords) do
 		if(string.find(motd, "%" .. i .. "%", 1, true)) then
 			motd = string.Replace(motd, "%" .. i .. "%", tostring(k.Function(vplayer)))
 		end
 	end
-	
-	
-	timer.Simple(2, function()
-		if(not Vermilion:OwnerExists() and not Vermilion:GetModuleData("server_manager", "disable_owner_nag", false)) then
-			Vermilion:SendNotify(vplayer, "No owner exists for this server!", 15, VERMILION_NOTIFY_ERROR)
-			Vermilion:SendNotify(vplayer, "If you are the owner of the server, please type 'vermilion_setrank \"" .. vplayer:GetName() .. "\" owner' into the DEDICATED SERVER console!", 15, VERMILION_NOTIFY_ERROR) 
-		end
-		for i,k in pairs(string.Explode("\n", motd)) do
-			Vermilion:SendNotify(vplayer, k, 10)
-		end
-	end)
-end)
+	if(Vermilion:GetModuleData("server_manager", "motdishtml", false)) then
+		net.Start("VHTMLMOTD")
+		net.WriteString(tostring(false))
+		net.WriteString(motd)
+		net.Send(vplayer)
+		return
+	end
+	for i,k in pairs(string.Explode("\n", motd)) do
+		Vermilion:SendNotify(vplayer, k, 10)
+	end
+end
 
 function Vermilion:GetPermissionDefinition(permission)
 	return hook.Call("VDefinePermission", permission)

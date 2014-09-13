@@ -45,6 +45,7 @@ EXTENSION.Permissions = {
 	"spawn_effect",
 	"spawn_ragdoll",
 	"spawn_all",
+	"add_resource"
 }
 EXTENSION.PermissionDefinitions = {
 	["server_manage"] = "This player can see the Server Settings tab in the Vermilion Menu and modify the settings within.",
@@ -116,14 +117,6 @@ EXTENSION.NetworkStrings = {
 function EXTENSION:InitServer()
 	
 	local META = FindMetaTable("Player")
-	
-	function META:IsAdmin()
-		if(CLIENT) then
-			return self:GetNWBool("Vermilion_Identify_Admin", false)
-		end
-		return Vermilion:HasPermission(self, "identify_as_admin")
-	end
-
 
 	if(META.Vermilion_Lock == nil) then META.Vermilion_Lock = META.Lock end
 	function META:Lock()
@@ -160,19 +153,43 @@ function EXTENSION:InitServer()
 		end
 	end
 	
-	Vermilion:AddChatCommand("broadcast", function(sender, text)
-		if(Vermilion:HasPermissionError(sender, "broadcast_hint")) then
-			Vermilion:BroadcastNotify(table.concat(text, " ", 1, table.Count(text)), 10, NOTIFY_HINT)
+	Vermilion:AddChatCommand("broadcast", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "broadcast_hint", log)) then
+			Vermilion:BroadcastNotify(text[1], 10, NOTIFY_HINT)
 		end
 	end, "<text>")
 	
-	Vermilion:AddChatCommand("addresource", function(sender, text)
-		if(Vermilion:HasPermissionError(sender, "vermilion_add_resource")) then
+	Vermilion:AddChatCommand("addresource", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "add_resource", log)) then
 			local str = table.concat(text, " ", 1, table.Count(text))
+			if(not file.Exists(str, "GAME")) then
+				log("File does not exist!", VERMILION_NOTIFY_ERROR)
+				return
+			end
 			resource.AddSingleFile(str)
-			Vermilion:SendNotify(sender, str .. " has been added to the client resources!")
+			log(str .. " has been added to the client resources!")
+			table.insert(EXTENSION:GetData("resources", {}, true), str)
 		end
 	end, "<resource path>")
+	
+	Vermilion:AddChatCommand("listresources", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "add_resource", log)) then
+			log("A list of resources has been printed to the chat.")
+			for i,k in pairs(EXTENSION:GetData("resources", {}, true)) do
+				sender:ChatPrint(k)
+			end
+		end
+	end)
+	
+	Vermilion:AddChatCommand("removeresource", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "add_resource", log)) then
+			if(not table.HasValue(EXTENSION:GetData("resources", {}, true), table.concat(text, " ", 1, table.Count(text)))) then
+				log("This resource has not been added to the downlad list.", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			table.RemoveByValue(EXTENSION:GetData("resources", {}, true), table.concat(text, " ", 1, table.Count(text)))
+		end
+	end)
 	
 	timer.Simple(1, function() -- This timer allows Vermilion to overwrite other addons by "waiting" for them to overwrite the function, then subsequently overwriting it after 1 second.
 		if(META.Vermilion_CheckLimit == nil) then
@@ -180,11 +197,17 @@ function EXTENSION:InitServer()
 		end
 		function META:CheckLimit(str)
 			if(not EXTENSION:GetData("enable_limit_remover", true)) then
+				local result = hook.Run("VCheckLimit", self, str)
+				if(result == nil) then result = true end
+				if(result == false) then return false end
 				return self:Vermilion_CheckLimit(str)
 			end
 			if(Vermilion:HasPermission(self, "no_spawn_restrictions")) then
 				return true
 			end
+			local result = hook.Run("VCheckLimit", self, str)
+			if(result == nil) then result = true end
+			if(result == false) then return false end
 			return self:Vermilion_CheckLimit(str)
 		end
 	end)
@@ -204,7 +227,7 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
-	
+	-- This is very inefficient. Replace with a hook?
 	self:AddHook("Tick", "V_BulletReload", function(vent, dTab)
 		if(not EXTENSION:GetData("unlimited_ammo", true)) then return end
 		for i,vplayer in pairs(player.GetAll()) do
@@ -349,12 +372,16 @@ function EXTENSION:InitServer()
 	self:NetHook("VGetMOTD", function(vplayer)
 		net.Start("VGetMOTD")
 		net.WriteString(EXTENSION:GetData("motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!"))
+		net.WriteString(tostring(EXTENSION:GetData("motdishtml", false, true)))
+		net.WriteString(tostring(EXTENSION:GetData("motdisurl", false, true)))
 		net.Send(vplayer)
 	end)
 	
 	self:NetHook("VUpdateMOTD", function(vplayer)
 		if(Vermilion:HasPermissionError(vplayer, "server_manage")) then
 			EXTENSION:SetData("motd", net.ReadString())
+			EXTENSION:SetData("motdishtml", tobool(net.ReadString()))
+			EXTENSION:SetData("motdisurl", tobool(net.ReadString()))
 		end
 	end)
 	
@@ -401,6 +428,8 @@ function EXTENSION:InitClient()
 	self:NetHook("VGetMOTD", function()
 		if(IsValid(EXTENSION.MOTDText)) then
 			EXTENSION.MOTDText:SetValue(net.ReadString())
+			EXTENSION.IsHTML = tobool(net.ReadString())
+			EXTENSION.IsURL = tobool(net.ReadString())
 		end
 	end)
 	
@@ -628,9 +657,75 @@ function EXTENSION:InitClient()
 				motd:SetMultiline(true)
 				EXTENSION.MOTDText = motd
 				
+				
+				local optionsButton = Crimson.CreateButton("Options", function()
+					local motdpanel2 = Crimson.CreateFrame(
+						{
+							['size'] = { 500, 300 },
+							['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 150 },
+							['closeBtn'] = true,
+							['draggable'] = true,
+							['title'] = "MOTD Variables",
+							['bgBlur'] = false
+						}
+					)
+					
+					
+					local ishtmlcb = nil
+					local isurlcb = nil
+					
+					ishtmlcb = vgui.Create("DCheckBoxLabel")
+					ishtmlcb:SetPos(10, 30)
+					ishtmlcb:SetText("HTML Based")
+					ishtmlcb:SizeToContents()
+					ishtmlcb:SetParent(motdpanel2)
+					ishtmlcb:SetBright(true)
+					ishtmlcb:SetValue(EXTENSION.IsHTML)
+					ishtmlcb.OnChange = function()
+						EXTENSION.IsHTML = ishtmlcb:GetChecked()
+						isurlcb:SetDisabled(ishtmlcb:GetChecked())
+					end
+					
+					isurlcb = vgui.Create("DCheckBoxLabel")
+					isurlcb:SetPos(10, 50)
+					isurlcb:SetText("Is URL")
+					isurlcb:SizeToContents()
+					isurlcb:SetParent(motdpanel2)
+					isurlcb:SetBright(true)
+					isurlcb:SetValue(EXTENSION.IsURL)
+					isurlcb.OnChange = function()
+						EXTENSION.IsURL = isurlcb:GetChecked()
+						ishtmlcb:SetDisabled(isurlcb:GetChecked())
+					end
+					
+					ishtmlcb:SetDisabled(isurlcb:GetChecked())
+					isurlcb:SetDisabled(ishtmlcb:GetChecked())
+					
+					EXTENSION.IsHTMLCB = ishtmlcb
+					EXTENSION.IsURLCB = isurlcb
+					
+					local confirmButton = Crimson.CreateButton("OK", function()
+						motdpanel2:Close()
+					end)
+					confirmButton:SetPos((500 - 100) / 2, 275)
+					confirmButton:SetSize(100, 20)
+					confirmButton:SetParent(motdpanel2)
+					
+					motdpanel2:MakePopup()
+					motdpanel2:DoModal()
+					motdpanel2:SetAutoDelete(true)
+				end)
+				optionsButton:SetPos(365, 275)
+				optionsButton:SetSize(100, 20)
+				optionsButton:SetParent(motdpanel)
+				
+				
+				
 				local confirmButton = Crimson.CreateButton("OK", function()
 					net.Start("VUpdateMOTD")
 					net.WriteString(motd:GetValue())
+					net.WriteString(tostring(EXTENSION.IsHTML))
+					net.WriteString(tostring(EXTENSION.IsURL))
 					net.SendToServer()
 					motdpanel:Close()
 				end)
@@ -674,6 +769,8 @@ function EXTENSION:InitClient()
 				activeValuesButton:SetSize(100, 20)
 				activeValuesButton:SetParent(motdpanel)
 				
+				
+				
 				net.Start("VGetMOTD")
 				net.SendToServer()
 				
@@ -691,6 +788,36 @@ function EXTENSION:InitClient()
 			net.SendToServer()
 		end, 1)
 	end)
+end
+
+function EXTENSION:InitShared()
+	local META = FindMetaTable("Player")
+	
+	function META:IsAdmin()
+		if(CLIENT) then
+			return self:GetNWBool("Vermilion_Identify_Admin", false)
+		end
+		return Vermilion:HasPermission(self, "identify_as_admin")
+	end
+	
+	properties.Add("vsteamprofile",
+		{
+			MenuLabel = "Open Steam Profile",
+			Order = 5,
+			MenuIcon = "icon16/page_find.png",
+			Filter = function(self, ent, ply)
+				if(not IsValid(ent)) then return false end
+				if(not ent:IsPlayer()) then return false end
+				return true
+			end,
+			Action = function(self, ent)
+				ent:ShowProfile()
+			end,
+			Receive = function(self, length, ply)
+			
+			end
+		}
+	)
 end
 
 Vermilion:RegisterExtension(EXTENSION)

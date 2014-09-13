@@ -40,7 +40,8 @@ function EXTENSION:InitServer()
 		EXTENSION.GeoIPCallbacks[vplayer:GetName()] = nil
 	end)
 
-	function Vermilion.GetGeoIPForPlayer(vplayer, callback)
+	function Vermilion.GetGeoIPForPlayer(vplayer, callback, failcallback)
+		failcallback = failcallback or function() end
 		if(IsValid(vplayer)) then
 			local ip = vplayer:IPAddress()
 			if(ip == "Error!") then
@@ -52,12 +53,14 @@ function EXTENSION:InitServer()
 					http.Fetch( "http://freegeoip.net/json/" .. string.Trim(tip), function(b1, l1, h1, c1)
 						if(c1 == 403) then
 							print("Used up query quota. If this is a problem, please change set up a local instance of the freegeoip service and change the target.")
+							failcallback()
 							return
 						end
 						callback(util.JSONToTable(b1))
 					end, function(err)
 						print("Error while fetching GeoIP information for " .. tip .. "!")
 						print(err)
+						failcallback()
 					end)
 				end
 				net.Send(vplayer)
@@ -68,16 +71,19 @@ function EXTENSION:InitServer()
 					http.Fetch( "http://freegeoip.net/json/" .. string.Trim(body), function(b1, l1, h1, c1)
 						if(c1 == 403) then
 							print("Used up query quota. If this is a problem, please change set up a local instance of the freegeoip service and change the target.")
+							failcallback()
 							return
 						end
 						callback(util.JSONToTable(b1))
 					end, function(err)
 						print("Error while fetching GeoIP information for " .. ip .. "!")
 						print(err)
+						failcallback()
 					end)
 				end, function(err)
 					print("Error while fetching GeoIP information for " .. ip .. "!")
 					print(err)
+					failcallback()
 				end)
 				return
 			end
@@ -87,15 +93,17 @@ function EXTENSION:InitServer()
 			http.Fetch( "http://freegeoip.net/json/" .. ip, function(body, len, headers, code)
 				if(code == 403) then
 					print("Used up query quota. If this is a problem, please change set up a local instance of the freegeoip service and change the target.")
+					failcallback()
 					return
 				end
-				print("BODY: " .. body)
 				callback(util.JSONToTable(body))
 			end, function(err)
 				print("Error while fetching GeoIP information for " .. ip .. "!")
 				print(err)
+				failcallback()
 			end)
 		else
+			failcallback()
 			return false
 		end
 	end
@@ -117,6 +125,18 @@ function EXTENSION:InitServer()
 			--Vermilion:SendNotify(sender, "GeoIP information for this player cannot be determined!", 5, VERMILION_NOTIFY_ERROR)
 		end
 	end, "[player]")
+	
+	Vermilion:AddChatPredictor("where", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
 
 end
 

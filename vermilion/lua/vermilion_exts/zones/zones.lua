@@ -364,6 +364,27 @@ function EXTENSION:InitServer()
 		log("Zone updated!")
 	end, "<zone> <mode>")
 	
+	Vermilion:AddChatPredictor("setmode", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.Zones) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+		if(pos == 2) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.EffectDefinitions) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+	end)
+	
 	Vermilion:AddChatCommand("unsetmode", function(sender, text, log)
 		if(not Vermilion:HasPermissionError(sender, "zone_manager")) then return end
 		if(table.Count(text) < 2) then
@@ -389,6 +410,31 @@ function EXTENSION:InitServer()
 		table.RemoveByValue(EXTENSION.Zones[text[1]].Effects, text[2])
 		log("Zone updated!")
 	end, "<zone> <mode>")
+	
+	Vermilion:AddChatPredictor("unsetmode", function(pos, current, all)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.Zones) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+		if(pos == 2) then
+			local tab = {}
+			if(EXTENSION.Zones[all[1]] == nil) then
+				table.insert(tab, "This zone doesn't exist.")
+				return tab
+			end
+			for i,k in pairs(EXTENSION.Zones[all[1]].Effects) do
+				if(string.StartWith(k, current)) then
+					table.insert(tab, k)
+				end
+			end
+			return tab
+		end
+	end)
 	
 	Vermilion:AddChatCommand("listmodes", function(sender, text, log)
 		if(not Vermilion:HasPermissionError(sender, "zone_manager")) then return end
@@ -418,6 +464,18 @@ function EXTENSION:InitServer()
 		for i,k in pairs(EXTENSION.Zones[text[1]].Effects) do
 			log(k)
 		end
+	end, "[zone]")
+	
+	Vermilion:AddChatPredictor("listmodes", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.Zones) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
 	end)
 	
 	Vermilion:AddChatCommand("clearzone", function(sender, text, log)
@@ -435,6 +493,18 @@ function EXTENSION:InitServer()
 		log("Zone removed!")
 		EXTENSION:UpdateClients()
 	end, "<zone>")
+	
+	Vermilion:AddChatPredictor("clearzone", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.Zones) do
+				if(string.StartWith(i, current)) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+	end)
 	
 	Vermilion:AddChatCommand("listzones", function(sender, text, log)
 		if(not Vermilion:HasPermissionError(sender, "zone_manager")) then return end

@@ -24,12 +24,14 @@ EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 	"map_management",
 	"changelevel",
-	"abort_map_change"
+	"abort_map_change",
+	"reloadmap"
 }
 EXTENSION.PermissionDefinitions = {
 	["map_management"] = "This player can see the Map tab in the Vermilion Menu and change the settings within.",
 	["changelevel"] = "This player can use the changelevel chat command.",
-	["abort_map_change"] = "This player can use the abortmapchange chat command."
+	["abort_map_change"] = "This player can use the abortmapchange chat command.",
+	["reloadmap"] = "This player can use the reloadmap chat command."
 }
 EXTENSION.NetworkStrings = {
 	"VScheduleMapChange",
@@ -345,6 +347,19 @@ function EXTENSION:InitServer()
 		end	
 	end, "<map> [delay in seconds]")
 	
+	Vermilion:AddChatPredictor("changelevel", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			if(string.len(current) < 1) then return end
+			for i,k in pairs(EXTENSION.MapCache) do
+				if(string.StartWith(string.lower(k[1]), string.lower(current))) then
+					table.insert(tab, k[1])
+				end
+			end
+			return tab
+		end
+	end)
+	
 	Vermilion:AddChatCommand("abortmapchange", function(sender, text, log)
 		if(Vermilion:HasPermissionError(sender, "abort_map_change", log)) then
 			if(not EXTENSION.MapChangeInProgress) then
@@ -427,12 +442,14 @@ function EXTENSION:InitClient()
 		EXTENSION.MapChangeInProgress = true
 		EXTENSION.MapChangeAt = os.time() + tonumber(net.ReadString())
 		EXTENSION.MapChangeTo = net.ReadString()
+		EXTENSION.HasMap = file.Exists("maps/" .. EXTENSION.MapChangeTo .. ".bsp", "GAME")
 	end)
 	
 	self:NetHook("VAbortMapChange", function()
 		EXTENSION.MapChangeInProgress = false
 		EXTENSION.MapChangeAt = nil
 		EXTENSION.MapChangeTo = nil
+		EXTENSION.HasMap = nil
 	end)
 	
 	self:AddHook("HUDPaint", function()
@@ -473,7 +490,7 @@ function EXTENSION:InitClient()
 			local w,h = draw.WordBox( 8, ScrW() - EXTENSION.DisplayXPos1 - 10, 10, "Server is changing level to " .. tostring(EXTENSION.MapChangeTo) .. " in ".. time, "Default", col, Color(255, 255, 255, 255))
 			EXTENSION.DisplayXPos1 = w
 			
-			if(not file.Exists("maps/" .. EXTENSION.MapChangeTo .. ".bsp", "GAME")) then
+			if(not EXTENSION.HasMap) then
 				local w1,h1 = draw.WordBox( 8, ScrW() - EXTENSION.DisplayXPos2 - 10, h + 20, "Warning: you do not have this map!", "Default", Color(255, 0, 0, 255), Color(255, 255, 255, 255))
 				EXTENSION.DisplayXPos2 = w1
 			end
@@ -542,7 +559,32 @@ function EXTENSION:InitClient()
 				if(val == "" or val == nil) then
 					EXTENSION.MapList:Clear()
 					for i,k in pairs(EXTENSION.MapCache) do
-						EXTENSION.MapList:AddLine(k[1], k[2])
+						local ln = EXTENSION.MapList:AddLine(k[1], k[2])
+						ln.OldCursorMoved = ln.OnCursorMoved
+						ln.OldCursorEntered = ln.OnCursorEntered
+						ln.OldCursorExited = ln.OnCursorExited
+						
+						function ln:OnCursorEntered()
+							EXTENSION.PreviewPanel:SetVisible(true)
+							EXTENSION.PreviewPanel.DHTML:OpenURL("asset://mapimage/" .. self:GetValue(1))
+							
+							if(self.OldCursorEntered) then self:OldCursorEntered() end
+						end
+						
+						function ln:OnCursorExited()
+							EXTENSION.PreviewPanel:SetVisible(false)
+							
+							if(self.OldCursorExited) then self:OldCursorExited() end
+						end
+						
+						function ln:OnCursorMoved(x,y)
+							if(IsValid(EXTENSION.PreviewPanel)) then
+								local x, y = input.GetCursorPos()
+								EXTENSION.PreviewPanel:SetPos(x - 275, y - 202)
+							end
+							
+							if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
+						end
 					end
 				else
 					EXTENSION.MapList:Clear()

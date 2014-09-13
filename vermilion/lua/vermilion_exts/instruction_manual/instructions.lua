@@ -107,64 +107,14 @@ function EXTENSION:InitClient()
 		
 	end)
 	
+	self:AddHelpTopic("Auto-Promotion", function(contentWindow)
+		local lab = EXTENSION:GetLabel(contentWindow)
+		lab:SetText("Auto-Promotion can be used to promote a user after they have spent some time playing on the server.\n\nThere are two things to note about the system:\n\n1. The system counts in 5 second intervals, meaning that every 5 seconds Vermilion increments it's internal playtime counter and the promotion checker counts in 10 second intervals.\n2. The playtime is cumulative. This means that this is the amount of time that the player has spent on the server since they first joined. For example, if you have 10 hours of playtime and the administrator adds a promotion for 5 hours, you will instantly get that promotion.")
+	end)
+	
 	self:AddHelpTopic("Chat Commands", function(contentWindow)
 		local lab = EXTENSION:GetLabel(contentWindow)
-		lab:SetText("Vermilion has commands that can be run from the chat. You can activate these commands by typing \"!<command name> <args>\" into the chat.\n\nThere is currently no help system available for the commands, and as such, a list of commands can be found below. Please note that commands are also subject to access permissions and will check if you are allowed to run them if such a check is required.")
-		
-		local lst = Crimson.CreateList({"Command"}, false, true)
-		lst:SetPos(0, 110)
-		lst:SetSize(200, 220)
-		contentWindow:AddItem(lst)
-		
-		local commandList = { -- get this from the server!
-			"where",
-			"lockplayer",
-			"unlockplayer",
-			"assassinate",
-			"ragdoll",
-			"removeammo",
-			"flatten",
-			"launch",
-			"teleport",
-			"health",
-			"reloadext",
-			"setmode",
-			"unsetmode",
-			"listmodes",
-			"clearzone",
-			"listzones",
-			"cancelzone",
-			"addzone",
-			"playsound",
-			"resetranks (!)",
-			"getrank",
-			"setrank",
-			"vox (!)",
-			"voxcount (!)",
-			"addresource",
-			"adduser",
-			"listexts",
-			"showmyprops",
-			"stopsound",
-			"teleport",
-			"tpquery",
-			"tpq",
-			"tpaccept",
-			"tpa",
-			"tpdeny",
-			"tpd",
-			"speed",
-			"respawn",
-			"pm",
-			"r",
-			"time",
-			"afk",
-			"getpos",
-			"sudo",
-			"addwarp",
-			"removewarp",
-			"warp"
-		}
+		lab:SetText("Vermilion has commands that can be run from the chat. You can activate these commands by typing \"!<command name> <args>\" into the chat.\n\nTo get a list of commands, type the command prefix (!) into the chat box. Please note that commands are also subject to access permissions and will check if you are allowed to run them if such a check is required.")
 		
 		for i,k in pairs(commandList) do
 			lst:AddLine(k)
@@ -189,6 +139,11 @@ function EXTENSION:InitClient()
 		local lab2 = EXTENSION:GetLabel(contentWindow)
 		lab2:SetPos(0, 320)
 		lab2:SetText("To remove a zone, type \"!clearzone <name>\" into the chat where <name> is the name of the zone to remove.\n\nNote that this feature is experimental and there will be a GUI to interact with the zones in the near future.")
+	end)
+	
+	self:AddHelpTopic("Hints and Tips", function(contentWindow)
+		local lab = EXTENSION:GetLabel(contentWindow)
+		lab:SetText("1. Right click on things such as lists. Vermilion has a large amount of contextual properties in the Vermilion Menu.\n2. Don't repeatedly open the Vermilion Menu in a short space of time. The server has to update it and the client has to re-build it each time it is opened to ensure fresh data is visible.\n3. The Vermilion SoundCloud browser can be bound to a key using 'vermilion_soundcloud_browser'\n4. If you don't see the 'Tool Limits' menu, then the Gamemode that you are playing does not support the toolgun.\n5. If the server starts a level change count-down, a notification will be displayed if you don't have the map to give you time to obtain the map.\n6. You can press tab to autocomplete a Vermilion chat command.\n7. There are two types of sound visualiser available. Change between them by changing the value of 'vermilion_fft_type'.\n8. Vermilion overrides 'sbox_noclip', therefore changing its value is pointless.\n9. If you get a notification that the password was wrong when joining a server, that means you have been banned by Vermilion.")
 	end)
 	
 	self:AddHelpTopic("Help me! I'm locked out!", function(contentWindow)

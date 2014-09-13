@@ -42,8 +42,9 @@ EXTENSION.NetworkStrings = {
 
 EXTENSION.EditingRank = ""
 
-function EXTENSION:GetToolgunToolName(name)
-	return weapons.Get("gmod_tool").Tool[name]
+function EXTENSION:GetToolgunTool(name)
+	if(EXTENSION.Toolgun == nil) then EXTENSION.Toolgun = weapons.Get("gmod_tool") end
+	return EXTENSION.Toolgun.Tool[name]
 end
 
 function EXTENSION:InitServer()
@@ -125,9 +126,24 @@ function EXTENSION:InitClient()
 		end
 		EXTENSION.AllWeaponsList:Clear()
 		local tab = net.ReadTable()
+		EXTENSION.ToolCache = tab
 		for i,k in pairs(tab) do
-			local name = EXTENSION:GetToolgunToolName(k).Name
-			EXTENSION.AllWeaponsList:AddLine(name).ToolClass = k
+			local name = EXTENSION:GetToolgunTool(k).Name
+			local ln = EXTENSION.AllWeaponsList:AddLine(name)
+			ln.ToolClass = k
+			ln.OnRightClick = function()
+				local mnu = DermaMenu(ln)
+				mnu:AddOption("Details", function()
+					local tool = EXTENSION:GetToolgunTool(k)
+					local details = {
+						"Name: " .. tostring(tool.Name),
+						"Tab: " .. tostring(tool.Tab),
+						"Category: " .. tostring(tool.Category)
+					}
+					Derma_Message(string.Implode("\n", details), "Tool Details", "Close")
+				end):SetIcon("icon16/book_open.png")
+				mnu:Open()
+			end
 		end
 	end)
 	self:NetHook("VRankToolsLoad", function()
@@ -137,7 +153,7 @@ function EXTENSION:InitClient()
 		EXTENSION.RankPermissionsList:Clear()
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
-			local name = EXTENSION:GetToolgunToolName(k).Name
+			local name = EXTENSION:GetToolgunTool(k).Name
 			EXTENSION.RankPermissionsList:AddLine(name).ToolClass = k
 		end
 	end)
@@ -170,11 +186,43 @@ function EXTENSION:InitClient()
 			local guiAllWeaponsList = Crimson.CreateList({ "Name" })
 			guiAllWeaponsList:SetParent(panel)
 			guiAllWeaponsList:SetPos(525, 250)
-			guiAllWeaponsList:SetSize(250, 280)
+			guiAllWeaponsList:SetSize(250, 250)
 			EXTENSION.AllWeaponsList = guiAllWeaponsList
 			
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Tools")
 			allWeaponsLabel:SetParent(panel)
+			
+			local searchBox = vgui.Create("DTextEntry")
+			searchBox:SetParent(panel)
+			searchBox:SetPos(525, 510)
+			searchBox:SetSize(250, 25)
+			searchBox:SetUpdateOnType(true)
+			function searchBox:OnChange()
+				local val = searchBox:GetValue()
+				if(val == "" or val == nil) then
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.ToolCache) do
+						local name = EXTENSION:GetToolgunTool(k).Name
+						if(name == nil) then continue end
+						guiAllWeaponsList:AddLine(name).ToolClass = k
+					end
+				else
+					guiAllWeaponsList:Clear()
+					for i,k in pairs(EXTENSION.ToolCache) do
+						local name = EXTENSION:GetToolgunTool(k).Name
+						if(name == nil) then continue end
+						if(string.find(string.lower(name), string.lower(val))) then
+							guiAllWeaponsList:AddLine(name).ToolClass = k
+						end
+					end
+				end
+			end
+			
+			local searchLogo = vgui.Create("DImage")
+			searchLogo:SetParent(searchBox)
+			searchLogo:SetPos(searchBox:GetWide() - 25, 5)
+			searchLogo:SetImage("icon16/magnifier.png")
+			searchLogo:SizeToContents()
 			
 			
 			
