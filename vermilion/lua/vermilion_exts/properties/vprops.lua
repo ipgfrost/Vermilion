@@ -25,6 +25,25 @@ EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 
 }
+EXTENSION.NetworkStrings = {
+	"VCopySteamID",
+	"VCopySteamID64",
+	"VCopyIP"
+}
+
+function EXTENSION:InitServer()
+	self:NetHook("VCopySteamID", function(vplayer)
+		vplayer:SendLua("SetClipboardText('" .. net.ReadEntity():SteamID() .. "')")
+	end)
+	
+	self:NetHook("VCopySteamID64", function(vplayer)
+		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():SteamID64()) .. "')")
+	end)
+	
+	self:NetHook("VCopyIP", function(vplayer)
+		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():IPAddress()) .. "')")
+	end)
+end
 
 function EXTENSION:InitShared()
 	--[[
@@ -40,4 +59,69 @@ function EXTENSION:InitShared()
 		strip weapon
 		dog - fetch
 	]]--
+	
+	properties.Add("copysteamid", {
+		MenuLabel = "Copy SteamID",
+		Order = 10000,
+		MenuIcon = "icon16/paste_plain.png",
+		Filter = function(self, ent, ply)
+			if(not IsValid(ent)) then return false end
+			if(not ent:IsPlayer()) then return false end
+			return true
+		end,
+		Action = function(self, ent)
+			net.Start("VCopySteamID")
+			net.WriteEntity(ent)
+			net.SendToServer()
+		end
+	})
+	
+	properties.Add("copysteamid64", {
+		MenuLabel = "Copy 64-Bit SteamID",
+		Order = 10001,
+		MenuIcon = "icon16/paste_plain.png",
+		Filter = function(self, ent, ply)
+			if(not IsValid(ent)) then return false end
+			if(not ent:IsPlayer()) then return false end
+			return true
+		end,
+		Action = function(self, ent)
+			net.Start("VCopySteamID64")
+			net.WriteEntity(ent)
+			net.SendToServer()
+		end
+	})
+	
+	properties.Add("copyip", {
+		MenuLabel = "Copy IP",
+		Order = 10002,
+		MenuIcon = "icon16/paste_plain.png",
+		Filter = function(self, ent, ply)
+			if(not IsValid(ent)) then return false end
+			if(not ent:IsPlayer()) then return false end
+			if(not ply:IsAdmin()) then return false end
+			return true
+		end,
+		Action = function(self, ent)
+			net.Start("VCopyIP")
+			net.WriteEntity(ent)
+			net.SendToServer()
+		end
+	})
+	
+	properties.Add("copyname", {
+		MenuLabel = "Copy Name",
+		Order = 10003,
+		MenuIcon = "icon16/paste_plain.png",
+		Filter = function(self, ent, ply)
+			if(not IsValid(ent)) then return false end
+			if(not ent:IsPlayer()) then return false end
+			return true
+		end,
+		Action = function(self, ent)
+			SetClipboardText(ent:GetName())
+		end
+	})
 end
+
+Vermilion:RegisterExtension(EXTENSION)

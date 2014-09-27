@@ -31,7 +31,7 @@ net.Receive("Vermilion_Client_Activate", function(len)
 	Vermilion.Activated = true
 	Vermilion.InfoStores = net.ReadTable()
 	Vermilion:LoadExtensions()
-	if(input.LookupBinding("vermilion_menu") == nil) then
+	if(input.LookupBinding("vermilion_menu") == nil and Vermilion:GetExtension("notifications") != nil) then
 		Vermilion:GetExtension("notifications"):AddNotify("Please bind a key to \"vermlion_menu\"!\n\nYou can do this by opening the console and typing \"bind <key> vermilion_menu\"", 15, NOTIFY_GENERIC)
 	end
 end)

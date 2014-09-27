@@ -77,22 +77,6 @@ function EXTENSION:InitClient()
 			EXTENSION.PromotionTable:Clear()
 			local tab = net.ReadTable()
 			for i,k in pairs(tab) do
-				--[[
-					Java Code to calculate times:
-					long different = end.getTime() - start.getTime();
-					long secInMil = 1000;
-					long minInMil = secInMil * 60;
-					long hrsInMil = minInMil * 60;
-					long dayInMil = hrsInMil * 24;
-					long elapsedDays = different / dayInMil;
-					different = different % dayInMil;
-					long elapsedHours = different / hrsInMil;
-					different = different % hrsInMil;
-					long elapsedMins = different / minInMil;
-					different = different % minInMil;
-					long elapsedSeconds = different / secInMil;
-					return new long[]{elapsedDays, elapsedHours, elapsedMins, elapsedSeconds};
-				]]
 				EXTENSION.PromotionTable:AddLine(k.Rank, k.ToRank, k.PlaytimeString).TotalTime = k.Playtime
 			end
 		end
@@ -158,14 +142,12 @@ function EXTENSION:InitClient()
 			saveListings:SetSize(105, 30)
 			saveListings:SetParent(panel)
 			
-			local fromRankLabel = vgui.Create("DLabel")
+			local fromRankLabel = Crimson.CreateLabel("From Rank: ")
 			fromRankLabel:SetPos(10, 402)
-			fromRankLabel:SetText("From Rank: ")
-			fromRankLabel:SizeToContents()
 			fromRankLabel:SetDark(true)
 			fromRankLabel:SetParent(panel)
 			
-			local fromRankCombo = vgui.Create("DComboBox")
+			local fromRankCombo = Crimson.CreateComboBox()
 			fromRankCombo:SetPos(fromRankLabel:GetWide() + 20, 400)
 			fromRankCombo:SetSize(200, 20)
 			fromRankCombo:SetParent(panel)
@@ -175,14 +157,12 @@ function EXTENSION:InitClient()
 			end
 			EXTENSION.FromRankCombo = fromRankCombo
 			
-			local toRankLabel = vgui.Create("DLabel")
+			local toRankLabel = Crimson.CreateLabel("To Rank: ")
 			toRankLabel:SetPos(10, 432)
-			toRankLabel:SetText("To Rank: ")
-			toRankLabel:SizeToContents()
 			toRankLabel:SetDark(true)
 			toRankLabel:SetParent(panel)
 			
-			local toRankCombo = vgui.Create("DComboBox")
+			local toRankCombo = Crimson.CreateComboBox()
 			toRankCombo:SetPos(toRankLabel:GetWide() + 20, 430)
 			toRankCombo:SetSize(200, 20)
 			toRankCombo:SetParent(panel)
@@ -192,10 +172,8 @@ function EXTENSION:InitClient()
 			end
 			EXTENSION.ToRankCombo = toRankCombo
 			
-			local timeLabel = vgui.Create("DLabel")
+			local timeLabel = Crimson.CreateLabel("After Playing For (running total since first ever spawn, not since last promotion):")
 			timeLabel:SetPos(10, 460)
-			timeLabel:SetText("After Playing For (running total since first ever spawn, not since last promotion):")
-			timeLabel:SizeToContents()
 			timeLabel:SetDark(true)
 			timeLabel:SetParent(panel)
 			

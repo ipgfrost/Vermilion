@@ -37,7 +37,11 @@ EXTENSION.Permissions = {
 	"goto",
 	"bring",
 	"tppos",
-	"steamid_others"
+	"steamid_others",
+	"setspawn",
+	"unsetspawn",
+	"timescale",
+	"stripweapons"
 }
 EXTENSION.PermissionDefinitions = {
 	["teleport"] = "This player is allowed to use the teleport command.",
@@ -54,7 +58,11 @@ EXTENSION.PermissionDefinitions = {
 	["spectate"] = "This player can use the spectate and unspectate commands.",
 	["identity_fraud"] = "This player can use the identityfraud command.",
 	["vanish"] = "This player can use the vanish command.",
-	["steamid_others"] = "This player can use the steamid command to obtain the SteamID for other players."
+	["steamid_others"] = "This player can use the steamid command to obtain the SteamID for other players.",
+	["setspawn"] = "This player can use the setspawn command to set the world spawnpoint.",
+	["unsetspawn"] = "This player can use the unsetspawn command to reset the world spawnpoint.",
+	["timescale"] = "This player can use the timescale command to change the server tick timescale.",
+	["stripweapons"] = "This player can use the stripweapons chat command."
 }
 
 EXTENSION.TeleportRequests = {}
@@ -62,6 +70,75 @@ EXTENSION.PrivateMessageHistory = {}
 EXTENSION.AFKPlayers = {}
 
 function EXTENSION:InitServer()
+
+	Vermilion:AddChatCommand("timescale", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "timescale", log)) then
+			if(table.Count(text) < 1) then
+				log("Syntax: !timescale <factor> (where 1 is default)", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local res = tonumber(text[1])
+			if(res == nil) then
+				log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			if(res <= 0) then
+				log("Can't set the timescale to 0!", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			Vermilion:BroadcastNotify("Server timescale set to " .. tostring(res) .. "x speed!")
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" set the server timescale to ",
+				Vermilion.Colours.Red,
+				res,
+				"x",
+				Vermilion.Colours.White,
+				" speed."
+			})
+			RunConsoleCommand("host_timescale", res)
+		end
+	end, "<factor> (where 1 is default)")
+
+	Vermilion:AddChatCommand("setspawn", function(sender, text, log)
+		if(not Vermilion:HasPermissionError(sender, "setspawn", log)) then return end
+		EXTENSION:GetData("spawnpoints", {}, true)[game.GetMap()] = { Point = sender:GetPos(), Facing = sender:GetAngles() }
+		log("Created spawnpoint.")
+		Vermilion.Log({
+			Vermilion.Colours.Blue,
+			sender:GetName(),
+			Vermilion.Colours.White,
+			" set the server spawnpoint to ",
+			Vermilion.Colours.Red,
+			sender:GetPos()
+		})
+	end)
+	
+	Vermilion:AddChatCommand("togglespawn", function(sender, text, log)
+		log("Feature incomplete.")
+	end, "<true|false>")
+	
+	Vermilion:AddChatCommand("unsetspawn", function(sender, text, log)
+		if(not Vermilion:HasPermissionError(sender, "unsetspawn", log)) then return end
+		EXTENSION:GetData("spawnpoints", {}, true)[game.GetMap()] = nil
+		log("Removed spawnpoint.")
+		Vermilion.Log({
+			Vermilion.Colours.Blue,
+			sender:GetName(),
+			Vermilion.Colours.White,
+			" removed the server spawnpoint."
+		})
+	end)
+	
+	self:AddHook("PlayerSpawn", function(vplayer)
+		if(EXTENSION:GetData("spawnpoints", {}, true)[game.GetMap()] != nil) then
+			local sp = EXTENSION:GetData("spawnpoints", {}, true)[game.GetMap()]
+			vplayer:SetPos(sp.Point)
+			vplayer:SetEyeAngles(sp.Facing)
+		end
+	end)
 	
 	Vermilion:AddChatCommand("teleport", function(sender, text, log)
 		if( not Vermilion:HasPermissionError(sender, "teleport", log) ) then
@@ -91,6 +168,19 @@ function EXTENSION:InitServer()
 		Target:Add(Vector(0,0,90))
 
 		tplayer:SetPos(Target)
+		
+		Vermilion.Log({
+			Vermilion.Colours.Blue,
+			sender:GetName(),
+			Vermilion.Colours.White,
+			" teleported ",
+			Vermilion.Colours.Blue,
+			tplayer:GetName(),
+			Vermilion.Colours.White,
+			" to ",
+			Vermilion.Colours.Blue,
+			lplayer:GetName()
+		})
 	end, "[player to move] <player to move to>")
 	
 	Vermilion:AliasChatCommand("tp", "teleport")
@@ -122,6 +212,15 @@ function EXTENSION:InitServer()
 			local target = tplayer:GetPos()
 			target:Add(Vector(0, 0, 90))
 			sender:SetPos(target)
+			
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" teleported to ",
+				Vermilion.Colours.Blue,
+				tplayer:GetName()
+			})
 		end
 	end, "<player to go to>")
 	
@@ -152,6 +251,17 @@ function EXTENSION:InitServer()
 			local target = sender:GetPos()
 			target:Add(Vector(0, 0, 90))
 			tplayer:SetPos(target)
+			
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" brought ",
+				Vermilion.Colours.Blue,
+				tplayer:GetName(),
+				Vermilion.Colours.White,
+				" to themselves."
+			})
 		end
 	end, "<player to bring>")
 	
@@ -201,6 +311,22 @@ function EXTENSION:InitServer()
 				return
 			end
 			tplayer:SetPos(Vector(x, y, z))
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" teleported ",
+				Vermilion.Colours.Blue,
+				tplayer:GetName(),
+				Vermilion.Colours.White,
+				" to ",
+				Vermilion.Colours.Red,
+				x,
+				" ",
+				y,
+				" ",
+				z
+			})
 		end
 	end, "[player] <x> <y> <z>")
 	
@@ -354,9 +480,24 @@ function EXTENSION:InitServer()
 				end
 				target = tplayer
 			end
-			local speed = math.abs(250 * times)
+			local speed = math.abs(200 * times)
 			GAMEMODE:SetPlayerSpeed(target, speed, speed * 2)
 			log("Speed set!")
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" has changed the speed of ",
+				Vermilion.Colours.Blue,
+				target:GetName(),
+				Vermilion.Colours.White,
+				" to ", 
+				Vermilion.Colours.Red,
+				times,
+				"x",
+				Vermilion.Colours.White,
+				" normal speed."
+			})
 		end
 	end, "<speed multiplier> [player]")
 	
@@ -387,6 +528,16 @@ function EXTENSION:InitServer()
 			if(target != nil) then
 				target:Spawn()
 			end
+			Vermilion.Log({
+				Vermilion.Colours.Blue,
+				sender:GetName(),
+				Vermilion.Colours.White,
+				" has forced ",
+				Vermilion.Colours.Blue,
+				target:GetName(),
+				Vermilion.Colours.White,
+				" to respawn"
+			})
 		end
 	end, "[player]")
 	
@@ -413,6 +564,18 @@ function EXTENSION:InitServer()
 				end
 				tplayer:ChatPrint("[Private] " .. sender:GetName() .. ": " .. table.concat(text, " ", 2))
 				EXTENSION.PrivateMessageHistory[tplayer:SteamID()] = sender:GetName()
+				Vermilion.Log({
+					Vermilion.Colours.Blue,
+					sender:GetName(),
+					Vermilion.Colours.White,
+					" has sent a private message to ",
+					Vermilion.Colours.Blue,
+					tplayer:GetName(),
+					Vermilion.Colours.White,
+					": ",
+					Vermilion.Colours.Red,
+					table.concat(text, " ", 2)
+				})
 			else
 				log("Syntax: !pm <target> <message>", VERMILION_NOTIFY_ERROR)
 			end
@@ -442,6 +605,18 @@ function EXTENSION:InitServer()
 				end
 				tplayer:ChatPrint("[Private] " .. sender:GetName() .. ": " .. table.concat(text, " "))
 				EXTENSION.PrivateMessageHistory[tplayer:SteamID()] = sender:GetName()
+				Vermilion.Log({
+					Vermilion.Colours.Blue,
+					sender:GetName(),
+					Vermilion.Colours.White,
+					" has sent a private message to ",
+					Vermilion.Colours.Blue,
+					tplayer:GetName(),
+					Vermilion.Colours.White,
+					": ",
+					Vermilion.Colours.Red,
+					table.concat(text, " ")
+				})
 			else
 				log("Syntax: !r <message>", VERMILION_NOTIFY_ERROR)
 			end
@@ -509,6 +684,18 @@ function EXTENSION:InitServer()
 			if(not string.StartWith(cmd, "!")) then
 				cmd = "!" .. cmd
 			end
+			Vermilion.Log({
+					Vermilion.Colours.Blue,
+					sender:GetName(),
+					Vermilion.Colours.White,
+					" has sudoed ",
+					Vermilion.Colours.Blue,
+					tplayer:GetName(),
+					Vermilion.Colours.White,
+					": ",
+					Vermilion.Colours.Red,
+					cmd
+				})
 			Vermilion:HandleChat(tplayer, cmd, log, false)
 		end
 	end, "<player> <command>")
@@ -584,10 +771,19 @@ function EXTENSION:InitServer()
 		"predicted_",
 		"scene_",
 		"gmod_gamerules",
-		"shadow_"
+		"shadow_",
+		"weapon_",
+		"gmod_tool",
+		"gmod_camera",
+		"gmod_hands",
+		"physgun_beam",
+		"phys_"
 	}
 	
 	Vermilion:AddChatPredictor("spectate", function(pos, current, all)
+		if(pos == 1) then
+			return { "-entity", "-player" }
+		end
 		if(pos == 2 and all[1] == "-entity") then
 			local tab = {}
 			for i,k in pairs(ents.GetAll()) do
@@ -600,7 +796,7 @@ function EXTENSION:InitServer()
 				end
 				if(banned) then continue end
 				if(string.StartWith(tostring(k:EntIndex()), current)) then
-					table.insert(tab, tostring(k:EntIndex()) .. " (" .. k:GetClass() .. ")")
+					table.insert(tab, {Name = tostring(k:EntIndex()), Syntax = "(" .. k:GetClass() .. ")"})
 				end
 			end
 			return tab
@@ -750,6 +946,281 @@ function EXTENSION:InitServer()
 			end
 			return tab
 		end
+	end)
+	
+	local allowed = {
+		"gm_",
+		"sbox_",
+		"sv_"
+	}
+	
+	Vermilion:AddChatCommand("convar", function(sender, text, log)
+		if(not Vermilion:HasPermissionError(sender, "convar", log)) then return end
+		if(table.Count(text) == 1) then
+			if(not ConVarExists(text[1])) then
+				log("This convar doesn't exist!", VERMILION_NOTIFY_ERROR)
+			else
+				log(text[1] .. " is set to " .. cvars.String(text[1]))
+			end
+		elseif(table.Count(text) > 1) then
+			if(ConVarExists(text[1])) then
+				local allowed = false
+				for i,k in pairs(allowed) do
+					if(string.StartWith(text[1], k)) then
+						allowed = true
+						break
+					end
+				end
+				if(not allowed) then
+					log("Cannot set the value of this convar.", VERMILION_NOTIFY_ERROR)
+					return
+				end
+				RunConsoleCommand(text[1], text[2])
+				log(text[1] .. " was set to " .. text[2])
+			else
+				log("This convar doesn't exist!", VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<cvar> [value]")
+	
+	Vermilion:AddChatCommand("deaths", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "set_deaths", log)) then
+			if(table.Count(text) < 2) then
+				log("Syntax: !deaths <player> <deaths>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				local result = tonumber(text[2])
+				if(result == nil) then
+					log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+					return
+				end
+				tplayer:SetDeaths(result)
+				log("Set " .. text[1] .. "'s death count to " .. text[2])
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player> <deaths>")
+	
+	Vermilion:AddChatPredictor("deaths", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("frags", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "set_frags", log)) then
+			if(table.Count(text) < 2) then
+				log("Syntax: !frags <player> <frags>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				local result = tonumber(text[2])
+				if(result == nil) then
+					log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+					return
+				end
+				tplayer:SetFrags(result)
+				log("Set " .. text[1] .. "'s frag count to " .. text[2])
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player> <frags>")
+	
+	Vermilion:AddChatPredictor("frags", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("armour", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "set_armour", log)) then
+			if(table.Count(text) < 2) then
+				log("Syntax: !armour <player> <armour>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				local result = tonumber(text[2])
+				if(result == nil) then
+					log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+					return
+				end
+				tplayer:SetArmor(result)
+				log("Set " .. text[1] .. "'s armour to " .. text[2])
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player> <arnour>")
+	
+	Vermilion:AddChatPredictor("armour", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("decals", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "clear_decals", log)) then
+			for i,k in pairs(player.GetAll()) do
+				k:ConCommand("r_cleardecals")
+			end
+			Vermilion:BroadcastNotify(sender:GetName() .. " cleared up the decals.")
+		end
+	end)
+	
+	Vermilion:AddChatCommand("kick_vehicle", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "kick_vehicle", log)) then
+			if(table.Count(text) < 1) then
+				log("Syntax: !kick_vehicle <player>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				tplayer:ExitVehicle()				
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player>")
+	
+	Vermilion:AddChatPredictor("kick_vehicle", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("ignite", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "ignite", log)) then
+			if(table.Count(text) < 2) then
+				log("Syntax: !ignite <player> <time>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				local result = tonumber(text[2])
+				if(result == nil) then
+					log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+					return
+				end
+				tplayer:Ignite(result, 5)
+				log("Ignited " .. text[1] .. " for " .. text[2] .. "s")
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player> <time>")
+	
+	Vermilion:AddChatPredictor("ignite", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("extinguish", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "extinguish", log)) then
+			if(table.Count(text) < 1) then
+				log("Syntax: !extinguish <player>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local tplayer = Crimson.LookupPlayerByName(text[1], false)
+			if(IsValid(tplayer)) then
+				tplayer:Extinguish()				
+			else
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+			end
+		end
+	end, "<player>")
+	
+	Vermilion:AddChatPredictor("extinguish", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("random", function(sender, text, log)
+		if(table.Count(text) < 1) then
+			log("Syntax: !random <max number>", VERMILION_NOTIFY_ERROR)
+			return
+		end
+		local res = tonumber(text[1])
+		if(res == nil) then
+			log("That isn't a number!", VERMILION_NOTIFY_ERROR)
+			return
+		end
+		log("Number: " .. tostring(math.random(0, res)))
+	end, "<max number>")
+	
+	Vermilion:AddChatCommand("stripweapons", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "stripweapons", log)) then
+			if(table.Count(text) < 1) then
+				log("Syntax: !stripweapons <player>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local target = Crimson.LookupPlayerByName(text[1])
+			if(not IsValid(target)) then
+				log(Vermilion.Lang.NoSuchPlayer, VERMILION_NOTIFY_ERROR)
+				return
+			end
+			target:StripWeapons()
+			log("Stripped the weapons of " .. text[1])
+		end
+	end, "<player>")
+	
+	Vermilion:AddChatPredictor("stripweapons", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
+	end)
+	
+	Vermilion:AddChatCommand("suicide", function(sender, text, log)
+		sender:ConCommand("kill")
 	end)
 	
 end

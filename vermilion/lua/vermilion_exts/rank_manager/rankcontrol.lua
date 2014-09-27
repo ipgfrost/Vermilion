@@ -50,12 +50,14 @@ EXTENSION.NetworkStrings = {
 	"VSaveRanks",
 	"VUpdateRankPermissions",
 	"VPermissionsList",
-	"VDefinePermission"
+	"VDefinePermission",
+	"VRankColour" -- used to update the colour wheel
 }
 EXTENSION.EditingRank = ""
 EXTENSION.UnsavedRankChanges = false
 
 function EXTENSION:InitServer()
+
 	
 	Vermilion:AddChatCommand("getrank", function(sender, text)
 		if(table.Count(text) == 0) then
@@ -287,12 +289,61 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
+	self:NetHook("VRankColour", function(vplayer)
+		local rank = net.ReadString()
+		local setting = tobool(net.ReadString())
+		if(not setting) then
+			net.Start("VRankColour")
+			net.WriteString(rank)
+			net.WriteColor(Vermilion:GetRankData(rank):GetColour())
+			net.Send(vplayer)
+		else
+			if(Vermilion:HasPermission(vplayer, "rank_management")) then
+				Vermilion:GetRankData(rank):SetColour(net.ReadColour())
+			end
+		end
+	end)
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("rank_control", "rank_management")
 	end)
 end
 
 function EXTENSION:InitClient()
+	
+	
+	self:AddHook("OnPlayerChat", function(vplayer, text, isTeam, dead)
+		local tab = {}
+		if(dead) then
+			table.insert(tab, Color(255, 30, 40))
+			table.insert(tab, "*DEAD* ")
+		end
+
+		if(isTeam) then
+			table.insert(tab, Color(30, 160, 40))
+			table.insert(tab, "(TEAM) ")
+		end
+		
+		local rank = vplayer:GetNWString("Vermilion_Rank")
+		
+		local ranku = string.SetChar(rank, 1, string.upper(string.GetChar(rank, 1)))
+		table.insert(tab, color_white)
+		table.insert(tab, "[" .. ranku .. "] ")
+		
+		if(IsValid(vplayer)) then
+			table.insert(tab, Color(GetGlobalInt(rank .. "Colourr"), GetGlobalInt(rank .. "Colourg"), GetGlobalInt(rank .. "Colourb")))
+			table.insert(tab, vplayer:Nick())
+		else
+			table.insert(tab, "Console")
+		end
+		
+		table.insert(tab, color_white)
+		table.insert(tab, ": " .. text)
+		
+		chat.AddText(unpack(tab))
+		return true
+	end)
+
 	self:AddHook("VActivePlayers", "ActivePlayersList", function(tab)
 		if(not IsValid(EXTENSION.ActivePlayersList)) then
 			return
@@ -334,6 +385,9 @@ function EXTENSION:InitClient()
 				conmenu:AddOption("Set as default rank", function()
 					Crimson:CreateErrorDialog("Feature not implemented.")
 				end):SetIcon("icon16/accept.png")
+				conmenu:AddOption("Set Colour", function()
+					EXTENSION:BuildRankColourPanel(k[1])
+				end):SetIcon("icon16/color_wheel.png")
 				conmenu:Open()
 			end
 		end
@@ -390,6 +444,58 @@ function EXTENSION:InitClient()
 	self:NetHook("VDefinePermission", function()
 		Derma_Message(net.ReadString(), "Permission Defintion", "Close")
 	end)
+	self:NetHook("VRankColour", function()
+		local rank = net.ReadString()
+		local colour = net.ReadColor()
+		Vermilion.Log("Got response for rank " .. rank .. ": " .. tostring(colour))
+		if(IsValid(EXTENSION["Mixer" .. rank])) then
+			EXTENSION["Mixer" .. rank]:SetColor(colour)
+		end
+	end)
+	
+	function EXTENSION:BuildRankColourPanel(rank)
+		local frame = Crimson.CreateFrame(
+			{
+				['size'] = { 500, 300 },
+				['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 150 },
+				['closeBtn'] = true,
+				['draggable'] = true,
+				['title'] = "Set Rank Colour - " .. rank,
+				['bgBlur'] = true
+			}
+		)
+		
+		local mixer = vgui.Create("DColorMixer")
+		mixer:SetPalette(true)
+		mixer:SetAlphaBar(false)
+		mixer:SetWangs(true)
+		mixer:SetParent(frame)
+		mixer:SetPos(0, 25)
+		mixer:SetSize(380, 275)
+		EXTENSION["Mixer" .. rank] = mixer
+		
+		local okbtn = Crimson.CreateButton("OK", function()
+			net.Start("VRankColour")
+			net.WriteString(rank)
+			net.WriteString(tostring(true))
+			net.WriteColor(mixer:GetColor())
+			net.SendToServer()
+			frame:Close()
+		end)
+		okbtn:SetPos(390, 25)
+		okbtn:SetSize(100, 25)
+		okbtn:SetParent(frame)
+		
+		net.Start("VRankColour")
+		net.WriteString(rank)
+		net.WriteString(tostring(false))
+		net.SendToServer()
+		
+		frame:MakePopup()
+		frame:DoModal()
+		frame:SetAutoDelete(true)
+	end
+	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
 		Vermilion:AddInterfaceTab("rank_control", "Ranks", "group_gear.png", "Put players in groups to assign permission sets to different types of players", function(panel)
 			EXTENSION.EditingRank = ""
@@ -728,6 +834,14 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllPermissionsList:GetSelected()) do
+					local dup = false
+					for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							dup = true
+							break
+						end
+					end
+					if(dup) then continue end
 					guiRankPermissionsList:AddLine(k:GetValue(1), k:GetValue(2))
 				end
 			end)
@@ -749,12 +863,12 @@ function EXTENSION:InitClient()
 				local tab = {}
 				for i,k in ipairs(guiRankPermissionsList:GetLines()) do
 					if(not k:IsSelected()) then
-						table.insert(tab, k:GetValue(1), k:GetValue(2))
+						table.insert(tab, {k:GetValue(1), k:GetValue(2)})
 					end
 				end
 				guiRankPermissionsList:Clear()
 				for i,k in ipairs(tab) do
-					guiRankPermissionsList:AddLine(k)
+					guiRankPermissionsList:AddLine(k[1], k[2])
 				end
 			end)
 			removeRankPermissionButton:SetPos(320, 390)

@@ -389,7 +389,7 @@ function EXTENSION:InitServer()
 		end
 
 		local phys = tplayer:GetPhysicsObject()
-		phys:ApplyForceCenter(Vector(0,0,5000000))
+		phys:ApplyForceCenter(Vector(0,0,-5000000))
 	end, "<player>")
 
 	Vermilion:AddChatPredictor("launch", function(pos, current)

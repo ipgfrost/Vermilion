@@ -20,17 +20,13 @@
 local EXTENSION = Vermilion:MakeExtensionBase()
 EXTENSION.Name = "Skybox Protector"
 EXTENSION.ID = "skybox_protect"
-EXTENSION.Description = "Prevents "
+EXTENSION.Description = "Prevents people messing up the skybox."
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
 	"skybox_protect"
 }
 EXTENSION.PermissionDefinitions = {
 	["skybox_protect"] = "This player is able to manage the skybox protector."
-}
-EXTENSION.NetworkStrings = {
-	"VUpdateSkyboxProtector",
-	"VGetSkyboxProtectorSettings"
 }
 
 EXTENSION.Skyboxes = {}
@@ -62,11 +58,13 @@ end
 function EXTENSION:InitServer()
 	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("skybox_protect", "skybox_protect")
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			Vermilion:GetExtension("server_manager"):AddOption("skybox_protect", "protect_skybox", "Enable Skybox Protector", "Checkbox", "Misc", 50, false, "skybox_protect")
+		end
 	end)
 	
 	self:AddHook("PlayerInitialSpawn", "NoSkyboxNag", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "skybox_protect") and EXTENSION.Skyboxes[game.GetMap()] == nil and Vermilion:GetSetting("protect_skybox", false)) then
+		if(Vermilion:HasPermission(vplayer, "skybox_protect") and EXTENSION.Skyboxes[game.GetMap()] == nil and EXTENSION:GetData("protect_skybox", false)) then
 			timer.Simple(2, function() Vermilion:SendNotify(vplayer, "No skybox area is defined for this map. Please define one or disable skybox protection!", VERMILION_NOTIFY_ERROR) end)
 		end
 	end)
@@ -141,17 +139,12 @@ function EXTENSION:InitServer()
 		buildTimer()
 	end
 	
-	self:NetHook("VUpdateSkyboxProtector", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "skybox_protect")) then
-			EXTENSION:SetData("protect_skybox", tobool(net.ReadString()))
-			if(EXTENSION:GetData("protect_skybox", false)) then buildTimer() else timer.Destroy("Vermilion_Skyboxes") end
+	self:AddDataChangeHook("protect_skybox", "startprotect", function(val)
+		if(val) then
+			buildTimer()
+		else
+			timer.Destroy("Vermilion_Skyboxes")
 		end
-	end)
-	
-	self:NetHook("VGetSkyboxProtectorSettings", function(vplayer)
-		net.Start("VGetSkyboxProtectorSettings")
-		net.WriteString(tostring(EXTENSION:GetData("protect_skybox", false)))
-		net.Send(vplayer)
 	end)
 	
 	self:AddHook("Vermilion-Pre-Shutdown", "skybox_save", function()
@@ -162,36 +155,7 @@ function EXTENSION:InitServer()
 end
 
 function EXTENSION:InitClient()
-	self:NetHook("VGetSkyboxProtectorSettings", function()
-		EXTENSION.EnabledCB:SetValue(tobool(net.ReadString()))
-	end)
 
-	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("skybox_protect", "Skybox Protector", "collision_on.png", "Protect the skybox from trolls", function(panel)
-			local checkbox = vgui.Create("DCheckBoxLabel")
-			checkbox:SetPos(10, 10)
-			checkbox:SetText("Enable Skybox Protector")
-			checkbox:SizeToContents()
-			checkbox:SetDark(true)
-			checkbox:SetParent(panel)
-			checkbox.OnChange = function()
-				net.Start("VUpdateSkyboxProtector")
-				net.WriteString(tostring(checkbox:GetChecked()))
-				net.SendToServer()
-			end
-			EXTENSION.EnabledCB = checkbox
-
-			local info = vgui.Create("DLabel")
-			info:SetText("Note that you need to define the skybox area using !skybox before this will work.")
-			info:SetPos(10, 30)
-			info:SizeToContents()
-			info:SetDark(true)
-			info:SetParent(panel)
-			
-			net.Start("VGetSkyboxProtectorSettings")
-			net.SendToServer()
-		end, 1.8)
-	end)
 end
 
 Vermilion:RegisterExtension(EXTENSION)

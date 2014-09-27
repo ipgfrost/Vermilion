@@ -93,9 +93,7 @@ EXTENSION.RankPermissions = {
 	}
 }
 EXTENSION.NetworkStrings = {
-	"VShowProps",
-	"VUpdatePropProtectionSettings",
-	"VGetPropProtectionSettings"
+	"VShowProps"
 }
 
 EXTENSION.ShowingProps = false
@@ -115,7 +113,7 @@ function EXTENSION:InitServer()
 	end)
 	
 	self:AddHook("CanTool", function(vplayer, tr, tool)
-		if(tr.Hit and tr.Entity != nil and not EXTENSION:CanTool(vplayer, tr.Entity, tool)) then print("NO TOOL") return false end
+		if(tr.Hit and tr.Entity != nil and not EXTENSION:CanTool(vplayer, tr.Entity, tool)) then return false end
 	end)
 	
 	self:AddHook("OnPhysgunFreeze", "Vermilion_Physgun_Freeze", function( weapon, phys, ent, vplayer )
@@ -134,27 +132,14 @@ function EXTENSION:InitServer()
 	end)
 	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("prop_protection", "manage_prop_protection")
-	end)
-	
-	self:NetHook("VUpdatePropProtectionSettings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_prop_protection")) then
-			EXTENSION:SetData("prop_protect_use", tobool(net.ReadString()))
-			EXTENSION:SetData("prop_protect_physgun", tobool(net.ReadString()))
-			EXTENSION:SetData("prop_protect_gravgun", tobool(net.ReadString()))
-			EXTENSION:SetData("prop_protect_toolgun", tobool(net.ReadString()))
-			EXTENSION:SetData("prop_protect_world", tobool(net.ReadString()))
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			local mgr = Vermilion:GetExtension("server_manager")
+			mgr:AddOption("prop_protect", "prop_protect_use", "Block unpermitted players from \"using\" other player's props", "Checkbox", "Prop Protection", 30, true, "manage_prop_protection")
+			mgr:AddOption("prop_protect", "prop_protect_physgun", "Block unpermitted players from using the physics gun on other player's props", "Checkbox", "Prop Protection", 30, true, "manage_prop_protection")
+			mgr:AddOption("prop_protect", "prop_protect_gravgun", "Block unpermitted players from using the gravity gun on other player's props", "Checkbox", "Prop Protection", 30, true, "manage_prop_protection")
+			mgr:AddOption("prop_protect", "prop_protect_toolgun", "Block unpermitted players from using the toolgun on other player's props", "Checkbox", "Prop Protection", 30, true, "manage_prop_protection")
+			mgr:AddOption("prop_protect", "prop_protect_world", "Blanket ban all physgun/toolgun interaction on map spawned props", "Checkbox", "Prop Protection", 30, true, "manage_prop_protection")
 		end
-	end)
-	
-	self:NetHook("VGetPropProtectionSettings", function(vplayer)
-		net.Start("VGetPropProtectionSettings")
-		net.WriteString(tostring(EXTENSION:GetData("prop_protect_use", true)))
-		net.WriteString(tostring(EXTENSION:GetData("prop_protect_physgun", true)))
-		net.WriteString(tostring(EXTENSION:GetData("prop_protect_gravgun", true)))
-		net.WriteString(tostring(EXTENSION:GetData("prop_protect_toolgun", true)))
-		net.WriteString(tostring(EXTENSION:GetData("prop_protect_world", true)))
-		net.Send(vplayer)
 	end)
 	
 	function EXTENSION:GetAllPropsOwnedByUser(vplayer)
@@ -195,87 +180,12 @@ function EXTENSION:InitClient()
 			halo.Add(propsToHalo, Color(255, 0, 0), 5, 5, 2)
 		end
 	end)
-	
-	self:NetHook("VGetPropProtectionSettings", function()
-		EXTENSION.useProtection:SetValue(tobool(net.ReadString()))
-		EXTENSION.physgunProtection:SetValue(tobool(net.ReadString()))
-		EXTENSION.gravgunProtection:SetValue(tobool(net.ReadString()))
-		EXTENSION.toolgunProtection:SetValue(tobool(net.ReadString()))
-		EXTENSION.worldProtection:SetValue(tobool(net.ReadString()))
-	end)
-	
-	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("prop_protection", "Prop Protection Settings", "shield.png", "Manage global prop protection settings for the server.", function(panel)
-			local function updateServer()
-				net.Start("VUpdatePropProtectionSettings")
-				net.WriteString(tostring(EXTENSION.useProtection:GetChecked()))
-				net.WriteString(tostring(EXTENSION.physgunProtection:GetChecked()))
-				net.WriteString(tostring(EXTENSION.gravgunProtection:GetChecked()))
-				net.WriteString(tostring(EXTENSION.toolgunProtection:GetChecked()))
-				net.WriteString(tostring(EXTENSION.worldProtection:GetChecked()))
-				net.SendToServer()
-			end
-			
-			EXTENSION.useProtection = vgui.Create("DCheckBoxLabel")
-			EXTENSION.useProtection:SetText("Block unpermitted players from \"using\" other player's props")
-			EXTENSION.useProtection:SetParent(panel)
-			EXTENSION.useProtection:SetPos(10, 10)
-			EXTENSION.useProtection:SetDark(true)
-			EXTENSION.useProtection:SizeToContents()
-			EXTENSION.useProtection.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.physgunProtection = vgui.Create("DCheckBoxLabel")
-			EXTENSION.physgunProtection:SetText("Block unpermitted players from using the physics gun on other player's props")
-			EXTENSION.physgunProtection:SetParent(panel)
-			EXTENSION.physgunProtection:SetPos(10, 30)
-			EXTENSION.physgunProtection:SetDark(true)
-			EXTENSION.physgunProtection:SizeToContents()
-			EXTENSION.physgunProtection.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.gravgunProtection = vgui.Create("DCheckBoxLabel")
-			EXTENSION.gravgunProtection:SetText("Block unpermitted players from using the gravity gun on other player's props")
-			EXTENSION.gravgunProtection:SetParent(panel)
-			EXTENSION.gravgunProtection:SetPos(10, 50)
-			EXTENSION.gravgunProtection:SetDark(true)
-			EXTENSION.gravgunProtection:SizeToContents()
-			EXTENSION.gravgunProtection.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.toolgunProtection = vgui.Create("DCheckBoxLabel")
-			EXTENSION.toolgunProtection:SetText("Block unpermitted players from using the toolgun on other player's props")
-			EXTENSION.toolgunProtection:SetParent(panel)
-			EXTENSION.toolgunProtection:SetPos(10, 70)
-			EXTENSION.toolgunProtection:SetDark(true)
-			EXTENSION.toolgunProtection:SizeToContents()
-			EXTENSION.toolgunProtection.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.worldProtection = vgui.Create("DCheckBoxLabel")
-			EXTENSION.worldProtection:SetText("Blanket ban all physgun/toolgun interaction on map spawned props")
-			EXTENSION.worldProtection:SetParent(panel)
-			EXTENSION.worldProtection:SetPos(10, 90)
-			EXTENSION.worldProtection:SetDark(true)
-			EXTENSION.worldProtection:SizeToContents()
-			EXTENSION.worldProtection.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			net.Start("VGetPropProtectionSettings")
-			net.SendToServer()
-		end, 1.5)
-	end)
 end
 
 function EXTENSION:CanTool(vplayer, ent, tool)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return true end
 	if(ent:CreatedByMap() and EXTENSION:GetData("prop_protect_world", true)) then 
-		Vermilion:SendNotify(vplayer, "You can't use the toolgun on a map entity!", VERMILION_NOTIFY_ERROR)
+		--Vermilion:SendNotify(vplayer, "You can't use the toolgun on a map entity!", VERMILION_NOTIFY_ERROR)
 		return false
 	end
 	if(not Vermilion:HasPermission(vplayer, "toolgun_all") and EXTENSION:GetData("prop_protect_toolgun", true)) then
@@ -312,7 +222,7 @@ end
 function EXTENSION:CanPhysgun( vplayer, ent )
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(ent:CreatedByMap() and EXTENSION:GetData("prop_protect_world", true)) then 
-		Vermilion:SendNotify(vplayer, "You can't use the physgun on a map entity!", VERMILION_NOTIFY_ERROR)
+		--Vermilion:SendNotify(vplayer, "You can't use the physgun on a map entity!", VERMILION_NOTIFY_ERROR)
 		return false
 	end
 	if(ent:IsPlayer() and Vermilion:HasPermission(vplayer, "physgun_pickup_players")) then return true end

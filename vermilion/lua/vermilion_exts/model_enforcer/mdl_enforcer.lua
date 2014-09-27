@@ -256,10 +256,8 @@ function EXTENSION:InitClient()
 			local ranksLabel = Crimson:CreateHeaderLabel(ranksList, "Ranks")
 			ranksLabel:SetParent(panel)
 			
-			local disableCheckbox = vgui.Create("DCheckBoxLabel")
-			disableCheckbox:SetText("This is a blacklist (models that cannot be used by the rank).")
+			local disableCheckbox = Crimson.CreateCheckBox("This is a blacklist (models that cannot be used by the rank).")
 			disableCheckbox:SetPos(270, 30)
-			disableCheckbox:SizeToContents()
 			disableCheckbox:SetParent(panel)
 			disableCheckbox:SetDark(true)
 			disableCheckbox:SetDisabled(true)
@@ -361,6 +359,14 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllWeaponsList:GetSelected()) do
+					local dup = false
+					for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							dup = true
+							break
+						end
+					end
+					if(dup) then continue end
 					guiRankPermissionsList:AddLine(k:GetValue(1)).ModelPath = k.ModelPath
 				end
 			end)

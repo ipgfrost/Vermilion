@@ -246,10 +246,6 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a rank to load the permissions for!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
-					Crimson:CreateErrorDialog("Cannot edit the permissions of this rank; it is a protected rank!")
-					return
-				end
 				net.Start("VRankWeaponsLoad")
 				net.WriteString(ranksList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
@@ -299,6 +295,14 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllWeaponsList:GetSelected()) do
+					local dup = false
+					for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							dup = true
+							break
+						end
+					end
+					if(dup) then continue end
 					guiRankPermissionsList:AddLine(k:GetValue(1)).WeaponClass = k.WeaponClass
 				end
 			end)

@@ -1,3 +1,3 @@
 {
-	"initFile": "server_manager.lua"
+	"initFile": "server_manager2.lua"
 }

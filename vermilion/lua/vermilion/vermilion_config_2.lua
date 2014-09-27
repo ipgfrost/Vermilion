@@ -29,10 +29,10 @@ Vermilion.Settings = {}
 Vermilion.Settings.GlobalData = {}
 Vermilion.Settings.ModuleData = {}
 Vermilion.Settings.Ranks = { 
-	{ Name = "owner", Permissions = { "*" }, Protected = true },
-	{ Name = "admin", Permissions = {}, Protected = false },
-	{ Name = "player", Permissions = {}, Protected = false },
-	{ Name = "guest", Permissions = {}, Protected = false }
+	{ Name = "owner", Permissions = { "*" }, Protected = true, Colour = Color(255, 0, 0) },
+	{ Name = "admin", Permissions = {}, Protected = false, Colour = Color(0, 255, 0) },
+	{ Name = "player", Permissions = {}, Protected = false, Colour = Color(0, 0, 255) },
+	{ Name = "guest", Permissions = {}, Protected = false, Colour = Color(0, 0, 0) }
 }
 Vermilion.Settings.Users = {}
 
@@ -57,10 +57,26 @@ function userFuncs:HasPermission(permission)
 	return self:GetRank():HasPermission(permission)
 end
 
+function userFuncs:GetColour()
+	return self:GetRank():GetColour()
+end
+
 
 local rankFuncs = {}
 function rankFuncs:HasPermission(permission)
 	return table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")
+end
+
+function rankFuncs:GetColour()
+	if(self.Colour != nil) then
+		if(istable(self.Colour)) then
+			return Color(self.Colour.r, self.Colour.g, self.Colour.b)
+		else
+			return self.Colour
+		end 
+	else
+		return Color(255, 0, 255)
+	end
 end
 
 function Vermilion:GetSetting(name, default)
@@ -72,6 +88,14 @@ function Vermilion:GetModuleData(mod, name, default)
 	if(self.Settings.ModuleData[mod] == nil) then return default end
 	if(self.Settings.ModuleData[mod][name] == nil) then return default end
 	return self.Settings.ModuleData[mod][name]
+end
+
+function Vermilion:SetModuleData(mod, name, value)
+	if(self.Settings.ModuleData[mod] == nil) then self.Settings.ModuleData[mod] = {} end
+	self.Settings.ModuleData[mod][name] = value
+	if(Vermilion:GetExtension(mod) != nil) then
+		Vermilion:GetExtension(mod):RunDataChangeHooks(name, value)
+	end
 end
 
 function Vermilion:SetSetting(name, value)
@@ -158,7 +182,7 @@ function Vermilion:AddUser(name, steamid, rank)
 		self.Log("Attempt to add duplicate user '" .. name .. "' failed!")
 		return
 	end
-	table.insert(self.Settings.Users, {
+	local userTable = {
 		Name = name,
 		SteamID = steamid,
 		Rank = rank,
@@ -169,8 +193,11 @@ function Vermilion:AddUser(name, steamid, rank)
 		Kills = 0,
 		Deaths = 0,
 		VAchievements = {},
-		Karma = { Positive = 0, Negative = 0 }
-	})
+		Karma = { Positive = 0, Negative = 0 },
+		Colour = Color(255, 0, 255)
+	}
+	hook.Run("Vermilion_RegisteredUser", userTable)
+	table.insert(self.Settings.Users, userTable)
 end
 
 function Vermilion:RemoveUser(name)
@@ -468,6 +495,21 @@ timer.Create("V-UpdatePlaytime", 5, 0, function()
 		local vdata = Vermilion:GetUser(k)
 		vdata.Playtime = vdata.Playtime + 5
 	end
+end)
+
+timer.Create("V-UpdateRankColours", 5, 0, function()
+	for i,k in pairs(Vermilion.Settings.Ranks) do
+		local rd = Vermilion:GetRankData(k.Name)
+		for i1,k1 in pairs(rd:GetColour()) do
+			SetGlobalInt(rd.Name .. "Colour" .. i1, k1)
+		end
+	end
+end)
+
+timer.Create("Vermilion-Autosave", 30, 0, function()
+	//Vermilion.Log("Autosaving data...")
+	hook.Call("Vermilion-Pre-Shutdown")
+	Vermilion:SaveSettings()
 end)
 
 Vermilion:RegisterHook("ShutDown", "V-CFG-Save", function()

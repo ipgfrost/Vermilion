@@ -59,7 +59,8 @@ EXTENSION.NetworkStrings = {
 	"VSCGetPlaylistContent",
 	"VSCRemoveFromPlaylist",
 	"VSCMoveTrack",
-	"VMusicCredits"
+	"VMusicCredits",
+	"VPlayEquation"
 }
 
 
@@ -133,16 +134,17 @@ function EXTENSION:InitServer()
 		net.Send(vplayer)
 	end
 	
-	function Vermilion:PlayStream(vplayer, stream, channel, loop, volume)
+	function Vermilion:PlayStream(vplayer, stream, channel, loop, volume, max)
 		channel = channel or "BaseSound"
 		loop = loop or false
 		volume = volume or 100
+		max = max or 1
 		net.Start("VPlaySoundStream")
 		net.WriteString(stream)
 		net.WriteString(channel)
 		net.WriteString(tostring(loop))
 		net.WriteString(tostring(volume))
-		EXTENSION.ActiveSound[channel] = { Path = stream, Stream = true, Loop = loop, volume = volume, Position = 0, ReportedPlayers = {} }
+		EXTENSION.ActiveSound[channel] = { Path = stream, Stream = true, Loop = loop, volume = volume, Position = 0, ReportedPlayers = {}, MaxPlayers = max }
 		net.Send(vplayer)
 	end
 
@@ -154,13 +156,25 @@ function EXTENSION:InitServer()
 	
 	function Vermilion:BroadcastStream(stream, channel, loop, volume)
 		for i,vplayer in pairs(player.GetHumans()) do
-			self:PlayStream(vplayer, stream, channel, loop, volume)
+			self:PlayStream(vplayer, stream, channel, loop, volume, table.Count(player.GetHumans()))
 		end
 	end
 	
 	--[[
 		Chat commands
 	]]--
+	
+	--[[ Vermilion:AddChatCommand("playequation", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "playsound", log)) then
+			if(table.Count(text) < 1) then
+				log("Syntax: !playequation <equation>", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			net.Start("VPlayEquation")
+			net.WriteString(text[1])
+			net.Broadcast()
+		end
+	end, "<equation>") ]]
 	
 	Vermilion:AddChatCommand("playsound", function(sender, text)
 		local targetplayer = -1
@@ -187,11 +201,11 @@ function EXTENSION:InitServer()
 		if(targetplayer > -1) then
 			local targetPlayer = Crimson.LookupPlayerByName(text[targetplayer])
 			if(targetPlayer != nil) then
-				Vermilion:SendNotify(sender, "Playing " .. text[filename] .. " to " .. text[targetplayer], 10, VERMILION_NOTIFY_ERROR)
+				Vermilion:SendNotify(sender, "Playing " .. text[streamfile] .. " to " .. text[targetplayer], 10, VERMILION_NOTIFY_ERROR)
 				if(streamfile == -1) then
-					Vermilion:PlaySound(text[filename], "BaseSound", loop, volume)
+					Vermilion:PlaySound(targetPlayer, text[filename], "BaseSound", loop, volume)
 				else
-					Vermilion:PlayStream(text[streamfile], "BaseSound", loop, volume)
+					Vermilion:PlayStream(targetPlayer, text[streamfile], "BaseSound", loop, volume)
 				end
 			else
 				Vermilion:SendNotify(sender, "Invalid target!", 10, VERMILION_NOTIFY_ERROR)
@@ -205,17 +219,42 @@ function EXTENSION:InitServer()
 		end
 	end, "[-stream <url>] [-file <path>] [-vol <number 0-100>] [-loop] [-targetplayer <player>]")
 	
-	--[[Vermilion:AddChatPredictor("playsound", function(pos, current)
-		if(pos == 1) then
-			local tab = {}
-			for i,k in pairs(player.GetAll()) do
-				if(string.StartWith(k:GetName(), current)) then
-					table.insert(tab, k:GetName())
+	Vermilion:AddChatPredictor("playsound", function(pos, current, all)
+		if(pos % 2 != 0) then
+			local tab = {
+				"-stream",
+				"-file",
+				"-vol",
+				"-loop",
+				"-targetplayer"
+			}
+			local rtab = {}
+			for i,k in pairs(tab) do
+				local has = false
+				for i1,k1 in pairs(all) do
+					if(k == k1) then
+						has = true
+						break
+					end
+				end
+				if(not has and string.StartWith(k, current)) then
+					table.insert(rtab, k)
 				end
 			end
-			return tab
+			return rtab
 		end
-	end)]]
+		if(pos - 1 > 0) then
+			if(all[pos -1] == "-targetplayer") then
+				local tab = {}
+				for i,k in pairs(player.GetAll()) do
+					if(string.StartWith(k:GetName(), current)) then
+						table.insert(tab, k:GetName())
+					end
+				end
+				return tab
+			end
+		end
+	end)
 	
 	Vermilion:AddChatCommand("stopsound", function(sender, text)
 		if(text[1] == "-targetplayer") then
@@ -305,6 +344,7 @@ function EXTENSION:InitServer()
 				break
 			end
 		end
+		if(table.Count(EXTENSION.ActiveSound[channel].ReportedPlayers) == EXTENSION.ActiveSound[channel].MaxPlayers) then hasAllNames = true end
 		if(hasAllNames) then
 			net.Start("VBeginStream")
 			net.WriteString(channel)
@@ -370,6 +410,18 @@ function EXTENSION:InitClient()
 			end
 		end)
 	end
+	
+	self:NetHook("VPlayEquation", function()
+		local equation = net.ReadString()
+		equation = string.Replace(equation, "%dat%", "Vermilion.SoundData")
+		local equfunc = CompileString(equation)
+		local val = math.Rand(0, 1000000)
+		sound.Generate("gen" .. tostring(val), 44100, 5, function(t)
+			Vermilion.SoundData = t
+			equfunc()
+		end)
+		surface.PlaySound("gen" .. tostring(val))
+	end)
 	
 	self:NetHook("VMusicCredits", function()
 		EXTENSION.Credits = string.Explode("\n", net.ReadString())

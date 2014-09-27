@@ -103,8 +103,7 @@ function EXTENSION:InitClient()
 			
 			local urltb = nil
 			
-			local enabled = vgui.Create("DCheckBoxLabel")
-			enabled:SetText("Enable donator promotion mode")
+			local enabled = Crimson.CreateCheckBox("Enable donator promotion mode")
 			enabled:SizeToContents()
 			enabled:SetPos(10, 10)
 			enabled:SetParent(panel)
@@ -117,7 +116,7 @@ function EXTENSION:InitClient()
 			end
 			EXTENSION.EnableDonatorMode = enabled
 			
-			urltb = vgui.Create("DTextEntry")
+			urltb = Crimson.CreateTextbox("", panel)
 			urltb:SetPos(10, 200)
 			urltb:SetSize(panel:GetWide() - 10, 20)
 			urltb:SetParent(panel)
@@ -129,7 +128,7 @@ function EXTENSION:InitClient()
 			end
 			EXTENSION.DonatorURL = urltb
 			
-			local tblab = vgui.Create("DLabel")
+			local tblab = Crimson.CreateLabel("")
 			tblab:SetPos(10, 50)
 			tblab:SetParent(panel)
 			tblab:SetText("This is the URL that Vermilion will contact to obtain the information to check which players are donators or not. Place %steamid% as the value of one of the GET\n parameters. The server has to return a JSON table.\n\nSpecs:\n- Must return a properly formatted JSON table.\n- Must return a \"status\" property in the table. If the request failed, return \"failed\" in this property. Anything else is a success.\n- Must return a \"query_result\" property if successful. This must be \"true\" if the player is registered as a donator.\n- May return a \"rank_promote\" property if successful. This gives the player a new rank.\n- May return an \"amount\" property if successful. This will be used in the message that is broadcast to all players.\n Must be a string with the currency information as well. (i.e. £15)")

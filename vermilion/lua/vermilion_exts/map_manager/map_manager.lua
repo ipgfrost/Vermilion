@@ -549,7 +549,7 @@ function EXTENSION:InitClient()
 				{ "In 1 day", 20, 60 * 60 * 24 }
 			}
 			
-			local searchBox = vgui.Create("DTextEntry")
+			local searchBox = Crimson.CreateTextbox("", panel)
 			searchBox:SetParent(panel)
 			searchBox:SetPos(10, 510)
 			searchBox:SetSize(450, 25)
@@ -627,7 +627,7 @@ function EXTENSION:InitClient()
 			searchLogo:SetImage("icon16/magnifier.png")
 			searchLogo:SizeToContents()
 			
-			local timeDelayComboBox = vgui.Create("DComboBox")
+			local timeDelayComboBox = Crimson.CreateComboBox()
 			timeDelayComboBox:SetText("Time Delay")
 			timeDelayComboBox.OnSelect = function(panel, index, value, data)
 				timeDelayComboBox.Vermilion_Value = value

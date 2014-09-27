@@ -172,7 +172,7 @@ function EXTENSION:InitClient()
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Entities")
 			allWeaponsLabel:SetParent(panel)
 			
-			local searchBox = vgui.Create("DTextEntry")
+			local searchBox = Crimson.CreateTextbox("", panel)
 			searchBox:SetParent(panel)
 			searchBox:SetPos(525, 510)
 			searchBox:SetSize(250, 25)
@@ -211,10 +211,6 @@ function EXTENSION:InitClient()
 				end
 				if(table.Count(ranksList:GetSelected()) == 0) then
 					Crimson:CreateErrorDialog("Must select a rank to load the permissions for!")
-					return
-				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
-					Crimson:CreateErrorDialog("Cannot edit the permissions of this rank; it is a protected rank!")
 					return
 				end
 				net.Start("VRankEntsLoad")
@@ -266,6 +262,14 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllWeaponsList:GetSelected()) do
+					local dup = false
+					for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							dup = true
+							break
+						end
+					end
+					if(dup) then continue end
 					guiRankPermissionsList:AddLine(k:GetValue(1)).EntClass = k.EntClass
 				end
 			end)

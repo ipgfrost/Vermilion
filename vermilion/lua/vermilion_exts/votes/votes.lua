@@ -43,9 +43,7 @@ EXTENSION.RankPermissions = {
 	}
 }
 EXTENSION.NetworkStrings = {
-	"VCallVote",
-	"VGetVoteSettings",
-	"VSetVoteSettings"
+	"VCallVote"
 }
 
 EXTENSION.VoteTypes = {}
@@ -59,11 +57,11 @@ EXTENSION.VoteExpires = nil
 
 EXTENSION.Checkboxes = {}
 
-function EXTENSION:AddVoteType(name, createFunc, sfunc)
+function EXTENSION:AddVoteType(name, createFunc, sfunc, predictor)
 	if(self.VoteTypes[name] != nil) then
 		Vermilion.Log("Overwriting vote type " .. name .. "!")
 	end
-	EXTENSION.VoteTypes[name] = { Create = createFunc, Success = sfunc }
+	EXTENSION.VoteTypes[name] = { Create = createFunc, Success = sfunc, Predictor = predictor }
 end
 
 
@@ -105,6 +103,18 @@ function EXTENSION:InitServer()
 		return "Change level to " .. data[1] .. "?"
 	end, function(data)
 		RunConsoleCommand("vermilion_changelevel", data[1], 60)
+	end, function(pos, current, all)
+		if(pos == 2) then
+			if(Vermilion:GetExtension("maps") != nil) then
+				local tab = {}
+				for i,k in pairs(Vermilion:GetExtension("maps").MapCache) do
+					if(string.StartWith(string.lower(k[1]), string.lower(current))) then
+						table.insert(tab, k[1])
+					end
+				end
+				return tab
+			end
+		end
 	end)
 		
 	EXTENSION:AddVoteType("ban", function(data)
@@ -115,6 +125,16 @@ function EXTENSION:InitServer()
 		return "Ban " .. data[1] .. " from the server for " .. tonumber(data[2]) .. " minutes?"
 	end, function(data)
 		Vermilion:BanPlayerFor(data[1], nil, "Votebanned", 0, 0, 0, 0, 0, tonumber(data[2]), 0)
+	end, function(pos, current, all)
+		if(pos == 2) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
 	end)
 	
 	EXTENSION:AddVoteType("unban", function(data)
@@ -140,6 +160,16 @@ function EXTENSION:InitServer()
 		if(not IsValid(tplayer)) then return end
 		Vermilion:BroadcastNotify(data[1] .. " was kicked by Console: Votekicked", 10, VERMILION_NOTIFY_ERROR)
 		tplayer:Kick("Kicked by Console: Votekicked")
+	end, function(pos, current, all)
+		if(pos == 2) then
+			local tab = {}
+			for i,k in pairs(player.GetAll()) do
+				if(string.StartWith(string.lower(k:GetName()), string.lower(current))) then
+					table.insert(tab, k:GetName())
+				end
+			end
+			return tab
+		end
 	end)
 	
 	EXTENSION:AddVoteType("playsound", function(data)
@@ -194,6 +224,25 @@ function EXTENSION:InitServer()
 		end
 	end, "<type> <data>")
 	
+	Vermilion:AddChatPredictor("callvote", function(pos, current, all)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(EXTENSION.VoteTypes) do
+				if(string.StartWith(string.lower(i), string.lower(current))) then
+					table.insert(tab, i)
+				end
+			end
+			return tab
+		end
+		if(pos > 1) then
+			if(EXTENSION.VoteTypes[all[1]] != nil) then
+				if(EXTENSION.VoteTypes[all[1]].Predictor != nil) then
+					return EXTENSION.VoteTypes[all[1]].Predictor(pos, current, all)
+				end
+			end
+		end
+	end)
+	
 	self:AddHook("ShowHelp", function(vplayer)
 		if(EXTENSION.VoteInProgress and not table.HasValue(EXTENSION.Voters, vplayer:SteamID())) then
 			EXTENSION.VoteResults.Yes = EXTENSION.VoteResults.Yes + 1
@@ -208,26 +257,13 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
-	self:NetHook("VSetVoteSettings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "vote_management")) then
-			for i,k in pairs(net.ReadTable()) do
-				EXTENSION:SetData("vote_" .. string.Replace(i, "Vote", ""), k)
+	self:AddHook(Vermilion.EVENT_EXT_POST, "AddGui1", function()
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			local mgr = Vermilion:GetExtension("server_manager")
+			for i,k in pairs(EXTENSION.VoteTypes) do
+				mgr:AddOption("votes", "vote_" .. i, "Enable " .. i .. " votes", "Checkbox", "Votes", 35, true, "vote_management")
 			end
 		end
-	end)
-	
-	self:NetHook("VGetVoteSettings", function(vplayer)
-		local tab = {}
-		for i,k in pairs(net.ReadTable()) do
-			tab[k] = EXTENSION:GetData(k, true)
-		end
-		net.Start("VGetVoteSettings")
-		net.WriteTable(tab)
-		net.Send(vplayer)
-	end)
-	
-	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("vote_settings", "vote_management")
 	end)
 	
 end
@@ -254,104 +290,6 @@ function EXTENSION:InitClient()
 				return true
 			end
 		end
-	end)
-	
-	self:NetHook("VGetVoteSettings", function()
-		for i,k in pairs(net.ReadTable()) do
-			EXTENSION.Checkboxes[string.Replace(i, "vote_", "") .. "Vote"]:SetValue(k)
-		end
-	end)
-	
-	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddGui", function()
-		Vermilion:AddInterfaceTab("vote_settings", "Voting", "user_comment.png", "Change voting settings", function(panel)
-			local function updateServer()
-				net.Start("VSetVoteSettings")
-				local tab = {}
-				for i,k in pairs(EXTENSION.Checkboxes) do
-					tab[i] = k:GetChecked()
-				end
-				net.WriteTable(tab)
-				net.SendToServer()
-			end
-			
-			EXTENSION.Checkboxes.mapVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.mapVote:SetText("Enable map votes")
-			EXTENSION.Checkboxes.mapVote:SetParent(panel)
-			EXTENSION.Checkboxes.mapVote:SetPos(10, 10)
-			EXTENSION.Checkboxes.mapVote:SetDark(true)
-			EXTENSION.Checkboxes.mapVote:SizeToContents()
-			EXTENSION.Checkboxes.mapVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.banVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.banVote:SetText("Enable ban votes")
-			EXTENSION.Checkboxes.banVote:SetParent(panel)
-			EXTENSION.Checkboxes.banVote:SetPos(10, 30)
-			EXTENSION.Checkboxes.banVote:SetDark(true)
-			EXTENSION.Checkboxes.banVote:SizeToContents()
-			EXTENSION.Checkboxes.banVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.unbanVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.unbanVote:SetText("Enable unban votes")
-			EXTENSION.Checkboxes.unbanVote:SetParent(panel)
-			EXTENSION.Checkboxes.unbanVote:SetPos(10, 50)
-			EXTENSION.Checkboxes.unbanVote:SetDark(true)
-			EXTENSION.Checkboxes.unbanVote:SizeToContents()
-			EXTENSION.Checkboxes.unbanVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.kickVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.kickVote:SetText("Enable kick votes")
-			EXTENSION.Checkboxes.kickVote:SetParent(panel)
-			EXTENSION.Checkboxes.kickVote:SetPos(10, 70)
-			EXTENSION.Checkboxes.kickVote:SetDark(true)
-			EXTENSION.Checkboxes.kickVote:SizeToContents()
-			EXTENSION.Checkboxes.kickVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.playsoundVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.playsoundVote:SetText("Enable playsound votes")
-			EXTENSION.Checkboxes.playsoundVote:SetParent(panel)
-			EXTENSION.Checkboxes.playsoundVote:SetPos(10, 90)
-			EXTENSION.Checkboxes.playsoundVote:SetDark(true)
-			EXTENSION.Checkboxes.playsoundVote:SizeToContents()
-			EXTENSION.Checkboxes.playsoundVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.playstreamVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.playstreamVote:SetText("Enable playstream votes")
-			EXTENSION.Checkboxes.playstreamVote:SetParent(panel)
-			EXTENSION.Checkboxes.playstreamVote:SetPos(10, 110)
-			EXTENSION.Checkboxes.playstreamVote:SetDark(true)
-			EXTENSION.Checkboxes.playstreamVote:SizeToContents()
-			EXTENSION.Checkboxes.playstreamVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			EXTENSION.Checkboxes.stopsoundVote = vgui.Create("DCheckBoxLabel")
-			EXTENSION.Checkboxes.stopsoundVote:SetText("Enable stopsound votes")
-			EXTENSION.Checkboxes.stopsoundVote:SetParent(panel)
-			EXTENSION.Checkboxes.stopsoundVote:SetPos(10, 130)
-			EXTENSION.Checkboxes.stopsoundVote:SetDark(true)
-			EXTENSION.Checkboxes.stopsoundVote:SizeToContents()
-			EXTENSION.Checkboxes.stopsoundVote.OnChange = function(self, val)
-				updateServer()
-			end
-			
-			net.Start("VGetVoteSettings")
-			local tab = {}
-			for i,k in pairs(EXTENSION.Checkboxes) do
-				table.insert(tab, "vote_" .. string.Replace(i, "Vote", ""))
-			end
-			net.WriteTable(tab)
-			net.SendToServer()
-		end, 8.5)
 	end)
 
 end

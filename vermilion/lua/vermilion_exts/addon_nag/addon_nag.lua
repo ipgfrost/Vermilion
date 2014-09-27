@@ -112,22 +112,6 @@ function EXTENSION:InitClient()
 			openInWSButton:SetSize(180, 35)
 			openInWSButton:SetParent(panel)
 			
-			--[[ local subscribeButton = Crimson.CreateButton("Subscribe", function(self)
-				if(table.Count(missingAddonsList:GetSelected()) == 0) then
-					Crimson:CreateErrorDialog("Must select at least one addon to subscribe to!")
-					return
-				end
-				Crimson:CreateConfirmDialog("Are you sure you want to subscribe to these addons?", function()
-					for i,k in pairs(missingAddonsList:GetSelected()) do
-						steamworks.Subscribe(k.wsid)
-					end
-					steamworks.ApplyAddons()
-				end)
-			end)
-			subscribeButton:SetPos(330, 225)
-			subscribeButton:SetSize(180, 35)
-			subscribeButton:SetParent(panel) ]]
-			
 			
 			local donotaskButton = Crimson.CreateButton("Close and do not ask again", function(self)
 				Crimson:CreateConfirmDialog("Are you sure?\nThis will take effect on every server you join.\nTo reset it, type \"vermilion_addonnag_do_not_ask 0\" into the console!", function()

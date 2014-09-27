@@ -3,7 +3,8 @@
 	"type": "tool",
 	"tags": [ "build", "fun" ],
 	"ignore": [ 
-		"*.DS_Store"
+		"*.DS_Store",
+		"*.txt"
 	]
 
 

@@ -32,7 +32,7 @@ end
 
 function TOOL:LeftClick( trace )
 	if(CLIENT) then return true end
-	if(not Vermilion:HasPermission(self:GetOwner(), "*")) then return false end
+	if(not Vermilion:HasPermission(self:GetOwner(), "*")) then print("NO PERMISSION") return false end
 	if(not trace.Hit) then
 		Vermilion:SendNotify(self:GetOwner(), "You didn't click on a valid object.")
 	else

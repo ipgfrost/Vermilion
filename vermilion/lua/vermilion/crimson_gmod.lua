@@ -19,9 +19,24 @@
 
 -- Crimson is the generic name for any utility library that I create.
 
+if(CLIENT) then
+	CreateClientConVar("crimson_manualpaint", 1, true, false)
+end
+
 Crimson = {}
 
 Crimson.Dark = true
+
+if(CLIENT) then
+	surface.CreateFont( 'VermilionButton', {
+		font		= 'Helvetica',
+		size		= 14,
+		weight		= 500,
+		additive 	= false,
+		antialias 	= true,
+		bold		= true,
+	} )
+end
 
 function Crimson:SetDark(dark)
 	self.Dark = dark
@@ -90,16 +105,64 @@ function Crimson:CreateHeaderLabel(object, text)
 	return label
 end
 
-function Crimson.CreateCheckBox(text, convar, initialValue)
-	if(initialValue == nil) then
-		initialValue = GetConVarNumber(convar)
+function Crimson.CreateComboBox(options, selected)
+	local cbox = vgui.Create("DComboBox")
+	options = options or {}
+	for i,k in pairs(options) do
+		cbox:AddChoice(k)
 	end
+	if(isnumber(selected)) then
+		cbox:ChooseOptionID(selected)
+	end
+	return cbox
+end
+
+function Crimson.CreateAvatarImage(vplayer, size)
+	local sizes = { 16, 32, 64, 84, 128, 184 }
+	if(not table.HasValue(sizes, size)) then
+		print("Invalid size (" .. tostring(size) .. ") for AvatarImage!")
+		return
+	end
+	local aimg = vgui.Create("AvatarImage")
+	aimg:SetSize(size, size)
+	if(isstring(vplayer)) then
+		aimg:SetPlayer(vplayer)
+	else
+		aimg:SetSteamID(vplayer)
+	end
+	return aimg
+end
+
+function Crimson.CreateCheckBox(text, convar, initialValue)
+	local cross = Material("icon16/cross.png")
 	local checkbox = vgui.Create("DCheckBoxLabel")
-	checkbox:SetText(text)
-	checkbox:SetConVar(convar)
-	checkbox:SetValue(initialValue)
-	checkbox:SizeToContents()
-	checkbox:SetDark(Crimson.Dark)
+	if(convar == nil) then
+		checkbox:SetText(text)
+		checkbox:SizeToContents()
+		checkbox:SetDark(Crimson.Dark)
+	else
+		if(initialValue == nil) then
+			initialValue = GetConVarNumber(convar)
+		end
+		checkbox:SetText(text)
+		checkbox:SetConVar(convar)
+		checkbox:SetValue(initialValue)
+		checkbox:SizeToContents()
+		checkbox:SetDark(Crimson.Dark)
+	end
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		checkbox.Button.Paint = function(self, w, h)
+			surface.SetDrawColor( 255, 255, 255, 255 )
+			surface.DrawRect( 0, 0, w, h )
+			surface.SetDrawColor( 255, 0, 0, 255 )
+			surface.DrawOutlinedRect( 0, 0, w, h )
+			surface.SetMaterial( cross )
+			if checkbox:GetChecked() then
+				surface.DrawTexturedRect( 2, 2, w - 4, h - 4 )
+			end
+		end
+		checkbox:SetTextColor( Color( 0, 0, 0, 255 ) )
+	end
 	return checkbox
 end
 
@@ -118,6 +181,19 @@ function Crimson.CreateButton(text, onClick)
 	button:SetText(text)
 	button:SetDark(Crimson.Dark)
 	button.DoClick = onClick
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		button:SetColor(Color(0, 0, 0, 255))
+		button:SetFont("VermilionButton")
+		button.Paint = function(self)
+			local w, h = self:GetWide(), self:GetTall()
+			-- body
+			surface.SetDrawColor( 255, 240, 240, 255 )
+			surface.DrawRect( 0, 0, w, h )
+			-- frame
+			surface.SetDrawColor( 255, 0, 0, 255 )
+			surface.DrawOutlinedRect( 0, 0, w, h )
+		end
+	end
 	return button 
 end
 
@@ -144,10 +220,28 @@ end
 
 function Crimson.CreateTextbox(text, panel, convar)
 	local textbox = vgui.Create("DTextEntry")
-	textbox:SetSize( panel:GetWide(), 35 )
-	textbox:SetText( text )
-	textbox.OnEnter = function( self )
-		RunConsoleCommand(convar, self:GetValue())
+	if(convar == nil) then
+		textbox:SetSize(panel:GetWide(), 35)
+		textbox:SetText(text)
+		return textbox
+	else
+		textbox:SetSize( panel:GetWide(), 35 )
+		textbox:SetText( text )
+		textbox.OnEnter = function( self )
+			RunConsoleCommand(convar, self:GetValue())
+		end
+	end
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		textbox.m_bBackground = false
+		textbox.m_colText = Color( 0, 0, 0, 255 )
+		local oldpaint = textbox.Paint
+		textbox.Paint = function( self, w, h )
+			oldpaint( self, w, h )
+			surface.SetDrawColor( 255, 255, 255, 255 )
+			surface.DrawRect( 0, 0, w, h )
+			surface.SetDrawColor( 255, 0, 0, 255 )
+			surface.DrawOutlinedRect( 0, 0, w, h )
+		end
 	end
 	return textbox
 end
@@ -170,6 +264,17 @@ function Crimson.CreateFrame(props)
 	if(props['bgBlur'] != nil) then
 		panel:SetBackgroundBlur(props['bgBlur'])
 	end
+	panel.lblTitle:SetBright(true)
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		panel.Paint = function( self, w, h ) 
+			-- body
+			surface.SetDrawColor( 100, 0, 0, 200 )
+			surface.DrawRect( 0, 0, w, h )
+			-- frame
+			surface.SetDrawColor( 255, 0, 0, 200 )
+			surface.DrawOutlinedRect( 0, 0, w, h )
+		end
+	end
 	return panel
 end
 
@@ -180,7 +285,7 @@ function Crimson:CreateErrorDialog(text)
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Error",
+			['title'] = "Vermilion - Error",
 			['bgBlur'] = true
 		}
 	)
@@ -189,11 +294,13 @@ function Crimson:CreateErrorDialog(text)
 	panel:SetAutoDelete(true)
 	
 	
+	
 	Crimson:SetDark(false)
 	local textLabel = self.CreateLabel(text)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
+	textLabel:SetBright(true)
 	
 	local confirmButton = self.CreateButton("OK", function(self)
 		panel:Close()
@@ -211,7 +318,7 @@ function Crimson:CreateConfirmDialog(text, completeFunc)
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Error",
+			['title'] = "Vermilion - Confirm",
 			['bgBlur'] = true
 		}
 	)
@@ -224,6 +331,7 @@ function Crimson:CreateConfirmDialog(text, completeFunc)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
+	textLabel:SetBright(true)
 	
 	local confirmButton = self.CreateButton("OK", function(self)
 		completeFunc()
@@ -250,7 +358,7 @@ function Crimson:CreateTextInput(text, completeFunc)
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Error",
+			['title'] = "Vermilion - Text Entry Required",
 			['bgBlur'] = true
 		}
 	)
@@ -263,8 +371,9 @@ function Crimson:CreateTextInput(text, completeFunc)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
+	textLabel:SetBright(true)
 	
-	local textbox = vgui.Create("DTextEntry")
+	local textbox = Crimson.CreateTextbox("", panel)
 	textbox:SetPos( 10, 50 )
 	textbox:SetSize( panel:GetWide() - 20, 20 )
 	textbox:SetParent(panel)

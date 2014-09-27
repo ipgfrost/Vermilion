@@ -159,7 +159,7 @@ function EXTENSION:InitClient()
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Limits")
 			allWeaponsLabel:SetParent(panel)
 			
-			local searchBox = vgui.Create("DTextEntry")
+			local searchBox = Crimson.CreateTextbox("", panel)
 			searchBox:SetParent(panel)
 			searchBox:SetPos(525, 510)
 			searchBox:SetSize(250, 25)
@@ -242,7 +242,15 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a limit to add to the list for this rank!")
 					return
 				end
+				local dup = false
 				local ln = guiAllWeaponsList:GetSelected()[1]
+				for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+					if(k1:GetValue(1) == ln:GetValue(1)) then
+						dup = true
+						break
+					end
+				end
+				if(dup) then return end
 				Derma_StringRequest("Set Limit - " .. ln:GetValue(1), "Set the value for this limit:", "Limit (as number)", function(text)
 					local num = tonumber(text)
 					if(num == nil) then
@@ -253,6 +261,7 @@ function EXTENSION:InitClient()
 						Derma_Message(tostring(text) .. " is outside the valid range. Defaulting to 0.", "Input Warning", "OK")
 						num = 0
 					end
+					
 					guiRankPermissionsList:AddLine(ln:GetValue(1), num).CVAR = ln.CVAR
 				end)
 			end)

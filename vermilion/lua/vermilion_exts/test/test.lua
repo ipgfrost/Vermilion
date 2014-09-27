@@ -28,20 +28,21 @@ EXTENSION.Permissions = {
 local TEST1 = "testing"
 
 function EXTENSION:InitServer()
-	print(list.Get("Weapon")["weapon_crowbar"]['PrintName'])
+
+	-- this stuff automatically respawns dead zombie bots
+	CreateConVar("vermilion_bot_test", "0", FCVAR_NOTIFY, "Automatically respawn dead zombie bots.")
 	
-	local originalStart = net.Start
---	function net.Start(typ)
---		print("NETWORK: " .. typ)
---		originalStart(typ)
---	end
-	
-	self:AddHook("OnLuaError", "PrintToConsole", function(str, realm, addontitle, addonid)
-		print(str)
-		print(realm)
-		print(addontitle)
-		print(addonid)
+	self:AddHook("DoPlayerDeath", function(vplayer, attacker, dmg)
+		if(GetConVarNumber("vermilion_bot_test") != 1) then return end 
+		if(vplayer:IsBot()) then
+			timer.Simple(2, function()
+				if(not IsValid(vplayer) or vplayer:Alive()) then return end
+				vplayer:Spawn()
+			end)
+		end
 	end)
+	
+	print(list.Get("Weapon")["weapon_crowbar"]['PrintName'])
 	
 	concommand.Add("print_wep_table", function(sender, cmd, args, fs)
 		print(table.Count(list.Get("Weapon")[args[1]]))
@@ -57,9 +58,24 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
-	concommand.Add("print_last_swep", function()
-		PrintTable(SWEP)
-	end)
+	--[[Vermilion:AddChatCommand("rocket", function(sender, text)
+		local rocket = ents.Create("rpg_missile")
+		rocket:SetPos(sender:GetPos() + Vector(0, 0, 120))
+		rocket:Spawn()
+		
+		rocket:Fire("SetGracePeriod", "0.1", 0)
+		
+		local val = math.random(0, 1000000)
+		timer.Create("Rocket" .. tostring(val), 0.1, 0, function()
+			if(not IsValid(rocket)) then
+				timer.Destroy("Rocket" .. tostring(val))
+				return
+			end
+			rocket:SetAngles(sender:EyeAngles())
+			
+		end)
+	end)]]
+	
 	
 end
 

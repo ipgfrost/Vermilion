@@ -23,27 +23,49 @@ EXTENSION.ID = "scoreboard"
 EXTENSION.Description = "Replaces the default scoreboard with something that can interact with Vermilion."
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
-	
+	"manage_scoreboard"
 }
 EXTENSION.NetworkStrings = {
 	"VScoreboardOpened",
 	"VScoreboardDescUpdate",
 	"VScoreboardPlayersUpdate",
-	"VScoreboardCommand"
+	"VScoreboardCommand",
+	"VCheckScoreboardActive"
 }
 
 EXTENSION.BaseDescText = "Active Players: %players%/%maxplayers%       Gamemode: %gamemode%       Map: %map%"
 
 function EXTENSION:InitServer()
+	concommand.Add("toggle_scoreboard", function(vplayer, cmd, args, str)
+		if(Vermilion:HasPermission(vplayer, "manage_scoreboard")) then
+			if(table.Count(args) < 1) then return end
+			if(tobool(args[1])) then
+				EXTENSION:SetData("scoreboard_enabled", true)
+				Vermilion.Log("Scoreboard enabled!")
+			else
+				EXTENSION:SetData("scoreboard_enabled", false)
+				Vermilion.Log("Scoreboard disabled!")
+			end
+		end
+	end)
+	
+	self:AddDataChangeHook("scoreboard_enabled", "update_scoreboard", function(val)
+		net.Start("VCheckScoreboardActive")
+		net.WriteString(tostring(val))
+		net.Broadcast()
+	end)
+	
 	-- stop suicides taking away from the frags count and add them to deaths instead.
 	local pMeta = FindMetaTable("Player")
-	pMeta.Vermilion_AddFrags = pMeta.AddFrags
-	function pMeta:AddFrags(num)
-		if(num < 0) then 
-			self:AddDeaths(num * -1)
-			return
+	if(pMeta.Vermilion_AddFrags == nil) then
+		pMeta.Vermilion_AddFrags = pMeta.AddFrags
+		function pMeta:AddFrags(num)
+			if(num < 0) then 
+				self:AddDeaths(num * -1)
+				return
+			end
+			self:Vermilion_AddFrags(num)
 		end
-		self:Vermilion_AddFrags(num)
 	end
 
 	function EXTENSION:SendDescUpdate(vplayer)
@@ -89,6 +111,12 @@ function EXTENSION:InitServer()
 		net.Send(vplayer)
 	end
 	
+	self:NetHook("VCheckScoreboardActive", function(vplayer)
+		net.Start("VCheckScoreboardActive")
+		net.WriteString(tostring(EXTENSION:GetData("scoreboard_enabled", true, true)))
+		net.Send(vplayer)
+	end)
+	
 	self:NetHook("VScoreboardOpened", function(vplayer)
 		EXTENSION:SendDescUpdate(vplayer)
 		EXTENSION:UpdatePlayers(vplayer)
@@ -132,9 +160,18 @@ function EXTENSION:InitServer()
 end
 
 function EXTENSION:InitClient()
-	CreateClientConVar("Vermilion_Scoreboard", 1, true, false)
+	local enabled = true
 	CreateClientConVar("vermilion_show_sb_bg", 0, true, false)
-
+	
+	self:NetHook("VCheckScoreboardActive", function()
+		enabled = tobool(net.ReadString())
+	end)
+	
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, "FirstCheck", function()
+		net.Start("VCheckScoreboardActive")
+		net.SendToServer()
+	end)
+	
 	surface.CreateFont( "ScoreBoardTitle", {
 		font = "Roboto",
 		size = 56,
@@ -277,13 +314,13 @@ function EXTENSION:InitClient()
 	end)
 	
 	self:AddHook("HUDDrawScoreBoard", function()
-		if(GetConVarNumber("Vermilion_Scoreboard") == 1) then
+		if(enabled) then
 			return true
 		end
 	end)
 	
 	self:AddHook("ScoreboardShow", function()
-		if(GetConVarNumber("Vermilion_Scoreboard") != 1) then return end
+		if(not enabled) then return end
 		gui.EnableScreenClicker(true)
 		local sbPanel = vgui.Create("DPanel")
 		EXTENSION.ScoreBoardPanel = sbPanel
@@ -342,7 +379,7 @@ function EXTENSION:InitClient()
 	end)
 	
 	self:AddHook("ScoreboardHide", function()
-		if(GetConVarNumber("Vermilion_Scoreboard") != 1) then return end
+		if(not enabled) then return end
 		EXTENSION.ScoreBoardPanel:Remove()
 		gui.EnableScreenClicker(false)
 		timer.Destroy("Vermilion_Scoreboard_Refresh")

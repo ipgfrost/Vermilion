@@ -40,18 +40,16 @@ EXTENSION.BannedBinds = {}
 
 
 function EXTENSION:BroadcastNewBinds()
-	for i,k in pairs(player.GetAll()) do
-		net.Start("VBindBlockUpdate")
-		local tab = {}
-		for i,k1 in pairs(self:GetData("blocked_binds", {}, true)) do
-			if(k1[1] == Vermilion:GetUser(k):GetRank().Name) then
-				tab = k1[2]
-				break
-			end
+	net.Start("VBindBlockUpdate")
+	local tab = {}
+	for i,k1 in pairs(self:GetData("blocked_binds", {}, true)) do
+		if(k1[1] == Vermilion:GetUser(k):GetRank().Name) then
+			tab = k1[2]
+			break
 		end
-		net.WriteTable(tab)
-		net.Send(k)
 	end
+	net.WriteTable(tab)
+	net.Broadcast()
 end
 
 function EXTENSION:InitServer()
@@ -128,6 +126,7 @@ function EXTENSION:InitClient()
 	self:NetHook("VBindBlockUpdate", function()
 		EXTENSION.BannedBinds = net.ReadTable()
 	end)
+	
 	self:AddHook("PlayerBindPress", function(vplayer, bind, pressed)
 		for i,k in pairs(EXTENSION.BannedBinds) do
 			if(string.find(bind, k)) then return true end

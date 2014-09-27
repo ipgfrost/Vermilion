@@ -29,7 +29,8 @@ EXTENSION.Tabs = {}
 EXTENSION.ClientTabs = {}
 
 EXTENSION.ClientOptions = {
-	{ "Alert Sounds", "vermilion_alert_sounds" }
+	{ "Alert Sounds", "vermilion_alert_sounds" },
+	{ "Use new menu style (experimental) (requires reconnect)", "crimson_manualpaint" }
 }
 
 function EXTENSION:InitClient()
@@ -40,18 +41,83 @@ function EXTENSION:InitClient()
 	
 	MENU.HasGotTabs = false
 	
+	-- WHEATLEY: Setup a new font for Panel's title
+	surface.CreateFont( 'VermilonTitle', {
+		font		= 'Helvetica',
+		size		= 22,
+		weight		= 800,
+		additive = false,
+		antialias = true,
+	} )
+	
+	-- WHEATLEY: Basic functions for rendering
+	local function RenderTab( self )
+		local w, h = self:GetWide() - 4, self:GetTall()
+		surface.SetDrawColor( 100, 0, 0, 200 )
+		surface.DrawRect( 0, 0, w, h )
+		surface.SetDrawColor( 255, 0, 0, 200 )
+		surface.DrawOutlinedRect( 0, 0, w, h )
+	end
+	
+	local function RenderBody( self )
+		local w, h = self:GetWide(), self:GetTall()
+		-- body
+		surface.SetDrawColor( 255, 255, 255, 255 )
+		surface.DrawRect( 0, 0, w, h )
+		-- frame
+		surface.SetDrawColor( 255, 0, 0, 255 )
+		surface.DrawOutlinedRect( 0, 0, w, h )
+	end
+	
+	local function RenderButton( self )
+		local w, h = self:GetWide(), self:GetTall()
+		-- body
+		surface.SetDrawColor( 255, 0, 0, 45 )
+		surface.DrawRect( 0, 0, w, h )
+		-- frame
+		surface.SetDrawColor( 255, 0, 0, 255 )
+		surface.DrawOutlinedRect( 0, 0, w, h )
+	end
+	
 	-- Create the menu
 	MENU.Panel = vgui.Create("DFrame")
 	MENU.Panel:SetSize(0, 0)
 	MENU.Panel:SetPos(ScrW() / 2, ScrH() / 2)
-	MENU.Panel:ShowCloseButton( true )
+	MENU.Panel:ShowCloseButton( GetConVarNumber("crimson_manualpaint") != 1 )
 	MENU.Panel:SetDraggable(false)
-	MENU.Panel:SetTitle("Vermilion Menu")
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		MENU.Panel:SetTitle("")
+	else
+		MENU.Panel:SetTitle("Vermilion Menu")
+	end
 	MENU.Panel:SetBackgroundBlur(true)
 	
 	MENU.Panel:MakePopup()
 	MENU.Panel:SetKeyboardInputEnabled( false )
 	MENU.Panel:SetVisible(false)
+	
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		-- WHEATLEY: Rendering main frame
+		MENU.Panel.Paint = function( self, w, h )
+			-- title
+			surface.SetFont( 'VermilonTitle' )
+			surface.SetTextPos( 2, 2 )
+			surface.SetTextColor( 255, 0, 0, 255 )
+			surface.DrawText( 'Vermilion Menu' )
+		end
+	end
+	
+	if(GetConVarNumber("crimson_manualpaint") == 1) then
+		-- WHEATLEY: Close button
+		MENU.CloseBtn = MENU.Panel:Add( 'DButton' )
+		MENU.CloseBtn:SetSize( 50, 20 )
+		MENU.CloseBtn:SetColor( Color( 255, 255, 255, 255 ) )
+		MENU.CloseBtn:SetText( 'Close' )
+		MENU.CloseBtn.DoClick = function()
+			MENU:Hide()
+		end
+		MENU.CloseBtn.Paint = RenderButton
+	end
 	
 	function MENU.Panel:Close()
 		MENU:Hide()
@@ -74,6 +140,9 @@ function EXTENSION:InitClient()
 			if(tabData != nil) then
 				local tpanel = vgui.Create("DPanel", MENU.TabHolder)
 				tpanel:StretchToParent(5, 20, 20, 5)
+				if(GetConVarNumber("crimson_manualpaint") == 1) then
+					tpanel.Paint = RenderBody
+				end
 				local success, err = pcall(tabData[4], tpanel)
 				if(not success) then
 					Vermilion.Log("Failure while generating panel " .. tab.ID .. "!")
@@ -81,7 +150,13 @@ function EXTENSION:InitClient()
 					tpanel:Remove()
 				else
 					Vermilion.Log("Loading panel " .. tab.ID)
-					MENU.TabHolder:AddSheet(tabData[1], tpanel, "icon16/" .. tabData[2], false, false, tabData[3])
+					if(GetConVarNumber("crimson_manualpaint") == 1) then
+						-- WHEATLEY: Tab rendering system
+						local __p = MENU.TabHolder:AddSheet(tabData[1], tpanel, "icon16/" .. tabData[2], false, false, tabData[3])
+						__p.Tab.Paint = RenderTab
+					else
+						MENU.TabHolder:AddSheet(tabData[1], tpanel, "icon16/" .. tabData[2], false, false, tabData[3])
+					end
 				end
 			end
 		end
@@ -91,6 +166,10 @@ function EXTENSION:InitClient()
 		local welcome = vgui.Create("DPanel", self.TabHolder)
 		welcome:StretchToParent(5, 20, 20, 5)
 		
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			welcome.Paint = RenderBody
+		end
+		
 		Crimson:SetDark(true)
 		
 		local title = Crimson.CreateLabel("Welcome To Vermilion")
@@ -99,12 +178,18 @@ function EXTENSION:InitClient()
 		title:SetPos((welcome:GetWide() / 2) - (title:GetWide() / 2), 50)
 		title:SetParent(welcome)
 		
-		self.TabHolder:AddSheet("Welcome", welcome, "icon16/house.png", false, false, "Welcome")
+		local __p = self.TabHolder:AddSheet("Welcome", welcome, "icon16/house.png", false, false, "Welcome")
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			__p.Tab.Paint = RenderTab
+		end
 	end
 	
 	function MENU:BuildClientOpts()
 		local clientOptions = vgui.Create("DPanel", self.TabHolder)
 		clientOptions:StretchToParent(5, 20, 20, 5)
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			clientOptions.Paint = RenderBody
+		end
 		
 		Crimson:SetDark(true)
 		local pos = 10
@@ -114,7 +199,10 @@ function EXTENSION:InitClient()
 			cb:SetParent(clientOptions)
 			pos = pos + 20
 		end
-		self.TabHolder:AddSheet("Client Options", clientOptions, "icon16/application.png", false, false, "Client Options")
+		local __p = self.TabHolder:AddSheet("Client Options", clientOptions, "icon16/application.png", false, false, "Client Options")
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			__p.Tab.Paint = RenderTab
+		end
 	end
 	
 	function MENU:Show()
@@ -122,11 +210,28 @@ function EXTENSION:InitClient()
 		self.TabHolder = vgui.Create("DPropertySheet", self.Panel)
 		self.TabHolder:SetPos(0, 20)
 		self.TabHolder:SetSize(MENU.Width, 580)
+		
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			self.TabHolder.Paint = function(self, w, h)
+				-- body
+				surface.SetDrawColor( 100, 0, 0, 200 )
+				surface.DrawRect( 0, 0, w, h )
+				-- frame
+				surface.SetDrawColor( 255, 0, 0, 200 )
+				surface.DrawOutlinedRect( 0, 0, w, h )
+			end
+			self.CloseBtn:SetPos( MENU.Width - 50, 0 )
+		end
+		
 		--self:BuildWelcomeScreen()
 		self:BuildClientOpts()
 		for i,tab in pairs(EXTENSION.ClientTabs) do
 			local tpanel = vgui.Create("DPanel", MENU.TabHolder)
 			tpanel:StretchToParent(5, 20, 20, 5)
+			if(GetConVarNumber("crimson_manualpaint") == 1) then
+				tpanel.Paint = RenderBody
+			end
+			
 			local success,err = pcall(tab[4], tpanel)
 			if(not success) then
 				Vermilion.Log("Failure while generating client panel " .. tab.ID .. "!")
@@ -134,7 +239,10 @@ function EXTENSION:InitClient()
 				tpanel:Remove()
 			else
 				Vermilion.Log("Loading client panel " .. i)
-				MENU.TabHolder:AddSheet(tab[1], tpanel, "icon16/" .. tab[2], false, false, tab[3])
+				local __p = MENU.TabHolder:AddSheet(tab[1], tpanel, "icon16/" .. tab[2], false, false, tab[3])
+				if(GetConVarNumber("crimson_manualpaint") == 1) then
+					__p.Tab.Paint = RenderTab
+				end
 			end
 		end
 		

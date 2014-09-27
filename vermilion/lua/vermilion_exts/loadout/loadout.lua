@@ -189,10 +189,8 @@ function EXTENSION:InitClient()
 			local ranksLabel = Crimson:CreateHeaderLabel(ranksList, "Ranks")
 			ranksLabel:SetParent(panel)
 			
-			local disableCheckbox = vgui.Create("DCheckBoxLabel")
-			disableCheckbox:SetText("Disable loadout management on any gamemode that isn't sandbox.")
+			local disableCheckbox = Crimson.CreateCheckBox("Disable loadout management on any gamemode that isn't sandbox.")
 			disableCheckbox:SetPos(270, 30)
-			disableCheckbox:SizeToContents()
 			disableCheckbox:SetParent(panel)
 			disableCheckbox.OnChange = function()
 				net.Start("VSetLoadoutDisabled")
@@ -223,7 +221,7 @@ function EXTENSION:InitClient()
 			local allWeaponsLabel = Crimson:CreateHeaderLabel(guiAllWeaponsList, "All Weapons")
 			allWeaponsLabel:SetParent(panel)
 			
-			local searchBox = vgui.Create("DTextEntry")
+			local searchBox = Crimson.CreateTextbox("", panel)
 			searchBox:SetParent(panel)
 			searchBox:SetPos(525, 510)
 			searchBox:SetSize(250, 25)
@@ -307,10 +305,18 @@ function EXTENSION:InitClient()
 					return
 				end
 				for i,k in pairs(guiAllWeaponsList:GetSelected()) do
+					local dup = false
+					for i1,k1 in pairs(guiRankPermissionsList:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							dup = true
+							break
+						end
+					end
+					if(dup) then continue end
 					guiRankPermissionsList:AddLine(k:GetValue(1)).WeaponClass = k.WeaponClass
 				end
 			end)
-			giveRankPermissionButton:SetPos(270, 350)
+			giveRankPermissionButton:SetPos(270, 330)
 			giveRankPermissionButton:SetSize(245, 30)
 			giveRankPermissionButton:SetParent(panel)
 			giveRankPermissionButton:SetTooltip("Add one or more weapons to the list of weapons to be given to members\nof this rank when they spawn. Make sure you have made a selection in\nthe list on the right and have loaded a loadout list for a rank.")
@@ -337,10 +343,26 @@ function EXTENSION:InitClient()
 					guiRankPermissionsList:AddLine(k)
 				end
 			end)
-			removeRankPermissionButton:SetPos(270, 390)
+			removeRankPermissionButton:SetPos(270, 370)
 			removeRankPermissionButton:SetSize(245, 30)
 			removeRankPermissionButton:SetParent(panel)
 			removeRankPermissionButton:SetTooltip("Remove one or more weapons from the list of weapons to be given to members\nof this rank when they spawn. Make sure you have made a selection in the\nloadout list on the left.")
+			
+			
+			local resetLoadoutButton = Crimson.CreateButton("Restore Default Loadout", function(self)
+				if(EXTENSION.EditingRank == "") then
+					Crimson:CreateErrorDialog("Must be editing a rank to reset the loadout!")
+					return
+				end
+				guiRankPermissionsList:Clear()
+				for i,k in pairs(EXTENSION.DefaultLoadout) do
+					local name = Vermilion.Utility.GetWeaponName(k)
+					guiRankPermissionsList:AddLine(name).WeaponClass = k
+				end
+			end)
+			resetLoadoutButton:SetPos(270, 410)
+			resetLoadoutButton:SetSize(245, 30)
+			resetLoadoutButton:SetParent(panel)
 			
 			net.Start("VGetLoadoutDisabled")
 			net.SendToServer()

@@ -21,7 +21,7 @@ local EXTENSION = Vermilion:MakeExtensionBase()
 EXTENSION.Name = "chat_censor"
 EXTENSION.ID = "censor"
 EXTENSION.Description = "Censors the chat to prevent the discussion of inappropriate topics/advertising"
-EXTENSION.Author = "Ned"
+EXTENSION.Author = "Ned and Foxworrior"
 EXTENSION.Permissions = {
 	"manage_censor"
 }
@@ -132,8 +132,7 @@ function EXTENSION:InitClient()
 				net.SendToServer()
 			end
 			
-			local enabledCB = vgui.Create("DCheckBoxLabel")
-			enabledCB:SetText("Enable Chat Censor")
+			local enabledCB = Crimson.CreateCheckBox("Enable Chat Censor")
 			enabledCB:SetParent(panel)
 			enabledCB:SetPos(10, 10)
 			enabledCB:SizeToContents()
@@ -143,8 +142,7 @@ function EXTENSION:InitClient()
 				updateServer()
 			end
 			
-			local ipCensor = vgui.Create("DCheckBoxLabel")
-			ipCensor:SetText("Censor IPv4 Addresses")
+			local ipCensor = Crimson.CreateCheckBox("Censor IPv4 Addresses")
 			ipCensor:SetParent(panel)
 			ipCensor:SetPos(10, 30)
 			ipCensor:SizeToContents()
@@ -154,8 +152,7 @@ function EXTENSION:InitClient()
 				updateServer()
 			end
 			
-			local exemption = vgui.Create("DCheckBoxLabel")
-			exemption:SetText("Allow users with the 'censor_exempt' permission to be exempt from censoring.")
+			local exemption = Crimson.CreateCheckBox("Allow users with the 'censor_exempt' permission to be exempt from censoring.")
 			exemption:SetParent(panel)
 			exemption:SetPos(10, 50)
 			exemption:SizeToContents()
@@ -165,8 +162,7 @@ function EXTENSION:InitClient()
 				updateServer()
 			end
 			
-			local banafter = vgui.Create("DCheckBoxLabel")
-			banafter:SetText("Ban users after the specified number of censored words: ")
+			local banafter = Crimson.CreateCheckBox("Ban users after the specified number of censored words: ")
 			banafter:SetParent(panel)
 			banafter:SetPos(10, 70)
 			banafter:SizeToContents()
@@ -174,13 +170,12 @@ function EXTENSION:InitClient()
 			banafter:SetDisabled(true)
 			EXTENSION.BanAfterCB = banafter
 			
-			local banafterwang = vgui.Create("DNumberWang")
+			local banafterwang = Crimson.CreateNumberWang(0, nil)
 			banafterwang:SetParent(panel)
 			banafterwang:SetPos(310, 68)
 			banafterwang:SetDisabled(true)
 			
-			local adminsee = vgui.Create("DCheckBoxLabel")
-			adminsee:SetText("Allow users with the 'censor_override' permission to see censored messages.")
+			local adminsee = Crimson.CreateCheckBox("Allow users with the 'censor_override' permission to see censored messages.")
 			adminsee:SetParent(panel)
 			adminsee:SetPos(10, 90)
 			adminsee:SizeToContents()

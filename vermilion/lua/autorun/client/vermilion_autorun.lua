@@ -23,21 +23,43 @@ Vermilion = {}
 Vermilion.internal = {}
 
 Vermilion.EVENT_EXT_LOADED = "Vermilion_LoadedEXT"
-
+Vermilion.EVENT_EXT_POST = "Vermilion_LoadedEXTPost"
 
 
 -- Internal logging function
-function Vermilion.Log( str ) 
-	print("[Vermilion - Client] " .. tostring(str))
-	file.Append("vermilion/vermilion_client_log.txt", util.DateStamp() .. tostring(str) .. "\n")
+function Vermilion.Log( str )
+	local side = "UNKNOWN"
+	if(SERVER) then
+		side = "Server"
+	elseif(CLIENT) then
+		side = "Client"
+	end
+	if(not istable(str)) then
+		str = { Color(255, 0, 0), "[Vermilion - " .. side .. "] ", Color(255, 255, 255), str }
+	else
+		table.insert(str, 1, Color(255, 255, 255))
+		table.insert(str, 1, "[Vermilion - " .. side .. "] ")
+		table.insert(str, 1, Color(255, 0, 0))
+	end
+	table.insert(str, "\n")
+	MsgC(unpack(str))
+	local texttab = {}
+	for i,k in pairs(str) do
+		if(not IsColor(k)) then
+			table.insert(texttab, tostring(k))
+		end
+	end
+	file.Append("vermilion/vermilion_" .. string.lower(side) .. "_log.txt", util.DateStamp() .. " " .. table.concat(texttab, " ") .. "\n")
 end
 
 local preloadFiles = {
 	"vermilion/crimson_gmod.lua",
 	"vermilion/vermilion_shared.lua",
-	"vermilion/vermilion_config_client.lua",
+	--"vermilion/vermilion_config_client.lua",
 	"vermilion/vermilion_client.lua"
 }
+
+
 for i, luaFile in pairs(preloadFiles) do
 	include(luaFile)
 end

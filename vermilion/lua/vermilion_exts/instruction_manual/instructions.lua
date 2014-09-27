@@ -87,7 +87,7 @@ function EXTENSION:InitClient()
 	
 	self:AddHelpTopic("The Vermilion Menu", function(contentWindow)
 		local lab = EXTENSION:GetLabel(contentWindow)
-		lab:SetText("The Vermilion Menu is your one-stop-shop for total server control. It is context-sensitive and as such will only display the options that the current user is permitted to see.\n\nAlong the top of the menu, you can see the tabs bar. Each tab manages a different function that Vermilion has to offer.\n\n\nA few things to note:\n\n- The \"Client Options\" tab will always be visible to everybody, but it only changes the way the Vermilion works on the current client, and as such is limited to cosmetic changes.\n- The \"Instructions\" tab will also be visible to everybody.\n- If you ever lose access to the Vermilion controls (i.e. you lose your rank), then one of two different behaviours will occur. If you were an \"owner\" and you lost your rank, you need to re-join the server quickly as the next player to join will be auto-promoted to owner. If you were not an \"owner\" or someone who can control ranks and you lost access, you will need to contact someone who has authority to do so.")
+		lab:SetText("The Vermilion Menu is your one-stop-shop for total server control. It is context-sensitive and as such will only display the options that the current user is permitted to see.\n\nAlong the top of the menu, you can see the tabs bar. Each tab manages a different function that Vermilion has to offer.\n\n\nA few things to note:\n\n- The \"Client Options\" tab will always be visible to everybody, but it only changes the way that Vermilion works on the current client, and as such is limited to cosmetic changes.\n- The \"Instructions\" tab will also be visible to everybody.\n- If you ever lose access to the Vermilion controls (i.e. you lose your rank), then one of two different behaviours will occur. If you were an \"owner\" and you lost your rank, you need to re-join the server quickly as the next player to join will be auto-promoted to owner. If you were not an \"owner\" or someone who can control ranks and you lost access, you will need to contact someone who has authority to do so.")
 		local lab1 = EXTENSION:GetLabel(contentWindow)
 		lab1:SetText("- The Vermilion menu will stay open until you press the close button. You do not have to hold down your keybind.")
 		lab1:SetPos(0, 220)
@@ -115,11 +115,6 @@ function EXTENSION:InitClient()
 	self:AddHelpTopic("Chat Commands", function(contentWindow)
 		local lab = EXTENSION:GetLabel(contentWindow)
 		lab:SetText("Vermilion has commands that can be run from the chat. You can activate these commands by typing \"!<command name> <args>\" into the chat.\n\nTo get a list of commands, type the command prefix (!) into the chat box. Please note that commands are also subject to access permissions and will check if you are allowed to run them if such a check is required.")
-		
-		for i,k in pairs(commandList) do
-			lst:AddLine(k)
-		end
-		
 	end)
 	
 	self:AddHelpTopic("Setting the MOTD", function(contentWindow)

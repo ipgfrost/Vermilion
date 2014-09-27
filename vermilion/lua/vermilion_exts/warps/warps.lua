@@ -179,10 +179,3 @@ function EXTENSION:InitClient()
 end
 
 Vermilion:RegisterExtension(EXTENSION)
-
-
-
-
-
-
-

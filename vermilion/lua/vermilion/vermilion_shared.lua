@@ -17,14 +17,26 @@
  in any way, nor claims to be so. 
 ]]
 
-if(SERVER) then AddCSLuaFile("vermilion/lang/vermilion_lang_engb.lua") AddCSLuaFile("vermilion/vermilion_globals.lua") end
+if(SERVER) then AddCSLuaFile("vermilion/lang/vermilion_lang_engb.lua") end
 include("vermilion/lang/vermilion_lang_engb.lua")
-include("vermilion/vermilion_globals.lua")
 
 function Vermilion.GetVersion()
-	return "1.8.0"
+	return "1.9.0"
 end
 
+Vermilion.Colours = {
+	White = Color(255, 255, 255),
+	Black = Color(0, 0, 0),
+	Red = Color(255, 0, 0),
+	Green = Color(0, 128, 0),
+	Blue = Color(0, 0, 255),
+	Yellow = Color(255, 255, 0),
+	Grey = Color(128, 128, 128)
+}
+
+function Vermilion.Colour(r, g, b, a)
+	return Color(r, g, b, a)
+end
 Vermilion.Utility = {}
 
 Vermilion.HookTimes = {}
@@ -156,11 +168,14 @@ function Vermilion:MakeExtensionBase()
 	base.Localisations = {}
 	base.Permissions = {}
 	base.PermissionDefinitions = {}
+	base.DataChangeHooks = {}
 	
 	function base:InitClient() end
 	function base:InitServer() end
 	function base:InitShared() end
 	function base:Destroy() end
+	
+	function base:RegisterChatCommands() end
 	
 	function base:FindData(name, default)
 		local dataTable = {}
@@ -181,8 +196,24 @@ function Vermilion:MakeExtensionBase()
 	end
 	
 	function base:SetData(name, value)
-		if(Vermilion.Settings.ModuleData[self.ID] == nil) then Vermilion.Settings.ModuleData[self.ID] = {} end
-		Vermilion.Settings.ModuleData[self.ID][name] = value
+		Vermilion:SetModuleData(self.ID, name, value)	
+	end
+	
+	function base:AddDataChangeHook(dataName, hookName, cHook)
+		if(self.DataChangeHooks[dataName] == nil) then self.DataChangeHooks[dataName] = {} end
+		self.DataChangeHooks[dataName][hookName] = cHook
+	end
+	
+	function base:RemoveDataChangeHook(dataName, hookName)
+		if(self.DataChangeHooks[dataName] == nil) then return end
+		self.DataChangeHooks[dataName][hookName] = nil
+	end
+	
+	function base:RunDataChangeHooks(dataName, value)
+		if(self.DataChangeHooks[dataName] == nil) then return end
+		for i,k in pairs(self.DataChangeHooks[dataName]) do
+			k(value)
+		end
 	end
 	
 	function base:Localise(id)
@@ -360,6 +391,7 @@ function Vermilion:LoadExtensions()
 		self.Log(string.format(Vermilion.Lang.ExtInit, i))
 		if(SERVER) then
 			extension:InitServer()
+			extension:RegisterChatCommands()
 		else
 			extension:InitClient()
 		end
@@ -367,7 +399,7 @@ function Vermilion:LoadExtensions()
 	end
 	Vermilion.LoadedExtensions = true
 	hook.Call(Vermilion.EVENT_EXT_LOADED)
-	
+	hook.Call(Vermilion.EVENT_EXT_POST)
 end
 
 
@@ -489,7 +521,11 @@ if(SERVER) then
 			local dataTable = predictor(table.Count(parts), parts[table.Count(parts)], parts)
 			if(dataTable != nil) then
 				for i,k in pairs(dataTable) do
-					table.insert(response, { Name = k, Syntax = "" }) 
+					if(istable(k)) then
+						table.insert(response, k)
+					else
+						table.insert(response, { Name = k, Syntax = "" })
+					end					
 				end
 			end
 		end
@@ -512,33 +548,59 @@ else
 	
 	Vermilion:RegisterHook("FinishChat", "VCloseChatbox", function()
 		Vermilion.ChatOpen = false
-		Vermilion.ChatPredictions = nil
+		Vermilion.ChatPredictions = {}
 	end)
 	
-	Vermilion:RegisterHook("KeyPress", "ChatSelector", function(vplayer, key)
-		if(Vermilion.ChatOpen) then
-			if(key == KEY_UP and Vermilion.ChatTabSelected + 1 >= table.Count(Vermilion.ChatPredictions)) then
-				Vermilion.ChatTabSelected = 0
-				return
-			elseif(key == KEY_DOWN and Vermilion.ChatTabSelect - 1 < 0) then
-				Vermilion.ChatTabSelected = table.Count(Vermilion.ChatPredictions)
-				return
-			end
-			
-			if(key == KEY_UP) then
-				Vermilion.ChatTabSelected = Vermilion.ChatTabSelected + 1
-			else
-				Vermilion.ChatTabSelected = Vermilion.ChatTabSelected - 1
+	Vermilion.ChatPredictions = {}
+	Vermilion.ChatTabSelected = 1
+	Vermilion.ChatBGW = 0
+	Vermilion.ChatBGH = 0
+	Vermilion.MoveEnabled = true
+	
+	Vermilion:RegisterHook("Think", "Testing", function()
+		if(Vermilion.ChatOpen and Vermilion.MoveEnabled and table.Count(Vermilion.ChatPredictions) > 0) then
+			if(input.IsKeyDown(KEY_DOWN)) then
+				if(string.find(Vermilion.CurrentChatText, " ")) then
+					if(Vermilion.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredictions)) then
+						Vermilion.ChatTabSelected = 2
+					else
+						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected + 1
+					end
+				else
+					if(Vermilion.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredictions)) then
+						Vermilion.ChatTabSelected = 1
+					else
+						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected + 1
+					end
+				end
+				Vermilion.MoveEnabled = false
+				timer.Simple(0.1, function()
+					Vermilion.MoveEnabled = true
+				end)
+			elseif(input.IsKeyDown(KEY_UP)) then
+				if(string.find(Vermilion.CurrentChatText, " ")) then
+					if(Vermilion.ChatTabSelected - 1 < 2) then
+						Vermilion.ChatTabSelected = table.Count(Vermilion.ChatPredictions)
+					else
+						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected - 1
+					end
+				else
+					if(Vermilion.ChatTabSelected - 1 < 1) then
+						Vermilion.ChatTabSelected = table.Count(Vermilion.ChatPredictions)
+					else
+						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected - 1
+					end
+				end
+				Vermilion.MoveEnabled = false
+				timer.Simple(0.1, function()
+					Vermilion.MoveEnabled = true
+				end)
 			end
 		end
 	end)
 	
-	Vermilion.ChatTabSelected = 0
-	Vermilion.ChatBGW = 0
-	Vermilion.ChatBGH = 0
-	
 	Vermilion:RegisterHook("OnChatTab", "VInsertPrediction", function()
-		if(Vermilion.ChatPredictions != nil and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
+		if(table.Count(Vermilion.ChatPredictions) > 0 and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
 			local commandText = Vermilion.CurrentChatText
 			local parts = string.Explode(" ", commandText, false)
 			local parts2 = {}
@@ -565,25 +627,26 @@ else
 					table.insert(parts, k)
 				--end
 			end
-			parts[table.Count(parts)] = Vermilion.ChatPredictions[2].Name
-			return table.concat(parts, " ", 1)
+			parts[table.Count(parts)] = Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name
+			return table.concat(parts, " ", 1) .. " "
 		end
 		if(Vermilion.ChatPredictions != nil and table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatTabSelected == 0) then
 			return "!" .. Vermilion.ChatPredictions[1].Name .. " "
 		end
 		if(Vermilion.ChatPredictions != nil and Vermilion.ChatTabSelected > 0) then
-			return "!" .. Vermilion.ChatPredictions[Vermilion.ChatTabSelected] .. " "
+			if(Vermilion.ChatPredictions[Vermilion.ChatTabSelected] == nil) then return end
+			return "!" .. Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name .. " "
 		end
 	end)
 	
 	Vermilion:RegisterHook("HUDPaint", "PredictDraw", function()
-		if(Vermilion.ChatPredictions != nil and Vermilion.ChatOpen) then
+		if(table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatOpen) then
 			local pos = 0
 			local xpos = 0
 			local maxw = 0
-			local text = "Press tab to complete the command with the one at the top of the list."
+			local text = "Press up/down to select a suggestion and press tab to insert it."
 			if(Vermilion:GetExtension("chatbox") != nil and GetConVarNumber("vermilion_replace_chat") == 1) then
-				text = "Press the right arrow key to complete the command with the one at the top of the list."
+				text = "Press up/down to select a suggestion and press right arrow key to insert it."
 			end
 			local mapbx = math.Remap(545, 0, 1366, 0, ScrW())
 			local maptx = math.Remap(550, 0, 1366, 0, ScrW())
@@ -617,18 +680,26 @@ else
 	end)
 	
 	Vermilion:RegisterHook("ChatTextChanged", "ChatPredict", function(chatText)
-		Vermilion.ChatTabSelected = 0
+		if(Vermilion.CurrentChatText != chatText) then
+			if(string.find(chatText, " ")) then
+				Vermilion.ChatTabSelected = 2
+			else
+				Vermilion.ChatTabSelected = 1
+			end
+		end
 		Vermilion.CurrentChatText = chatText
-		if(string.StartWith(chatText, Vermilion:GetSetting("chat_prefix", "!"))) then
+		
+		if(string.StartWith(chatText, "!")) then
 			net.Start("VChatPrediction")
 			local space = nil
 			if(string.find(chatText, " ")) then
 				space = string.find(chatText, " ") - 1
+				
 			end
 			net.WriteString(string.sub(chatText, 2))
 			net.SendToServer()
 		else
-			Vermilion.ChatPredictions = nil
+			Vermilion.ChatPredictions = {}
 		end
 	end)
 end

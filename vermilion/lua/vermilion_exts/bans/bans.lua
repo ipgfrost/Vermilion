@@ -50,14 +50,25 @@ EXTENSION.RankPermissions = {
 	}
 }
 EXTENSION.NetworkStrings = {
-	"VBannedPlayersList",
-	"VBanPlayer",
-	"VUnbanPlayer",
-	"VKickPlayer"
+	"VBannedPlayersList", -- retrieves the list of banned players for the GUI
+	"VBanPlayer", -- sends a command to the server to ban a player
+	"VUnbanPlayer", -- sends a command to the server to unban a player
+	"VKickPlayer" -- sends a command to the server to kick a player.
 }
 
 --[[
 	Ban a player and unban them using a unix timestamp.
+	
+	vplayer - the player to ban (string or player entity)
+	vplayerBanner - the player executing the ban (string or player entity)
+	reason - the reason for the ban
+	years - years to ban for
+	months - months to ban for
+	weeks - weeks to ban for
+	days - days to ban for
+	hours - hours to ban for
+	mins - minutes to ban for
+	seconds - seconds to ban for
 ]]--
 function Vermilion:BanPlayerFor(vplayer, vplayerBanner, reason, years, months, weeks, days, hours, mins, seconds)
 	-- seconds per year = 31557600
@@ -218,11 +229,20 @@ function Vermilion:BanPlayerFor(vplayer, vplayerBanner, reason, years, months, w
 	
 end
 
+--[[
+	Unban a player
+	
+	steamid - the steamid that should be unbanned
+	unbanner - the player that is executing the function (player entity or string)
+]]--
 function Vermilion:UnbanPlayer(steamid, unbanner)
 	if(isstring(unbanner)) then
 		unbanner = Crimson.LookupPlayerByName(unbanner)
 	end
-	if(not IsValid(unbanner)) then
+	if(not Vermilion:HasPermission(unbanner, "unban")) then
+		return
+	end
+	if(not IsValid(unbanner)) then -- if the unbanner isn't valid, assume it's the console and create a fake player object.
 		unbanner = {}
 		function unbanner:GetName()
 			return "Console"
@@ -243,6 +263,24 @@ function Vermilion:UnbanPlayer(steamid, unbanner)
 	end
 end
 
+--[[
+	Get the ban data for the steamid
+	
+	steamid - the steamid to get the data for
+]]--
+function Vermilion:GetBanData(steamid)
+	for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
+		if(k[1] == steamid) then
+			return k
+		end
+	end
+end
+
+--[[
+	Check if the steamid has been banned.
+	
+	steamid - the steamid to check
+]]--
 function Vermilion:IsSteamIDBanned(steamid)
 	for i,k in pairs(EXTENSION:GetData("bans", {}, true)) do
 		if(k[1] == steamid) then
@@ -441,6 +479,11 @@ end
 
 function EXTENSION:InitClient()
 
+	--[[
+		Create a panel that allows the user to enter a time that a group of players should be banned for.
+		
+		playersToBan - the player(s) to ban (table of steamids or steamid)
+	]]--
 	function EXTENSION:CreateBanForPanel(playersToBan)
 		if(not istable(playersToBan)) then playersToBan = { playersToBan } end
 		local bTimePanel = Crimson.CreateFrame(
