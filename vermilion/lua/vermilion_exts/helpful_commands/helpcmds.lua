@@ -41,7 +41,16 @@ EXTENSION.Permissions = {
 	"setspawn",
 	"unsetspawn",
 	"timescale",
-	"stripweapons"
+	"stripweapons",
+	"ignite",
+	"extinguish",
+	"kick_vehicle",
+	"decals",
+	"armour",
+	"frags",
+	"deaths",
+	"convar",
+	"ping"
 }
 EXTENSION.PermissionDefinitions = {
 	["teleport"] = "This player is allowed to use the teleport command.",
@@ -62,7 +71,16 @@ EXTENSION.PermissionDefinitions = {
 	["setspawn"] = "This player can use the setspawn command to set the world spawnpoint.",
 	["unsetspawn"] = "This player can use the unsetspawn command to reset the world spawnpoint.",
 	["timescale"] = "This player can use the timescale command to change the server tick timescale.",
-	["stripweapons"] = "This player can use the stripweapons chat command."
+	["stripweapons"] = "This player can use the stripweapons chat command.",
+	["ignite"] = "This player can use the ignite chat command.",
+	["extinguish"] = "This player can use the extinguish chat command.",
+	["kick_vehicle"] = "This player can use the kick_vehicle chat command.",
+	["decals"] = "This player can use the decals chat command.",
+	["armour"] = "This player can use the armour chat command.",
+	["frags"] = "This player can use the frags chat command.",
+	["deaths"] = "This player can use the deaths chat command.",
+	["convar"] = "This player can use the convar chat command.",
+	["ping"] = "This player can use the ping command to get the ping of other players."
 }
 
 EXTENSION.TeleportRequests = {}

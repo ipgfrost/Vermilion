@@ -54,6 +54,16 @@ end
 
 function userFuncs:HasPermission(permission)
 	if(table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")) then return true end
+	if(self:GetRank() == nil) then
+		Vermilion.Log({
+			Color(255, 0, 0),
+			"CRITICAL WARNING: ",
+			Color(255, 255, 255),
+			"A user's rank was queried but no data was returned. THIS IS A BUG. Restoring user to default rank."
+		})
+		self:SetRank(Vermilion:GetSetting("default-rank", "player"))
+		return false
+	end
 	return self:GetRank():HasPermission(permission)
 end
 
@@ -77,6 +87,10 @@ function rankFuncs:GetColour()
 	else
 		return Color(255, 0, 255)
 	end
+end
+
+function rankFuncs:SetColour(colour)
+	self.Colour = colour
 end
 
 function Vermilion:GetSetting(name, default)

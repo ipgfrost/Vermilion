@@ -214,23 +214,6 @@ function EXTENSION:InitServer()
 		end
 	end, "<minutes>")
 	
-	self:AddHook(Vermilion.EVENT_EXT_LOADED, "ConfigureServerManager", function() -- tell the server manager to disable some sandbox cheats. NOTE: Move this into the gamemode customiser
-		if(engine.ActiveGamemode() != "terrortown") then return end
-		if(Vermilion:GetExtension("server_manager") != nil) then
-			local ext = Vermilion:GetExtension("server_manager")
-			ext:SetData("unlimited_ammo", false)
-			ext:SetData("enable_no_damage", false)
-			ext:SetData("noclip_control", false)
-			ext:SetData("enable_lock_immunity", false)
-			ext:SetData("enable_kill_immunity", false)
-			ext:SetData("enable_kick_immunity", false)
-			ext:SetData("force_noclip_permissions", false)
-			Vermilion:SetModuleData("deathnotice", "enabled", false)
-			ext:SetData("disable_fall_damage", false)
-			Vermilion.Log("Modified internal settings to compensate for non-sandbox gamemode!")
-		end
-	end)
-	
 end
 
 function EXTENSION:InitClient()

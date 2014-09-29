@@ -141,6 +141,33 @@ function EXTENSION:InitServer()
 		return table.HasValue({"server_manager" .. "unlimited_ammo", "server_manager" .. "enable_limit_remover", "server_manager" .. "enable_no_damage", "server_manager" .. "noclip_control", "server_manager" .. "enable_kick_immunity", "server_manager" .. "enable_kill_immunity", "server_manager" .. "enable_lock_immunity", "server_manager" .. "disable_fall_damage", "scoreboard" .. "scoreboard_enabled", "deathnotice" .. "enabled"}, mod .. setting)
 	end)
 	
+	EXTENSION:AddGamemodeType(function(name, sandbox, toolgunEnabled)
+		return name == "terrortown"
+	end, function(name, svManager)
+		if(EXTENSION:GetData("ttt_configed", false, true)) then
+			local mData = EXTENSION:GetData("ttt", {}, true)
+			for i,k in pairs(cproperties) do
+				local mod = k.Module or "server_manager"
+				if(mData[mod .. k.Name] == nil) then continue end
+				Vermilion:SetModuleData(mod, k.Name, mData[k.Name])
+			end
+			return
+		end
+		svManager:SetData("unlimited_ammo", 1)
+		svManager:SetData("enable_no_damage", 1)
+		svManager:SetData("flashlight_control", 1)
+		svManager:SetData("noclip_control", 1)
+		svManager:SetData("enable_lock_immunity", 1)
+		svManager:SetData("enable_kill_immunity", 1)
+		svManager:SetData("enable_kick_immunity", 1)
+		svManager:SetData("disable_fall_damage", 1)
+		Vermilion:SetModuleData("deathnotice", "enabled", false)
+		Vermilion:SetModuleData("scoreboard", "scoreboard_enabled", false)
+	end, function(mod, setting)
+		mod = mod or "server_manager"
+		return table.HasValue({"server_manager unlimited_ammo", "server_manager enable_no_damage", "server_manager noclip_control", "server_manager enable_lock_immunity", "server_manager enable_kill_immunity", "server_manager enable_kick_immunity", "server_manager force_noclip_permissions", "deathnotice enabled", "server_manager disable_fall_damage"}, mod .. setting)
+	end)
+	
 	self:AddHook("OnGamemodeLoaded", function()
 		if(not EXTENSION:GetData("enabled", true, true)) then return end
 		for i,k in pairs(types) do

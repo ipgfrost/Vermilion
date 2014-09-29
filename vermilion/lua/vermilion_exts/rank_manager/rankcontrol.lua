@@ -299,7 +299,7 @@ function EXTENSION:InitServer()
 			net.Send(vplayer)
 		else
 			if(Vermilion:HasPermission(vplayer, "rank_management")) then
-				Vermilion:GetRankData(rank):SetColour(net.ReadColour())
+				Vermilion:GetRankData(rank):SetColour(net.ReadColor())
 			end
 		end
 	end)
@@ -478,7 +478,8 @@ function EXTENSION:InitClient()
 			net.Start("VRankColour")
 			net.WriteString(rank)
 			net.WriteString(tostring(true))
-			net.WriteColor(mixer:GetColor())
+			local col = mixer:GetColor()
+			net.WriteColor(Color(col.r, col.g, col.b, col.a))
 			net.SendToServer()
 			frame:Close()
 		end)
@@ -531,7 +532,6 @@ function EXTENSION:InitClient()
 						if(i == table.Count(oldranks) - 1) then
 							ranksList:AddLine(k[1], k[2], k[3])
 							ranksList:AddLine(text, i + 1, "No")
-							ranksList:AddLine("banned", i + 2, "No")
 							break
 						end
 						ranksList:AddLine(k[1], k[2], k[3])
@@ -725,10 +725,6 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select at least one user to assign to a rank!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "banned") then
-					Crimson:CreateErrorDialog("Cannot manually set user to \"banned\" rank!")
-					return
-				end
 				for i,userLine in pairs(activePlayerList:GetSelected()) do
 					if(userLine:GetValue(2) == LocalPlayer():SteamID()) then
 						local selectedNumId = tonumber(ranksList:GetSelected()[1]:GetValue(2))
@@ -783,7 +779,7 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a rank to assign this/these user(s) to!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
+				if(ranksList:GetSelected()[1]:GetValue(1) == "owner") then
 					Crimson:CreateErrorDialog("Cannot set a protected rank as the default. Doing so is insecure and/or stupid.")
 					return
 				end
@@ -894,7 +890,7 @@ function EXTENSION:InitClient()
 					Crimson:CreateErrorDialog("Must select a rank to load the permissions for!")
 					return
 				end
-				if(ranksList:GetSelected()[1]:GetValue(1) == "owner" or ranksList:GetSelected()[1]:GetValue(1) == "banned") then
+				if(ranksList:GetSelected()[1]:GetValue(1) == "owner") then
 					Crimson:CreateErrorDialog("Cannot edit the permissions of this rank; it is a protected rank!")
 					return
 				end

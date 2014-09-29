@@ -42,6 +42,10 @@ function EXTENSION:InitServer()
 		end
 	end)
 	
+	--[[ self:AddHook("CanProperty", function(vplayer, prop, ent)
+		return false
+	end) ]]
+	
 	print(list.Get("Weapon")["weapon_crowbar"]['PrintName'])
 	
 	concommand.Add("print_wep_table", function(sender, cmd, args, fs)
