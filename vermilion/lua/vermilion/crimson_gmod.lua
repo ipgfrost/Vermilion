@@ -38,6 +38,16 @@ if(CLIENT) then
 	} )
 end
 
+-- net patches
+function net.ReadBoolean()
+	return net.ReadBit() == 1
+end
+
+-- just to make it look nicer
+function net.WriteBoolean(bool)
+	net.WriteBit(bool)
+end
+
 function Crimson:SetDark(dark)
 	self.Dark = dark
 end
@@ -125,10 +135,10 @@ function Crimson.CreateAvatarImage(vplayer, size)
 	end
 	local aimg = vgui.Create("AvatarImage")
 	aimg:SetSize(size, size)
-	if(isstring(vplayer)) then
-		aimg:SetPlayer(vplayer)
+	if(not isstring(vplayer)) then
+		aimg:SetPlayer(vplayer, size)
 	else
-		aimg:SetSteamID(vplayer)
+		aimg:SetSteamID(util.SteamIDTo64(vplayer), size)
 	end
 	return aimg
 end
@@ -276,6 +286,39 @@ function Crimson.CreateFrame(props)
 		end
 	end
 	return panel
+end
+
+function Crimson:CreateDialog(title, text)
+	local panel = self.CreateFrame(
+		{
+			['size'] = { 500, 100 },
+			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
+			['closeBtn'] = true,
+			['draggable'] = true,
+			['title'] = "Vermilion - " .. title,
+			['bgBlur'] = true
+		}
+	)
+	panel:MakePopup()
+	panel:DoModal()
+	panel:SetAutoDelete(true)
+	
+	
+	
+	Crimson:SetDark(false)
+	local textLabel = self.CreateLabel(text)
+	textLabel:SizeToContents()
+	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
+	textLabel:SetParent(panel)
+	textLabel:SetBright(true)
+	
+	local confirmButton = self.CreateButton("OK", function(self)
+		panel:Close()
+	end)
+	confirmButton:SetPos(200, 75)
+	confirmButton:SetSize(100, 20)
+	confirmButton:SetParent(panel)
+	Crimson:SetDark(true)
 end
 
 function Crimson:CreateErrorDialog(text)

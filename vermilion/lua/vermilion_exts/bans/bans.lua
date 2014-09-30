@@ -401,7 +401,7 @@ function EXTENSION:InitServer()
 			local times = net.ReadTable()
 			local reason = net.ReadString()
 			local tplayer = nil
-			if(tobool(net.ReadString())) then
+			if(net.ReadBoolean()) then
 				tplayer = net.ReadEntity()
 			else
 				tplayer = Crimson.LookupPlayerBySteamID(net.ReadString())
@@ -434,7 +434,7 @@ function EXTENSION:InitServer()
 	self:NetHook("VKickPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "kick")) then
 			local tplayer = nil
-			if(tobool(net.ReadString())) then
+			if(net.ReadBoolean()) then
 				tplayer = net.ReadEntity()
 			else
 				tplayer = Crimson.LookupPlayerBySteamID(net.ReadString())
@@ -613,7 +613,7 @@ function EXTENSION:InitClient()
 					net.Start("VBanPlayer")
 					net.WriteTable(times)
 					net.WriteString(text)
-					net.WriteString(tostring(isentity(k)))
+					net.WriteBoolean(isentity(k))
 					if(isentity(k)) then
 						net.WriteEntity(k)
 					else
@@ -734,7 +734,7 @@ function EXTENSION:InitClient()
 				Crimson:CreateTextInput("For what reason are you kicking this/these player(s)?", function(text)
 					for i,k in pairs(EXTENSION.ActivePlayerList:GetSelected()) do
 						net.Start("VKickPlayer")
-						net.WriteString(tostring(false))
+						net.WriteBoolean(false)
 						net.WriteString(k:GetValue(2))
 						net.WriteString(text)
 						net.SendToServer()
@@ -822,7 +822,7 @@ function EXTENSION:InitShared()
 				if(LocalPlayer():IsAdmin()) then
 					Crimson:CreateTextInput("For what reason are you kicking this player?", function(text)
 						net.Start("VKickPlayer")
-						net.WriteString(tostring(true))
+						net.WriteBoolean(true)
 						net.WriteEntity(ent)
 						net.WriteString(text)
 						net.SendToServer()

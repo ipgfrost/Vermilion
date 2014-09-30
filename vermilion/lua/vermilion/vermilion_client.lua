@@ -29,7 +29,7 @@ net.Receive("Vermilion_Client_Activate", function(len)
 		return
 	end
 	Vermilion.Activated = true
-	Vermilion.InfoStores = net.ReadTable()
+	Vermilion.InfoStores = net.ReadTable() -- probably a bad idea?
 	Vermilion:LoadExtensions()
 	if(input.LookupBinding("vermilion_menu") == nil and Vermilion:GetExtension("notifications") != nil) then
 		Vermilion:GetExtension("notifications"):AddNotify("Please bind a key to \"vermlion_menu\"!\n\nYou can do this by opening the console and typing \"bind <key> vermilion_menu\"", 15, NOTIFY_GENERIC)
@@ -45,16 +45,58 @@ net.Receive("VActivePlayers", function(len)
 	hook.Call("VActivePlayers", nil, net.ReadTable())
 end)
 
+local oldRanks = nil
+
+function Vermilion:RequestRanksList()
+	net.Start("VRanksList")
+	net.WriteBoolean(oldRanks != nil)
+	if(oldRanks != nil) then
+		net.WriteString(util.CRC(table.ToString(oldRanks)))
+	end
+	net.SendToServer()
+end
+
 net.Receive("VRanksList", function(len)
-	hook.Call("VRanksList", nil, net.ReadTable())
+	if(net.ReadBoolean()) then
+		oldRanks = net.ReadTable()
+	end
+	hook.Call("VRanksList", nil, oldRanks)
 end)
+
+local oldWeapons = nil
+
+function Vermilion:RequestWeaponsList()
+	net.Start("VWeaponsList")
+	net.WriteBoolean(oldWeapons != nil)
+	if(oldWeapons != nil) then
+		net.WriteString(util.CRC(table.ToString(oldWeapons)))
+	end
+	net.SendToServer()
+end
 
 net.Receive("VWeaponsList", function(len)
-	hook.Call("VWeaponsList", nil, net.ReadTable())
+	if(net.ReadBoolean()) then
+		oldWeapons = net.ReadTable()
+	end
+	hook.Call("VWeaponsList", nil, oldWeapons)
 end)
 
+local oldEnts = nil
+
+function Vermilion:RequestEntsList()
+	net.Start("VEntsList")
+	net.WriteBoolean(oldEnts != nil)
+	if(oldEnts != nil) then
+		net.WriteString(util.CRC(table.ToString(oldEnts)))
+	end
+	net.SendToServer()
+end
+
 net.Receive("VEntsList", function(len)
-	hook.Call("VEntsList", nil, net.ReadTable())
+	if(net.ReadBoolean()) then
+		oldEnts = net.ReadTable()
+	end
+	hook.Call("VEntsList", nil, oldEnts)
 end)
 
 Vermilion:RegisterHook("ChatText", "HideJoin", function(index, name, text, typ)
@@ -62,7 +104,7 @@ Vermilion:RegisterHook("ChatText", "HideJoin", function(index, name, text, typ)
 end)
 
 net.Receive("VHTMLMOTD", function()
-	local isurl = tobool(net.ReadString())
+	local isurl = net.ReadBoolean()
 	local html = net.ReadString()
 	local frame = Crimson.CreateFrame({
 		size = { 800, 600 },

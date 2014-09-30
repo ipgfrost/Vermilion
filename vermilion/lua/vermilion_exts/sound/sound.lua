@@ -128,7 +128,7 @@ function EXTENSION:InitServer()
 		net.Start("VPlaySound")
 		net.WriteString(path)
 		net.WriteString("BaseSound")
-		net.WriteString(tostring(loop))
+		net.WriteBoolean(loop)
 		net.WriteString(tostring(volume))
 		EXTENSION.ActiveSound[channel] = { Path = path, Stream = false, Loop = loop, Volume = volume, Position = 0 }
 		net.Send(vplayer)
@@ -142,7 +142,7 @@ function EXTENSION:InitServer()
 		net.Start("VPlaySoundStream")
 		net.WriteString(stream)
 		net.WriteString(channel)
-		net.WriteString(tostring(loop))
+		net.WriteBoolean(loop)
 		net.WriteString(tostring(volume))
 		EXTENSION.ActiveSound[channel] = { Path = stream, Stream = true, Loop = loop, volume = volume, Position = 0, ReportedPlayers = {}, MaxPlayers = max }
 		net.Send(vplayer)
@@ -313,9 +313,9 @@ function EXTENSION:InitServer()
 			net.Start("VPlaySoundStream")
 			local filename = net.ReadString()
 			local volume = tonumber(net.ReadString())
-			local loop = tobool(net.ReadString())
+			local loop = net.ReadBoolean()
 			local credits = nil
-			if(tobool(net.ReadString())) then
+			if(net.ReadBoolean()) then
 				credits = net.ReadString()
 			end
 			Vermilion:BroadcastStream(filename, "BaseSound", loop, volume)
@@ -466,7 +466,7 @@ function EXTENSION:InitClient()
 	self:NetHook("VPlaySound", function()
 		local path = net.ReadString()
 		local index = net.ReadString()
-		local loop = tobool(net.ReadString())
+		local loop = net.ReadBoolean()
 		local volume = tonumber(net.ReadString()) / 100
 		if(EXTENSION.ActiveSound[index] != nil) then
 			EXTENSION.ActiveSound[index]:Stop()
@@ -488,7 +488,7 @@ function EXTENSION:InitClient()
 	self:NetHook("VPlaySoundStream", function()
 		local stream = net.ReadString()
 		local index = net.ReadString()
-		local loop = tobool(net.ReadString())
+		local loop = net.ReadBoolean()
 		local volume = tonumber(net.ReadString()) / 100
 		EXTENSION:PlayStream(stream, index, loop, volume, function(errid)
 			if(errid == "BASS_ERROR_TIMEOUT") then
@@ -604,7 +604,7 @@ function EXTENSION:InitClient()
 						net.Start("VBroadcastSound")
 						net.WriteString(i) -- filename
 						net.WriteString("BaseSound") -- channel
-						net.WriteString(tostring(false)) -- loop
+						net.WriteBoolean(false) -- loop
 						net.WriteString(tostring(100)) -- volume
 						net.SendToServer()
 						break

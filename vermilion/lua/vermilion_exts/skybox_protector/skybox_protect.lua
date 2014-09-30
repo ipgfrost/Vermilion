@@ -122,7 +122,6 @@ function EXTENSION:InitServer()
 				local entsRemoved = 0
 				for i,k in pairs(EXTENSION.Skyboxes[game.GetMap()]:GetEnts()) do
 					if(not k:CreatedByMap() and not k:IsPlayer() and (not k:IsWeapon() or k:GetOwner() == nil) and not table.HasValue(badClasses, k:GetClass())) then
-						print(k:GetClass())
 						k:Remove()
 						entsRemoved = entsRemoved + 1
 					end

@@ -160,6 +160,7 @@ function EXTENSION:InitClient()
 				end
 			end
 		end
+		MENU:BuildCredits()
 	end)
 	
 	function MENU:BuildWelcomeScreen()
@@ -179,6 +180,86 @@ function EXTENSION:InitClient()
 		title:SetParent(welcome)
 		
 		local __p = self.TabHolder:AddSheet("Welcome", welcome, "icon16/house.png", false, false, "Welcome")
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			__p.Tab.Paint = RenderTab
+		end		
+	end
+	
+	function MENU:BuildCredits()
+		local credits = {
+			{
+				Name = "Ned",
+				SteamID = "STEAM_0:0:44370296",
+				Role = "Project Lead - Coding"
+			},
+			{
+				Name = "Foxworrior",
+				SteamID = "STEAM_0:1:43536003",
+				Role = "Code Contributor"
+			},
+			{
+				Name = "Wheatley",
+				SteamID = "STEAM_0:0:44277237",
+				Role = "GUI Designer"
+			},
+			{
+				Name = "TehAngel",
+				SteamID = "STEAM_0:1:79012222",
+				Role = "Ideas, Persuasion and General Help"
+			}
+		}
+		
+		local panel = vgui.Create("DPanel", self.TabHolder)
+		panel:StretchToParent(5, 20, 20, 5)
+		if(GetConVarNumber("crimson_manualpaint") == 1) then
+			panel.Paint = RenderBody
+		end
+		Crimson:SetDark(true)
+		
+		local title = Crimson.CreateLabel("Vermilion Credits")
+		title:SetFont("DermaLarge")
+		title:SizeToContents()
+		title:SetPos((panel:GetWide() / 2) - (title:GetWide() / 2), 20)
+		title:SetParent(panel)
+		
+		local scroll = vgui.Create("DScrollPanel")
+		scroll:SetPos(0, 50)
+		scroll:SetSize(panel:GetWide(), panel:GetTall() - 62)
+		scroll:SetParent(panel)
+		
+		local size = 64
+		
+		for i,k in pairs(credits) do
+			local av = Crimson.CreateAvatarImage(k.SteamID, size)
+			av:SetPos(10, (i - 1) * (size + 15))
+			av:SetParent(scroll)
+			
+			function av:OnMousePressed(mc)
+				print(mc)
+				if(mc == MOUSE_LEFT) then
+					gui.OpenURL("http://steamcommunity.com/profiles/" .. util.SteamIDTo64(k.SteamID)) -- doesn't work :(
+				end
+			end
+			
+			av:SetCursor("hand")
+			
+			local name = vgui.Create("DLabel")
+			name:SetText(k.Name)
+			name:SetFont("DermaDefaultBold")
+			name:SizeToContents()
+			name:SetPos(10 + size + 20, (i - 1) * (size + 15))
+			name:SetDark(true)
+			name:SetParent(scroll)
+			
+			local role = vgui.Create("DLabel")
+			role:SetText(k.Role)
+			role:SizeToContents()
+			role:SetPos(10 + size + 20, (i - 1) * (size + 15) + 25)
+			role:SetDark(true)
+			role:SetParent(scroll)
+		end
+		
+		local __p = self.TabHolder:AddSheet("Credits", panel, "icon16/award_star_gold_3.png", false, false, "Credits")
 		if(GetConVarNumber("crimson_manualpaint") == 1) then
 			__p.Tab.Paint = RenderTab
 		end
@@ -268,14 +349,11 @@ function EXTENSION:InitClient()
 				net.Start("VActivePlayers")
 				net.SendToServer()
 				
-				net.Start("VRanksList")
-				net.SendToServer()
+				Vermilion:RequestRanksList()
 				
-				net.Start("VWeaponsList")
-				net.SendToServer()
+				Vermilion:RequestWeaponsList()
 				
-				net.Start("VEntsList")
-				net.SendToServer()
+				Vermilion:RequestEntsList()
 			end
 		end)
 	end

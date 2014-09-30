@@ -182,7 +182,7 @@ function Vermilion:SendMOTD(vplayer)
 	local motd = Vermilion:GetModuleData("server_manager", "motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!")
 	if(Vermilion:GetModuleData("server_manager", "motdisurl", false)) then
 		net.Start("VHTMLMOTD")
-		net.WriteString(tostring(true))
+		net.WriteBit(true)
 		net.WriteString(motd)
 		net.Send(vplayer)
 		return
@@ -194,7 +194,7 @@ function Vermilion:SendMOTD(vplayer)
 	end
 	if(Vermilion:GetModuleData("server_manager", "motdishtml", false)) then
 		net.Start("VHTMLMOTD")
-		net.WriteString(tostring(false))
+		net.WriteBit(true)
 		net.WriteString(motd)
 		net.Send(vplayer)
 		return

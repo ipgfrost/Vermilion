@@ -563,8 +563,8 @@ function EXTENSION:InitServer()
 	self:NetHook("VGetMOTD", function(vplayer)
 		net.Start("VGetMOTD")
 		net.WriteString(EXTENSION:GetData("motd", "Welcome to %servername%!\nThis server is running the Vermilion Server Administration Tool!\nBe on your best behaviour!"))
-		net.WriteString(tostring(EXTENSION:GetData("motdishtml", false, true)))
-		net.WriteString(tostring(EXTENSION:GetData("motdisurl", false, true)))
+		net.WriteBoolean(EXTENSION:GetData("motdishtml", false, true))
+		net.WriteBoolean(EXTENSION:GetData("motdisurl", false, true))
 		net.Send(vplayer)
 	end)
 	
@@ -572,8 +572,8 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermissionError(vplayer, "server_manage")) then
 			Vermilion.Log({Color(0, 0, 255), vplayer:GetName(), Color(255, 255, 255), " updated the MOTD."})
 			EXTENSION:SetData("motd", net.ReadString())
-			EXTENSION:SetData("motdishtml", tobool(net.ReadString()))
-			EXTENSION:SetData("motdisurl", tobool(net.ReadString()))
+			EXTENSION:SetData("motdishtml", net.ReadBoolean())
+			EXTENSION:SetData("motdisurl", net.ReadBoolean())
 		end
 	end)
 	
@@ -593,6 +593,24 @@ function EXTENSION:InitServer()
 end
 
 function EXTENSION:InitClient()
+	
+	self:NetHook("VGetMOTD", function()
+		if(IsValid(EXTENSION.MOTDText)) then
+			EXTENSION.MOTDText:SetValue(net.ReadString())
+			EXTENSION.IsHTML = net.ReadBoolean()
+			EXTENSION.IsURL = net.ReadBoolean()
+		end
+	end)
+	
+	self:NetHook("VGetMOTDVars", function()
+		if(IsValid(EXTENSION.VarList)) then
+			local tab = net.ReadTable()
+			EXTENSION.VarList:Clear()
+			for i,k in pairs(tab) do
+				EXTENSION.VarList:AddLine(k.Name, k.Description)
+			end
+		end
+	end)
 	
 	self:NetHook("VServerGetProperties", function()
 		local tab = net.ReadTable()
@@ -835,8 +853,8 @@ function EXTENSION:InitClient()
 				local confirmButton = Crimson.CreateButton("OK", function()
 					net.Start("VUpdateMOTD")
 					net.WriteString(motd:GetValue())
-					net.WriteString(tostring(EXTENSION.IsHTML))
-					net.WriteString(tostring(EXTENSION.IsURL))
+					net.WriteBoolean(EXTENSION.IsHTML)
+					net.WriteBoolean(EXTENSION.IsURL)
 					net.SendToServer()
 					motdpanel:Close()
 				end)

@@ -67,17 +67,17 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VGetCensorUpdate", function(vplayer)
 		net.Start("VGetCensorUpdate")
-		net.WriteString(tostring(EXTENSION:GetData("enabled", false, true)))
-		net.WriteString(tostring(EXTENSION:GetData("filter_ips", false, true)))
-		net.WriteString(tostring(EXTENSION:GetData("exemptions", true, true)))
+		net.WriteBoolean(EXTENSION:GetData("enabled", false, true))
+		net.WriteBoolean(EXTENSION:GetData("filter_ips", false, true))
+		net.WriteBoolean(EXTENSION:GetData("exemptions", true, true))
 		net.Send(vplayer)
 	end)
 	
 	self:NetHook("VCensorUpdate", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_censor")) then
-			EXTENSION:SetData("enabled", tobool(net.ReadString()))
-			EXTENSION:SetData("filter_ips", tobool(net.ReadString()))
-			EXTENSION:SetData("exemptions", tobool(net.ReadString()))
+			EXTENSION:SetData("enabled", net.ReadBoolean())
+			EXTENSION:SetData("filter_ips", net.ReadBoolean())
+			EXTENSION:SetData("exemptions", net.ReadBoolean())
 		end
 	end)
 	
@@ -115,9 +115,9 @@ function EXTENSION:InitClient()
 	
 	self:NetHook("VGetCensorUpdate", function()
 		if(IsValid(EXTENSION.EnabledCB)) then
-			EXTENSION.EnabledCB:SetValue(tobool(net.ReadString()))
-			EXTENSION.IPCensorCB:SetValue(tobool(net.ReadString()))
-			EXTENSION.ExemptCB:SetValue(tobool(net.ReadString()))
+			EXTENSION.EnabledCB:SetValue(net.ReadBoolean())
+			EXTENSION.IPCensorCB:SetValue(net.ReadBoolean())
+			EXTENSION.ExemptCB:SetValue(net.ReadBoolean())
 		end
 	end)
 
@@ -126,9 +126,9 @@ function EXTENSION:InitClient()
 			
 			local function updateServer()
 				net.Start("VCensorUpdate")
-				net.WriteString(tostring(EXTENSION.EnabledCB:GetChecked()))
-				net.WriteString(tostring(EXTENSION.IPCensorCB:GetChecked()))
-				net.WriteString(tostring(EXTENSION.ExemptCB:GetChecked()))
+				net.WriteBoolean(EXTENSION.EnabledCB:GetChecked())
+				net.WriteBoolean(EXTENSION.IPCensorCB:GetChecked())
+				net.WriteBoolean(EXTENSION.ExemptCB:GetChecked())
 				net.SendToServer()
 			end
 			

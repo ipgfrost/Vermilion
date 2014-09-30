@@ -51,7 +51,7 @@ function EXTENSION:InitServer()
 	
 	self:AddDataChangeHook("scoreboard_enabled", "update_scoreboard", function(val)
 		net.Start("VCheckScoreboardActive")
-		net.WriteString(tostring(val))
+		net.WriteBoolean(val)
 		net.Broadcast()
 	end)
 	
@@ -113,7 +113,7 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VCheckScoreboardActive", function(vplayer)
 		net.Start("VCheckScoreboardActive")
-		net.WriteString(tostring(EXTENSION:GetData("scoreboard_enabled", true, true)))
+		net.WriteBoolean(EXTENSION:GetData("scoreboard_enabled", true, true))
 		net.Send(vplayer)
 	end)
 	
@@ -164,7 +164,7 @@ function EXTENSION:InitClient()
 	CreateClientConVar("vermilion_show_sb_bg", 0, true, false)
 	
 	self:NetHook("VCheckScoreboardActive", function()
-		enabled = tobool(net.ReadString())
+		enabled = net.ReadBoolean()
 	end)
 	
 	self:AddHook(Vermilion.EVENT_EXT_LOADED, "FirstCheck", function()
@@ -229,7 +229,7 @@ function EXTENSION:InitClient()
 						adminmenu:AddOption("Kick", function()
 							if(Vermilion:GetExtension("bans") != nil) then
 								net.Start("VKickPlayer")
-								net.WriteString(tostring(false))
+								net.WriteBoolean(false)
 								net.WriteString(k.SteamID)
 								net.WriteString("Kicked from Scoreboard")
 								net.SendToServer()

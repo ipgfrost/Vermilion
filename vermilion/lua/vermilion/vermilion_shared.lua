@@ -21,7 +21,7 @@ if(SERVER) then AddCSLuaFile("vermilion/lang/vermilion_lang_engb.lua") end
 include("vermilion/lang/vermilion_lang_engb.lua")
 
 function Vermilion.GetVersion()
-	return "1.10.0"
+	return "1.10.1"
 end
 
 Vermilion.Colours = {

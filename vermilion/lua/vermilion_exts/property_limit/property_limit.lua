@@ -66,7 +66,7 @@ function EXTENSION:InitServer()
 			end
 		end
 		net.Start("VBuildEntityMenu")
-		net.WriteString(net.ReadString())
+		net.WriteString(net.ReadString()) -- send back the code to make sure that we really want to build this menu
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)

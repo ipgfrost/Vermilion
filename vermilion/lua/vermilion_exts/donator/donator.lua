@@ -72,7 +72,7 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VUpdateDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
-			EXTENSION:SetData("donator_mode_enabled", tobool(net.ReadString()))
+			EXTENSION:SetData("donator_mode_enabled", net.ReadBoolean())
 			EXTENSION:SetData("donator_url", net.ReadString())
 		end
 	end)
@@ -80,7 +80,7 @@ function EXTENSION:InitServer()
 	self:NetHook("VGetDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
 			net.Start("VGetDonatorMode")
-			net.WriteString(tostring(EXTENSION:GetData("donator_mode_enabled", false)))
+			net.WriteBoolean(EXTENSION:GetData("donator_mode_enabled", false))
 			net.WriteString(EXTENSION:GetData("donator_url", ""))
 			net.Send(vplayer)
 		end
@@ -94,7 +94,7 @@ end
 
 function EXTENSION:InitClient()
 	self:NetHook("VGetDonatorMode", function(vplayer)
-		EXTENSION.EnableDonatorMode:SetValue(tobool(net.ReadString()))
+		EXTENSION.EnableDonatorMode:SetValue(net.ReadBoolean())
 		EXTENSION.DonatorURL:SetValue(net.ReadString())
 	end)
 
@@ -110,7 +110,7 @@ function EXTENSION:InitClient()
 			enabled:SetDark(true)
 			enabled.OnValueChanged = function()
 				net.Start("VUpdateDonatorMode")
-				net.WriteString(tostring(enabled:GetChecked()))
+				net.WriteBoolean(enabled:GetChecked())
 				net.WriteString(urltb:GetValue())
 				net.SendToServer()
 			end
@@ -122,7 +122,7 @@ function EXTENSION:InitClient()
 			urltb:SetParent(panel)
 			urltb.OnValueChanged = function()
 				net.Start("VUpdateDonatorMode")
-				net.WriteString(tostring(enabled:GetChecked()))
+				net.WriteBoolean(enabled:GetChecked())
 				net.WriteString(urltb:GetValue())
 				net.SendToServer()
 			end

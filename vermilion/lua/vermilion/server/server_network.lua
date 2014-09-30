@@ -55,18 +55,50 @@ Vermilion:RegisterHook("PlayerConnect", "ActivePlayersUpdate", function()
 	Vermilion.internal:UpdateActivePlayers()
 end)
 
+local oldWeapons = {}
+
 function Vermilion:SendWeaponsList(vplayer)
+	local hasGot = net.ReadBoolean()
+	local crc = nil
+	if(hasGot) then crc = net.ReadString() end
+
+
 	local tab = {}
 	for i,k in pairs(list.Get("Weapon")) do
 		table.insert(tab, { Class = i, PrintName = k.PrintName })
 	end
 	
+	local resend = true
+	
+	if(table.Count(oldWeapons) == 0) then
+		oldWeapons = tab
+	else
+		if(oldWeapons == tab) then
+			resend = false
+		end
+	end
+	
+	if(hasGot and crc != util.CRC(table.ToString(tab))) then
+		resend = true
+	end
+	
 	net.Start("VWeaponsList")
-	net.WriteTable(tab)
+	net.WriteBoolean(resend)
+	if(resend) then
+		net.WriteTable(tab)
+	else
+		oldWeapons = tab
+	end
 	net.Send(vplayer)
 end
 
+local oldRanks = {}
+
 function Vermilion:SendRanksList(vplayer)
+	local hasGot = net.ReadBoolean()
+	local crc = nil
+	if(hasGot) then crc = net.ReadString() end
+
 	local ranksTab = {}
 	for i,k in pairs(Vermilion.Settings.Ranks) do
 		local isDefault = "No"
@@ -76,8 +108,27 @@ function Vermilion:SendRanksList(vplayer)
 		table.insert(ranksTab, { k.Name, isDefault })
 	end
 	
+	local resend = true
+	
+	if(table.Count(oldRanks) == 0) then
+		oldRanks = ranksTab
+	else
+		if(oldRanks == ranksTab) then
+			resend = false
+		end
+	end
+	
+	if(hasGot and crc != util.CRC(table.ToString(ranksTab))) then
+		resend = true
+	end
+	
 	net.Start("VRanksList")
-	net.WriteTable(ranksTab)
+	net.WriteBoolean(resend)
+	if(resend) then
+		net.WriteTable(ranksTab)
+	else
+		oldRanks = ranksTab
+	end
 	net.Send(vplayer)
 end
 
@@ -92,40 +143,14 @@ function Vermilion:SendEntsList(vplayer)
 	net.Send(vplayer)
 end
 
-net.Receive("VPopulateLists", function(len, vplayer)
-	
-end)
-
 net.Receive("VWeaponsList", function(len, vplayer)
-	net.Start("VWeaponsList")
-	local tab = {}
-	for i,k in pairs(list.Get("Weapon")) do
-		table.insert(tab, { Class = i, PrintName = k.PrintName })
-	end
-	net.WriteTable(tab)
-	net.Send(vplayer)
+	Vermilion:SendWeaponsList(vplayer)
 end)
 
 net.Receive("VRanksList", function(len, vplayer)
-	net.Start("VRanksList")
-	local ranksTab = {}
-	for i,k in pairs(Vermilion.Settings.Ranks) do
-		local isDefault = "No"
-		if(Vermilion:GetSetting("default_rank", "player") == k.Name) then
-			isDefault = "Yes"
-		end
-		table.insert(ranksTab, { k.Name, isDefault })
-	end
-	net.WriteTable(ranksTab)
-	net.Send(vplayer)
+	Vermilion:SendRanksList(vplayer)
 end)
 
 net.Receive("VEntsList", function(len, vplayer)
-	net.Start("VEntsList")
-	local tab = {}
-	for i,k in pairs(list.Get("SpawnableEntities")) do
-		table.insert(tab, { Class = i, PrintName = k.PrintName })
-	end
-	net.WriteTable(tab)
-	net.Send(vplayer)
+	Vermilion:SendEntsList(vplayer)
 end)

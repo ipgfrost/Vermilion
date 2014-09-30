@@ -104,10 +104,10 @@ function EXTENSION:InitServer()
 			local rankData = EXTENSION:GetData("models", {}, true)[rank]
 			net.Start("VRankModelsLoad")
 			if(rankData == nil) then
-				net.WriteString(tostring(true))
+				net.WriteBoolean(true)
 				net.WriteTable({})
 			else
-				net.WriteString(tostring(rankData.IsBlacklist))
+				net.WriteBoolean(rankData.IsBlacklist)
 				local tab = {}
 				if(rankData.ModelList == nil) then rankData.ModelList = {} end
 				for i,k in pairs(rankData.ModelList) do
@@ -127,7 +127,7 @@ function EXTENSION:InitServer()
 				EXTENSION:GetData("models", {}, true)[rank] = {}
 				rankData = EXTENSION:GetData("models", {}, true)[rank]
 			end
-			rankData.IsBlacklist = tobool(net.ReadString())
+			rankData.IsBlacklist = net.ReadBoolean()
 			rankData.ModelList = net.ReadTable()
 		end
 	end)
@@ -188,7 +188,7 @@ function EXTENSION:InitClient()
 			return
 		end
 		EXTENSION.RankPermissionsList:Clear()
-		EXTENSION.blacklistCB:SetValue(tobool(net.ReadString()))
+		EXTENSION.blacklistCB:SetValue(net.ReadBoolean())
 		EXTENSION.blacklistCB:SetDisabled(false)
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
@@ -329,7 +329,7 @@ function EXTENSION:InitClient()
 				end
 				net.Start("VRankModelsSave")
 				net.WriteString(EXTENSION.EditingRank)
-				net.WriteString(tostring(EXTENSION.blacklistCB:GetChecked()))
+				net.WriteBoolean(EXTENSION.blacklistCB:GetChecked())
 				local tab = {}
 				for i,k in pairs(guiRankPermissionsList:GetLines()) do
 					table.insert(tab, k.ModelPath)

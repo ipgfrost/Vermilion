@@ -281,9 +281,7 @@ function EXTENSION:InitServer()
 	self:NetHook("VDefinePermission", function(vplayer)
 		local definition = hook.Call("VDefinePermission", nil, net.ReadString())
 		if(definition != nil) then
-			net.Start("VDefinePermission")
-			net.WriteString(definition)
-			net.Send(vplayer)
+			Vermilion:SendMessageBox(vplayer, definition)
 		else
 			Vermilion:SendMessageBox(vplayer, "This permission does not have an available definition.")
 		end
@@ -291,7 +289,7 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VRankColour", function(vplayer)
 		local rank = net.ReadString()
-		local setting = tobool(net.ReadString())
+		local setting = net.ReadBoolean()
 		if(not setting) then
 			net.Start("VRankColour")
 			net.WriteString(rank)
@@ -477,7 +475,7 @@ function EXTENSION:InitClient()
 		local okbtn = Crimson.CreateButton("OK", function()
 			net.Start("VRankColour")
 			net.WriteString(rank)
-			net.WriteString(tostring(true))
+			net.WriteBoolean(true)
 			local col = mixer:GetColor()
 			net.WriteColor(Color(col.r, col.g, col.b, col.a))
 			net.SendToServer()
@@ -489,7 +487,7 @@ function EXTENSION:InitClient()
 		
 		net.Start("VRankColour")
 		net.WriteString(rank)
-		net.WriteString(tostring(false))
+		net.WriteBoolean(false)
 		net.SendToServer()
 		
 		frame:MakePopup()

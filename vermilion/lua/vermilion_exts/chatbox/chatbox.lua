@@ -117,7 +117,7 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VPlayerSay", function(vplayer)
 		local message = net.ReadString()
-		local isTeam = tobool(net.ReadString())
+		local isTeam = net.ReadBoolean()
 		vplayer:Say(message, isTeam)
 	end)
 end
@@ -253,7 +253,7 @@ function EXTENSION:InitClient()
 					if(self:GetValue() != nil and self:GetValue() != "") then
 						net.Start("VPlayerSay")
 						net.WriteString(string.Trim(self:GetValue()))
-						net.WriteString(tostring(false))
+						net.WriteBoolean(false)
 						net.SendToServer()
 					end
 					EXTENSION:CloseChat()

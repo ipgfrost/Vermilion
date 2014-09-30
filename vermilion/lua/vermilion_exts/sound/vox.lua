@@ -119,7 +119,7 @@ Vermilion:AddChatCommand("voxcount", function(sender, text)
 		local voxtime = 0
 		for val=0,tonumber(text[1]),1 do
 			timer.Simple(voxtime, function()
-				print(tostring(tonumber(text[1]) - val) .. getNum(tonumber(text[1]) - val))
+				print(tostring(tonumber(text[1]) - val) .. " " .. getNum(tonumber(text[1]) - val))
 				Vermilion:Vox(string.Trim(getNum(tonumber(text[1]) - val)), player.GetAll())
 			end)
 			voxtime = voxtime + Vermilion:VoxTime(getNum(tonumber(text[1]) - val))

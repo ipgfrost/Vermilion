@@ -121,14 +121,14 @@ function EXTENSION:InitServer()
 	self:NetHook("VGetLoadoutDisabled", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "loadout_management")) then
 			net.Start("VGetLoadoutDisabled")
-			net.WriteString(tostring(EXTENSION:GetData("disable_loadout_on_non_sandbox", true)))
+			net.WriteBoolean(EXTENSION:GetData("disable_loadout_on_non_sandbox", true))
 			net.Send(vplayer)
 		end
 	end)
 	
 	self:NetHook("VSetLoadoutDisabled", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "loadout_management")) then
-			EXTENSION:SetData("disable_loadout_on_non_sandbox", tobool(net.ReadString()))
+			EXTENSION:SetData("disable_loadout_on_non_sandbox", net.ReadBoolean())
 		end
 	end)
 	
@@ -174,7 +174,7 @@ function EXTENSION:InitClient()
 	
 	self:NetHook("VGetLoadoutDisabled", function()
 		if(IsValid(EXTENSION.DisableLoadoutsCB)) then
-			EXTENSION.DisableLoadoutsCB:SetValue(tobool(net.ReadString()))
+			EXTENSION.DisableLoadoutsCB:SetValue(net.ReadBoolean())
 		end
 	end)
 	
@@ -194,7 +194,7 @@ function EXTENSION:InitClient()
 			disableCheckbox:SetParent(panel)
 			disableCheckbox.OnChange = function()
 				net.Start("VSetLoadoutDisabled")
-				net.WriteString(tostring(disableCheckbox:GetChecked()))
+				net.WriteBoolean(disableCheckbox:GetChecked())
 				net.SendToServer()
 			end
 			disableCheckbox:SetDark(true)

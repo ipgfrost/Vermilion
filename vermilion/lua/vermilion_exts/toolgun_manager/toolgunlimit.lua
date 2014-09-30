@@ -140,7 +140,7 @@ function EXTENSION:InitClient()
 						"Tab: " .. tostring(tool.Tab),
 						"Category: " .. tostring(tool.Category)
 					}
-					Derma_Message(string.Implode("\n", details), "Tool Details", "Close")
+					Crimson:CreateDialog("Tool Details", string.Implode("\n", details))
 				end):SetIcon("icon16/book_open.png")
 				mnu:Open()
 			end
