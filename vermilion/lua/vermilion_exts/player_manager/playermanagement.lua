@@ -94,7 +94,9 @@ function EXTENSION:InitClient()
 					if(IsValid(tplayer)) then tplayer:ShowProfile() end
 				end):SetIcon("icon16/page_find.png")
 				conmenu:AddOption("Open Vermilion Profile", function()
-					
+					if(Vermilion:GetExtension("profiles") != nil) then
+						Vermilion:GetExtension("profiles"):OpenProfileSteamID(k[2])
+					end
 				end):SetIcon("icon16/comment.png")
 				conmenu:Open()
 			end

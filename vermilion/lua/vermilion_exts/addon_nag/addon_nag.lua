@@ -27,8 +27,22 @@ EXTENSION.NetworkStrings = {
 	"VAddonListRequest"
 }
 
+function EXTENSION:RegisterChatCommands()
+	Vermilion:AddChatCommand("checkaddons", function(sender, text, log)
+		if(not EXTENSION:GetData("enabled", true, true)) then return end
+		net.Start("VAddonListRequest")
+		local tab = {}
+		for i,k in pairs(engine.GetAddons()) do
+			if(k.mounted) then table.insert(tab, k) end
+		end
+		net.WriteTable(tab)
+		net.Send(sender)
+	end)
+end
+
 function EXTENSION:InitServer()
 	self:NetHook("VAddonListRequest", function(vplayer)
+		if(not EXTENSION:GetData("enabled", true, true)) then return end
 		net.Start("VAddonListRequest")
 		local tab = {}
 		for i,k in pairs(engine.GetAddons()) do
@@ -36,6 +50,12 @@ function EXTENSION:InitServer()
 		end
 		net.WriteTable(tab)
 		net.Send(vplayer)
+	end)
+	
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddOptions", function()
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			Vermilion:GetExtension("server_manager"):AddOption("addonnag", "enabled", "Enable Addon Validator", "Checkbox", "Misc", 50, true)
+		end
 	end)
 end
 

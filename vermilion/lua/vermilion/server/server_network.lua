@@ -132,14 +132,40 @@ function Vermilion:SendRanksList(vplayer)
 	net.Send(vplayer)
 end
 
+local oldEnts = {}
+
 function Vermilion:SendEntsList(vplayer)
+	local hasGot = net.ReadBoolean()
+	local crc = nil
+	if(hasGot) then crc = net.ReadString() end
+
+
 	local tab = {}
 	for i,k in pairs(list.Get("SpawnableEntities")) do
 		table.insert(tab, { Class = i, PrintName = k.PrintName })
 	end
 	
+	local resend = true
+	
+	if(table.Count(oldEnts) == 0) then
+		oldEnts = tab
+	else
+		if(oldEnts == tab) then
+			resend = false
+		end
+	end
+	
+	if(hasGot and crc != util.CRC(table.ToString(tab))) then
+		resend = true
+	end
+	
 	net.Start("VEntsList")
-	net.WriteTable(tab)
+	net.WriteBoolean(resend)
+	if(resend) then
+		net.WriteTable(tab)
+	else
+		oldEnts = tab
+	end
 	net.Send(vplayer)
 end
 

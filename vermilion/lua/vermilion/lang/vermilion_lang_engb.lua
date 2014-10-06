@@ -30,6 +30,7 @@ Vermilion.Lang.JoinedServerFirst = "%s has joined the server for the first time!
 Vermilion.Lang.JoinedServer = "%s has joined the server!"
 Vermilion.Lang.JoinedServerFirstGeoIP = "%s has joined the server from %s for the first time!"
 Vermilion.Lang.JoinedServerGeoIP = "%s has joined the server from %s!"
+Vermilion.Lang.LeftServer = "%s has left the server: %s"
 Vermilion.Lang.ExtHookRemoveFailed = "Attempted to remove hook %s from event %s inside extension %s but no such event table has been created!"
 Vermilion.Lang.HookRemoveFailed = "Attempted to remove hook %s from event %s but no such event table has been created!"
 Vermilion.Lang.SafeHookRemoveFailed = "Attempted to remove SafeHook %s from event %s but no such event table has been created!"

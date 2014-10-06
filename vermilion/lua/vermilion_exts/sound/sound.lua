@@ -659,6 +659,12 @@ function EXTENSION:InitClient()
 		end
 	end)
 	
+	self:AddHook("HUDShouldDraw", function(name)
+		if(name == "NetGraph") then
+			return not (IsValid(EXTENSION.ActiveSound["BaseSound"]) and GetConVarNumber("vermilion_fft") == 1 and EXTENSION.ActiveSound["BaseSound"]:GetState() != 0)
+		end
+	end)
+	
 	self:AddHook("HUDPaint", "FFTDraw", function()
 		if(EXTENSION.Credits != nil) then
 			local pos = 0

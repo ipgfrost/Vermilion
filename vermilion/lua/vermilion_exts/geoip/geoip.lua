@@ -30,10 +30,6 @@ EXTENSION.GeoIPCallbacks = {}
 
 
 function EXTENSION:InitServer()
-	local flags = file.Find("materials/vermilion/flags/*.png", "GAME")
-	for i,k in pairs(flags) do
-		resource.AddSingleFile("materials/vermilion/flags/" .. k)
-	end
 	
 	self:NetHook("VGeoIP", function(vplayer)
 		EXTENSION.GeoIPCallbacks[vplayer:GetName()](net.ReadString())
@@ -113,7 +109,7 @@ function EXTENSION:InitServer()
 		if(table.Count(text) == 0) then 
 			tplayer = sender
 		else
-			tplayer = Crimson.LookupPlayerByName(text[1])
+			tplayer = Crimson.LookupPlayerByName(text[1], false)
 		end
 		if(tplayer == nil) then
 			Vermilion:SendNotify(sender, Vermilion.Lang.NoSuchPlayer, 5, VERMILION_NOTIFY_ERROR)
@@ -137,11 +133,27 @@ function EXTENSION:InitServer()
 			return tab
 		end
 	end)
+	
+	self:AddDataChangeHook("enabled", "EnabledHook", function(val)
+		SetGlobalBool("VGeoIPHudEnabled", val)
+	end)
+	
+	SetGlobalBool("VGeoIPHudEnabled", EXTENSION:GetData("enabled", true, true))
+	
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, "Settings", function()
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			Vermilion:GetExtension("server_manager"):AddOption("geoip", "enabled", "Enable GeoIP Services", "Checkbox", "Misc", 50, true)
+		end
+	end)
+	
+	include("vermilion_exts/geoip/joinnotify.lua")
 
 end
 
 function EXTENSION:InitClient()
 	Vermilion:RegisterSafeHook("HUDDrawTargetID", "VTarget", function() -- this needs to go somewhere else when I replace the TargetID. Perhaps use a slots system in the TargetID window?
+		if(not GetGlobalBool("VGeoIPHudEnabled", true)) then return end
+		
 		local tr = util.GetPlayerTrace( LocalPlayer() )
 		local trace = util.TraceLine( tr )
 		if (!trace.Hit) then return end
@@ -168,7 +180,7 @@ function EXTENSION:InitClient()
 
 		if(trace.Entity.VCountry == nil or trace.Entity.VCountry == "") then
 			trace.Entity.VCountry = string.lower(trace.Entity:GetNWString("Country_Code"))
-			trace.Entity.VCountryMat = Material("vermilion/flags/" .. trace.Entity.VCountry .. ".png", "noclamp smooth")
+			trace.Entity.VCountryMat = Material("flags16/" .. trace.Entity.VCountry .. ".png", "noclamp smooth")
 		end
 		
 		surface.SetMaterial(trace.Entity.VCountryMat)

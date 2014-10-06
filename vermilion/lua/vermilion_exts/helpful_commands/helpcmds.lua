@@ -50,7 +50,8 @@ EXTENSION.Permissions = {
 	"frags",
 	"deaths",
 	"convar",
-	"ping"
+	"ping",
+	"remove"
 }
 EXTENSION.PermissionDefinitions = {
 	["teleport"] = "This player is allowed to use the teleport command.",
@@ -80,7 +81,8 @@ EXTENSION.PermissionDefinitions = {
 	["frags"] = "This player can use the frags chat command.",
 	["deaths"] = "This player can use the deaths chat command.",
 	["convar"] = "This player can use the convar chat command.",
-	["ping"] = "This player can use the ping command to get the ping of other players."
+	["ping"] = "This player can use the ping command to get the ping of other players.",
+	["remove"] = "This player can use the remove chat command."
 }
 
 EXTENSION.TeleportRequests = {}
@@ -795,7 +797,14 @@ function EXTENSION:InitServer()
 		"gmod_camera",
 		"gmod_hands",
 		"physgun_beam",
-		"phys_"
+		"phys_",
+		"hint",
+		"spotlight_",
+		"path_",
+		"lua_",
+		"func_brush",
+		"light",
+		"point_"
 	}
 	
 	Vermilion:AddChatPredictor("spectate", function(pos, current, all)
@@ -1239,6 +1248,54 @@ function EXTENSION:InitServer()
 	
 	Vermilion:AddChatCommand("suicide", function(sender, text, log)
 		sender:ConCommand("kill")
+	end)
+	
+	Vermilion:AddChatCommand("remove", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "remove")) then
+			local target = nil
+			if(table.Count(text) == 0) then
+				target = sender:GetEyeTrace().Entity
+			else
+				target = ents.GetByIndex(tonumber(text[1]))
+			end
+			if(target == nil) then
+				log("Invalid entity!", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			local banned = false
+			for i,k in pairs(bannedClasses) do
+				if(string.StartWith(target:GetClass(), k)) then
+					banned = true
+					break
+				end
+			end
+			if(banned) then
+				log("Invalid entity!", VERMILION_NOTIFY_ERROR)
+				return
+			end
+			target:Remove()
+			log("Removed entity " .. tostring(target:EntIndex()))
+		end
+	end)
+	
+	Vermilion:AddChatPredictor("remove", function(pos, current)
+		if(pos == 1) then
+			local tab = {}
+			for i,k in pairs(ents.GetAll()) do
+				local banned = false
+				for i1,k1 in pairs(bannedClassses) do
+					if(string.StartWith(k:GetClass(), k1)) then
+						banned = true
+						break
+					end
+				end
+				if(banned) then continue end
+				if(string.StartWith(tostring(k:EntIndex()), current)) then
+					table.insert(tab, {Name = tostring(k:EntIndex()), Syntax = "(" .. k:GetClass() .. ")"})
+				end
+			end
+			return tab
+		end
 	end)
 	
 end

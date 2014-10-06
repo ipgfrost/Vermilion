@@ -81,6 +81,7 @@ function EXTENSION:InitServer()
 	end)]]
 	
 	
+	
 end
 
 function EXTENSION:InitClient()
@@ -112,6 +113,10 @@ function EXTENSION:InitClient()
 			HTMLControls:SetWide(1000)
 			HTMLControls:SetParent(panel)
 		end
+	end)
+	
+	self:AddHook("HUDShouldDraw", function(name)
+		--print(name)
 	end)
 
 end

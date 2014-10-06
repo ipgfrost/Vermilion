@@ -18,7 +18,7 @@
 ]]
 
 local EXTENSION = Vermilion:MakeExtensionBase()
-EXTENSION.Name = "Experimental CPPI Module"
+EXTENSION.Name = "CPPI Module"
 EXTENSION.ID = "cppi"
 EXTENSION.Description = "Implements the CPPI protocol"
 EXTENSION.Author = "Ned"

@@ -207,7 +207,7 @@ function Vermilion:AddUser(name, steamid, rank)
 		Kills = 0,
 		Deaths = 0,
 		VAchievements = {},
-		Karma = { Positive = 0, Negative = 0 },
+		Karma = { Positive = {}, Negative = {} },
 		Colour = Color(255, 0, 255)
 	}
 	hook.Run("Vermilion_RegisteredUser", userTable)
@@ -317,6 +317,119 @@ function Vermilion:HasPermissionError(vplayer, permission, log)
 		return false
 	end
 	return true
+end
+
+function Vermilion:GetKarma(vplayer)
+	if(isstring(vplayer)) then
+		if(not self:HasUserSteamID(vplayer)) then
+			self.Log({
+				"Failed to get karma for user ",
+				Vermilion.Colours.Blue,
+				vplayer,
+				Vermilion.Colours.White,
+				" because the user doesn't exist."
+			})
+		else
+			return self:GetUserSteamID(vplayer).Karma
+		end
+	else
+		if(not self:HasUser(vplayer)) then
+			self.Log({
+				"Failed to get karma for user ",
+				Vermilion.Colours.Blue,
+				vplayer:GetName(),
+				Vermilion.Colours.White,
+				" because the user doesn't exist."
+			})
+		else
+			return self:GetUser(vplayer).Karma
+		end
+	end
+end
+
+function Vermilion:AddKarma(vplayer, ranker, typ)
+	local karmaDat = self:GetKarma(vplayer)
+	if(karmaDat != nil) then
+		if(typ) then
+			if(isstring(ranker)) then
+				if(table.HasValue(karmaDat.Positive, ranker)) then
+					Vermilion.Log({
+						"Already ranked player positively."
+					})
+				else
+					table.RemoveByValue(karmaDat.Negative, ranker)
+					table.insert(karmaDat.Positive, ranker)
+				end
+			else
+				if(table.HasValue(karmaDat.Positive, ranker:SteamID())) then
+					Vermilion.Log({
+						"Already ranked player positively."
+					})
+				else
+					table.RemoveByValue(karmaDat.Negative, ranker:SteamID())
+					table.insert(karmaDat.Positive, ranker:SteamID())
+				end
+			end
+		else
+			if(isstring(ranker)) then
+				if(table.HasValue(karmaDat.Negative, ranker)) then
+					Vermilion.Log({
+						"Already ranked player negatively."
+					})
+				else
+					table.RemoveByValue(karmaDat.Positive, ranker)
+					table.insert(karmaDat.Negative, ranker)
+				end
+			else
+				if(table.HasValue(karmaDat.Negative, ranker:SteamID())) then
+					Vermilion.Log({
+						"Already ranked player negatively."
+					})
+				else
+					table.RemoveByValue(karmaDat.Positive, ranker:SteamID())
+					table.insert(karmaDat.Negative, ranker:SteamID())
+				end
+			end
+		end
+	end
+end
+
+function Vermilion:GetKarmaType(vplayer, typ)
+	local karmaDat = self:GetKarma(vplayer)
+	if(karmaDat != nil) then
+		if(typ) then
+			return karmaDat.Positive
+		else
+			return karmaDat.Negative
+		end
+	end
+end
+
+function Vermilion:GetKarmaRating(vplayer)
+	local karmaDat = self:GetKarma(vplayer)
+	if(karmaDat != nil) then
+		local total = table.Count(karmaDat.Positive) + table.Count(karmaDat.Negative)
+		if(total == 0) then return 0 end
+		local percentage = (table.Count(karmaDat.Positive) / total) * 100
+		if(percentage >= 90) then return 5 end
+		return math.floor(percentage / 20)
+	end
+	return 0
+end
+
+function Vermilion:HasPlayerAddedKarma(vplayer, ranker, typ)
+	local karmaDat = self:GetKarma(vplayer)
+	if(karmaDat != nil) then
+		local ranker2 = ranker
+		if(not isstring(ranker2)) then
+			ranker2 = ranker:SteamID()
+		end
+		if(typ) then
+			return table.HasValue(karmaDat.Positive, ranker2)
+		else
+			return table.HasValue(karmaDat.Negative, ranker2)
+		end
+	end
 end
 
 function Vermilion:RankHasPermission(rank, permission)
@@ -500,6 +613,19 @@ end
 
 Vermilion:LoadSettings()
 
+if(not Vermilion:GetSetting("upgraded-usertable", false)) then
+	for i,k in pairs(Vermilion.Settings.Users) do
+		if(not istable(k.Karma.Positive)) then
+			k.Karma.Positive = {}
+		end
+		if(not istable(k.Karma.Negative)) then
+			k.Karma.Negative = {}
+		end
+	end
+	Vermilion:SetSetting("upgraded-usertable", true)
+end
+
+	
 concommand.Add("vermilion_dump_settings", function()
 	PrintTable(Vermilion.Settings)
 end)

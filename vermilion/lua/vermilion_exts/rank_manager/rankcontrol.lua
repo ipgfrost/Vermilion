@@ -221,7 +221,7 @@ function EXTENSION:InitServer()
 			local ntab = {}
 			for i,k in ipairs(tab) do
 				if(k[3] == "Yes") then Vermilion:SetSetting("default_rank", k[1]) end
-				table.insert(ntab, { Name = k[1], Permissions = {}, Protected = k[1] == "owner" })
+				table.insert(ntab, { Name = k[1], Permissions = {}, Protected = k[1] == "owner", Colour = Vermilion:GetRankData(k[1]).Colour })
 			end
 			
 			-- remove duplicates
@@ -339,6 +339,7 @@ function EXTENSION:InitClient()
 		table.insert(tab, ": " .. text)
 		
 		chat.AddText(unpack(tab))
+		hook.Run("VOnPlayerChat", vplayer, text, isTeam, dead) -- run a compatibility hook
 		return true
 	end)
 
@@ -358,7 +359,9 @@ function EXTENSION:InitClient()
 					if(IsValid(tplayer)) then tplayer:ShowProfile() end
 				end):SetIcon("icon16/page_find.png")
 				conmenu:AddOption("Open Vermilion Profile", function()
-					
+					if(Vermilion:GetExtension("profiles") != nil) then
+						Vermilion:GetExtension("profiles"):OpenProfileSteamID(k[2])
+					end
 				end):SetIcon("icon16/comment.png")
 				conmenu:Open()
 			end
@@ -527,7 +530,7 @@ function EXTENSION:InitClient()
 					end
 					ranksList:Clear()
 					for i,k in pairs(ranksTab) do
-						if(i == table.Count(oldranks) - 1) then
+						if(i == table.Count(oldranks)) then
 							ranksList:AddLine(k[1], k[2], k[3])
 							ranksList:AddLine(text, i + 1, "No")
 							break

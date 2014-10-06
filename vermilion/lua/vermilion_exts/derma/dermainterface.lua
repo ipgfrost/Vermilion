@@ -38,7 +38,7 @@ function EXTENSION:InitClient()
 	MENU.Width = 800
 	MENU.Height = 600
 	MENU.CurrentHeight = 0
-	
+	MENU.TitleExt = "Client Options"
 	MENU.HasGotTabs = false
 	
 	-- WHEATLEY: Setup a new font for Panel's title
@@ -103,7 +103,7 @@ function EXTENSION:InitClient()
 			surface.SetFont( 'VermilonTitle' )
 			surface.SetTextPos( 2, 2 )
 			surface.SetTextColor( 255, 0, 0, 255 )
-			surface.DrawText( 'Vermilion Menu' )
+			surface.DrawText( 'Vermilion Menu - ' .. MENU.TitleExt )
 		end
 	end
 	
@@ -244,6 +244,12 @@ function EXTENSION:InitClient()
 			av:SetCursor("hand")
 			
 			local name = vgui.Create("DLabel")
+			steamworks.RequestPlayerInfo(util.SteamIDTo64(k.SteamID))
+			timer.Simple(3, function()
+				if(not IsValid(name)) then return end
+				name:SetText(steamworks.GetPlayerName(util.SteamIDTo64(k.SteamID)))
+				name:SizeToContents()
+			end)
 			name:SetText(k.Name)
 			name:SetFont("DermaDefaultBold")
 			name:SizeToContents()
@@ -258,6 +264,29 @@ function EXTENSION:InitClient()
 			role:SetDark(true)
 			role:SetParent(scroll)
 		end
+		
+		local thanks = Crimson.CreateLabel("Thank you to anyone else who has contributed ideas and has supported Vermilion throughout development!")
+		thanks:SetPos(10, (table.Count(credits)) * (size + 15))
+		thanks:SetParent(scroll)
+		thanks:SetDark(true)
+		
+		local gotoWorkshop = Crimson.CreateButton("Open Vermilion Workshop Page", function()
+			steamworks.ViewFile("295053419")
+		end)
+		gotoWorkshop:SetPos(10, (table.Count(credits) + 1) * (size + 15) - 40)
+		gotoWorkshop:SetSize(200, 25)
+		gotoWorkshop:SetParent(scroll)
+		
+		local openGithub = Crimson.CreateButton("Open GitHub Repository", function()
+			gui.OpenURL("http://github.com/nedhyett/Vermilion")
+		end)
+		openGithub:SetPos(220, (table.Count(credits) + 1) * (size + 15) - 40)
+		openGithub:SetSize(200, 25)
+		openGithub:SetParent(scroll)
+		
+		local geoipPoweredBy = Crimson.CreateLabel("GeoIP Services Powered By the FreeGeoIP project (http://freegeoip.net)!")
+		geoipPoweredBy:SetPos(10, (table.Count(credits) + 1.65) * (size + 15) - 40)
+		geoipPoweredBy:SetParent(scroll)
 		
 		local __p = self.TabHolder:AddSheet("Credits", panel, "icon16/award_star_gold_3.png", false, false, "Credits")
 		if(GetConVarNumber("crimson_manualpaint") == 1) then
@@ -289,6 +318,11 @@ function EXTENSION:InitClient()
 	function MENU:Show()
 		if(self.TabHolder and IsValid(self.TabHolder)) then self.TabHolder:Remove() end
 		self.TabHolder = vgui.Create("DPropertySheet", self.Panel)
+		self.TabHolder.OldSetTab = self.TabHolder.SetActiveTab
+		function self.TabHolder:SetActiveTab(tab)
+			MENU.TitleExt = tab:GetText()
+			self:OldSetTab(tab)
+		end
 		self.TabHolder:SetPos(0, 20)
 		self.TabHolder:SetSize(MENU.Width, 580)
 		

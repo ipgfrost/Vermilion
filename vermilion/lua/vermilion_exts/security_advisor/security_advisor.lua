@@ -36,6 +36,7 @@ EXTENSION.NetworkStrings = {
 
 function EXTENSION:InitServer()
 	self:NetHook("VFaultListRequest", function(vplayer)
+		if(not EXTENSION:GetData("enabled", true, true)) then return end
 		if(Vermilion:HasPermission(vplayer, "see_security_advisor_prompt")) then
 			local faults = {}
 			if(GetConVarNumber("sv_cheats") != 0 and not EXTENSION:GetData("sv_cheats_ignore", false, true)) then
@@ -84,6 +85,12 @@ function EXTENSION:InitServer()
 		if(Vermilion:HasPermission(vplayer, "see_security_advisor_prompt")) then
 			local ignored = net.ReadString()
 			EXTENSION:SetData(ignored .. "_ignore", true)
+		end
+	end)
+	
+	self:AddHook(Vermilion.EVENT_EXT_LOADED, "AddOptions", function()
+		if(Vermilion:GetExtension("server_manager") != nil) then
+			Vermilion:GetExtension("server_manager"):AddOption("security_advisor", "enabled", "Enable Security Advisor", "Checkbox", "Misc", 50, true)
 		end
 	end)
 end

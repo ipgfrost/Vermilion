@@ -21,7 +21,7 @@ if(SERVER) then AddCSLuaFile("vermilion/lang/vermilion_lang_engb.lua") end
 include("vermilion/lang/vermilion_lang_engb.lua")
 
 function Vermilion.GetVersion()
-	return "1.10.1"
+	return "1.11.0"
 end
 
 Vermilion.Colours = {
@@ -459,6 +459,31 @@ timer.Simple(1, function()
 	end
 end)
 
+local originalHookAdd = hook.Add
+
+local vhookAdd = function(hk, name, func)
+	if(hk == "OnPlayerChat" and CLIENT) then
+		originalHookAdd("VOnPlayerChat", name, func)
+		return
+	end
+	originalHookAdd(hk, name, func)
+end
+
+hook.Add = vhookAdd
+
+timer.Simple(1, function()
+	if(originalHookAdd != hook.Add and hook.Add != vhookAdd) then
+		originalHookAdd = hook.Add
+		hook.Add = vhookAdd
+	end
+end)
+
+if(CLIENT) then
+	local originalHooks = hook.GetTable()['OnPlayerChat']
+	hook.GetTable()['VOnPlayerChat'] = originalHooks
+end
+
+
 if(SERVER) then
 	util.AddNetworkString("VChatPrediction")
 	
@@ -549,6 +574,11 @@ else
 	Vermilion:RegisterHook("FinishChat", "VCloseChatbox", function()
 		Vermilion.ChatOpen = false
 		Vermilion.ChatPredictions = {}
+	end)
+	
+	Vermilion:RegisterHook("HUDShouldDraw", "ChatHideHUD", function(name)
+		if(Vermilion.CurrentChatText == nil) then return end
+		if(string.StartWith(Vermilion.CurrentChatText, "!") and (name == "NetGraph" or name == "CHudAmmo")) then return false end
 	end)
 	
 	Vermilion.ChatPredictions = {}

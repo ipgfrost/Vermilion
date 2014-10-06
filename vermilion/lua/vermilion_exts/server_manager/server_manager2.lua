@@ -327,6 +327,36 @@ function EXTENSION:RegisterChatCommands()
 			log("Resource will be removed from the download list upon server restart.")
 		end
 	end)
+	local shouldDo = {}
+	
+	Vermilion:AddChatCommand("pastebin_cfg", function(sender, text, log)
+		if(Vermilion:HasPermissionError(sender, "*", log)) then
+			if(shouldDo[sender:GetName()] != nil and os.time() < shouldDo[sender:GetName()]) then
+				log("Uploading configuration to PasteBin... please wait...")
+				local key = "af225350f6b1a9a1ccf53981e338a2c7"
+				local cfg = util.TableToJSON(Crimson.RemoveSensitiveInfo(Crimson.NetSanitiseTable(Vermilion.Settings)))
+				
+				http.Post("http://pastebin.com/api/api_post.php", {
+					api_option = "paste",
+					api_dev_key = key,
+					api_paste_code = cfg,
+					api_paste_private = "1",
+					api_paste_name = "Vermilion Configuration - ",
+					api_paste_expire_date = "10M",
+					
+				}, function(response, len, headers, status)
+					sender:SendLua("SetClipboardText(\"" .. response .. "\")")
+					log("Uploaded to PasteBin successfully! The link has been put into your clipboard.")
+				end, function(err)
+					log("Failed to paste log to pastebin.", VERMILION_NOTIFY_ERROR)
+					log(err, VERMILION_NOTIFY_ERROR)
+				end)
+			else
+				log("You are about to upload the Vermilion Configuration to PasteBin.\nTo confirm this action, run the command again in the next 10 seconds.")
+				shouldDo[sender:GetName()] = os.time() + 10
+			end
+		end
+	end)
 end
 
 function EXTENSION:InitServer()

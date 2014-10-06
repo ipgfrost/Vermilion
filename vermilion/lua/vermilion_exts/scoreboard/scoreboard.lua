@@ -23,17 +23,79 @@ EXTENSION.ID = "scoreboard"
 EXTENSION.Description = "Replaces the default scoreboard with something that can interact with Vermilion."
 EXTENSION.Author = "Ned"
 EXTENSION.Permissions = {
-	"manage_scoreboard"
+	"manage_scoreboard",
+	"karma_vote"
 }
 EXTENSION.NetworkStrings = {
 	"VScoreboardOpened",
 	"VScoreboardDescUpdate",
 	"VScoreboardPlayersUpdate",
 	"VScoreboardCommand",
-	"VCheckScoreboardActive"
+	"VCheckScoreboardActive",
+	"VScoreboardUpdateRequest"
 }
 
 EXTENSION.BaseDescText = "Active Players: %players%/%maxplayers%       Gamemode: %gamemode%       Map: %map%"
+
+EXTENSION.DataTypes = {}
+
+function EXTENSION:AddDataType(name, obtainer, drawer, mandatory)
+	mandatory = mandatory or false
+	self.DataTypes[name] = { Obtainer = obtainer, Drawer = drawer, IsMandatory = mandatory }
+end
+
+function EXTENSION:InitShared()
+	self:AddDataType("Name", function(vplayer, requester)
+		return vplayer:GetName()
+	end, false, true)
+	
+	self:AddDataType("SteamID", function(vplayer, requester)
+		return vplayer:SteamID()
+	end, false)
+	
+	self:AddDataType("KDR", function(vplayer, requester)
+		local kdrtext = tostring(vplayer:Frags()) .. ":" .. tostring(vplayer:Deaths()) .. " ("
+		if(vplayer:Frags() > vplayer:Deaths()) then
+			local kdr = (vplayer:Frags() / (vplayer:Frags() + vplayer:Deaths())) * 100
+			kdrtext = kdrtext .. tostring(math.Round(kdr, 1)) .. "%)"
+		elseif(vplayer:Deaths() > vplayer:Frags()) then
+			local kdr = (vplayer:Deaths() / (vplayer:Deaths() + vplayer:Frags())) * 100
+			kdrtext = kdrtext .. "-" ..tostring(math.Round(kdr, 1)) .. "%)"
+		else
+			kdrtext = kdrtext .. "0%)"
+		end
+		return kdrtext
+	end, false)
+	
+	self:AddDataType("Rank", function(vplayer, requester)
+		return string.SetChar(Vermilion:GetUser(vplayer):GetRank().Name, 1, string.upper(string.GetChar(Vermilion:GetUser(vplayer):GetRank().Name, 1)))
+	end, false)
+	
+	self:AddDataType("Time Connected", function(vplayer, requester)
+		return vplayer:TimeConnected()
+	end, false)
+	
+	--[[self:AddDataType("Karma", function(vplayer, requester)
+		return Vermilion:GetKarmaRating(vplayer)
+	end, function(cell, data)
+		--if(data == 1) then
+			local image1 = vgui.Create("DImage")
+			image1:SetImage("icon16/star.png")
+			image1:SizeToContents()
+			local cx, cy = cell:GetSize()
+			image1:SetPos((cx - image1:GetWide()) / 2, (cy - image1:GetTall()) / 2)
+			image1:SetParent(cell)
+		--end
+	end)]]--
+	
+	self:AddDataType("Karma", function(vplayer, requester)
+		return tostring(Vermilion:GetKarmaRating(vplayer)) .. " / 5"
+	end, false)
+	
+	self:AddDataType("Ping", function(vplayer, requester)
+		return vplayer:Ping()
+	end, false)
+end
 
 function EXTENSION:InitServer()
 	concommand.Add("toggle_scoreboard", function(vplayer, cmd, args, str)
@@ -86,30 +148,29 @@ function EXTENSION:InitServer()
 	
 	function EXTENSION:UpdatePlayers(vplayer)
 		net.Start("VScoreboardPlayersUpdate")
+		local dataTypes = net.ReadTable()
+		
 		local gdata = {}
-		for i,k in pairs(player.GetAll()) do
-			local kdrtext = tostring(k:Frags()) .. ":" .. tostring(k:Deaths()) .. " ("
-			if(k:Frags() > k:Deaths()) then
-				local kdr = (k:Frags() / (k:Frags() + k:Deaths())) * 100
-				kdrtext = kdrtext .. tostring(math.Round(kdr, 1)) .. "%)"
-			elseif(k:Deaths() > k:Frags()) then
-				local kdr = (k:Deaths() / (k:Deaths() + k:Frags())) * 100
-				kdrtext = kdrtext .. "-" ..tostring(math.Round(kdr, 1)) .. "%)"
-			else
-				kdrtext = kdrtext .. "0%)"
+		for i,tplayer in pairs(player.GetAll()) do
+			local pData = {}
+			for qrd,typ in pairs(dataTypes) do
+				pData[typ] = EXTENSION.DataTypes[typ].Obtainer(tplayer, vplayer)
 			end
-			local data = {
-				Name = k:GetName(),
-				SteamID = k:SteamID(),
-				KDR = kdrtext,
-				Rank = string.SetChar(Vermilion:GetUser(k):GetRank().Name, 1, string.upper(string.GetChar(Vermilion:GetUser(k):GetRank().Name, 1))),
-				TimeConnected = 0
-			}
-			table.insert(gdata, data)
+			table.insert(gdata, { SteamID = tplayer:SteamID(), Data = pData })
 		end
+		
 		net.WriteTable(gdata)
 		net.Send(vplayer)
 	end
+	
+	function EXTENSION:SendUpdatePlayersRequest(target)
+		net.Start("VScoreboardUpdateRequest")
+		net.Send(target)
+	end
+	
+	self:NetHook("VScoreboardUpdateRequest", function(vplayer)
+		EXTENSION:UpdatePlayers(vplayer)
+	end)
 	
 	self:NetHook("VCheckScoreboardActive", function(vplayer)
 		net.Start("VCheckScoreboardActive")
@@ -119,17 +180,17 @@ function EXTENSION:InitServer()
 	
 	self:NetHook("VScoreboardOpened", function(vplayer)
 		EXTENSION:SendDescUpdate(vplayer)
-		EXTENSION:UpdatePlayers(vplayer)
+		EXTENSION:SendUpdatePlayersRequest(vplayer)
 	end)
 	
 	self:AddHook("PlayerInitialSpawn", function(vplayer)
 		EXTENSION:SendDescUpdate(player.GetAll())
-		EXTENSION:UpdatePlayers(player.GetAll())
+		EXTENSION:SendUpdatePlayersRequest(player.GetAll())
 	end)
 	
 	self:AddHook("PlayerDisconnected", function(vplayer)
 		EXTENSION:SendDescUpdate(player.GetAll())
-		EXTENSION:UpdatePlayers(player.GetAll())
+		EXTENSION:SendUpdatePlayersRequest(player.GetAll())
 	end)
 	
 	self:NetHook("VScoreboardCommand", function(vplayer)
@@ -154,6 +215,12 @@ function EXTENSION:InitServer()
 				if(IsValid(tplayer)) then
 					tplayer:UnLock()
 				end
+			end
+		elseif(command == "Karma") then
+			if(Vermilion:HasPermission(vplayer, "karma_vote")) then
+				local tplayer = net.ReadEntity()
+				if(tplayer == vplayer) then return end -- can't vote on yourself.
+				Vermilion:AddKarma(tplayer, vplayer, net.ReadBoolean())
 			end
 		end
 	end)
@@ -190,6 +257,14 @@ function EXTENSION:InitClient()
 		weight = 500,
 		antialias = true
 	})
+	
+	local types = { "Name", "SteamID", "Rank", "KDR", "Ping", "Karma" }
+	
+	self:NetHook("VScoreboardUpdateRequest", function()
+		net.Start("VScoreboardUpdateRequest")
+		net.WriteTable(types)
+		net.SendToServer()
+	end)
 
 	
 	
@@ -202,17 +277,53 @@ function EXTENSION:InitClient()
 	end)
 	
 	self:NetHook("VScoreboardPlayersUpdate", function()
-		if(not IsValid(EXTENSION.PlayerList)) then return end
+		if(not Vermilion.ScoreboardOpened) then return end
+		if(IsValid(EXTENSION.PlayerList)) then EXTENSION.PlayerList:Remove() end
+		local playerList = Crimson.CreateList(types)
+		if(not IsValid(playerList) or not IsValid(EXTENSION.DescriptionLabel) or not IsValid(EXTENSION.ScoreBoardPanel)) then return end
+		if(IsValid(EXTENSION.LoadingPanel)) then EXTENSION.LoadingPanel:Remove() end
+		playerList:SetPos(0, select(2, EXTENSION.DescriptionLabel:GetPos()) + EXTENSION.DescriptionLabel:GetTall() + 35)
+		playerList:SetSize(EXTENSION.ScoreBoardPanel:GetWide(), EXTENSION.ScoreBoardPanel:GetTall() - select(2, playerList:GetPos()))
+		playerList:SetParent(EXTENSION.ScoreBoardPanel)
+		playerList:SetDrawBackground(false)
+		
+		EXTENSION.PlayerList = playerList
+		
 		local gdata = net.ReadTable()
-		EXTENSION.PlayerList:Clear()
+		playerList:Clear()
 		for i,k in pairs(gdata) do
+			local pdatag = k.Data
 			local vplayer = Crimson.LookupPlayerBySteamID(k.SteamID)
-			if(not IsValid(vplayer)) then vplayer = Crimson.LookupPlayerByName(k.Name) end
+			if(not IsValid(vplayer)) then vplayer = Crimson.LookupPlayerByName(pdatag.Name) end
 			if(IsValid(vplayer)) then
-				local ln = EXTENSION.PlayerList:AddLine(vplayer:GetName(), k.SteamID, k.KDR, vplayer:Ping(), k.Rank, k.TimeConnected)
+				
+				--local ln = EXTENSION.PlayerList:AddLine(vplayer:GetName(), k.SteamID, k.KDR, vplayer:Ping(), k.Rank, k.TimeConnected)
+				local vri = 1
+				local lndat = {}
+				for iad,dfr in pairs(types) do
+					lndat[vri] = pdatag[dfr]
+					vri = vri + 1
+				end
+				local ln = playerList:AddLine()
+				
+				local avatar = Crimson.CreateAvatarImage(k.SteamID, 16)
+				ln:Add(avatar)
+				
+				for indr,dfr in pairs(lndat) do
+					ln:SetValue(indr, dfr)
+				end
+				
 				
 				for i1,k1 in pairs(ln.Columns) do
 					k1:SetContentAlignment(5)
+					local drawer = EXTENSION.DataTypes[types[i1]].Drawer
+					if(isfunction(drawer)) then
+						local oldDraw = k1.Draw
+						k1.Draw = function(self)
+							oldDraw()
+							drawer(lndat[i1], k1)
+						end
+					end
 				end
 				
 				ln.OnRightClick = function()
@@ -299,12 +410,30 @@ function EXTENSION:InitClient()
 					ppcmenu:AddOption("Clear NPCs"):SetIcon("icon16/user_female.png")
 					ppmenu:AddOption("Request access to props"):SetIcon("icon16/database_connect.png")
 					
+					local karmaMenu = conmenu:AddSubMenu("Karma")
+					karmaMenu:AddOption("Positive", function()
+						net.Start("VScoreboardCommand")
+						net.WriteString("Karma")
+						net.WriteEntity(vplayer)
+						net.WriteBoolean(true)
+						net.SendToServer()
+					end):SetIcon("icon16/add.png")
+					karmaMenu:AddOption("Negative", function()
+						net.Start("VScoreboardCommand")
+						net.WriteString("Karma")
+						net.WriteEntity(vplayer)
+						net.WriteBoolean(false)
+						net.SendToServer()
+					end):SetIcon("icon16/delete.png")
+					
 					conmenu:AddOption("Private Message"):SetIcon("icon16/user_comment.png")
 					conmenu:AddOption("Open Steam Profile", function()
 						if(IsValid(vplayer)) then vplayer:ShowProfile() end
 					end):SetIcon("icon16/page_find.png")
 					conmenu:AddOption("Open Vermilion Profile", function()
-					
+						if(Vermilion:GetExtension("profiles") != nil) then
+							Vermilion:GetExtension("profiles"):OpenProfile(vplayer)
+						end
 					end):SetIcon("icon16/comment.png")
 					
 					conmenu:Open()
@@ -320,6 +449,7 @@ function EXTENSION:InitClient()
 	end)
 	
 	self:AddHook("ScoreboardShow", function()
+		Vermilion.ScoreboardOpened = true
 		if(not enabled) then return end
 		gui.EnableScreenClicker(true)
 		local sbPanel = vgui.Create("DPanel")
@@ -327,6 +457,8 @@ function EXTENSION:InitClient()
 		sbPanel:SetDrawBackground(GetConVarNumber("vermilion_show_sb_bg") == 1)
 		sbPanel:SetPos(100, 100)
 		sbPanel:SetSize(ScrW() - 200, ScrH() - 200)
+		
+		
 		
 		local serverNameLabel = vgui.Create("DLabel")
 		serverNameLabel:SetPos(0, 0)
@@ -354,13 +486,19 @@ function EXTENSION:InitClient()
 		
 		EXTENSION.DescriptionLabel = descriptionLabel
 		
-		local playerList = Crimson.CreateList({"Name", "SteamID", "KDR", "Ping", "Rank", "Time Connected"})
-		playerList:SetPos(0, select(2, descriptionLabel:GetPos()) + descriptionLabel:GetTall() + 35)
-		playerList:SetSize(sbPanel:GetWide(), sbPanel:GetTall() - select(2, playerList:GetPos()))
-		playerList:SetParent(sbPanel)
-		playerList:SetDrawBackground(false)
+		local loadingPanel = vgui.Create("DPanel")
+		loadingPanel:SetPos(0, select(2, EXTENSION.DescriptionLabel:GetPos()) + EXTENSION.DescriptionLabel:GetTall() + 35)
+		loadingPanel:SetSize(EXTENSION.ScoreBoardPanel:GetWide(), EXTENSION.ScoreBoardPanel:GetTall() - select(2, loadingPanel:GetPos()))
+		loadingPanel:SetParent(sbPanel)
+		EXTENSION.LoadingPanel = loadingPanel
 		
-		EXTENSION.PlayerList = playerList
+		local loadingLabel = Crimson.CreateLabel("Loading Data From Server...")
+		loadingLabel:SetFont("ScoreBoardTitle")
+		loadingLabel:SetTextColor(Vermilion.Colours.Black)
+		loadingLabel:SizeToContents()
+		local lpx, lpy = loadingPanel:GetSize()
+		loadingLabel:SetPos((lpx - loadingLabel:GetWide()) / 2, (lpy - loadingLabel:GetTall()) / 2)
+		loadingLabel:SetParent(loadingPanel)
 		
 		net.Start("VScoreboardOpened")
 		net.SendToServer()
@@ -379,8 +517,10 @@ function EXTENSION:InitClient()
 	end)
 	
 	self:AddHook("ScoreboardHide", function()
+		Vermilion.ScoreboardOpened = false
 		if(not enabled) then return end
 		EXTENSION.ScoreBoardPanel:Remove()
+		EXTENSION.ScoreBoardPanel = nil
 		gui.EnableScreenClicker(false)
 		timer.Destroy("Vermilion_Scoreboard_Refresh")
 		return false
