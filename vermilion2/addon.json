@@ -1,0 +1,11 @@
+{
+	"title": "Vermilion 2",
+	"type": "tool",
+	"tags": [ "build", "fun" ],
+	"ignore": [ 
+		"*.DS_Store",
+		"*.txt"
+	]
+
+
+}
