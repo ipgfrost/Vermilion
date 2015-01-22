@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Playermodel Enforcer"
 MODULE.ID = "limit_playermodel"
 MODULE.Description = "Set the player models that players can/cannot use or force a specific model for a rank."
@@ -294,7 +294,7 @@ function MODULE:InitClient()
 				paneldata.IsBlacklist = isBlacklist
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Models == nil) then
 					paneldata.Models = {}
 					for i,k in pairs(player_manager.AllValidModels()) do
@@ -345,5 +345,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

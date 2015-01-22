@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Spawn Limits"
 MODULE.ID = "limit_spawn"
 MODULE.Description = "Emulates the sbox_max convars but adds a rank-based system."
@@ -316,7 +316,7 @@ function MODULE:InitClient()
 				panel.EditRule = editRule
 				
 			end,
-			Updater = function(panel)
+			OnOpen = function(panel)
 				--if(table.Count(panel.AllRules:GetLines()) == 0) then
 					MODULE:NetStart("VGetRules")
 					net.SendToServer()
@@ -330,5 +330,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

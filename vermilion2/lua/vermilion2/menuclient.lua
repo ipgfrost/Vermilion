@@ -59,15 +59,22 @@ function Vermilion.Menu:AddPage(data)
 		{ "Conditional", function() return true end },
 		{ "Builder", function() end },
 		{ "Destroyer", function() end },
-		{ "Updater", function() end },
 		{ "OnOpen", function() end },
 		{ "OnClose", function() end }
+	}
+	local probablyShouldntHave = {
+		{ "Updater", "Updater is deprecated; use OnOpen instead" },
 	}
 	for i,k in pairs(mustHave) do
 		assert(data[k] != nil, "Page missing required component!")
 	end
 	for i,k in pairs(shouldHave) do
 		if(data[k[1]] == nil) then data[k[1]] = k[2] end
+	end
+	for i,k in pairs(probablyShouldntHave) do
+		if(data[k[1]] != nil) then
+			Vermilion.Log("Page '" .. data.Name .. "' is using component '" .. k[1] .. "'! (Complaint reason: " .. k[2] .. ")")
+		end
 	end
 	local has = false
 	for index,cat in pairs(self.Categories) do
@@ -112,12 +119,12 @@ MENU:AddCategory("basic", 1)
 
 MENU:AddPage({
 	ID = "welcome",
-	Name = "Welcome",
+	Name = Vermilion:TranslateStr("menu:welcome"),
 	Order = -9000,
 	Category = "basic",
 	Size = { 580, 560 },
 	Builder = function(panel)
-		local welcomeLabel = VToolkit:CreateLabel("Welcome to Vermilion!")
+		local welcomeLabel = VToolkit:CreateLabel(Vermilion:TranslateStr("welcome:welcome"))
 		welcomeLabel:SetFont("DermaLarge")
 		welcomeLabel:SizeToContents()
 		welcomeLabel:SetPos((580 - welcomeLabel:GetWide()) / 2, 30)
@@ -130,9 +137,9 @@ MENU:AddPage({
 		tabs.VHideBG = true
 		
 		
-		local changelogPanel = tabs:AddBlankSheet("Change Log", "icon16/report.png", "", false)
-		local faqPanel = tabs:AddBlankSheet("FAQ", "icon16/user_comment.png", "", false)
-		local serverInfoPanel = tabs:AddBlankSheet("Server Information", "icon16/server_chart.png", "", false)
+		local changelogPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:changelog"), "icon16/report.png", "", false)
+		local faqPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:faq"), "icon16/user_comment.png", "", false)
+		--local bugReport = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:bugreport"), "icon16/bug.png", "", false)
 		
 		
 		local clContainer = VToolkit:CreateCategoryList(true)
@@ -141,6 +148,108 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 		
 		local changelog = {
+			{ "2.4 - 25th January 2015", {
+					"Huge update for the localisation system and added more localisation options for translators",
+					"Updated some global broadcasts to translate into player's chosen language automatically",
+					"Added German translation (courtesy of Spennyone)",
+					"Fixed zone bugs",
+					"Added replacement TargetID",
+					"Rank icons now appear on TargetID",
+					"Blocked sv_cheats in the !convar command (would have errored anyway)"
+				}
+			},
+			{ "2.3.6 - 15th January 2015", {
+					"Attempt to fix serious jail bug with the movement hook."
+				}
+			},
+			{ "2.3.5 - 12th January 2015", {
+					"Added !addplayer",
+					"Added !delplayer",
+					"Updated !setrank to work on offline players",
+					"Max Health spawnflag now works on values above 100",
+					"Player pickup protection now works regardless of the state of the physgun protection",
+					"More tweaks to the MOTD"
+				}
+			},
+			{ "2.3.4 - 4th January 2015", {
+					"Disabled button colour is now grey",
+					"Fixed bug with decimal values in the spawn settings",
+					"Fixed bug with reloading values in the spawn settings",
+					"Fixed bug with !motd",
+					"Fixed bug with MOTD initialisation"
+				}
+			},
+			{ "2.3.3 - 24th December 2014", {
+					"Bug fixes for upcoming GMod update",
+					"Bug fixes for prop protection"
+				}
+			},
+			{ "2.3.2 - 19th December 2014", {
+					"Fix syntax error"
+				}
+			},
+			{ "2.3.1 - 18th December 2014", {
+					"Fixes bug in jail code that causes errors when loading saves"
+				}
+			},
+			{ "2.3 - 13th December 2014", {
+					"Finished kits",
+					"Improved localisation",
+					"Fixed bug where the backup system would only delete old configurations after losing the config",
+					"Added !jail and !setjailpos",
+					"Updated CPPI to version 1.3",
+					"Added prop protection settings for breaking, driving, damaging and property editing",
+					"Added prop protection buddy list",
+					"Fixed bug in CPPI Player UID Caching",
+					"Added default permissions for prop protection",
+					"Added Russian Translation (courtesy of BatyaMedic)",
+					"Fixed the lack of predictions at the start of a command",
+					"Fixed VoIP graphs starting at zero",
+					"Direct DarkRP integration",
+					"Fix for User Rank Editor bug triggered by FPP",
+					"Fixed severe bug regarding SteamIDs on Linux",
+					"Modules no longer have to declare the MODULE namespace or register themselves",
+					"Modules can start disabled",
+					"Added developer module (starts disabled)",
+					"Fixed another GeoIP bug",
+					"Added !version",
+					"Added custom spawnpoints",
+					"The menu now only updates tabs while they are active, reducing the load when the menu is opened",
+					"Added 'self-destruct' hooks (one time hooks)",
+					"Vermilion's setup hooks now self-destruct to free memory",
+					"Fixed Vermilion 2 accidentally claiming to be Vermilion 1 in the log",
+					"VoIP graphs can now be personalised",
+					"Created second menu command 'vermillion_menu' in case people misspell 'Vermilion'",
+					"Added automatic prop cleanup",
+					"Added configuration reset button",
+					"The chat predictor will now explain why it cannot complete a request",
+					"The chat predictor can now be turned off on a client-by-client basis",
+					"Added new questions to the FAQ",
+					"Misc refinements on OS X and Linux",
+					"Removed the 'Server Information' tab for the time being",
+					"Calls to OnOpen for menu pages are now safe and will not lock up the menu if they break",
+					"Attempted to fix skin problems",
+					"Added Zones GUI",
+					"Drastically reduced number of network strings using a layering technique (187 => 46)",
+					"Added notification zones"
+				}
+			},
+			{ "2.2.4 - 10th December 2014", {
+					"Fixed skin errors"
+				}
+			},
+			{ "2.2.3 - 25th November 2014", {
+					"Fixed missing permissions"
+				}
+			},
+			{ "2.2.2 - 21st November 2014", {
+					"Fixed the CatList errors (hopefully)"
+				}
+			},
+			{ "2.2.1 - 18th November 2014", {
+					"Fix for stupid mistake when regaining control of the hook system"
+				}
+			},
 			{ "2.2 - 16th November 2014", {
 					"Chat tags now work",
 					"Rank colour is now displayed in chat",
@@ -148,26 +257,26 @@ MENU:AddPage({
 					"Noclip will now never get stuck",
 					"Added !slap",
 					"Added !adminchat and !asay (!asay is alias of !adminchat)",
-					"Added !gimp and the Gimp Editor panel.",
+					"Added !gimp and the Gimp Editor panel",
 					"Added !gag",
 					"Added !mute",
-					"Vermilion now checks for the presence of Vermilion 1 and will stop loading if it is found.",
-					"Rebuilt the changelog so it scrolls properly and looks nicer.",
+					"Vermilion now checks for the presence of Vermilion 1 and will stop loading if it is found",
+					"Rebuilt the changelog so it scrolls properly and looks nicer",
 					"Fixed !ragdoll",
 					"Added the userdata browser (not finished)",
-					"Started work on new skin elements.",
-					"Added kits.",
-					"The Vermilion Menu now notifies tabs that they have just been opened/closed.",
-					"Fixed weird menu bugs.",
-					"Vermilion Menu now shows the title of the active tab in the title.",
-					"Command parsing now ignores a blank final parameter.",
-					"Notifications now slide up when those above have dissappeared.",
-					"Notifications now will not stick if animating.",
-					"The menu now updates in real-time with changes that other users are making."
+					"Started work on new skin elements",
+					"Added kits",
+					"The Vermilion Menu now notifies tabs that they have just been opened/closed",
+					"Fixed weird menu bugs",
+					"Vermilion Menu now shows the title of the active tab in the title",
+					"Command parsing now ignores a blank final parameter",
+					"Notifications now slide up when those above have dissappeared",
+					"Notifications now will not stick if animating",
+					"The menu now updates in real-time with changes that other users are making"
 				}
 			},
 			{ "2.1.1 - 11th November 2014", {
-					"Loadout can be turned off on non-sandbox gamemodes.",
+					"Loadout can be turned off on non-sandbox gamemodes",
 					"Fixes for bad VoIP settings"
 				}
 			},
@@ -179,7 +288,7 @@ MENU:AddPage({
 					"Swapped parameters for !speed to maintain compatibility with the new menu registration",
 					"Chat commands are now registered both on the server and the client",
 					"Added punishment commands",
-					"Fixed localisation error with Battery Meter causing it to error A LOT.",
+					"Fixed localisation error with Battery Meter causing it to error A LOT",
 					"Version information can now be retrieved numerically by calling Vermilion.GetVersion()",
 					"Version information can still be retrieved as a string by calling Vermilion.GetVersionString()"
 				}
@@ -219,10 +328,11 @@ MENU:AddPage({
 			{ "How do I make myself owner on a dedicated server?", "Open the server console (not the one in GMod, but the terminal that the server is running on) and type\n\n \"vermilion setrank <yourname> owner\"", 50 },
 			{ "How do I make myself owner on a listen server/singleplayer?", "This happens automatically on listen servers and singleplayer." },
 			{ "I can't use chat!", "Do you have the permission to use chat?" },
-			{ "How do I disable god mode?", "Server Settings -> Basic Settings -> Disable Damage -> \"Off\" or use !damagemode" },
-			{ "How do I change the permissions of the owner rank?", "You can't." },
+			{ "How do I disable god mode?", "Server Settings -> Basic Settings -> Disable Damage -> \"Off\" or use !damagemode.\nAlso, disable the PvP management in the same screen and ensure that sbox_godmode is disabled.", 50 },
+			{ "How do I change the permissions of the owner rank?", "You can't. It's not designed to be chanaged." },
 			{ "Is Vermilion compatible with X?", "If X is not an older version of Vermilion or another administration tool, then the answer is probably yes." },
 			{ "Do you plan on making Vermilion compatible with <insert other admin tool here>?", "No. If I make it compatible, then I lose my reason to make Vermilion even better." },
+			{ "I installed Vermilion with another admin tool and everything broke. I hate you!", "I did warn you not to do it. Please read the FAQs next time." },
 			{ "What is the GeoIP system used for?", "Currently, it only displays the flags on TargetID, but more features are planned." },
 			{ "Can I request a feature?", "Certainly, just post a comment on the workshop page and I'll take a look!" },
 			{ "Can I add you as a friend on Steam?", "I would rather not, instead, take a look at the Steam Group!" },
@@ -234,10 +344,11 @@ MENU:AddPage({
 			{ "You keep talking about localisation, where is it?", "It isn't ready yet, but if you want to help translate Vermilion in the future, don't hesitate to contribute to the GitHub repository (I will post an announcement when it is safe to start translating!", 40 },
 			{ "I see you can select a visualiser, how do I make my own?", "I plan on adding a visualiser development kit later on, but for now, you can look at the GitHub code.", 30 },
 			{ "I'm getting a lot of errors, what the heck?", "Firstly, make sure that there are no other administration tools on the server (this includes Vermilion 1) and then restart the server. If this doesn't fix anything, try deleting the Vermilion configuration. As a last resort, check for similar reports and if one doesn't exist, file a new one!", 50 },
-			{ "I don't like the way you have spelled something (i.e. colour)! Change it!", "No." },
+			{ "I don't like the way you have spelled something (i.e. colour)! Change it!", "No. If you can't stand it, make your own localisation file." },
 			{ "How do I enable anti-spam?", "Look in the Basic Settings panel." },
 			{ "How do I select all players in a chat command?", "Replace the player argument with \"@\"" },
 			{ "How often do you update?", "I don't have a schedule, but I will usually release a minor update after a bug report and large releases will take place every now and then.", 30 },
+			{ "Can you sort out the text on OS X?", "The text will be fixed an a future GMod update where the default text on OS X will be easier to read." },
 			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
 		}
 		
@@ -252,19 +363,20 @@ MENU:AddPage({
 			lab:Dock(TOP)
 			lab:SetDark(true)
 		end
+		
 	end
 })
 
 MENU:AddPage({
 	ID = "modules",
-	Name = "Modules",
+	Name = Vermilion:TranslateStr("menu:modules"),
 	Order = 1,
 	Category = "basic",
 	Size = { 700, 560 },
 	Builder = function(panel, paneldata)
 		local mlist = VToolkit:CreateList({
 			cols = {
-				"Name"
+				Vermilion:TranslateStr("name")
 			}
 		})
 		mlist:Dock(LEFT)
@@ -279,7 +391,7 @@ MENU:AddPage({
 		infopanel:DockMargin(10, 10, 10, 10)
 		infopanel:SetParent(panel)
 		
-		local title = VToolkit:CreateLabel("Click on a module...")
+		local title = VToolkit:CreateLabel(Vermilion:TranslateStr("modules:clickon"))
 		title:SetFont("DermaLarge")
 		title:SizeToContents()
 		title:Dock(TOP)
@@ -301,7 +413,7 @@ MENU:AddPage({
 
 		paneldata.EnablerPanel = enablerPanel
 		
-		local enableCB = VToolkit:CreateCheckBox("Enabled")
+		local enableCB = VToolkit:CreateCheckBox(Vermilion:TranslateStr("modules:enabled"))
 		enableCB:Dock(FILL)
 		enableCB:SetParent(enablerPanel)
 		enableCB.CanUpdate = true
@@ -342,7 +454,7 @@ MENU:AddPage({
 		end)
 		
 	end,
-	Updater = function(panel, paneldata)
+	OnOpen = function(panel, paneldata)
 		if(table.Count(paneldata.ModuleList:GetLines()) == 0) then
 			for i,k in pairs(Vermilion.Modules) do
 				local ln = paneldata.ModuleList:AddLine(k.Name)
@@ -376,7 +488,7 @@ MENU:AddPage({
 
 MENU:AddPage({
 	ID = "api",
-	Name = "API Documentation",
+	Name = Vermilion:TranslateStr("menu:api"),
 	Order = 10,
 	Category = "basic",
 	Size = { 600, 560 },
@@ -391,12 +503,12 @@ MENU:AddPage({
 
 MENU:AddPage({
 	ID = "credits",
-	Name = "Credits",
+	Name = Vermilion:TranslateStr("menu:credits"),
 	Order = 50,
 	Category = "basic",
 	Size = { 600, 560 },
 	Builder = function(panel, paneldata)
-		local title = VToolkit:CreateLabel("Vermilion Credits")
+		local title = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:title"))
 		title:SetFont("DermaLarge")
 		title:SizeToContents()
 		title:SetParent(panel)
@@ -421,7 +533,7 @@ MENU:AddPage({
 			{
 				Name = "TehAngel",
 				SteamID = "STEAM_0:1:79012222",
-				Role = "Ideas, Persuasion and Workshop Icon"
+				Role = "Ideas, Persuasion, Bug Reports and Workshop Icon"
 			}
 		}
 		
@@ -481,13 +593,15 @@ MENU:AddPage({
 			role:SetParent(dataPanel)
 		end
 		
-		local thanks = VToolkit:CreateLabel("Thank you to anyone else who has contributed ideas and has supported Vermilion throughout development!")
+		local thanks = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:thanks"))
 		thanks:Dock(TOP)
 		thanks:DockMargin(10, 10, 10, 10)
 		thanks:SetParent(scrollPanel)
 		thanks:SetDark(true)
+		thanks:SetWrap(true)
+		thanks:SetTall(thanks:GetTall() * 2)
 		
-		local poweredBySoundCloud = VToolkit:CreateLabel("Vermilion uses resources from the SoundCloud API. Use of the services provided by Vermilion that use the SoundCloud API constitutes acceptance of the SoundCloud API terms of use.")
+		local poweredBySoundCloud = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:scapi"))
 		poweredBySoundCloud:Dock(TOP)
 		poweredBySoundCloud:SetWrap(true)
 		poweredBySoundCloud:SetTall(poweredBySoundCloud:GetTall() * 2)
@@ -495,7 +609,7 @@ MENU:AddPage({
 		poweredBySoundCloud:SetParent(scrollPanel)
 		poweredBySoundCloud:SetDark(true)
 		
-		local poweredByFGIP = VToolkit:CreateLabel("The GeoIP services in Vermilion are powered by freegeoip.net. freegeoip.net includes GeoLite data created by MaxMind, available from maxmind.com.")
+		local poweredByFGIP = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:fgip"))
 		poweredByFGIP:Dock(TOP)
 		poweredByFGIP:SetWrap(true)
 		poweredByFGIP:SetTall(poweredByFGIP:GetTall() * 2)
@@ -511,21 +625,21 @@ MENU:AddPage({
 		buttonBar:SetTall(25)
 		buttonBar:SetDrawBackground(false)
 		
-		local gotoWorkshop = VToolkit:CreateButton("Vermilion Workshop Page", function()
+		local gotoWorkshop = VToolkit:CreateButton(Vermilion:TranslateStr("credits:workshop"), function()
 			steamworks.ViewFile("338063408")
 		end)
 		gotoWorkshop:Dock(LEFT)
 		gotoWorkshop:SetSize(200, 25)
 		gotoWorkshop:SetParent(buttonBar)
 		
-		local openGithub = VToolkit:CreateButton("GitHub Repository", function()
+		local openGithub = VToolkit:CreateButton(Vermilion:TranslateStr("credits:github"), function()
 			gui.OpenURL("http://github.com/nedhyett/Vermilion")
 		end)
 		openGithub:Dock(RIGHT)
 		openGithub:SetSize(200, 25)
 		openGithub:SetParent(buttonBar)
 		
-		local openSteamGroup = VToolkit:CreateButton("Steam Group", function()
+		local openSteamGroup = VToolkit:CreateButton(Vermilion:TranslateStr("credits:group"), function()
 			gui.OpenURL("http://steamcommunity.com/groups/VSM-GMOD")
 		end)
 		openSteamGroup:Dock(TOP)
@@ -540,19 +654,16 @@ MENU:AddPage({
 		paneldata.WorkshopRating = workshopRating
 		
 		local workshopRatingLabel = vgui.Create("DLabel")
-		workshopRatingLabel:SetText("Workshop Rating")
+		workshopRatingLabel:SetText(Vermilion:TranslateStr("credits:workshoprating"))
 		workshopRatingLabel:SizeToContents()
 		workshopRatingLabel:SetParent(workshopRating)
 		workshopRatingLabel:SetDark(true)
 		paneldata.WorkshopRatingLabel = workshopRatingLabel
 	end,
-	Updater = function(panel, paneldata)
-		
-	end,
 	OnOpen = function(panel, paneldata)
 		steamworks.VoteInfo(338063408, function(result)
 			paneldata.WorkshopRating:SetFraction(result.up / result.total)
-			paneldata.WorkshopRatingLabel:SetText("Workshop Rating: " .. tostring(math.Round((result.up/result.total) * 100, 2)) .. "%")
+			paneldata.WorkshopRatingLabel:SetText(Vermilion:TranslateStr("credits:workshoprating:detail", { tostring(math.Round((result.up/result.total) * 100, 2)) }))
 			paneldata.WorkshopRatingLabel:SizeToContents()
 			paneldata.WorkshopRatingLabel:Center()
 		end)
@@ -600,7 +711,7 @@ function MENU:ChangeTab(to, quiet)
 				if(MENU.ActiveTab != to) then return end
 				newPage.Panel:SetAlpha(0)
 				newPage.Panel:SetVisible(true)
-				MENU:GetActivePage().OnOpen(MENU:GetActivePage().Panel, MENU:GetActivePage())
+				pcall(MENU:GetActivePage().OnOpen, MENU:GetActivePage().Panel, MENU:GetActivePage())
 				newPage.Panel:AlphaTo(255, 0.25, 0, function()
 					MENU.ContentPanel:SetTitle("Vermilion Menu - " .. self:GetActivePage().Name)
 					MENU.Animating = false
@@ -617,6 +728,87 @@ end
 
 Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 	-- assume that all modules have run their code to register their pages
+	
+	MENU.TabPanel = VToolkit:CreateFrame({
+		size = { 170, 600 },
+		pos = { -170, 10 },
+		closeBtn = false,
+		draggable = false,
+		title = "",
+		bgBlur = false
+	})
+	
+	MENU.ContentPanel = VToolkit:CreateFrame({
+		size = { 600, 600 },
+		pos = { 200, ScrH() },
+		closeBtn = true,
+		draggable = false,
+		title = "Vermilion Menu",
+		bgBlur = false
+	})
+	
+	MENU.ContentPanel.lblTitle.UpdateColours = function() end
+	
+	
+	-- add a list thingy
+	local catList = VToolkit:CreateCategoryList()
+	catList:SetPos(5, 5)
+	catList:SetSize(160, 590)
+	catList:SetParent(MENU.TabPanel)
+	
+	MENU.CatList = catList
+	
+	MENU.TabPanel:SetVisible(false)
+	MENU.ContentPanel:SetVisible(false)
+	MENU.TabPanel:MakePopup()
+	MENU.ContentPanel:MakePopup()
+
+	function MENU.ContentPanel:Close()
+		MENU:Close()
+	end
+
+	function MENU:Open()
+		if(hook.Run(Vermilion.Event.MENU_OPENING) == false or MENU.IsOpen or not MENU.Built) then return end
+		
+		for i,k in pairs(MENU.Pages) do
+			if(k.Conditional(LocalPlayer()) and k.Updater != nil) then
+				xpcall(k.Updater, function(err)
+					Vermilion.Log("Failed to update panel (" .. k.ID .. "): " .. err)
+					debug.Trace()
+				end, k.Panel, k)
+			end
+		end
+		
+		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
+		
+		MENU.IsOpen = true
+		MENU.TabPanel:SetVisible(true)
+		MENU.ContentPanel:SetVisible(true)
+		MENU.TabPanel:MoveTo(10, 10, 0.5, 0, -3)
+		MENU.ContentPanel:MoveTo(200, 10, 0.5, 0, -3, function()
+			MENU.TabPanel:SetKeyboardInputEnabled(true)
+			MENU.ContentPanel:SetKeyboardInputEnabled(true)
+			hook.Run(Vermilion.Event.MENU_OPEN)
+		end)
+	end
+
+	function MENU:Close(force)
+		if(not force and (hook.Run(Vermilion.Event.MENU_CLOSING) == false or not MENU.IsOpen)) then return end
+		
+		MENU.TabPanel:MoveTo(-170, 10, 0.5, 0, -3)
+		MENU.ContentPanel:MoveTo(200, ScrH(), 0.5, 0, -3, function()
+			MENU.TabPanel:SetVisible(false)
+			MENU.ContentPanel:SetVisible(false)
+			MENU.TabPanel:SetKeyboardInputEnabled(false)
+			MENU.ContentPanel:SetKeyboardInputEnabled(false)
+			MENU.IsOpen = false
+			for i,k in pairs(MENU.Pages) do
+				local suc, err = pcall(k.Destroyer, k.Panel, k)
+				if(not suc) then print(err) end
+			end
+			hook.Run(Vermilion.Event.MENU_CLOSED)
+		end)
+	end
 	
 	local categories = {}
 	for index,catData in SortedPairsByMemberValue(MENU.Categories, "Order", false) do
@@ -666,8 +858,17 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 	MENU.Built = true
 end)
 
+concommand.Add("vermilion_menu", function()
+	MENU:Open()
+end)
+
+concommand.Add("vermillion_menu", function()
+	Vermilion.Log("Warning: you have made a spelling error in the 'vermilion_menu' command. Please re-bind the command!")
+	MENU:Open()
+end)
+
 Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, "UpdateMenuAccess", true, function()
-	if(table.Count(MENU.Pages) == 0) then return end
+	if(not MENU.Built or table.Count(MENU.Pages) == 0) then return end
 	if(MENU.Pages["welcome"].TabButton == nil) then return end
 	for i,k in pairs(MENU.Pages) do
 		k.TabButton:SetVisible(k.Conditional(LocalPlayer()))
@@ -682,94 +883,4 @@ Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, "UpdateMenuAccess", true, fu
 	end
 	if(not MENU:GetActivePage().TabButton:IsVisible()) then MENU:ChangeTab("welcome") end
 	MENU.CatList:InvalidateLayout()
-end)
-
-
-
--- Build the base menu
-timer.Simple(1, function()
-	MENU.TabPanel = VToolkit:CreateFrame({
-		size = { 170, 600 },
-		pos = { -170, 10 },
-		closeBtn = false,
-		draggable = false,
-		title = "",
-		bgBlur = false
-	})
-	
-	MENU.ContentPanel = VToolkit:CreateFrame({
-		size = { 600, 600 },
-		pos = { 200, ScrH() },
-		closeBtn = true,
-		draggable = false,
-		title = "Vermilion Menu",
-		bgBlur = false
-	})
-	
-	MENU.ContentPanel.lblTitle.UpdateColours = function() end
-	
-	
-	-- add a list thingy
-	local catList = VToolkit:CreateCategoryList()
-	catList:SetPos(5, 5)
-	catList:SetSize(160, 590)
-	catList:SetParent(MENU.TabPanel)
-	
-	MENU.CatList = catList
-	
-	MENU.TabPanel:SetVisible(false)
-	MENU.ContentPanel:SetVisible(false)
-	MENU.TabPanel:MakePopup()
-	MENU.ContentPanel:MakePopup()
-
-	function MENU.ContentPanel:Close()
-		MENU:Close()
-	end
-
-	function MENU:Open()
-		if(hook.Run(Vermilion.Event.MENU_OPENING) == false or MENU.IsOpen or not MENU.Built) then return end
-		
-		for i,k in pairs(MENU.Pages) do
-			if(k.Conditional(LocalPlayer())) then
-				xpcall(k.Updater, function(err)
-					Vermilion.Log("Failed to update panel (" .. k.ID .. "): " .. err)
-					debug.Trace()
-				end, k.Panel, k)
-			end
-		end
-		
-		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
-		
-		MENU.IsOpen = true
-		MENU.TabPanel:SetVisible(true)
-		MENU.ContentPanel:SetVisible(true)
-		MENU.TabPanel:MoveTo(10, 10, 0.5, 0, -3)
-		MENU.ContentPanel:MoveTo(200, 10, 0.5, 0, -3, function()
-			MENU.TabPanel:SetKeyboardInputEnabled(true)
-			MENU.ContentPanel:SetKeyboardInputEnabled(true)
-			hook.Run(Vermilion.Event.MENU_OPEN)
-		end)
-	end
-
-	function MENU:Close(force)
-		if(not force and (hook.Run(Vermilion.Event.MENU_CLOSING) == false or not MENU.IsOpen)) then return end
-		
-		MENU.TabPanel:MoveTo(-170, 10, 0.5, 0, -3)
-		MENU.ContentPanel:MoveTo(200, ScrH(), 0.5, 0, -3, function()
-			MENU.TabPanel:SetVisible(false)
-			MENU.ContentPanel:SetVisible(false)
-			MENU.TabPanel:SetKeyboardInputEnabled(false)
-			MENU.ContentPanel:SetKeyboardInputEnabled(false)
-			MENU.IsOpen = false
-			for i,k in pairs(MENU.Pages) do
-				local suc, err = pcall(k.Destroyer, k.Panel, k)
-				if(not suc) then print(err) end
-			end
-			hook.Run(Vermilion.Event.MENU_CLOSED)
-		end)
-	end
-
-	concommand.Add("vermilion_menu", function()
-		MENU:Open()
-	end)
 end)

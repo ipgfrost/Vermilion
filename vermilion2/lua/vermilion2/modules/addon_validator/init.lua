@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Addon Validator"
 MODULE.ID = "addon_validator"
 MODULE.Description = "Checks if the client has all the addons that the server does."
@@ -170,5 +170,3 @@ function MODULE:InitClient()
 	end)
 	
 end
-
-Vermilion:RegisterModule(MODULE)

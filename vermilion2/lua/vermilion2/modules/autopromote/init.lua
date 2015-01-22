@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Auto-Promote"
 MODULE.ID = "auto_promote"
 MODULE.Description = "Automatically promotes users to different ranks depending on playtime. This is a direct port from Vermilion 1 and is probably buggy. I'll fix that later."
@@ -58,7 +58,7 @@ function MODULE:InitServer()
 				if(k1.Rank == rank.Name) then
 					if(vdata.Playtime >= k1.Playtime) then
 						vdata:SetRank(k1.ToRank)
-						Vermilion:BroadcastNoficiation(k:GetName() .. " was automatically promoted to " .. k1.ToRank .. " after playing for " .. k1.PlaytimeString .. "!")
+						MODULE:TransBroadcastNotify("autodone", { k:GetName(), k1.ToRank, k1.PlaytimeString })
 					end
 					break
 				end
@@ -96,7 +96,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddPage({
 			ID = "autopromote",
-			Name = "Auto-Promote",
+			Name = Vermilion:TranslateStr("menu:autopromote"),
 			Order = 6,
 			Category = "ranks",
 			Size = { 785, 540 },
@@ -106,9 +106,9 @@ function MODULE:InitClient()
 			Builder = function(panel, paneldata)
 				local listings = VToolkit:CreateList({
 					cols = {
-						"From Rank",
-						"To Rank",
-						"After Playing For"
+						MODULE:TranslateStr("list:from"),
+						MODULE:TranslateStr("list:to"),
+						MODULE:TranslateStr("list:after")
 					},
 					multiselect = false
 				})
@@ -118,12 +118,12 @@ function MODULE:InitClient()
 				
 				paneldata.PromotionTable = listings
 				
-				local listingsLabel = VToolkit:CreateHeaderLabel(listings, "Auto-Promotion Listings")
+				local listingsLabel = VToolkit:CreateHeaderLabel(listings, MODULE:TranslateStr("header"))
 				listingsLabel:SetParent(panel)
 				
-				local removeListing = VToolkit:CreateButton("Remove Listing", function()
+				local removeListing = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
 					if(table.Count(listings:GetSelected()) == 0) then
-						VToolkit:CreateErrorDialog("Must select at least one listing to remove.")
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("remove:error"))
 						return
 					end
 					local tab = {}
@@ -146,7 +146,7 @@ function MODULE:InitClient()
 				removeListing:SetSize(105, 30)
 				removeListing:SetParent(panel)
 				
-				local saveListings = VToolkit:CreateButton("Save Listings", function()
+				local saveListings = VToolkit:CreateButton(MODULE:TranslateStr("save"), function()
 					local tab = {}
 					for i,k in pairs(listings:GetLines()) do
 						table.insert(tab, { Rank = k:GetValue(1), ToRank = k:GetValue(2), PlaytimeString = k:GetValue(3), Playtime = k.TotalTime})
@@ -160,7 +160,7 @@ function MODULE:InitClient()
 				saveListings:SetSize(105, 30)
 				saveListings:SetParent(panel)
 				
-				local fromRankLabel = VToolkit:CreateLabel("From Rank: ")
+				local fromRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("from"))
 				fromRankLabel:SetPos(10, 402)
 				fromRankLabel:SetDark(true)
 				fromRankLabel:SetParent(panel)
@@ -175,7 +175,7 @@ function MODULE:InitClient()
 				end
 				paneldata.FromRankCombo = fromRankCombo
 				
-				local toRankLabel = VToolkit:CreateLabel("To Rank: ")
+				local toRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("to"))
 				toRankLabel:SetPos(10, 432)
 				toRankLabel:SetDark(true)
 				toRankLabel:SetParent(panel)
@@ -190,12 +190,12 @@ function MODULE:InitClient()
 				end
 				paneldata.ToRankCombo = toRankCombo
 				
-				local timeLabel = VToolkit:CreateLabel("After Playing For (running total since first ever spawn, not since last promotion):")
+				local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("after"))
 				timeLabel:SetPos(10, 460)
 				timeLabel:SetDark(true)
 				timeLabel:SetParent(panel)
 				
-				local daysLabel = VToolkit:CreateLabel("Days:")
+				local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
 				daysLabel:SetPos(10 + ((64 - daysLabel:GetWide()) / 2), 480)
 				daysLabel:SetParent(panel)
 				
@@ -205,7 +205,7 @@ function MODULE:InitClient()
 				
 				
 				
-				local hoursLabel = VToolkit:CreateLabel("Hours:")
+				local hoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
 				hoursLabel:SetPos(84 + ((64 - hoursLabel:GetWide()) / 2), 480)
 				hoursLabel:SetParent(panel)
 				
@@ -221,7 +221,7 @@ function MODULE:InitClient()
 				
 				
 				
-				local minsLabel = VToolkit:CreateLabel("Minutes:")
+				local minsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
 				minsLabel:SetPos(158 + ((64 - minsLabel:GetWide()) / 2), 480)
 				minsLabel:SetParent(panel)
 				
@@ -237,7 +237,7 @@ function MODULE:InitClient()
 				
 				
 				
-				local secondsLabel = VToolkit:CreateLabel("Seconds:")
+				local secondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
 				secondsLabel:SetPos(232 + ((64 - secondsLabel:GetWide()) / 2), 480)
 				secondsLabel:SetParent(panel)
 				
@@ -251,13 +251,13 @@ function MODULE:InitClient()
 					end
 				end
 				
-				local addListingButton = VToolkit:CreateButton("Add Listing", function()
+				local addListingButton = VToolkit:CreateButton(MODULE:TranslateStr("add"), function()
 					if(fromRankCombo.SelectedValue == nil or toRankCombo.SelectedValue == nil) then
-						VToolkit:CreateErrorDialog("Please input the initial rank and the target rank correctly!")
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:inittarrank"))
 						return
 					end
 					if(fromRankCombo.SelectedValue == toRankCombo.SelectedValue) then
-						VToolkit:CreateErrorDialog("Must select two different ranks.")
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:diff"))
 						return
 					end
 					local time = 0
@@ -273,7 +273,7 @@ function MODULE:InitClient()
 					time = time + (daysWang:GetValue() * 86400)
 					
 					if(time == 0) then
-						VToolkit:CreateErrorDialog("Must have playtime greater than zero.")
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:time:0"))
 						return
 					end
 					
@@ -290,16 +290,16 @@ function MODULE:InitClient()
 				
 				MODULE:AddHook(Vermilion.Event.MENU_CLOSING, function()
 					if(paneldata.UnsavedChanges) then
-						VToolkit:CreateConfirmDialog("There are unsaved changes in the Auto-Promote settings! Really close?", function()
+						VToolkit:CreateConfirmDialog(MODULE:TranslateStr("unsaved"), function()
 							Vermilion.Menu:Close(true)
 							paneldata.UnsavedChanges = false
-						end, { Confirm = "Yes", Deny = "No", Default = false })
+						end, { Confirm = MODULE:TranslateStr("yes"), Deny = MODULE:TranslateStr("no"), Default = false })
 						return false
 					end
 				end)
 			
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				MODULE:NetCommand("VGetAutoPromoteListing")
 				paneldata.FromRankCombo:Clear()
 				paneldata.ToRankCombo:Clear()
@@ -310,5 +310,3 @@ function MODULE:InitClient()
 			end
 		})
 end
-
-Vermilion:RegisterModule(MODULE)

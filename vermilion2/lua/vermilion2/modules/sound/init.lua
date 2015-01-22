@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Sounds"
 MODULE.ID = "sound"
 MODULE.Description = "Plays sounds from files, the internet and the SoundCloud API."
@@ -363,8 +363,17 @@ function MODULE:InitClient()
 		end
 		local mod = Vermilion:GetModule("client_settings")
 		if(mod == nil) then return end
-		mod:AddOption("vermilion_fft", "Enable Visualiser", "Checkbox", "Features")
-		mod:AddOption("vermilion_fft_type", "Visualiser Style", "Combobox", "Graphics", {
+		mod:AddOption({
+			GuiText = "Enable Visualiser",
+			ConVar = "vermilion_fft",
+			Type = "Checkbox",
+			Category = "Features"
+		})
+		mod:AddOption({
+			GuiText = "Visualiser Style",
+			ConVar = "vermilion_fft_type",
+			Type = "Combobox",
+			Category = "Graphics",
 			Options = table.GetKeys(MODULE.Visualisers),
 			SetAs = "text"
 		})
@@ -648,5 +657,3 @@ function MODULE:InitClient()
 	end)
 	
 end
-
-Vermilion:RegisterModule(MODULE)

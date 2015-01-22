@@ -97,8 +97,10 @@ CreateClientConVar("vtoolkit_skin", "Basic", true, false)
 
 
 function VToolkit:GetActiveSkin()
-	assert(GetConVarString("vtoolkit_skin") != nil, "Bad active skin!")
-	assert(self.Skins[GetConVarString("vtoolkit_skin")] != nil, "No active skin!")
+	if(GetConVarString("vtoolkit_skin") == nil or self.Skins[GetConVarString("vtoolkit_skin")] == nil) then
+		RunConsoleCommand("vtoolkit_skin", "Basic")
+		return self.Skins["Basic"]
+	end
 	return self.Skins[GetConVarString("vtoolkit_skin")]
 end
 
@@ -246,12 +248,20 @@ function VToolkit:CreateButton(text, onClick)
 	button:SetText(text)
 	button:SetDark(self.Dark)
 	button.DoClick = function()
-		if(not button:GetDisabled()) then onClick() end
+		if(not button.vdisabled) then onClick() end
 	end
 	button.OldDisabled = button.SetDisabled
 	function button:SetDisabled(is)
-		self:SetEnabled(not is)
-		self:OldDisabled(is)
+		self.vdisabled = is
+		if(is) then
+			self:SetTextColor(Vermilion.Colours.Grey)
+		else
+			self:SetTextColor(Vermilion.Colours.Black)
+		end
+		self:SetAlpha(255)
+	end
+	function button:SetEnabled(is)
+		self:SetDisabled(not is)
 	end
 	if(self:GetSkinComponent("Button") != nil) then
 		if(self:GetSkinComponent("Button").Config != nil) then
@@ -394,7 +404,7 @@ function VToolkit:CreateDialog(title, text)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
 	
-	local confirmButton = self:CreateButton("OK", function(self)
+	local confirmButton = self:CreateButton(Vermilion:TranslateStr("ok"), function(self)
 		panel:Close()
 	end)
 	confirmButton:SetPos(200, 75)
@@ -406,7 +416,7 @@ function VToolkit:CreateDialog(title, text)
 end
 
 function VToolkit:CreateErrorDialog(text)
-	return self:CreateDialog("Error", text)
+	return self:CreateDialog(Vermilion:TranslateStr("error"), text)
 end
 
 function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // This can sometimes fall behind the VMenu and get lost... Fix it!
@@ -416,7 +426,7 @@ function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // 
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Vermilion - Select an Option",
+			['title'] = Vermilion:TranslateStr("combopanel_title"),
 			['bgBlur'] = true
 		}
 	)
@@ -437,7 +447,7 @@ function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // 
 	combo:SetSize(panel:GetWide() - 20, 25)
 	combo:SetParent(panel)
 
-	local confirmButton = self:CreateButton("OK", function(self)
+	local confirmButton = self:CreateButton(Vermilion:TranslateStr("ok"), function(self)
 		completeFunc(combo:GetValue())
 		panel:Close()
 	end)
@@ -445,7 +455,7 @@ function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // 
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
 	
-	local cancelButton = self:CreateButton("Cancel", function(self)
+	local cancelButton = self:CreateButton(Vermilion:TranslateStr("cancel"), function(self)
 		panel:Close()
 	end)
 	cancelButton:SetPos(145, 90)
@@ -462,7 +472,7 @@ function VToolkit:CreateConfirmDialog(text, completeFunc, options)
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Vermilion - Confirm",
+			['title'] = Vermilion:TranslateStr("confirmpanel_title"),
 			['bgBlur'] = true
 		}
 	)
@@ -477,8 +487,8 @@ function VToolkit:CreateConfirmDialog(text, completeFunc, options)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
 	
-	local confirmText = "OK"
-	local denyText = "Cancel"
+	local confirmText = Vermilion:TranslateStr("ok")
+	local denyText = Vermilion:TranslateStr("cancel")
 	
 	if(istable(options)) then
 		confirmText = options.Confirm or confirmText
@@ -526,7 +536,7 @@ function VToolkit:CreateTextInput(text, completeFunc)
 			['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 50 },
 			['closeBtn'] = true,
 			['draggable'] = true,
-			['title'] = "Vermilion - Text Entry Required",
+			['title'] = Vermilion:TranslateStr("textpanel_title"),
 			['bgBlur'] = true
 		}
 	)
@@ -550,7 +560,7 @@ function VToolkit:CreateTextInput(text, completeFunc)
 		panel:Close()
 	end
 	
-	local confirmButton = self:CreateButton("OK", function(self)
+	local confirmButton = self:CreateButton(Vermilion:TranslateStr("ok"), function(self)
 		completeFunc(textbox:GetValue())
 		panel:Close()
 	end)
@@ -558,7 +568,7 @@ function VToolkit:CreateTextInput(text, completeFunc)
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
 	
-	local cancelButton = self:CreateButton("Cancel", function(self)
+	local cancelButton = self:CreateButton(Vermilion:TranslateStr("cancel"), function(self)
 		panel:Close()
 	end)
 	cancelButton:SetPos(145, 75)
@@ -841,26 +851,79 @@ function VToolkit:CreatePreviewPanel(typ, parent, move)
 	return PreviewPanel
 end
 
-function VToolkit:CreateLeftDrawer(parent, sizeOffset)
+function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 	sizeOffset = sizeOffset or 0
+	if(closeBtn == nil) then closeBtn = true end
 	local drawer = vgui.Create("DPanel")
+	drawer.IsOpen = false
 	drawer:SetTall(parent:GetTall())
 	drawer:SetWide((parent:GetWide() / 2) + 55 + sizeOffset)
 	drawer:SetPos(-drawer:GetWide(), 0)
 	drawer:SetParent(parent)
-	local cRKPanel = self:CreateButton("Close", function()
-		drawer:MoveTo(-drawer:GetWide(), 0, 0.25, 0, -3)
-	end)
-	cRKPanel:SetPos(drawer:GetWide() - 65, 10)
-	cRKPanel:SetSize(50, 20)
-	cRKPanel:SetParent(drawer)
+	if(closeBtn) then
+		local cRKPanel = self:CreateButton(Vermilion:TranslateStr("close"), function()
+			drawer:Close()
+		end)
+		cRKPanel:SetPos(drawer:GetWide() - 65, 10)
+		cRKPanel:SetSize(50, 20)
+		cRKPanel:SetParent(drawer)
+	end
 	
 	function drawer:Open()
 		self:MoveTo(0, 0, 0.25, 0, -3)
+		self.IsOpen = true
 	end
 	
 	function drawer:Close()
-		drawer:MoveTo(-drawer:GetWide(), 0, 0.25, 0, -3)
+		self:MoveTo(-self:GetWide(), 0, 0.25, 0, -3)
+		self.IsOpen = false
+	end
+	
+	function drawer:Toggle()
+		if(self.IsOpen) then
+			self:Close()
+		else
+			self:Open()
+		end
+	end
+	
+	return drawer
+end
+
+function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
+	sizeOffset = sizeOffset or 0
+	if(closeBtn == nil) then closeBtn = true end
+	local drawer = vgui.Create("DPanel")
+	drawer.IsOpen = false
+	drawer:SetTall(parent:GetTall())
+	drawer:SetWide((parent:GetWide() / 2) + 55 + sizeOffset)
+	drawer:SetPos(parent:GetWide(), 0)
+	drawer:SetParent(parent)
+	if(closeBtn) then
+		local cRKPanel = self:CreateButton(Vermilion:TranslateStr("close"), function()
+			drawer:Close()
+		end)
+		cRKPanel:SetPos(10, 10)
+		cRKPanel:SetSize(50, 20)
+		cRKPanel:SetParent(drawer)
+	end
+	
+	function drawer:Open()
+		self:MoveTo((parent:GetWide() / 2) - 50 - sizeOffset, 0, 0.25, 0, -3)
+		self.IsOpen = true
+	end
+	
+	function drawer:Close()
+		self:MoveTo(parent:GetWide(), 0, 0.25, 0, -3)
+		self.IsOpen = false
+	end
+	
+	function drawer:Toggle()
+		if(self.IsOpen) then
+			self:Close()
+		else
+			self:Open()
+		end
 	end
 	
 	return drawer

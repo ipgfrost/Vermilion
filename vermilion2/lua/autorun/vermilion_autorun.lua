@@ -33,12 +33,43 @@ if(SERVER) then
 	NOTIFY_UNDO = 2
 	NOTIFY_HINT = 3
 	NOTIFY_CLEANUP = 4
+	
+	--[[ local tab = {}
+	
+	local netstart = net.Start
+	local currmsg = nil
+	function net.Start(msg)
+		if(tab[msg] == nil) then
+			tab[msg] = { Number = 1, Size = 0 }
+		else
+			tab[msg].Number = tab[msg].Number + 1
+		end
+		currmsg = msg
+		netstart(msg)
+	end
+	local netsend = net.Send
+	function net.Send(vplayer)
+		tab[currmsg].Size = tab[currmsg].Size + net.BytesWritten()
+		netsend(vplayer)
+	end
+	
+	concommand.Add("v_networktracker", function()
+		PrintTable(tab)
+	end) ]]
 end
 if(not file.Exists("vermilion2/", "DATA")) then
 	file.CreateDir("vermilion2")
 end
 
 Vermilion = {}
+
+Vermilion.NetStrings = {}
+
+local addns = util.AddNetworkString
+function util.AddNetworkString(str)
+	if(string.StartWith(str, "V")) then table.insert(Vermilion.NetStrings, str) end
+	return addns(str)
+end
 
 function Vermilion.GetFileName(name)
 	if(CLIENT) then
@@ -74,7 +105,7 @@ function Vermilion.GetVersionString()
 end
 
 function Vermilion.GetVersion()
-	return 2, 2, 0
+	return 2, 4, 0
 end
 
 Vermilion.Internal = {}
@@ -108,7 +139,7 @@ function Vermilion.Log( str )
 		str = { Color(255, 0, 0), "[Vermilion2 - " .. side .. "] ", Color(255, 255, 255), str }
 	else
 		table.insert(str, 1, Color(255, 255, 255))
-		table.insert(str, 1, "[Vermilion - " .. side .. "] ")
+		table.insert(str, 1, "[Vermilion2 - " .. side .. "] ")
 		table.insert(str, 1, Color(255, 0, 0))
 	end
 	table.insert(str, "\n")
@@ -138,7 +169,8 @@ local files = {
 	{ "vermilion2/chatpredict.lua", true, true, true },
 	{ "vermilion2/geoip.lua", true, true, true },
 	{ "vermilion2/memoryviewer.lua", true, true, true },
-	{ "vermilion2/ply_extension.lua", false, false, true }
+	{ "vermilion2/ply_extension.lua", false, false, true },
+	{ "vermilion2/targetid.lua", true, true, false }
 }
 
 local clientfiles = 0

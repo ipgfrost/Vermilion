@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "VoIP Channels"
 MODULE.ID = "voip_channels"
 MODULE.Description = "Manages VoIP Channels"
@@ -206,5 +206,3 @@ end
 function MODULE:InitClient()
 	
 end
-
-Vermilion:RegisterModule(MODULE)

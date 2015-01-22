@@ -50,10 +50,10 @@ concommand.Add("vermilion", function(sender, cmd, args, fullstring)
 	local cmd = subcommands[args[1]]
 	if(cmd == nil) then
 		if(CLIENT and game.IsDedicated()) then
-			Vermilion.Log("Unknown command! You are not the host of this server; could you perhaps be trying to set your rank? If so, this is not the correct console!")
+			Vermilion.Log(Vermilion:TranslateStr("basecommand:dedicatedunknown"))
 			return
 		end
-		Vermilion.Log("Unknown Command!")
+		Vermilion.Log(Vermilion:TranslateStr("basecommand:unknown"))
 		return
 	end
 	local cargs = table.Copy(args)

@@ -39,11 +39,22 @@ function Vermilion.GetActiveLanguage(vplayer)
 	return GetConVarString("vermilion_interfacelang")
 end
 
+function Vermilion.GetActiveLanguageFile(forplayer)
+	if(Vermilion.Languages[Vermilion.GetActiveLanguage(forplayer)] != nil) then
+		return Vermilion.Languages[Vermilion.GetActiveLanguage(forplayer)]
+	end
+	if(Vermilion.Languages["English"] != nil) then return Vermilion.Languages["English"] end
+	return {}
+end
+
 function Vermilion:CreateLangBody(locale)
 	
 	local body = {}
 	
 	body.Locale = locale
+	body.DateTimeFormat = "%I:%M:%S %p on %d/%m/%Y"
+	body.DateFormat = "%d/%m/%Y"
+	body.TimeFormat = "%I:%M:%S %p"
 	
 	body.Translations = {}
 	
@@ -68,7 +79,9 @@ end
 function Vermilion:TranslateStr(key, values, forplayer)
 	if(CLIENT and forplayer == nil) then forplayer = LocalPlayer() end
 	if(self.Languages[self.GetActiveLanguage(forplayer)] != nil) then
-		return self.Languages[self.GetActiveLanguage(forplayer)]:TranslateStr(key, values or {})
+		local translation = self.Languages[self.GetActiveLanguage(forplayer)]:TranslateStr(key, values or {})
+		if(translation != key or self.Languages["English"] == nil) then return translation end
+		return self.Languages["English"]:TranslateStr(key, values or {})
 	end
 	return key
 end
@@ -105,6 +118,14 @@ end
 Vermilion.Hooks = {}
 Vermilion.SafeHooks = {}
 Vermilion.LowPriorityHooks = {}
+Vermilion.SelfDestructHooks = {
+	Vermilion.Event.MOD_LOADED,
+	Vermilion.Event.MOD_POST
+}
+
+function Vermilion:AddSDHookType(name)
+	table.insert(self.SelfDestructHooks, name)
+end
 
 function Vermilion:AddHook(hookType, hookName, safe, callback)
 	if(safe) then
@@ -139,6 +160,19 @@ end
 
 local oldHook = hook.Call
 
+local function destroySDHook(name)
+	if(table.HasValue(Vermilion.SelfDestructHooks, name)) then
+		Vermilion.Log({"Performing self-destruct on hook: ", Vermilion.Colours.Blue, name})
+		Vermilion.SafeHooks[name] = nil
+		Vermilion.Hooks[name] = nil
+		for i,k in pairs(Vermilion.Modules) do
+			k.Hooks[name] = nil
+		end
+		Vermilion.LowPriorityHooks[name] = nil
+		hook.GetTable()[name] = nil
+	end
+end
+
 local vHookCall = function(evtName, gmTable, ...)
 	local a, b, c, d, e, f
 	if(Vermilion.SafeHooks[evtName] != nil) then
@@ -149,18 +183,25 @@ local vHookCall = function(evtName, gmTable, ...)
 	if(Vermilion.Hooks[evtName] != nil) then
 		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
 			a, b, c, d, e, f = hookFunc(...)
-			if(a != nil) then return a, b, c, d, e, f end
+			if(a != nil) then
+				destroySDHook(evtName)
+				return a, b, c, d, e, f
+			end
 		end
 	end
 	for i,mod in pairs(Vermilion.Modules) do
 		a, b, c, d, e, f = mod:DistributeEvent(evtName, ...)
-		if(a != nil) then return a, b, c, d, e, f end
+		if(a != nil) then
+			destroySDHook(evtName)
+			return a, b, c, d, e, f
+		end
 		if(mod.Hooks != nil) then
 			local hookList = mod.Hooks[evtName]
 			if(hookList != nil) then
 				for i,hookFunc in pairs(hookList) do
 					a, b, c, d, e, f = hookFunc(...)
 					if(a != nil) then
+						destroySDHook(evtName)
 						return a, b, c, d, e, f
 					end
 				end
@@ -168,13 +209,20 @@ local vHookCall = function(evtName, gmTable, ...)
 		end
 	end
 	a,b,c,d,e,f = oldHook(evtName, gmTable, ...)
-	if(a != nil) then return a, b, c, d, e, f end
+	if(a != nil) then
+		destroySDHook(evtName)
+		return a, b, c, d, e, f
+	end
 	if(Vermilion.LowPriorityHooks[evtName] != nil) then
 		for id,hookFunc in pairs(Vermilion.LowPriorityHooks[evtName]) do
 			a, b, c, d, e, f = hookFunc(...)
-			if(a != nil) then return a, b, c, d, e, f end
+			if(a != nil) then
+				destroySDHook(evtName)
+				return a, b, c, d, e, f
+			end
 		end
 	end
+	destroySDHook(evtName) -- one last attempt to destroy the hook.
 end
 
 hook.Call = vHookCall
@@ -207,18 +255,24 @@ if(hook.GetTable()["PlayerSay"] != nil) then
 	hook.GetTable()["PlayerSay"] = nil
 end
 
-timer.Create("Vermilion_OverrideHookCall", 1, 0, function()
+Vermilion.DHOStarted = false
+
+local function doHookOverride()
 	if(hook.Call != vHookCall) then
 		hook.Call = vHookCall
 	end
 	if(hook.Add != vHookAdd) then
-		hook.Call = vHookAdd
+		hook.Add = vHookAdd
 	end
 	if(hook.Remove != vHookRemove) then
 		hook.Remove = vHookRemove
 	end
-end)
-
+	timer.Simple(1, doHookOverride)
+end
+if(not Vermilion.DHOStarted) then
+	doHookOverride()
+	Vermilion.DHOStarted = true
+end
 
 
 --[[
@@ -263,21 +317,27 @@ function Vermilion:LoadModules(cl_loaddata)
 			local fle = CompileFile("vermilion2/modules/" .. dir .. "/init.lua")
 			if(isfunction(fle)) then
 				if(SERVER) then AddCSLuaFile("vermilion2/modules/" .. dir .. "/init.lua") end
+				MODULE = self:CreateBaseModule()
 				xpcall(fle, function(err)
 					Vermilion.Log("Error loading module: " .. err)
 					debug.Trace()
 				end)
+				Vermilion:RegisterModule(MODULE)
+				MODULE = nil
 			end
 		end
 	end
 	for index,mod in pairs(self.Modules) do
 		if(SERVER) then
-			if(Vermilion:GetData("addon_load_states", {}, true)[mod.ID] == false) then
+			if(Vermilion:GetData("addon_load_states", {}, true)[mod.ID] == nil and mod.StartDisabled) then
+				Vermilion:GetData("addon_load_states", {}, true)[mod.ID] = false
+			end
+			if(Vermilion:GetData("addon_load_states", {}, true)[mod.ID] == false and not mod.PreventDisable) then
 				continue
 			end
 		end
 		if(CLIENT) then
-			if(cl_loaddata[mod.ID] == false) then
+			if(cl_loaddata[mod.ID] == false and not mod.PreventDisable) then
 				continue
 			end
 		end
@@ -352,21 +412,27 @@ function Vermilion:CreateBaseModule()
 		end
 		
 		function base:NetHook(nstr, func)
-			net.Receive(self.ID .. ":" .. nstr, function(len, ply)
-				func(ply)
-			end)
+			self.NetworkHooks[nstr] = func
 		end
 		
 		function base:NetStart(msg)
-			net.Start(self.ID .. ":" .. msg)
+			net.Start("V:" .. self.ID)
+			net.WriteString(msg)
 		end
 		
 		function base:NetCommand(msg, target)
-			net.Start(self.ID .. ":" .. msg)
+			net.Start("V:" .. self.ID)
+			net.WriteString(msg)
 			if(SERVER) then
 				net.Send(target)
 			else
 				net.SendToServer()
+			end
+		end
+		
+		function base:DidGetNetStr(str, vplayer)
+			if(self.NetworkHooks[str] != nil) then
+				self.NetworkHooks[str](vplayer)
 			end
 		end
 		
@@ -385,6 +451,12 @@ function Vermilion:CreateBaseModule()
 			return tab
 		end
 		
+		function base:TransBroadcastNotify(key, parameters, typ, time)
+			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
+			for i,k in pairs(VToolkit.GetValidPlayers(false)) do
+				Vermilion:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
+			end
+		end
 		
 		function base:DistributeEvent(event, parameters) end
 		
@@ -397,6 +469,7 @@ function Vermilion:CreateBaseModule()
 	base.Permissions = {}
 	base.PermissionDefinitions = {}
 	base.DataChangeHooks = {}
+	base.NetworkHooks = {}
 	
 	setmetatable(base, { __index = Vermilion.ModuleBase })
 	
@@ -423,10 +496,17 @@ function Vermilion:RegisterModule(mod)
 				end
 			end
 		end
-		if(mod.NetworkStrings != nil) then
-			for i,k in pairs(mod.NetworkStrings) do
-				util.AddNetworkString(mod.ID .. ":" .. k)
-			end
+		if(mod.NetworkStrings != nil and table.Count(mod.NetworkStrings) > 0) then
+			util.AddNetworkString("V:" .. mod.ID)
+			net.Receive("V:" .. mod.ID, function(len, vplayer)
+				mod:DidGetNetStr(net.ReadString(), vplayer)
+			end)
+		end
+	else
+		if(mod.NetworkStrings != nil and table.Count(mod.NetworkStrings) > 0) then
+			net.Receive("V:" .. mod.ID, function()
+				mod:DidGetNetStr(net.ReadString())
+			end)
 		end
 	end
 	if(mod.ConVars != nil) then
@@ -744,4 +824,36 @@ else
 		Vermilion.Log("[Notification:Broadcast] " .. tostring(text))
 		self:AddNotification(VToolkit.GetValidPlayers(false), text, typ, time)
 	end
+	
+	function Vermilion:TransBroadcastNotify(text, vars, typ, time, MODULE)
+		Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
+		for i,k in pairs(VToolkit.GetValidPlayers(false)) do
+			if(MODULE) then
+				self:AddNotification(k, MODULE:TranslateStr(text, vars, k), typ, time)
+				continue
+			end
+			self:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
+		end
+	end
+	
+	function Vermilion:TransNotify(recipient, text, vars, typ, time, MODULE)
+		if(istable(recipient)) then
+			if(MODULE) then
+				for i,k in pairs(recipient) do
+					self:AddNotification(k, MODULE:TranslateStr(text, vars, k), typ, time)
+				end
+			else
+				for i,k in pairs(recipient) do
+					self:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
+				end
+			end
+		else
+			if(MODULE) then
+				self:AddNotification(recipient, MODULE:TranslateStr(text, vars, recipient), typ, time)
+			else
+				self:AddNotification(recipient, self:TranslateStr(text, vars, recipient), typ, time)
+			end
+		end
+	end
+	
 end

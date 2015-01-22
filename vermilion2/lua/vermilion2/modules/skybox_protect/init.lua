@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Skybox Protector"
 MODULE.ID = "skybox_protect"
 MODULE.Description = "Protects the skybox from trolling."
@@ -169,5 +169,3 @@ end
 function MODULE:InitClient()
 	
 end
-
-Vermilion:RegisterModule(MODULE)

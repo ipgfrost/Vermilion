@@ -57,7 +57,7 @@ end)
 Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "GeoIPOptions", true, function()
 	local mod = Vermilion:GetModule("server_settings")
 	if(mod != nil) then
-		mod:AddOption("Vermilion", "geoip_enabled", "Enable GeoIP Services", "Checkbox", "Misc")
+		mod:AddOption("Vermilion", "geoip_enabled", Vermilion:TranslateStr("geoip:enablesetting"), "Checkbox", "Misc")
 	end
 end)
 
@@ -75,8 +75,13 @@ if(SERVER) then
 	function Vermilion.GeoIP:LoadConfiguration()
 		if(file.Exists(self.FSCacheFile, "DATA") and self.DoFSCache) then
 			self.Cache = util.JSONToTable(file.Read(self.FSCacheFile, "DATA"))
+			if(self.Cache == nil) then
+				self.Cache = {}
+				self.Cache.ExpiryTime = os.time() + self.FSCacheTime
+				self.Cache.Addresses = {}
+			end
 			if(self.Cache.ExpiryTime <= os.time()) then
-				Vermilion.Log("GeoIP cache has expired. Removing.")
+				Vermilion.Log(Vermilion:TranslateStr("geoip:cache:expired"))
 				table.Empty(self.Cache)
 				self.Cache.ExpiryTime = os.time() + self.FSCacheTime
 				self.Cache.Addresses = {}
@@ -90,7 +95,7 @@ if(SERVER) then
 
 	timer.Create("VGeoIPFlush", 60, 0, function()
 		if(Vermilion.GeoIP.Cache.ExpiryTime > os.time()) then return end
-		Vermilion.Log("GeoIP cache has expired. Removing.")
+		Vermilion.Log(Vermilion:TranslateStr("geoip:cache:expired"))
 		table.Empty(self.Cache)
 		self.Cache.ExpiryTime = os.time() + self.FSCacheTime
 		self.Cache.Addresses = {}
@@ -148,6 +153,7 @@ if(SERVER) then
 				return
 			end
 			local data = util.JSONToTable(body)
+			if(data == nil) then if(isfunction(fcallback)) then fcallback(ip, "Not Found") end return end
 			Vermilion.GeoIP.Cache.Addresses[ip] = {
 				CountryCode = data.country_code,
 				CountryName = data.country_name,
@@ -178,9 +184,14 @@ if(SERVER) then
 else
 	
 	--- temp code until I add the new TargetID
-	Vermilion:AddHook("HUDDrawTargetID", "GeoIPTargetID", true, function()
+	Vermilion:AddHook("Vermilion2_TargetIDDataGeoIP", "GeoIPTargetID", false, function(vplayer)
 		if(not GetGlobalBool("geoip_enabled")) then return end
-		local tr = util.GetPlayerTrace( LocalPlayer() )
+		if(vplayer.VCountry == nil or vplayer.VCountry == "") then
+			vplayer.VCountry = string.lower(vplayer:GetNWString("CountryCode"))
+			vplayer.VCountryMat = Material("flags16/" .. vplayer.VCountry .. ".png", "noclamp smooth")
+		end
+		return vplayer.VCountryMat 
+		--[[ local tr = util.GetPlayerTrace( LocalPlayer() )
 		local trace = util.TraceLine( tr )
 		if (!trace.Hit) then return end
 		if (!trace.HitNonWorld) then return end
@@ -211,7 +222,7 @@ else
 		
 		surface.SetMaterial(trace.Entity.VCountryMat)
 		surface.SetDrawColor(255, 255, 255, 255)
-		surface.DrawTexturedRect(x, y, 24, 16.5)
+		surface.DrawTexturedRect(x, y, 24, 16.5) ]]
 	end)
 	
 end

@@ -105,11 +105,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 		
 		function meta:MoveUp()
 			if(self:GetImmunity() <= 2) then
-				Vermilion.Log("Cannot move rank up. Would interfere with owner rank.")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmoveup"))
 				return false
 			end
 			if(self.Protected) then
-				Vermilion.Log("Cannot move protected rank!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
 			local immunity = self:GetImmunity()
@@ -121,11 +121,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 		
 		function meta:MoveDown()
 			if(self:GetImmunity() == table.Count(Vermilion.Data.Ranks)) then
-				Vermilion.Log("Cannot move rank; already at bottom!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmovedown"))
 				return false
 			end
 			if(self.Protected) then
-				Vermilion.Log("Cannot move protected rank!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
 			local immunity = self:GetImmunity()
@@ -147,13 +147,13 @@ function Vermilion:AttachRankFunctions(rankObj)
 		
 		function meta:Rename(newName)
 			if(self.Protected) then
-				Vermilion.Log("Cannot rename protected rank!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
 				return false
 			end
 			for i,k in pairs(self:GetUsers()) do
 				k:SetRank(newName)
 			end
-			Vermilion.Log("Renamed rank " .. self.Name .. " to " .. newName)
+			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
 			hook.Run(Vermilion.Event.RankRenamed, self.Name, newName)
 			self.Name = newName
 			Vermilion:BroadcastRankData()
@@ -162,7 +162,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 		
 		function meta:Delete()
 			if(self.Protected) then
-				Vermilion.Log("Cannot delete protected rank!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:deleteprotected"))
 				return false
 			end
 			for i,k in pairs(self:GetUsers()) do
@@ -175,7 +175,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			table.RemoveByValue(Vermilion.Data.Ranks, self)
 			Vermilion:BroadcastRankData()
-			Vermilion.Log("Removed rank " .. self.Name)
+			Vermilion.Log(Vermilion:TranslateStr("config:rank:deleted", { self.Name }))
 			hook.Run(Vermilion.Event.RankDeleted, self.Name)
 			return true
 		end
@@ -235,7 +235,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					if(k.Permission == permission) then has = true break end
 				end
 				if(not has) then
-					Vermilion.Log("Looking for unknown permission (" .. permission .. ")!")
+					Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
 				end
 			end
 			if(self.InheritsFrom != nil) then
@@ -252,7 +252,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				self.Colour = colour
 				Vermilion:BroadcastRankData()
 			else
-				Vermilion.Log("Warning: cannot set colour. Invalid type " .. type(colour) .. "!")
+				Vermilion.Log(Vermilion:TranslateStr("config:rank:badcolour", { type(colour) }))
 			end
 		end
 		
@@ -370,7 +370,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				hook.Run(Vermilion.Event.PlayerChangeRank, self, old, rank)
 				local ply = self:GetEntity()
 				if(IsValid(ply)) then
-					--Vermilion:AddNotification(ply, Vermilion:TranslateStr("change_rank", { self.Rank }, ply))
+					Vermilion:AddNotification(ply, Vermilion:TranslateStr("change_rank", { self.Rank }, ply))
 					ply:SetNWString("Vermilion_Rank", self.Rank)
 					Vermilion:SyncClientRank(ply)
 				end
@@ -384,7 +384,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 					if(k.Permission == permission) then has = true break end
 				end
 				if(not has) then
-					Vermilion.Log("Looking for unknown permission (" .. permission .. ")!")
+					Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
 				end
 			end
 			if(table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")) then return true end
@@ -408,6 +408,7 @@ function Vermilion:StoreNewUserdata(vplayer)
 end
 
 function Vermilion:GetUser(vplayer)
+	if(not isfunction(vplayer.SteamID)) then return end
 	return Vermilion:GetUserBySteamID(vplayer:SteamID())
 end
 
@@ -434,11 +435,11 @@ function Vermilion:HasPermission(vplayer, permission)
 			if(k.Permission == permission) then has = true break end
 		end
 		if(not has) then
-			Vermilion.Log("Looking for unknown permission (" .. permission .. ")!")
+			Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
 		end
 	end
 	if(not IsValid(vplayer)) then
-		Vermilion.Log("Invalid user during permissions check; assuming console.")
+		Vermilion.Log(Vermilion:TranslateStr("config:invaliduser"))
 		return true
 	end
 	local usr = self:GetUser(vplayer)
@@ -574,20 +575,7 @@ function Vermilion:LoadConfiguration()
 				Vermilion.Log({ Vermilion.Colours.Red, "NO BACKUPS FOUND! Did you delete them? Restoring configuration file to defaults." })
 				self:CreateDefaultDataStructs()
 				return
-			end
-			
-			if(table.Count(fls) > 100) then
-				local oneWeekAgo = os.time() - (60 * 60 * 24 * 7)
-				for i,k in pairs(fls) do
-					if(tonumber(string.Replace(k, ".txt", "")) < oneWeekAgo) then
-						Vermilion.Log("Deleting week-old configuration file; " .. k .. "!")
-						file.Delete("vermilion2/backup/" .. k)
-						table.RemoveByValue(fls, k)
-						if(table.Count(fls) <= 100) then break end
-					end
-				end
-			end
-			
+			end			
 			
 			local max = 0
 			for i,k in pairs(fls) do
@@ -601,7 +589,20 @@ function Vermilion:LoadConfiguration()
 			
 			Vermilion.Log("Restored configuration with timestamp " .. tostring(max) .. "!")
 		else
-			Vermilion.Log("Backing up configuration file...")
+			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
+			--if(table.Count(fls) > 100) then
+				local oneWeekAgo = os.time() - (60 * 60 * 24 * 7)
+				for i,k in pairs(fls) do
+					if(tonumber(string.Replace(k, ".txt", "")) < oneWeekAgo) then
+						Vermilion.Log("Deleting week-old configuration file; " .. k .. "!")
+						file.Delete("vermilion2/backup/" .. k)
+						table.RemoveByValue(fls, k)
+						if(table.Count(fls) <= 100) then break end
+					end
+				end
+			--end
+		
+			Vermilion.Log(Vermilion:TranslateStr("config:backup"))
 			local code = tostring(os.time())
 			local content = file.Read(self.GetFileName("settings"), "DATA")
 			
@@ -615,7 +616,7 @@ function Vermilion:LoadConfiguration()
 			self:AttachUserFunctions(usr)
 		end
 		Vermilion.Data = data
-		self.Log("Loaded data...")
+		self.Log(Vermilion:TranslateStr("config:loaded"))
 	end
 end
 
@@ -623,7 +624,7 @@ Vermilion:LoadConfiguration()
 
 function Vermilion:SaveConfiguration(verbose)
 	if(verbose == nil) then verbose = true end
-	if(verbose) then Vermilion.Log("Saving Data...") end
+	if(verbose) then Vermilion.Log(Vermilion:TranslateStr("config:saving")) end
 	local safeTable = VToolkit.NetSanitiseTable(Vermilion.Data)
 	file.Write(self.GetFileName("settings"), util.Compress(util.TableToJSON(safeTable)))
 end
@@ -649,6 +650,7 @@ end)
 ]]--
 
 Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer)
+	vplayer:SetNWString("SteamID", vplayer:SteamID())
 	local new = false
 	if(not Vermilion:HasUser(vplayer)) then
 		Vermilion:StoreNewUserdata(vplayer)
@@ -679,9 +681,9 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	timer.Simple(1, function()
 		if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 		if(new) then
-			Vermilion:BroadcastNotification(vplayer:GetName() .. " has joined the server for the first time!")
+			Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:join:first", { vplayer:GetName() }))
 		else
-			Vermilion:BroadcastNotification(vplayer:GetName() .. " has joined the server.")
+			Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:join", { vplayer:GetName() }))
 		end
 	end)
 end)
@@ -691,7 +693,7 @@ gameevent.Listen("player_disconnect")
 Vermilion:AddHook("player_disconnect", "DisconnectMessage", true, function(data)
 	if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 	if(string.find(data.reason, "Kicked by")) then return end
-	Vermilion:BroadcastNotification(data.name .. " left the server: " .. data.reason)
+	Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:left", { data.name, data.reason }))
 end)
 
 
@@ -777,6 +779,7 @@ local spawnFuncs = {
 
 for i,k in pairs(spawnFuncs) do
 	Vermilion:AddHook(k[1], "Vermilion_CheckLimit" .. k[1], false, function(vplayer)
+		if(not IsValid(vplayer)) then return end
 		if(not vplayer:CheckLimit(k[2])) then return false end
 	end)
 end

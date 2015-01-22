@@ -285,3 +285,18 @@ function VToolkit.GetNPCName(vclass)
 	if(list.Get("NPC")[vclass] == nil) then return nil end
 	return list.Get( "NPC" )[vclass]['Name']
 end
+
+local pMeta = FindMetaTable("Player")
+if(CLIENT) then
+	function pMeta:SteamID()
+		return self:GetNWString("SteamID")
+	end
+else
+	pMeta.OldSteamID = pMeta.SteamID -- fixes singleplayer on Linux
+	function pMeta:SteamID()
+		if(game.SinglePlayer()) then
+			return "STEAM_0:0:0"
+		end
+		return self:OldSteamID()
+	end
+end

@@ -17,14 +17,33 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = MODULE
-MODULE.Name = "Base"
-MODULE.ID = "base"
-MODULE.Description = "Something"
+MODULE.Name = "Developer Tweaks"
+MODULE.ID = "developer"
+MODULE.Description = "Enables developer functionality that should usually be disabled on public servers."
 MODULE.Author = "Ned"
+MODULE.StartDisabled = true
 MODULE.Permissions = {
-
+	"bot"
 }
+
+function MODULE:RegisterChatCommands()
+	Vermilion:AddChatCommand({
+		Name = "bot",
+		Description = "Adds a bot",
+		Syntax = "<number of bots>",
+		Permissions = { "bot" },
+		Function = function(sender, text, log, glog)
+			local num = tonumber(text[1]) or 1
+			for i=1,num,1 do
+				RunConsoleCommand("bot")
+			end
+		end
+	})
+end
+
+function MODULE:InitShared()
+	include("vermilion2/modules/developer/interfacebuilder/init.lua")
+end
 
 function MODULE:InitServer()
 	

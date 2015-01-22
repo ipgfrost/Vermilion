@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Death Notice"
 MODULE.ID = "deathnotice"
 MODULE.Description = "Broadcasts a notification when someone dies."
@@ -40,6 +40,7 @@ function MODULE:InitShared()
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		local mod = Vermilion:GetModule("server_settings")
 		if(mod != nil) then
+			if(SERVER) then MODULE:GetData("enabled", true, true) end -- create variable if it doesn't exist.
 			mod:AddOption("deathnotice", "enabled", "Enable Death Notices", "Checkbox", "Misc")
 			mod:AddOption("deathnotice", "debugmode", "Enable Death Notice Debug Output", "Checkbox", "Misc")
 		end
@@ -54,7 +55,7 @@ function MODULE:InitServer()
 	end)
 	
 	self:AddHook("DoPlayerDeath", "DeathNotice", function(victim, attacker, dmg)
-		if(not MODULE:GetData("enabled", true)) then return end
+		if(not MODULE:GetData("enabled", true, true)) then return end
 		local inflictor = dmg:GetInflictor()
 		
 		if(attacker == nil or victim == nil) then return end
@@ -233,9 +234,3 @@ function MODULE:InitServer()
 		end
 	end
 end
-
-function MODULE:InitClient()
-	
-end
-
-Vermilion:RegisterModule(MODULE)

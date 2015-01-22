@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Trouble in Terrorist Town"
 MODULE.ID = "ttt"
 MODULE.Description = "Integrates with TTT"
@@ -226,5 +226,3 @@ function MODULE:InitServer()
 	})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

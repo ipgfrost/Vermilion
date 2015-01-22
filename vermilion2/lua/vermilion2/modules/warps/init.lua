@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Warps"
 MODULE.ID = "warps"
 MODULE.Description = "Create destinations that can be travelled to using commands."
@@ -129,9 +129,3 @@ function MODULE:InitServer()
 		end
 	})
 end
-
-function MODULE:InitClient()
-	
-end
-
-Vermilion:RegisterModule(MODULE)

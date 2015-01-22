@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Donator Checker"
 MODULE.ID = "donator"
 MODULE.Description = "Checks with a web server to check if a player has donated to the server. Depending on the response, can automatically promote them to a specific rank ect."
@@ -132,10 +132,8 @@ function MODULE:InitClient()
 			tblab:SetDark(true)
 			tblab:SizeToContents()
 		end,
-		Updater = function(panel)
+		OnOpen = function(panel)
 		
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

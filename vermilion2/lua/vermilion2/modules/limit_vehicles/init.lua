@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Vehicle Limits"
 MODULE.ID = "limit_vehicle"
 MODULE.Description = "Prevent players from spawning certain vehicles."
@@ -234,7 +234,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Vehicles == nil) then
 					paneldata.Vehicles = {}
 					for i,k in pairs(list.Get("Vehicles")) do
@@ -289,5 +289,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

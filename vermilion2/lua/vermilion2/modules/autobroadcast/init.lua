@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Automatic Broadcast"
 MODULE.ID = "autobroadcast"
 MODULE.Description = "Allows defined messages to be broadcast through the chat using an interval."
@@ -105,7 +105,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 			ID = "autobroadcast",
-			Name = "Auto-Broadcast",
+			Name = Vermilion:TranslateStr("menu:autobroadcast"),
 			Order = 6,
 			Category = "server",
 			Size = { 785, 540 },
@@ -288,11 +288,9 @@ function MODULE:InitClient()
 				addListingButton:SetSize(105, 30)
 				addListingButton:SetParent(addMessagePanel)
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				MODULE:NetCommand("VGetAutoBroadcastListing")
 				paneldata.AddMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
 			end
 		})
 end
-
-Vermilion:RegisterModule(MODULE)

@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Property Limits"
 MODULE.ID = "limit_properties"
 MODULE.Description = "Prevent players from using certain right-click properties."
@@ -83,6 +83,10 @@ function MODULE:InitServer()
 		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true))
 		net.Send(vplayer)
 	end)
+	
+	function MODULE:IsPropertyBlocked(vplayer, prop)
+		return table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), prop)
+	end
 	
 end
 
@@ -297,7 +301,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Properties == nil) then
 					paneldata.Properties = {}
 					for i,k in pairs(properties.List) do
@@ -323,5 +327,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

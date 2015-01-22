@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Maps"
 MODULE.ID = "map"
 MODULE.Description = "Change or reload the map after a specified delay."
@@ -130,6 +130,10 @@ function MODULE:RegisterChatCommands()
 		CanMute = true,
 		Permissions = { "manage_map" },
 		Function = function(sender, text, log, glog)
+			if(MODULE.BlockAbort) then
+				log("Attempt to abort the level change has been blocked by the management engine.", NOTIFY_ERROR)
+				return
+			end
 			MODULE.MapChangeInProgress = false
 			MODULE.MapChangeIn = nil
 			MODULE.MapChangeTo = nil
@@ -678,17 +682,15 @@ function MODULE:InitClient()
 				reload:SetSize(100, 25)
 				reload:SetParent(panel)
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(table.Count(paneldata.MapList:GetLines()) == 0) then
 					MODULE:NetStart("VGetMapList")
 					net.SendToServer()
 				end
 				paneldata.MapList:SetVisible(true)
 			end,
-			Destroyer = function(panel, paneldata)
+			OnClose = function(panel, paneldata)
 				paneldata.MapList:SetVisible(false)
 			end
 		})
 end
-
-Vermilion:RegisterModule(MODULE)

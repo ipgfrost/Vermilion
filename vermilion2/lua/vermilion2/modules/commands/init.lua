@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Commands"
 MODULE.ID = "commands"
 MODULE.Description = "Provides some basic commands."
@@ -62,7 +62,9 @@ MODULE.Permissions = {
 	"edit_gimps",
 	"gimp",
 	"mute",
-	"gag"
+	"gag",
+	"jail",
+	"setjailpos"
 }
 
 MODULE.NetworkStrings = {
@@ -95,7 +97,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "tplook",
 		Description = "Teleports players to a look position.",
-		Syntax = "[player to move] [player reference]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:tplook:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.PlayerArg }
@@ -113,7 +115,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			local target = sender
 			local eyeTarget = sender
 			if(table.Count(text) > 0) then
@@ -131,24 +133,23 @@ function MODULE:RegisterChatCommands()
 				if(not Vermilion:GetUser(target):IsImmune(sender)) then
 					local targetPhrase = ""
 					if(sender == eyeTarget) then
-						targetPhrase = "his/her look position."
+						tglog("commands:tplook:text:self", { sender:GetName(), target:GetName() })
 					else
-						targetPhrase = eyeTarget:GetName() .. "'s look position."
+						tglog("commands:tplook:text", { sender:GetName(), target:GetName(), eyeTarget:GetName() })
 					end
-					glog(sender:GetName() .. " teleported " .. target:GetName() .. " to " .. targetPhrase)
 					target:SetPos(trace.HitPos)
 				end
 			else
 				return false
 			end
 		end,
-		AllBroadcast = function(sender, text)
+		AllBroadcast = function(sender, text, forplayer)
 			local eyeTarget = sender
 			if(table.Count(text) > 1) then
 				eyeTarget = VToolkit.LookupPlayer(text[2])
 			end
 			if(IsValid(eyeTarget)) then
-				return "All players were teleported to " .. eyeTarget:GetName() .. "'s look position."
+				return MODULE:TranslateStr("tplook:all", { eyeTarget:GetName() }, forplayer)
 			end
 		end
 	})
@@ -156,7 +157,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "tppos",
 		Description = "Teleports players to exact coordinates.",
-		Syntax = "[player] <x> <y> <z>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:tppos:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberArg, Bounds = { Min = -1000000, Max = 1000000 } },
@@ -176,7 +177,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			local target = sender
 			local coordinates = { text[1], text[2], text[3] }
 			if(table.Count(text) > 3) then
@@ -196,24 +197,24 @@ function MODULE:RegisterChatCommands()
 			
 			local vector = Vector(tonumber(coordinates[1]), tonumber(coordinates[2]), tonumber(coordinates[3]))
 			if(not util.IsInWorld(vector)) then
-				log("Cannot put player here; it is outside of the world.", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tppos:outofworld", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
-				glog(sender:GetName() .. " teleported " .. target:GetName() .. " to " .. table.concat(coordinates, ":"))
+				tglog("commands:tppos:teleported", { sender:GetName(), target:GetName(), table.concat(coordinates, ":") })
 				target:SetPos(vector)
 			end
 		end,
-		AllBroadcast = function(sender, text)
+		AllBroadcast = function(sender, text, forplayer)
 			coordinates = { text[2], text[3], text[4] }
-			return sender:GetName() .. " teleported all players to " .. table.concat(coordinates, ":")
+			return MODULE:TranslateStr("tppos:teleported:all", { sender:GetName(), table.concat(coordinates, ":") }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "teleport",
 		Description = "Teleports a player to another player",
-		Syntax = "[player to move] <player to move to>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:teleport:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.PlayerArg }
@@ -231,7 +232,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			local mtarget = nil
 			local ptarget = nil
 			
@@ -256,14 +257,14 @@ function MODULE:RegisterChatCommands()
 			end
 			
 			if(not Vermilion:GetUser(mtarget):IsImmune(sender)) then
-				glog(sender:GetName() .. " teleported " .. mtarget:GetName() .. " to " .. ptarget:GetName())
+				tglog("commands:teleport", { sender:GetName(), mtarget:GetName(), ptarget:GetName() })
 				mtarget:SetPos(target)
 			end
 		end,
-		AllBroadcast = function(sender, text)
+		AllBroadcast = function(sender, text, forplayer)
 			local target = VToolkit.LookupPlayer(text[2])
 			if(IsValid(target)) then
-				return sender:GetName() .. " teleported all players to " .. target:GetName()
+				return MODULE:TranslateStr("teleport:all", { sender:GetName(), target:GetName() }, forplayer)
 			end
 		end
 	})
@@ -273,7 +274,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "goto",
 		Description = "Teleport yourself to a player",
-		Syntax = "<player to go to>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:goto:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.PlayerArg }
 		},
@@ -286,7 +287,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -296,7 +297,7 @@ function MODULE:RegisterChatCommands()
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 				return
 			end
-			glog(sender:GetName() .. " teleported to " .. target:GetName())
+			tglog("commands:goto", { sender:GetName(), target:GetName() })
 			sender:SetPos(target:GetPos() + Vector(0, 0, 100))
 		end
 	})
@@ -304,7 +305,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "bring",
 		Description = "Bring a player to you",
-		Syntax = "<player to bring>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:bring:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -320,7 +321,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -331,19 +332,19 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
-				glog(sender:GetName() .. " brought " .. target:GetName() .. " to him/herself.")
+				tglog("commands:bring", { sender:GetName(), target:GetName() })
 				target:SetPos(sender:GetPos() + Vector(0, 0, 100))
 			end
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " brought all players to him/herself."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("bring:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "tpquery",
 		Description = "Asks a player if you can teleport to them.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:tpquery:syntax", nil, vplayer) end,
 		CanRunOnDS = false,
 		Permissions = { "conditional_teleport" },
 		Predictor = function(pos, current, all, vplayer)
@@ -351,7 +352,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, self), NOTIFY_ERROR)
 				return false
@@ -362,19 +363,19 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(not Vermilion:HasPermission(target, "conditional_teleport")) then
-				log("This player doesn't have the permission to respond to teleport requests.", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tpquery:otherpermission", nil, sender), NOTIFY_ERROR)
 				return
 			end
-			log("Sent request!")
+			log(MODULE:TranslateStr("tpquery:sent", nil, sender))
 			MODULE.TeleportRequests[sender:SteamID() .. target:SteamID()] = false
-			Vermilion:AddNotification(target, sender:GetName() .. " is requesting to teleport to you...", NOTIFY_HINT)
+			Vermilion:AddNotification(target, MODULE:TranslateStr("tpquery:notification", { sender:GetName() }, target), NOTIFY_HINT)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "tpaccept",
 		Description = "Accept a teleport request",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:tpaccept:syntax", nil, vplayer) end,
 		CanRunOnDS = false,
 		Permissions = { "conditional_teleport" },
 		Predictor = function(pos, current, all, vplayer)
@@ -393,7 +394,7 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -404,23 +405,23 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] == nil) then
-				log("This player has not asked to teleport to you.", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tpaccept:notask", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			if(MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] == true) then
-				log("This player has already teleported to you and the ticket has been cancelled!", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tpaccept:already", nil, sender), NOTIFY_ERROR)
 				return false
 			end
-			Vermilion:AddNotification({sender, target}, "Request accepted! Teleporting in 10 seconds.")
+			Vermilion:TransNotify({sender, target}, "tpaccept:accepted", nil, nil, nil, MODULE)
 			local sPos = sender:GetPos()
 			local tPos = target:GetPos()
 			timer.Simple(10, function()
 				if(sPos != sender:GetPos() or tPos != target:GetPos()) then
-					Vermilion:AddNotification({sender, target}, "Someone moved. Teleportation cancelled!", NOTIFY_ERROR)
+					Vermilion:TransNotify({sender, target}, "tpaccept:moved", nil, NOTIFY_ERROR, nil, MODULE)
 					MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] = true
 					return
 				end
-				Vermilion:AddNotification({sender, target}, "Teleporting...")
+				Vermilion:TransNotify({sender, target}, "tpaccept:done", nil, nil, nil, MODULE)
 				target:SetPos(sender:GetPos() + Vector(0, 0, 90))
 				MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] = true
 			end)
@@ -430,7 +431,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "tpdeny",
 		Description = "Denies a teleport request",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:tpdeny:syntax", nil, vplayer) end,
 		CanRunOnDS = false,
 		Permissions = { "conditional_teleport" },
 		Predictor = function(pos, current, all, vplayer)
@@ -449,7 +450,7 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return
@@ -460,14 +461,14 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] == nil) then
-				log("This player has not asked to teleport to you.", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tpdeny:notask", nil, sender), NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] == true) then
-				log("This player has already teleported to you and the ticket has been cancelled!", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("tpdeny:already", nil, sender), NOTIFY_ERROR)
 				return
 			end
-			Vermilion:AddNotification({sender, target}, "Request denied!")
+			Vermilion:TransNotify({sender, target}, "tpdeny:done", nil, nil, nil, MODULE)
 			MODULE.TeleportRequests[target:SteamID() .. sender:SteamID()] = true
 		end
 	})
@@ -479,7 +480,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "speed",
 		Description = "Changes player speed",
-		Syntax = "[player] <speed multiplier>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:speed:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 0.1, Max = 20 }, Decimals = 2, InfoText = "Multiplier" } 
@@ -496,7 +497,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -529,20 +530,20 @@ function MODULE:RegisterChatCommands()
 			end
 			GAMEMODE:SetPlayerSpeed(target, speed, speed * 2)
 			if(sender == target) then
-				glog(sender:GetName() .. " set his/her speed to " .. tostring(times) .. "x normal speed.")
+				tglog("commands:speed:done:self", { sender:GetName(), tostring(times) })
 			else
-				glog(sender:GetName() .. " set the speed of " .. target:GetName() .. " to " .. tostring(times) .. "x normal speed.")
+				tglog("commands:speed:done:other", { sender:GetName(), target:GetName(), tostring(times) })
 			end
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " set the speed of all players to " .. tostring(text[2]) .. "x normal speed."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("speed:done:all", { sender:GetName(), tostring(text[2]) }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "respawn",
 		Description = "Forces a player to respawn",
-		Syntax = "[player]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:respawn:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -558,7 +559,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			local target = sender
 			if(table.Count(text) > 0) then
 				local tplayer = VToolkit.LookupPlayer(text[1])
@@ -573,19 +574,19 @@ function MODULE:RegisterChatCommands()
 					log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
 					return
 				end
-				glog(sender:GetName() .. " forced " .. target:GetName() .. " to respawn.")
+				tglog("commands:respawn:done", { sender:GetName(), target:GetName() })
 				target:Spawn()
 			end
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " forced all players to respawn."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("respawn:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "pm",
 		Description = "Sends a private message",
-		Syntax = "<target> <message>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:pm:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.StringArg }
@@ -603,7 +604,7 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -621,21 +622,21 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "r",
 		Description = "Replies to the last pm you were sent.",
-		Syntax = "<message>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:r:syntax", nil, vplayer) end,
 		Permissions = { "private_message" },
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			local target = VToolkit.LookupPlayerBySteamID(MODULE.PrivateMessageHistory[sender:SteamID()])
 			if(not IsValid(target)) then
-				log("You haven't received a private message yet or the player has left the server!", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("r:notvalid", nil, sender), NOTIFY_ERROR)
 				return
 			end
-			target:ChatPrint("[Private]" .. sender:GetName() .. ": " .. table.concat(text, " "))
+			sender:ChatPrint("[" .. MODULE:TranslateStr("r:private", nil, sender) .. "] " .. sender:GetName() .. ": " .. table.concat(text, " "))
+			target:ChatPrint("[" .. MODULE:TranslateStr("r:private", nil, target) .. "] " .. sender:GetName() .. ": " .. table.concat(text, " "))
 			MODULE.PrivateMessageHistory[target:SteamID()] = sender:SteamID()
-			
 		end
 	})
 	
@@ -645,15 +646,15 @@ function MODULE:RegisterChatCommands()
 		BasicParameters = {},
 		Category = "Utils",
 		CommandFormat = "",
-		Function = function(sender, text, log, glog)
-			log("The server time is: " .. os.date("%I:%M:%S %p on %d/%m/%Y"))
+		Function = function(sender, text, log, glog, tglog)
+			log(MODULE:TranslateStr("time", { os.date(Vermilion.GetActiveLanguageFile(sender).DateTimeFormat) }, sender))
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "getpos",
 		Description = "Get the position of a player",
-		Syntax = "[player]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:getpos:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -665,7 +666,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			local target = sender
 			if(table.Count(text) > 0) then
 				target = VToolkit.LookupPlayer(text[1])
@@ -676,9 +677,9 @@ function MODULE:RegisterChatCommands()
 			end
 			local pos = target:GetPos()
 			if(target == sender) then
-				log("Your position is " .. table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":"))
+				log(MODULE:TranslateStr("getpos:self", { table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":") }, sender))
 			else
-				log(target:GetName() .. "'s position is " .. table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":"))
+				log(MODULE:TranslateStr("getpos:other", { target:GetName(), table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":") }, sender))
 			end
 		end
 	})
@@ -686,7 +687,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "sudo",
 		Description = "Makes another player run a chat command.",
-		Syntax = "<player> <command>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:sudo:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.StringArg }
@@ -704,7 +705,7 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -758,7 +759,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "spectate",
 		Description = "Allows you to spectate stuff",
-		Syntax = "[-entity <entityid>] [-player <name>]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:spectate:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -792,7 +793,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)		
+		Function = function(sender, text, log, glog, tglog)		
 			if(text[1] == "-entity") then
 				if(tonumber(text[2]) == nil) then
 					log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
@@ -802,23 +803,23 @@ function MODULE:RegisterChatCommands()
 				if(IsValid(tent)) then
 					for i,k in pairs(bannedSpecClassses) do
 						if(string.StartWith(tent:GetClass(), k)) then
-							log("You cannot spectate this entity!", NOTIFY_ERROR)
+							log(MODULE:TranslateStr("spectate:banned", nil, sender), NOTIFY_ERROR)
 							return
 						end
 					end
 					sender.SpectateOriginalPos = sender:GetPos()
-					log("You are now spectating " .. tent:GetClass())
+					log(MODULE:TranslateStr("spectate:done", { tent:GetClass() }, sender))
 					sender:Spectate( OBS_MODE_CHASE )
 					sender:SpectateEntity( tent )
 					sender:StripWeapons()
 					sender.VSpectating = true
 				else
-					log("That isn't a valid entity.", NOTIFY_ERROR)
+					log(MODULE:TranslateStr("spectate:ent:invalid", nil, sender), NOTIFY_ERROR)
 				end
 			elseif(text[1] == "-player") then
 				local tplayer = VToolkit.LookupPlayer(text[2])
 				if(tplayer == sender) then
-					log("You cannot spectate yourself!", NOTIFY_ERROR)
+					log(MODULE:TranslateStr("spectate:ply:self", nil, sender), NOTIFY_ERROR)
 					return
 				end
 				if(IsValid(tplayer)) then
@@ -831,7 +832,7 @@ function MODULE:RegisterChatCommands()
 					log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 				end
 			else
-				log("Invalid type!")
+				log(MODULE:TranslateStr("spectate:invtyp", nil, sender), NOTIFY_ERROR)
 			end
 		end
 	})
@@ -843,7 +844,7 @@ function MODULE:RegisterChatCommands()
 				k:Spawn()
 				k:SetPos(k.SpectateOriginalPos)
 				k.VSpectating = false
-				Vermilion:AddNotification(k, "The entity you were spectating was removed.")
+				Vermilion:AddNotification(k, MODULE:TranslateStr("spectate:removed", nil, k))
 			end
 		end
 	end)
@@ -855,9 +856,9 @@ function MODULE:RegisterChatCommands()
 		Category = "Utils",
 		CommandFormat = "",
 		CanRunOnDS = false,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(not sender.VSpectating) then
-				log("You aren't spectating anything...")
+				log(MODULE:TranslateStr("unspectate:bad", nil, sender))
 				return
 			end
 			sender:UnSpectate()
@@ -872,7 +873,7 @@ function MODULE:RegisterChatCommands()
 		Description = "Makes you invisible to other players.",
 		CanRunOnDS = false,
 		Permissions = { "vanish" },
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(sender:GetRenderMode() == RENDERMODE_NORMAL) then
 				sender:SetRenderMode(RENDERMODE_NONE)
 				for i,k in pairs(player.GetAll()) do
@@ -890,7 +891,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "steamid",
 		Description = "Gets the steamid of a player",
-		Syntax = "[player]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:steamid:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -901,14 +902,14 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) == 0) then
-				log("Your SteamID is " .. tostring(sender:SteamID()))
+				log(MODULE:TranslateStr("steamid:self", { sender:SteamID() }, sender))
 				return
 			end
 			local tplayer = VToolkit.LookupPlayer(text[1])
 			if(IsValid(tplayer)) then
-				log(tplayer:GetName() .. "'s SteamID is " .. tostring(tplayer:SteamID()))
+				log(MODULE:TranslateStr("steamid:other", { tplayer:GetName(), sender:SteamID() }, sender))
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -918,7 +919,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "ping",
 		Description = "Gets the ping of a player.",
-		Syntax = "[player]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:ping:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -930,13 +931,13 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) == 0) then
-				log("Your ping is " .. tostring(sender:Ping()) .. "ms")
+				log(MODULE:TranslateStr("ping:self", { tostring(sender:Ping()) }, sender))
 			else
 				local tplayer = VToolkit.LookupPlayer(text[1])
 				if(IsValid(tplayer)) then
-					log(tplayer:GetName() .. "'s ping is " .. tostring(tplayer:Ping()) .. "ms")
+					log(MODULE:TranslateStr("ping:other", { tplayer:GetName(), tostring(tplayer:Ping()) }, sender))
 				else
 					log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 				end
@@ -947,21 +948,26 @@ function MODULE:RegisterChatCommands()
 	local allowedcvars = {
 		"gm_",
 		"sbox_",
-		"sv_"
+		"sv_",
+		"bot_"
+	}
+	
+	local blockedcvars = {
+		"sv_cheats"
 	}
 	
 	Vermilion:AddChatCommand({
 		Name = "convar",
 		Description = "Modifies server convars",
-		Syntax = "<cvar> [value]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:convar:syntax", nil, vplayer) end,
 		Permissions = { "convar" },
 		CanMute = true,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) == 1) then
 				if(not ConVarExists(text[1])) then
-					log("This convar doesn't exist!", NOTIFY_ERROR)
+					log(MODULE:TranslateStr("convar:nexist", nil, sender), NOTIFY_ERROR)
 				else
-					log(text[1] .. " is set to " .. cvars.String(text[1]))
+					log(MODULE:TranslateStr("convar:value", { text[1], cvars.String(text[1]) }, sender))
 				end
 			elseif(table.Count(text) > 1) then
 				if(ConVarExists(text[1])) then
@@ -972,14 +978,20 @@ function MODULE:RegisterChatCommands()
 							break
 						end
 					end
+					for i,k in pairs(blockedcvars) do
+						if(text[1] == k) then
+							allowed = false
+							break
+						end
+					end
 					if(not allowed) then
-						log("Cannot set the value of this convar.", NOTIFY_ERROR)
+						log(MODULE:TranslateStr("convar:cannotset", nil, sender), NOTIFY_ERROR)
 						return
 					end
 					RunConsoleCommand(text[1], text[2])
-					glog(sender:GetName() .. " set " .. text[1] .. " to " .. text[2])
+					tglog("commands:convar:set", { sender:GetName(), text[1], text[2] })
 				else
-					log("This convar doesn't exist!", NOTIFY_ERROR)
+					log(MODULE:TranslateStr("convar:nexist", nil, sender), NOTIFY_ERROR)
 				end
 			else
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
@@ -990,7 +1002,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "deaths",
 		Description = "Set the deaths for a player.",
-		Syntax = "<player> <deaths>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:deaths:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberArg, Bounds = { Min = 0, Max = 1000 } }
@@ -1007,7 +1019,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return
@@ -1024,7 +1036,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				tplayer:SetDeaths(result)
-				glog(sender:GetName() .. " set " .. text[1] .. "'s death count to " .. text[2])
+				tglog("commands:deaths", { sender:GetName(), text[1], text[2] })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -1034,7 +1046,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "frags",
 		Description = "Set the frags for a player.",
-		Syntax = "<player> <frags>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:frags:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberArg, Bounds = { Min = 0, Max = 1000 } }
@@ -1051,7 +1063,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return
@@ -1068,7 +1080,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				tplayer:SetFrags(result)
-				glog(sender:GetName() .. " set " .. text[1] .. "'s frag count to " .. text[2])
+				tglog("commands:frags", { sender:GetName(), text[1], text[2] })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -1078,7 +1090,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "armour",
 		Description = "Set the armour for a player.",
-		Syntax = "<player> <armour>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:armour:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 0, Max = 200 }, Decimals = 0, InfoText = "Armour" }
@@ -1095,7 +1107,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return
@@ -1112,7 +1124,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				tplayer:SetArmor(result)
-				glog(sender:GetName() .. " set " .. text[1] .. "'s armour to " .. text[2])
+				tglog("commands:armour", { sender:GetName(), text[1], text[2] })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -1127,18 +1139,18 @@ function MODULE:RegisterChatCommands()
 		CommandFormat = "",
 		Permissions = { "clear_decals" },
 		CanMute = true,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			for i,k in pairs(VToolkit.GetValidPlayers()) do
 				k:ConCommand("r_cleardecals")
 			end
-			glog(sender:GetName() .. " cleared up the decals.")
+			tglog("commands:decals", { sender:GetName() })
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "kickvehicle",
 		Description = "Kicks a player from their vehicle.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:kickvehicle:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1154,7 +1166,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current, function(p) return p:InVehicle() end)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return
@@ -1166,11 +1178,11 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				if(not tplayer:InVehicle()) then
-					log("This player isn't in a vehicle!", NOTIFY_ERROR)
+					log(MODULE:TranslateStr("kickvehicle:notin", nil, sender), NOTIFY_ERROR)
 					return
 				end
 				tplayer:ExitVehicle()
-				glog(sender:GetName() .. " kicked " .. sender:GetName() .. " from his/her vehicle.")
+				tglog("commands:kickvehicle:done", { sender:GetName(), tplayer:GetName() })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -1180,7 +1192,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "ignite",
 		Description = "Set a player on fire.",
-		Syntax = "<player> <time:seconds>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:ignite:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 0, Max = 200 }, Decimals = 1, InfoText = "Time (seconds)" }
@@ -1197,7 +1209,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current, function(p) return not p:IsOnFire() end)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1214,7 +1226,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				tplayer:Ignite(result, 5)
-				glog(sender:GetName() .. " set " .. tplayer:GetName() .. " on fire for " .. tostring(result) .. " seconds.")
+				tglog("commands:ignite:done", { sender:GetName(), tplayer:GetName(), tostring(result) })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 			end
@@ -1224,7 +1236,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "extinguish",
 		Description = "Stops a player from being on fire.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:extinguish:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1240,7 +1252,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current, function(p) return p:IsOnFire() end)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1252,7 +1264,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 				tplayer:Extinguish()
-				glog(sender:GetName() .. " extinguished " .. tplayer:GetName())
+				tglog("commands:extinguish:done", { sender:GetName(), tplayer:GetName() })
 			else
 				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
 				return
@@ -1263,7 +1275,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "random",
 		Description = "Generates a pseudo-random number.",
-		Syntax = "[min] <max>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:random:syntax", nil, vplayer) end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
@@ -1283,7 +1295,7 @@ function MODULE:RegisterChatCommands()
 				return false
 			end
 			
-			log("Number: " .. tostring(math.random(min, max)))
+			log(MODULE:TranslateStr("random", { tostring(math.random(min, max)) }, sender))
 		end
 	})
 	
@@ -1293,16 +1305,16 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "suicide" },
 		CanMute = true,
 		CanRunOnDS = false,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			sender:Kill()
-			glog(sender:GetName() .. " killed him/herself.")
+			tglog("commands:suicide", { sender:GetName() })
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "lockplayer",
 		Description = "Prevents a player from moving.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:lockplayer:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1318,7 +1330,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1333,17 +1345,17 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			tplayer:Lock()
-			glog(tplayer:GetName() .. " was locked by " .. sender:GetName())
+			tglog("commands:lockplayer", { tplayer:GetName(), sender:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " locked all players."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("lockplayer:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "unlockplayer",
 		Description = "Allows a player to move again after using !lockplayer",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:unlockplayer:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1359,7 +1371,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1374,17 +1386,17 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			tplayer:UnLock()
-			glog(tplayer:GetName() .. " was unlocked by " .. sender:GetName())
+			tglog("commands:unlockplayer", { tplayer:GetName(), sender:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " unlocked all players."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("unlockplayer:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "kill",
 		Description = "Kills a player.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:kill:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1400,7 +1412,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1415,17 +1427,17 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			tplayer:Kill()
-			glog(sender:GetName() .. " killed " .. tplayer:GetName())
+			tglog("commands:kill", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " killed everybody."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("kill:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "assassinate",
 		Description = "Kills a player silently.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:assassinate:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1440,7 +1452,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1461,7 +1473,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "ragdoll",
 		Description = "Turns a player into a ragdoll.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:ragdoll:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1477,7 +1489,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1492,18 +1504,18 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(tplayer:Vermilion2_DoRagdoll()) then
-				glog(sender:GetName() .. " turned " .. tplayer:GetName() .. " into a ragdoll.")
+				tglog("commands:ragdoll:done", { sender:GetName(), tplayer:GetName() })
 			end
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " turned everybody into a ragdoll."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("ragdoll:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "stripammo",
 		Description = "Removes all ammo from a player.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:stripammo:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1519,7 +1531,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1534,17 +1546,17 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			tplayer:RemoveAllAmmo()
-			glog(sender:GetName() .. " removed all of " .. tplayer:GetName() .. "'s ammo.")
+			tglog("commands:stripammo:done", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " took everybody's ammo."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("stripammo:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "flatten",
 		Description = "Flattens a player with a heavy object.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:flatten:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1560,7 +1572,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1592,17 +1604,17 @@ function MODULE:RegisterChatCommands()
 			timer.Simple(5, function()
 				if(IsValid(ent)) then ent:Remove() end
 			end)
-			glog(sender:GetName() .. " flattened " .. tplayer:GetName())
+			tglog("commands:flatten:done", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " flattened everybody."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("flatten:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "launch",
 		Description = "Throws a player into the air.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:launch:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1618,7 +1630,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1634,17 +1646,17 @@ function MODULE:RegisterChatCommands()
 			end
 			local phys = tplayer:GetPhysicsObject()
 			if(IsValid(phys)) then phys:ApplyForceCenter(Vector(0, 0, -50000000)) end
-			glog(sender:GetName() .. " launched " .. tplayer:GetName() .. " into the air!")
+			tglog("commands:launch:done", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " launched everybody into the air!"
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("launch:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "stripweapons",
 		Description = "Removes all weapons from a player.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:stripweapons:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
@@ -1660,7 +1672,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1675,17 +1687,17 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			tplayer:StripWeapons()
-			glog(sender:GetName() .. " stripped " .. tplayer:GetName() .. " of his/her weapons!")
+			tglog("commands:stripweapons:done", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " stripped everybody of their weapons!"
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("stripweapons:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "health",
 		Description = "Changes the health of a player.",
-		Syntax = "[player] <health>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:health:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 0, Max = 100 }, Decimals = 0, InfoText = "Health" }
@@ -1702,7 +1714,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1731,18 +1743,17 @@ function MODULE:RegisterChatCommands()
 			
 			tplayer:SetHealth(health)
 			
-			
-			glog(sender:GetName() .. " set " .. tplayer:GetName() .. "'s health to " .. tostring(health))
+			tglog("commands:health:done", { sender:GetName(), tplayer:GetName(), tostring(health) })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " set everybody's health to " .. text[2]
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("health:done:all", { sender:GetName(), text[2] }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "explode",
 		Description = "Blows a player up.",
-		Syntax = "<player> [magnitude:20]",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:explode:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 1, Max = 40 }, Decimals = 1, InfoText = "Magnitude" }
@@ -1759,7 +1770,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1788,17 +1799,17 @@ function MODULE:RegisterChatCommands()
 			explode:Fire("Explode", 0, 0)
 			explode:EmitSound("weapon_AWP.Single", 400, 400)
 			util.BlastDamage(explode, explode, explode:GetPos(), magnitude, 100)
-			glog(sender:GetName() .. " blew up " .. tplayer:GetName())
+			tglog("commands:explode:done", { sender:GetName(), tplayer:GetName() })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " blew everybody up."
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("explode:done:all", { sender:GetName() }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "setteam",
 		Description = "Assign a player to a team.",
-		Syntax = "<player> <team>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:setteam:syntax", nil, vplayer) end,
 		CanMute = true,
 		Permissions = { "set_team" },
 		AllValid = {
@@ -1818,7 +1829,7 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 2) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1840,18 +1851,18 @@ function MODULE:RegisterChatCommands()
 				end
 			end
 			if(table.Count(possibleTeams) > 1) then
-				log("Ambiguous result for team name. Try again!", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("setteam:amb", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			if(table.Count(possibleTeams) < 1) then
-				log("No results for team name. Try again!", NOTIFY_ERROR)
+				log(MODULE:TranslateStr("setteam:nores", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			teamid = possibleTeams[1]
 			target:SetTeam(teamid)
-			glog(sender:GetName() .. " assigned " .. target:GetName() .. " to team '" .. team.GetName(teamid) .. "'")
+			tglog("commands:setteam:done", { sender:GetName(), target:GetName(), team.GetName(teamid) })
 		end,
-		AllBroadcast = function(sender, text)
+		AllBroadcast = function(sender, text, forplayer)
 			local teamid = nil
 			local possibleTeams = {}
 			for i,k in pairs(team.GetAllTeams()) do
@@ -1866,14 +1877,14 @@ function MODULE:RegisterChatCommands()
 				return false
 			end
 			teamid = possibleTeams[1]
-			return sender:GetName() .. " assigned everybody to team '" .. team.GetName(teamid) .. "'"
+			return MODULE:TranslateStr("setteam:done:all", { sender:GetName(), team.GetName(teamid) }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "slap",
 		Description = "Hits a player repeatedly.",
-		Syntax = "<player> <times> <damage>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:slap:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 			{ Type = Vermilion.ChatCommandConst.NumberRangeArg, Bounds = { Min = 0, Max = 100 }, Decimals = 0, InfoText = "Times" },
@@ -1891,7 +1902,7 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 3) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1926,18 +1937,17 @@ function MODULE:RegisterChatCommands()
 				end
 			end)
 			
-			
-			glog(sender:GetName() .. " slapped " .. tplayer:GetName() .. " " .. tostring(times) .. " times!")
+			tglog("commands:slap:done", { sender:GetName(), tplayer:GetName(), tostring(times) })
 		end,
-		AllBroadcast = function(sender, text)
-			return sender:GetName() .. " slapped everybody " .. text[2] .. " times!"
+		AllBroadcast = function(sender, text, forplayer)
+			return MODULE:TranslateStr("slap:done:all", { sender:GetName(), text[2] }, forplayer)
 		end
 	})
 	
 	Vermilion:AddChatCommand({
 		Name = "adminchat",
 		Description = "Sends a message to all currently connected admins.",
-		Syntax = "<msg>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:adminchat:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.StringArg }
 		},
@@ -1945,20 +1955,20 @@ function MODULE:RegisterChatCommands()
 		CommandFormat = "%s",
 		CanMute = true,
 		Permissions = { "admin_chat" },
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
 			end
 			if(table.Count(Vermilion:GetUsersWithPermission("see_admin_chat")) == 0) then
-				log("No administrators are currently online.", NOTIFY_HINT)
+				log(MODULE:TranslateStr("adminchat:noadmin", nil, sender), NOTIFY_HINT)
 				return false
 			end
 			for i,k in pairs(Vermilion:GetUsersWithPermission("see_admin_chat")) do
 				k:ChatPrint("[Vermilion - AdminChat] [" .. sender:GetName() .. "]: " .. table.concat(text, " ")) 
 			end
 			Vermilion.Log(sender:GetName() .. " sent admin message: " .. table.concat(text, " "))
-			log("Message sent!")
+			log(MODULE:TranslateStr("adminchat:sent", nil, sender))
 		end
 	})
 	
@@ -1968,19 +1978,23 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "gimp",
 		Description = "Prevents a player from using chat by making them say what the admin wants them to.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:gimp:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
 		},
 		Category = "Chat",
 		CommandFormat = "\"%s\"",
 		Permissions = { "gimp" },
+		AllValid = {
+			{ Size = nil, Indexes = { 1 } }
+		},
+		CanMute = true,
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1996,16 +2010,16 @@ function MODULE:RegisterChatCommands()
 			end
 			local gimpedPlayers = MODULE:GetData("gimped_players", {}, true)
 			if(gimpedPlayers[tplayer:SteamID()]) then
-				glog(sender:GetName() .. " ungimped " .. tplayer:GetName())
+				tglog("commands:gimp:ungimped:done", { sender:GetName(), tplayer:GetName() })
 			else
-				glog(sender:GetName() .. " gimped " .. tplayer:GetName())
+				tglog("commands:gimp:gimped:done", { sender:GetName(), tplayer:GetName() })
 				if(sender:SteamID() != "CONSOLE") then
 					if(not Vermilion:GetUser(sender).GimpHelpNotified) then
-						log("Run the gimp command again to ungimp this player.", NOTIFY_HINT)
+						log(MODULE:TranslateStr("gimp:help", nil, sender), NOTIFY_HINT)
 						Vermilion:GetUser(sender).GimpHelpNotified = true
 					end
 				else
-					log("Run the gimp command again to ungimp this player.", NOTIFY_HINT)
+					log(MODULE:TranslateStr("gimp:help", nil, sender), NOTIFY_HINT)
 				end
 			end
 			gimpedPlayers[tplayer:SteamID()] = not gimpedPlayers[tplayer:SteamID()]
@@ -2015,19 +2029,23 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "mute",
 		Description = "Stop a player from chatting completely.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:mute:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 		},
 		Category = "Chat",
 		CommandFormat = "\"%s\"",
 		Permissions = { "mute" },
+		AllValid = {
+			{ Size = nil, Indexes = { 1 } }
+		},
+		CanMute = true,
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -2043,16 +2061,16 @@ function MODULE:RegisterChatCommands()
 			end
 			local mutedPlayers = MODULE:GetData("muted_players", {}, true)
 			if(mutedPlayers[tplayer:SteamID()]) then
-				glog(sender:GetName() .. " unmuted " .. tplayer:GetName())
+				tglog("commands:mute:unmuted:done", { sender:GetName(), tplayer:GetName() })
 			else
-				glog(sender:GetName() .. " muted " .. tplayer:GetName())
+				tglog("commands:mute:muted:done", { sender:GetName(), tplayer:GetName() })
 				if(sender:SteamID() != "CONSOLE") then
 					if(not Vermilion:GetUser(sender).MuteHelpNotified) then
-						log("Run the mute command again to unmute this player.", NOTIFY_HINT)
+						log(MODULE:TranslateStr("mute:help", nil, sender), NOTIFY_HINT)
 						Vermilion:GetUser(sender).MuteHelpNotified = true
 					end
 				else
-					log("Run the mute command again to unmute this player.", NOTIFY_HINT)
+					log(MODULE:TranslateStr("mute:help", nil, sender), NOTIFY_HINT)
 				end
 			end
 			mutedPlayers[tplayer:SteamID()] = not mutedPlayers[tplayer:SteamID()]
@@ -2062,19 +2080,23 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "gag",
 		Description = "Stop a player from using VoIP.",
-		Syntax = "<player>",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:gag:syntax", nil, vplayer) end,
 		BasicParameters = {
 			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
 		},
 		Category = "Chat",
 		CommandFormat = "\"%s\"",
 		Permissions = { "gag" },
+		AllValid = {
+			{ Size = nil, Indexes = { 1 } }
+		},
+		CanMute = true,
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
 				return VToolkit.MatchPlayerPart(current)
 			end
 		end,
-		Function = function(sender, text, log, glog)
+		Function = function(sender, text, log, glog, tglog)
 			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
@@ -2090,19 +2112,84 @@ function MODULE:RegisterChatCommands()
 			end
 			local gaggedPlayers = MODULE:GetData("gagged_players", {}, true)
 			if(gaggedPlayers[tplayer:SteamID()]) then
-				glog(sender:GetName() .. " ungagged " .. tplayer:GetName())
+				tglog("commands:gag:ungagged:done", { sender:GetName(), tplayer:GetName() })
 			else
-				glog(sender:GetName() .. " gagged " .. tplayer:GetName())
+				tglog("commands:gag:gagged:done", { sender:GetName(), tplayer:GetName() })
 				if(sender:SteamID() != "CONSOLE") then
 					if(not Vermilion:GetUser(sender).GagHelpNotified) then
-						log("Run the gag command again to ungag this player.", NOTIFY_HINT)
+						log(MODULE:TranslateStr("gag:help", nil, sender), NOTIFY_HINT)
 						Vermilion:GetUser(sender).GagHelpNotified = true
 					end
 				else
-					log("Run the gag command again to ungag this player.", NOTIFY_HINT)
+					log(MODULE:TranslateStr("gag:help", nil, sender), NOTIFY_HINT)
 				end
 			end
 			gaggedPlayers[tplayer:SteamID()] = not gaggedPlayers[tplayer:SteamID()]
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "jail",
+		Description = "Send a player to jail.",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:jail:syntax", nil, vplayer) end,
+		BasicParameters = {
+			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
+		},
+		Category = "Utils",
+		CommandFormat = "\"%s\"",
+		Permissions = { "jail" },
+		AllValid = {
+			{ Size = nil, Indexes = { 1 } }
+		},
+		CanMute = true,
+		Predictor = function(pos, current, all, vplayer)
+			if(pos == 1) then
+				return VToolkit.MatchPlayerPart(current)
+			end
+		end,
+		Function = function(sender, text, log, glog, tglog)
+			if(table.Count(text) < 1) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			
+			local tplayer = VToolkit.LookupPlayer(text[1])
+			if(not IsValid(tplayer)) then
+				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			if(Vermilion:GetUser(tplayer).Jailed) then
+				Vermilion:GetUser(tplayer).Jailed = false
+				tplayer:SetNWBool("v_jailed", false)
+				tplayer:Spawn()
+				tglog("commands:jail:release", { sender:GetName(), tplayer:GetName() })
+				return
+			end			
+			if(MODULE:GetData("jailpos", nil, true) == nil) then
+				log(MODULE:TranslateStr("jail:nojail", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			Vermilion:GetUser(tplayer).Jailed = true
+			tplayer:SetNWBool("v_jailed", true)
+			tplayer:SetPos(MODULE:GetData("jailpos", nil, true))
+			tglog("commands:jail:jail", { sender:GetName(), target:GetName() })
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "setjailpos",
+		Description = "Set the new jail position.",
+		Permissions = { "jail", "setjailpos" },
+		CanMute = true,
+		CanRunOnDS = false,
+		Function = function(sender, text, log, glog, tglog)
+			if(not util.IsInWorld(sender:GetPos())) then
+				log(MODULE:TranslateStr("setjailpos:world", nil, sender), NOTIFY_ERROR)
+				return
+			end
+			local pos = sender:GetPos()
+			MODULE:SetData("jailpos", pos)
+			tglog("commands:setjailpos:done", { sender:GetName(), table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":") })
 		end
 	})
 	
@@ -2110,6 +2197,68 @@ function MODULE:RegisterChatCommands()
 end
 
 function MODULE:InitServer()
+
+	local hooks = {
+		"PlayerSpawnEffect",
+		"PlayerSpawnNPC",
+		"PlayerSpawnObject",
+		"PlayerSpawnProp",
+		"PlayerSpawnRagdoll",
+		"PlayerSpawnSENT",
+		"PlayerSpawnSWEP",
+		"PlayerSpawnVehicle",
+		"CanDrive",
+		"CanTool",
+		"CanProperty",
+		"PlayerUse",
+		"PlayerSpray",
+		"PlayerNoClip",
+		"PhysgunPickup",
+		"CanPlayerSuicide",
+		"CanPlayerUnfreeze",
+		"CanPlayerEnterVehicle"
+	}
+	
+	for i,k in pairs(hooks) do
+		self:AddHook(k, "jail" .. k, function(vplayer)
+			if(not IsValid(vplayer)) then return end
+			if(Vermilion:GetUser(vplayer).Jailed) then return false end
+		end)
+	end
+	
+	self:AddHook("PlayerSpawn", function(vplayer)
+		vplayer:SetNWBool("v_jailed", Vermilion:GetUser(vplayer).Jailed == true)
+		if(Vermilion:GetUser(vplayer).Jailed) then
+			if(MODULE:GetData("jailpos", nil, true) != nil) then
+				vplayer:SetPos(MODULE:GetData("jailpos", nil, true))
+			end
+		end
+	end)
+	
+	self:AddDataChangeHook("jailpos", "jailpos_network", function(value)
+		if(value == nil) then return end
+		SetGlobalVector("v_jailpos", value)
+	end)
+	
+	//SetGlobalVector("v_jailpos", MODULE:GetData("jailpos", nil, true))
+
+	local jailsize = 250
+	
+	self:AddHook("FinishMove", function(ply, mv)
+		if(not Vermilion:GetUser(ply)) then return end
+		if(Vermilion:GetUser(ply).Jailed and MODULE:GetData("jailpos", nil, true) != nil) then
+			local jp = MODULE:GetData("jailpos", nil, true)
+			local ang = mv:GetMoveAngles()
+			local vel = mv:GetVelocity()
+			vel = vel + ang:Forward() * mv:GetForwardSpeed()
+			vel = vel + ang:Right() * mv:GetSideSpeed()
+			vel = vel + ang:Up() * mv:GetSideSpeed()
+			if(jp:Distance(mv:GetOrigin() + (vel * 0.1)) <= jp:Distance(mv:GetOrigin())) then return end
+			if(jp:Distance(mv:GetOrigin()) >= jailsize) then
+				return true
+			end
+		end
+	end)
 
 	self:AddHook("VPlayerSay", function(vplayer)
 		if(MODULE:GetData("muted_players", {}, true)[vplayer:SteamID()]) then return "" end
@@ -2157,6 +2306,23 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
+
+	local jailsize = 250
+
+	self:AddHook("FinishMove", function(ply, mv)
+		if(ply:GetNWBool("v_jailed") and GetGlobalVector("v_jailpos") != nil) then
+			local jp = GetGlobalVector("v_jailpos")
+			local ang = mv:GetMoveAngles()
+			local vel = mv:GetVelocity()
+			vel = vel + ang:Forward() * mv:GetForwardSpeed()
+			vel = vel + ang:Right() * mv:GetSideSpeed()
+			vel = vel + ang:Up() * mv:GetSideSpeed()
+			if(jp:Distance(mv:GetOrigin() + (vel * 0.1)) <= jp:Distance(mv:GetOrigin())) then return end
+			if(jp:Distance(mv:GetOrigin()) >= jailsize) then
+				return true
+			end
+		end
+	end)
 	
 	self:NetHook("VGetGimpList", function()
 		local paneldata = Vermilion.Menu.Pages["gimps"]
@@ -2171,7 +2337,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "gimps",
-		Name = "Gimp Editor",
+		Name = Vermilion:TranslateStr("menu:gimps"),
 		Order = 7,
 		Category = "player",
 		Size = { 785, 540 },
@@ -2180,7 +2346,7 @@ function MODULE:InitClient()
 		end,
 		Builder = function(panel, paneldata)
 			local listings = VToolkit:CreateList({
-				cols = MODULE:TranslateTable({ "list:text" }),
+				cols = MODULE:TranslateTable({ "gimps:list:text" }),
 				multiselect = false
 			})
 			listings:SetPos(10, 30)
@@ -2189,12 +2355,12 @@ function MODULE:InitClient()
 			
 			paneldata.MessageTable = listings
 			
-			local listingsLabel = VToolkit:CreateHeaderLabel(listings, MODULE:TranslateStr("list:title"))
+			local listingsLabel = VToolkit:CreateHeaderLabel(listings, MODULE:TranslateStr("gimps:list:title"))
 			listingsLabel:SetParent(panel)
 			
-			local removeListing = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
+			local removeListing = VToolkit:CreateButton(MODULE:TranslateStr("gimps:remove"), function()
 				if(table.Count(listings:GetSelected()) == 0) then
-					VToolkit:CreateErrorDialog(MODULE:TranslateStr("remove:g1"))
+					VToolkit:CreateErrorDialog(MODULE:TranslateStr("gimps:remove:g1"))
 					return
 				end
 				local tab = {}
@@ -2241,7 +2407,7 @@ function MODULE:InitClient()
 			cAMPanel:SetSize(50, 20)
 			cAMPanel:SetParent(addMessagePanel)
 			
-			local addMessageButton = VToolkit:CreateButton(MODULE:TranslateStr("new"), function()
+			local addMessageButton = VToolkit:CreateButton(MODULE:TranslateStr("gimps:new"), function()
 				addMessagePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
 			end)
 			addMessageButton:SetPos(10, 500)
@@ -2256,10 +2422,10 @@ function MODULE:InitClient()
 			messageBox:SetMultiline(true)
 			messageBox:SetEnterAllowed(false)
 			
-			local addListingButton = VToolkit:CreateButton(MODULE:TranslateStr("new:add"), function()
+			local addListingButton = VToolkit:CreateButton(MODULE:TranslateStr("gimps:new:add"), function()
 				
 				if(string.find(messageBox:GetValue(), "\n")) then
-					VToolkit:CreateErrorDialog("Gimp must not contain new lines!")
+					VToolkit:CreateErrorDialog(MODULE:TranslateStr("gimps:newlines"))
 					return
 				end
 			
@@ -2276,12 +2442,10 @@ function MODULE:InitClient()
 			addListingButton:SetSize(105, 30)
 			addListingButton:SetParent(addMessagePanel)
 		end,
-		Updater = function(panel, paneldata)
+		OnOpen = function(panel, paneldata)
 			MODULE:NetCommand("VGetGimpList")
 			paneldata.AddMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
 		end
 	})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

@@ -17,13 +17,15 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Kits"
 MODULE.ID = "kits"
 MODULE.Description = "Create sets of weapons that players can request via commands."
 MODULE.Author = "Ned"
 MODULE.Permissions = {
-	"manage_kits"
+	"manage_kits",
+	"kitsubscribe",
+	"getkit"
 }
 MODULE.NetworkStrings = {
 	"VAddKit",
@@ -32,10 +34,83 @@ MODULE.NetworkStrings = {
 	"VListKits",
 	"VGetKitContents",
 	"VAddKitContents",
-	"VDelKitContents"
+	"VDelKitContents",
+	"VGetAllowedRanks",
+	"VAddAllowedRank",
+	"VDelAllowedRank"
 }
 
+function MODULE:RegisterChatCommands()
+	Vermilion:AddChatCommand({
+		Name = "kitsubscribe",
+		Description = "Subscribe to a kit to have it given to you each time you spawn.",
+		Syntax = "<kitname>",
+		CanRunOnDS = false,
+		Permissions = { "kitsubscribe" },
+		Predictor = function(pos, current, all, vplayer)
+			if(pos == 1) then
+				local tab = {}
+				local rnk = Vermilion:GetUser(vplayer):GetRankName()
+				for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+					if(table.HasValue(k.RanksAllowed, rnk)) then
+						table.insert(tab, k.Name)
+					end
+				end
+				return tab
+			end
+		end,
+		Function = function(sender, text, log, glog)
+			if(table.Count(text) < 1) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			local has = false
+			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+				if(k.Name == text[1]) then
+					has = true
+					break
+				end
+			end
+			if(not has) then return end
+			log("Subscribed to kit '" .. text[1] .. "' successfully!")
+			MODULE:GetData("subscriptions", {}, true)[sender:SteamID()] = text[1]
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "kitunsubscribe",
+		Description = "Clears a subscription to a kit.",
+		CanRunOnDS = false,
+		Function = function(sender, text, log, glog)
+			log("Unsubscribed from kit successfully!")
+			MODULE:GetData("subscriptions", {}, true)[sender:SteamID()] = nil
+		end
+	})
+end
+
 function MODULE:InitServer()
+
+	function MODULE:WouldRun(ply)
+		return MODULE:GetData("subscriptions", {}, true)[ply:SteamID()] != nil
+	end
+
+	self:AddHook("PlayerLoadout", function(ply)
+		if(MODULE:GetData("subscriptions", {}, true)[ply:SteamID()] != nil) then
+			local kit = nil
+			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+				if(k.Name == MODULE:GetData("subscriptions", {}, true)[ply:SteamID()]) then
+					kit = k
+					break
+				end
+			end
+			if(kit == nil) then return end
+			ply:StripWeapons()
+			for i,k in pairs(kit.Contents) do
+				ply:Give(k)
+			end
+			return true
+		end
+	end)
 	
 	local function sendKitList(vplayer)
 		local tab = {}
@@ -155,6 +230,70 @@ function MODULE:InitServer()
 		end
 	end)
 	
+	self:NetHook("VGetAllowedRanks", function(vplayer)
+		local name = net.ReadString()
+		local kit = nil
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				kit = k
+				break
+			end
+		end
+		if(kit == nil) then return end
+		MODULE:NetStart("VGetAllowedRanks")
+		net.WriteString(name)
+		net.WriteTable(kit.RanksAllowed)
+		net.Send(vplayer)
+	end)
+	
+	self:NetHook("VAddAllowedRank", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
+			local name = net.ReadString()
+			local kit = nil
+			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+				if(k.Name == name) then
+					kit = k
+					break
+				end
+			end
+			if(kit == nil) then return end
+			local rankname = net.ReadString()
+			if(not table.HasValue(kit.RanksAllowed, rankname)) then table.insert(kit.RanksAllowed, rankname) end
+		end
+	end)
+	
+	self:NetHook("VDelAllowedRank", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
+			local name = net.ReadString()
+			local kit = nil
+			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+				if(k.Name == name) then
+					kit = k
+					break
+				end
+			end
+			if(kit == nil) then return end
+			local rankname = net.ReadString()
+			table.RemoveByValue(kit.RanksAllowed, rankname)
+		end
+	end)
+	
+	self:AddHook(Vermilion.Event.RankRenamed, function(oldName, newName)
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			for i1,k1 in pairs(k.RanksAllowed) do
+				if(k1 == oldName) then k.RanksAllowed[i1] = newName end
+			end
+		end
+	end)
+	
+	self:NetHook(Vermilion.Event.RankDeleted, function(name)
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			for i1,k1 in pairs(k.RanksAllowed) do
+				if(k1 == name) then k.RanksAllowed[i1] = nil end
+			end
+		end
+	end)
+	
 end
 
 function MODULE:InitClient()
@@ -186,11 +325,22 @@ function MODULE:InitClient()
 		end
 	end)
 	
+	self:NetHook("VGetAllowedRanks", function(vplayer)
+		local name = net.ReadString()
+		local data = net.ReadTable()
+		local paneldata = Vermilion.Menu.Pages["kit_creator"]
+		local allowedrnks = paneldata.KitPermissionsAllowedRanks
+		allowedrnks:Clear()
+		for i,k in pairs(data) do
+			allowedrnks:AddLine(k)
+		end
+	end)
+	
 	Vermilion.Menu:AddCategory("player", 4)
 	
 	Vermilion.Menu:AddPage({
 		ID = "kit_creator",
-		Name = "Kit Creator (WIP)",
+		Name = "Kit Creator",
 		Order = 10,
 		Category = "player",
 		Size = { 900, 560 },
@@ -385,13 +535,61 @@ function MODULE:InitClient()
 				multiselect = false
 			})
 			kitPermissionsAllowedRanks:SetParent(kitPermissionPanel)
-			kitPermissionsAllowedRanks:SetPos(400, 40)
+			kitPermissionsAllowedRanks:SetPos(380, 40)
 			kitPermissionsAllowedRanks:SetSize(200, kitPermissionPanel:GetTall() - 50)
+			paneldata.KitPermissionsAllowedRanks = kitPermissionsAllowedRanks
 			
+			VToolkit:CreateHeaderLabel(kitPermissionsAllowedRanks, "Allowed Ranks"):SetParent(kitPermissionPanel)
 			VToolkit:CreateHeaderLabel(kitPermissionsAllRanks, "Ranks"):SetParent(kitPermissionPanel)
+			
+			local addKitPermission = VToolkit:CreateButton("Allow", function()
+				if(kitPermissionsAllRanks:GetSelected()[1] == nil) then
+					VToolkit:CreateErrorDialog("Must select at least one rank to add to the list of allowed ranks!")
+					return
+				end
+				for i,k in pairs(kitPermissionsAllRanks:GetSelected()) do
+					local has = false
+					for i1,k1 in pairs(kitPermissionsAllowedRanks:GetLines()) do
+						if(k1:GetValue(1) == k:GetValue(1)) then
+							has = true
+							break
+						end
+					end
+					if(not has) then
+						kitPermissionsAllowedRanks:AddLine(k:GetValue(1))
+						MODULE:NetStart("VAddAllowedRank")
+						net.WriteString(kitList:GetSelected()[1]:GetValue(1))
+						net.WriteString(k:GetValue(1))
+						net.SendToServer()
+					end
+				end
+			end)
+			addKitPermission:SetPos(220, 100)
+			addKitPermission:SetSize(150, 20)
+			addKitPermission:SetParent(kitPermissionPanel)
+			
+			local remKitPermission = VToolkit:CreateButton("Deny", function()
+				if(kitPermissionsAllowedRanks:GetSelected()[1] == nil) then
+					VToolkit:CreateErrorDialog("Must select at least one rank to remove from the list of allowed ranks!")
+					return
+				end
+				for i,k in pairs(kitPermissionsAllowedRanks:GetSelected()) do
+					MODULE:NetStart("VDelAllowedRank")
+					net.WriteString(kitList:GetSelected()[1]:GetValue(1))
+					net.WriteString(k:GetValue(1))
+					net.SendToServer()
+					kitPermissionsAllowedRanks:RemoveLine(k:GetID())
+				end
+			end)
+			remKitPermission:SetPos(220, 130)
+			remKitPermission:SetSize(150, 20)
+			remKitPermission:SetParent(kitPermissionPanel)
 			
 			
 			openKitPermissions = VToolkit:CreateButton("Permissions", function()
+				MODULE:NetStart("VGetAllowedRanks")
+				net.WriteString(kitList:GetSelected()[1]:GetValue(1))
+				net.SendToServer()
 				kitPermissionPanel:Open()
 			end)
 			openKitPermissions:SetPos(210 - 98, panel:GetTall() - 35)
@@ -485,7 +683,7 @@ function MODULE:InitClient()
 			paneldata.GiveWeapon = giveWeapon
 			paneldata.TakeWeapon = takeWeapon
 		end,
-		Updater = function(panel, paneldata)
+		OnOpen = function(panel, paneldata)
 			if(paneldata.Weapons == nil) then
 				paneldata.Weapons = {}
 				for i,k in pairs(list.Get("Weapon")) do
@@ -537,9 +735,9 @@ function MODULE:InitClient()
 			paneldata.RenKit:SetDisabled(true)
 			paneldata.OpenKitPermissions:SetDisabled(true)
 			
-			paneldata.KitPermissionPanel.Close()
-			paneldata.AddKitPanel.Close()
-			paneldata.RenKitPanel.Close()
+			paneldata.KitPermissionPanel:Close()
+			paneldata.AddKitPanel:Close()
+			paneldata.RenKitPanel:Close()
 			
 			Vermilion:PopulateRankTable(paneldata.KitPermissionsAllRanks, false, true)
 			
@@ -547,5 +745,3 @@ function MODULE:InitClient()
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

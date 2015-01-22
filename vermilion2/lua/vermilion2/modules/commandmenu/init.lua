@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Player Management Menu"
 MODULE.ID = "playermanagement"
 MODULE.Description = "<insert useful and informative description here>"
@@ -37,7 +37,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "playermanagement",
-		Name = "Execute Commands",
+		Name = Vermilion:TranslateStr("menu:playermanagement"),
 		Order = 3,
 		Category = "player",
 		Size = { 800, 560 },
@@ -92,8 +92,8 @@ function MODULE:InitClient()
 							
 							local playerlist = VToolkit:CreateList({
 								cols = {
-									"Name",
-									"Rank"
+									MODULE:TranslateStr("name"),
+									MODULE:TranslateStr("rank")
 								}
 							})
 							playerlist:Dock(FILL)
@@ -169,5 +169,3 @@ function MODULE:InitClient()
 		net.SendToServer()
 	end
 end
-
-Vermilion:RegisterModule(MODULE)

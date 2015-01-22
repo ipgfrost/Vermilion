@@ -26,14 +26,19 @@ if(CLIENT) then
 				local nnode = cnode:AddNode(i)
 				nnode:SetIcon("icon16/folder.png")
 				repeatParseTree(k, nnode)
+			end
+		end
+		for i,k in pairs(tab) do
+			if(istable(k)) then
+				continue
 			else
 				local tnode = cnode:AddNode(i)
 				tnode:SetIcon("icon16/page.png")
 				if(k == "FUNCTION") then
 					tnode:SetIcon("icon16/script.png")
-					tnode:AddNode("Type: function")
+					continue
 				elseif(k == "IMATERIAL") then
-					tnode:AddNode("Type: function")
+					tnode:AddNode("Type: IMATERIAL")
 				elseif(k == "LARGE TABLE") then
 					tnode:AddNode("Type: table")
 					tnode:SetIcon("icon16/folder.png")
@@ -87,7 +92,7 @@ else
 	local function trimData(tab)
 		for i,k in pairs(tab) do
 			if(istable(k)) then
-				if(table.Count(k) > 100) then
+				if(table.Count(k) > 200) then
 					tab[i] = "LARGE TABLE"
 				else
 					trimData(k)

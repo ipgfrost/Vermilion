@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Entity Limits"
 MODULE.ID = "limit_entities"
 MODULE.Description = "Prevent players from spawning certain entities."
@@ -226,7 +226,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Entities == nil) then
 					paneldata.Entities = {}
 					for i,k in pairs(list.Get("SpawnableEntities")) do
@@ -251,5 +251,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

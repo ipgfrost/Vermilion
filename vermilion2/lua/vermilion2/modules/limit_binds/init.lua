@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Keybind Blocker"
 MODULE.ID = "bindcontrol"
 MODULE.Description = "Stops clients from abusing keybinds such as \"say\"."
@@ -256,7 +256,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)
 				paneldata.RankBlockList:Clear()
 				paneldata.BlockBind:SetDisabled(true)
@@ -265,5 +265,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

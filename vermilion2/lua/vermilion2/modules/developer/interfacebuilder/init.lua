@@ -17,19 +17,16 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = MODULE
-MODULE.Name = "Base"
-MODULE.ID = "base"
-MODULE.Description = "Something"
-MODULE.Author = "Ned"
-MODULE.Permissions = {
-
-}
-
-function MODULE:InitServer()
+if(SERVER) then
+	AddCSLuaFile()
+	AddCSLuaFile("interface.lua")
 	
+	
+	return
+else
+	VInterfaceBuilder = {}
+	include("interface.lua")
 end
 
-function MODULE:InitClient()
-	
-end
+
+

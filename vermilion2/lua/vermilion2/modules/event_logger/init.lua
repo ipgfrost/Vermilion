@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Event Logger"
 MODULE.ID = "event_logger"
 MODULE.Description = "Logs events that take place on the server."
@@ -169,7 +169,9 @@ function MODULE:InitClient()
 		for i,k in pairs(var) do
 			timer.Simple(i / 30, function()
 				local img = vgui.Create("DImage")
-				img:SetImage(k.Icon)
+				if(k.Icon != nil) then
+					img:SetImage(k.Icon)
+				end
 				img:SizeToContents()
 				
 				local ln = paneldata.EventList:AddLine(os.date("%d/%m/%y %H:%M:%S", k.Time), "", k.Text)
@@ -223,10 +225,8 @@ function MODULE:InitClient()
 			evtlist.Columns[1]:SetFixedWidth(100)
 			evtlist.Columns[2]:SetFixedWidth(16)
 		end,
-		Updater = function(panel)
+		OnOpen = function(panel)
 			MODULE:NetCommand("VGetEvents")
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

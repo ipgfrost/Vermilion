@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Extra Properties"
 MODULE.ID = "properties"
 MODULE.Description = "Adds some useful properties to the contextual menu."
@@ -109,5 +109,3 @@ function MODULE:InitShared()
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

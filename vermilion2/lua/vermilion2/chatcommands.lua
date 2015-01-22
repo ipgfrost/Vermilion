@@ -54,6 +54,18 @@ local function commandGLOG(commandname, text, typ, time) -- Global Logger: use t
 	Vermilion:BroadcastNotification(text, typ, time)
 end
 
+local function commandTGLog(commandname, text, values, typ, time)
+	if(text == nil) then return end
+	if(Vermilion:GetData("muted_commands", {}, true)[commandname] == false) then return end
+	Vermilion:TransBroadcastNotify(text, values, typ, time)
+end
+
+local function commandFilter(commandname)
+	if(text == nil) then return end
+	if(Vermilion:GetData("muted_commands", {}, true)[commandname] == false) then return false end
+	return true
+end
+
 function Vermilion:AddChatCommand(props)
 	for i,k in pairs(commandMustHave) do
 		assert(props[k] != nil)
@@ -68,7 +80,7 @@ function Vermilion:AddChatCommand(props)
 		Vermilion:AddCommand(props.Name, function(sender, args)
 			for i,k in pairs(props.Permissions) do
 				if(not Vermilion:HasPermission(sender, k)) then
-					Vermilion.Log("Access denied!")
+					Vermilion.Log(Vermilion:TranslateStr("access_denied", nil, sender))
 					return
 				end
 			end
@@ -82,19 +94,27 @@ function Vermilion:AddChatCommand(props)
 				end
 			else
 				if(Vermilion:GetModule("event_logger") != nil) then
-					Vermilion:GetModule("event_logger"):AddEvent("script", sender:GetName() .. " is running the " .. props.Name .. " chat command. (" .. table.concat(args, ", ") .. ")")
+					Vermilion:GetModule("event_logger"):AddEvent("script", Vermilion:TranslateStr("event_logger:chatcommand", { sender:GetName(), props.Name, table.concat(args, ", ") }))
 				end
 			end
 			
-			local success = props.Function(sender, args, function(text) Vermilion.Log(text) end, function(text, typ, time) commandGLOG(props.Name, text, typ, time) end)
+			local success = props.Function(sender, args, function(text) Vermilion.Log(text) end, function(text, typ, time) commandGLOG(props.Name, text, typ, time) end, function(text, values, typ, time) commandTGLog(props.Name, text, values, typ, time) end)
 			if(success == nil) then success = true end
 			if(not success) then
-				Vermilion.Log("Command failed!")
+				Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, sender))
 			end
 		end)
 	end
 	self.ChatCommands[props.Name] = props
 end
+
+Vermilion:AddChatCommand({
+	Name = "version",
+	Description = "Prints the current version number.",
+	Function = function(sender, text, log, glog)
+		log(Vermilion:TranslateStr("commands:version", { Vermilion.GetVersionString() }))
+	end
+})
 
 
 
@@ -155,40 +175,44 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 								end
 							end
 							if(not table.HasValue(k1.Indexes, k)) then
-								logFunc("Cannot specify all players (@) here!", NOTIFY_ERROR)
+								logFunc(Vermilion:TranslateStr("cmd_all_bad_pos", nil, vplayer), NOTIFY_ERROR)
 								return ""
 							end
 						end
 					end
 				else
-					logFunc("Cannot specify all players (@) here!", NOTIFY_ERROR)
+					logFunc(Vermilion:TranslateStr("cmd_all_bad_pos", nil, vplayer), NOTIFY_ERROR)
 					return ""
 				end
 				if(Vermilion:GetModule("event_logger") != nil) then
-					Vermilion:GetModule("event_logger"):AddEvent("script", vplayer:GetName() .. " is running the " .. commandName .. " chat command. (" .. table.concat(parts, ", ") .. ")")
+					Vermilion:GetModule("event_logger"):AddEvent("script", Vermilion:TranslateStr("event_logger:chatcommand", { vplayer:GetName(), commandName, table.concat(parts, ", ") }))
 				end
 				local edittable = table.Copy(parts)
 				for i,k in pairs(VToolkit.GetValidPlayers()) do
 					for i1,k1 in pairs(atindexes) do
 						edittable[k1] = k:GetName()
 					end
-					local success = command.Function(vplayer, edittable, logFunc, function() end) // <-- we ignore global output here, otherwise we get spammed.
+					local success = command.Function(vplayer, edittable, logFunc, function() end, function() end) // <-- we ignore global output here, otherwise we get spammed.
 					if(success == nil) then success = true end
 					if(not success) then 
 						return "" // <-- we can assume that this error will happen again, so don't bother repeating.
 					end
 				end
 				if(command.AllBroadcast != nil) then
-					commandGLOG(command.Name, command.AllBroadcast(vplayer, parts))
+					if(commandFilter(command.Name)) then
+						for i,k in pairs(VToolkit.GetValidPlayers()) do
+							Vermilion:AddNotification(k, command.AllBroadcast(vplayer, parts, k))
+						end
+					end
 				end
 			else
 				if(Vermilion:GetModule("event_logger") != nil) then
-					Vermilion:GetModule("event_logger"):AddEvent("script", vplayer:GetName() .. " is running the " .. commandName .. " chat command. (" .. table.concat(parts, ", ") .. ")")
+					Vermilion:GetModule("event_logger"):AddEvent("script", Vermilion:TranslateStr("event_logger:chatcommand", { vplayer:GetName(), commandName, table.concat(parts, ", ") }))
 				end
-				local success = command.Function(vplayer, parts, logFunc, function(text, typ, time) commandGLOG(commandName, text, typ, time) end)
+				local success = command.Function(vplayer, parts, logFunc, function(text, typ, time) commandGLOG(commandName, text, typ, time) end, function(text, values, typ, time) commandTGLog(commandName, text, values, typ, time) end)
 				if(success == nil) then success = true end
 				if(not success) then 
-					Vermilion.Log("Command failed!") 
+					Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, vplayer)) 
 				end
 			end
 			return ""
@@ -197,7 +221,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 			if(result == "") then
 				return result
 			end
-			logFunc("No such command!", NOTIFY_ERROR)
+			logFunc(Vermilion:TranslateStr("cmd_notfound", nil, vplayer), NOTIFY_ERROR)
 			return ""
 		end
 	else

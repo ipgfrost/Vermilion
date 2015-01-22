@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Weapon Limits"
 MODULE.ID = "limit_weapons"
 MODULE.Description = "Prevent players from spawning/using/picking up certain weapons."
@@ -288,7 +288,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Weapons == nil) then
 					paneldata.Weapons = {}
 					for i,k in pairs(list.Get("Weapon")) do
@@ -341,5 +341,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

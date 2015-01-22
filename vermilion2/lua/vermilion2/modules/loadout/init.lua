@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Loadouts"
 MODULE.ID = "loadout"
 MODULE.Description = "Set the weapons that players spawn with."
@@ -51,6 +51,9 @@ function MODULE:InitServer()
 
 	self:AddHook("PlayerLoadout", function(vplayer)
 		if(not MODULE:GetData("enabled_on_non_sandbox", false, true) and engine.ActiveGamemode() != "sandbox") then return end
+		if(Vermilion:GetModule("kits") != nil) then
+			if(Vermilion:GetModule("kits"):WouldRun(vplayer)) then return end
+		end
 		local data = MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), defaultLoadout, true)
 		if(data != nil) then
 			vplayer:RemoveAllAmmo()
@@ -312,7 +315,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Weapons == nil) then
 					paneldata.Weapons = {}
 					for i,k in pairs(list.Get("Weapon")) do
@@ -375,5 +378,3 @@ function MODULE:InitShared()
 		end
 	end)
 end
-
-Vermilion:RegisterModule(MODULE)

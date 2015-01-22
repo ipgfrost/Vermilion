@@ -74,7 +74,8 @@ Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANK_OVERVIEWS, "UpdateRankTables",
 end)
 
 
-function Vermilion:PopulateRankTable(ranklist, detailed, protected)
+function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
+	if(ranklist == nil) then return end
 	detailed = detailed or false
 	protected = protected or false
 	local has = false
@@ -92,7 +93,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected)
 		for i,k in pairs(self.Data.RankOverview) do
 			if(not protected and k.Protected) then continue end
 			if(k.IsDefault) then
-				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or "None", i, "Yes")
+				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("yes"))
 				ln.Protected = k.Protected
 				for i1,k1 in pairs(ln.Columns) do
 					k1:SetContentAlignment(5)
@@ -102,7 +103,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected)
 				img:SetSize(16, 16)
 				ln:Add(img)
 			else
-				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or "None", i, "No")
+				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("no"))
 				ln.Protected = k.Protected
 				for i1,k1 in pairs(ln.Columns) do
 					k1:SetContentAlignment(5)
@@ -111,12 +112,15 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected)
 				img:SetImage("icon16/" .. k.Icon .. ".png")
 				img:SetSize(16, 16)
 				ln:Add(img)
+				if(isfunction(customiser)) then customiser(ln, k) end
 			end
 		end
 	else
 		for i,k in pairs(self.Data.RankOverview) do
 			if(not protected and k.Protected) then continue end
-			ranklist:AddLine(k.Name).Protected = k.Protected
+			local ln = ranklist:AddLine(k.Name)
+			ln.Protected = k.Protected
+			if(isfunction(customiser)) then customiser(ln, k) end
 		end
 	end
 end
@@ -139,7 +143,6 @@ end
 function Vermilion:SetModuleData(mod, name, val)
 	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
 	self.Data.Module[mod][name] = val
-	--self:TriggerDataChangeHooks(mod, name)
 end
 
 Vermilion:AddHook("ChatText", "StopDefaultChat", false, function(index, name, text, typ)

@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Client Settings"
 MODULE.ID = "client_settings"
 MODULE.Description = "Allows the player to modify the operation of the Vermilion Client."
@@ -28,28 +28,41 @@ MODULE.Permissions = {
 }
 
 local categories = {
-	{ Name = "Features", ID = "Features", Order = 1 },
-	{ Name = "Graphics", ID = "Graphics", Order = 2 }
+	{ Name = MODULE:TranslateStr("cat:features"), ID = "Features", Order = 1 },
+	{ Name = MODULE:TranslateStr("cat:graphics"), ID = "Graphics", Order = 2 }
 }
 local options = {}
 
-function MODULE:AddOption(convar, guitext, typ, category, otherdat)
+function MODULE:AddOption(data)
+	table.insert(options, data)
+end
+
+--[[ function MODULE:AddOption(convar, guitext, typ, category, otherdat)
 	otherdat = otherdat or {}
 	table.insert(options, table.Merge({ ConVar = convar, GuiText = guitext, Type = typ, Category = category }, otherdat))
-end
-
-function MODULE:InitServer()
-	
-end
+end ]]
 
 function MODULE:InitClient()
-	self:AddOption("vtoolkit_skin", "Skin (requires restart)", "Combobox", "Graphics", {
+	self:AddOption({
+		GuiText = MODULE:TranslateStr("opt:skin"),
+		ConVar = "vtoolkit_skin",
+		Type = "Combobox",
+		Category = "Graphics",
 		Options = table.GetKeys(VToolkit.Skins)
+	})
+	
+	self:AddOption({
+		GuiText = MODULE:TranslateStr("opt:lang"),
+		ConVar = "vermilion_interfacelang",
+		Type = "Combobox",
+		Category = "Features",
+		Options = table.GetKeys(Vermilion.Languages),
+		SetAs = "text"
 	})
 
 	Vermilion.Menu:AddPage({
 		ID = "client_settings",
-		Name = "Client Settings",
+		Name = Vermilion:TranslateStr("menu:client_settings"),
 		Order = 0.5,
 		Category = "basic",
 		Size = { 600, 560 },
@@ -73,7 +86,7 @@ function MODULE:InitClient()
 				
 					local label = VToolkit:CreateLabel(k.GuiText)
 					label:SetDark(true)
-					label:SetPos(10, 3 + 3)
+					label:SetPos(10, 6)
 					label:SetParent(panel)
 					
 					local combobox = VToolkit:CreateComboBox()
@@ -107,7 +120,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -147,7 +160,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -169,9 +182,7 @@ function MODULE:InitClient()
 					
 					function slider:OnChange(index)
 						if(paneldata.UpdatingGUI) then return end
-						net.Start("VServerUpdate")
-						net.WriteTable({{ Module = k.Module, Name = k.Name, Value = index}})
-						net.SendToServer()
+						RunConsoleCommand(k.ConVar, tostring(index))
 					end
 					
 					panel:SetSize(slider:GetWide() + 10, slider:GetTall() + 5)
@@ -179,7 +190,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -193,7 +204,41 @@ function MODULE:InitClient()
 					end
 					k.Impl = slider
 				elseif(k.Type == "Colour") then
-					-- Implement Me!
+					local panel = vgui.Create("DPanel")
+				
+					local label = VToolkit:CreateLabel(k.GuiText)
+					label:SetDark(true)
+					label:SetPos(10, 6)
+					label:SetParent(panel)
+					
+					local mixer = VToolkit:CreateColourMixer(true, false, true, Color(0, 0, 255, 255), k.UpdateFunc)
+					mixer:SetPos(sl:GetWide() - mixer:GetWide() - 10, 3)
+					mixer:SetParent(panel)
+					
+					if(k.Incomplete) then
+						local dimage = vgui.Create("DImage")
+						dimage:SetImage("icon16/error.png")
+						dimage:SetSize(16, 16)
+						dimage:SetPos(select(1, mixer:GetPos()) - 25, 5)
+						dimage:SetParent(panel)
+						dimage:SetTooltip("Feature not implemented!")
+					end
+					
+					panel:SetSize(select(1, mixer:GetPos()) + mixer:GetWide() + 10, mixer:GetTall() + 5)
+					panel:SetPaintBackground(false)
+					
+					local cat = nil
+					for ir,cat1 in pairs(categories) do
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+					end
+					
+					panel:SetContentAlignment( 4 )
+					panel:DockMargin( 1, 0, 1, 0 )
+					
+					panel:Dock(TOP)
+					panel:SetParent(cat)
+					
+					k.Impl = mixer
 				elseif(k.Type == "NumberWang") then
 					-- Implement Me!
 				elseif(k.Type == "Text") then
@@ -202,7 +247,7 @@ function MODULE:InitClient()
 			end
 			paneldata.UpdatingGUI = false
 		end,
-		Updater = function(panel, paneldata)
+		OnOpen = function(panel, paneldata)
 			paneldata.UpdatingGUI = true
 			for i,k in pairs(options) do
 				if(k.Type == "Combobox") then
@@ -219,5 +264,3 @@ function MODULE:InitClient()
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

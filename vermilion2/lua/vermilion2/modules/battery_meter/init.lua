@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Battery Meter"
 MODULE.ID = "battery_meter"
 MODULE.Description = "Provides a small battery meter on the top of the screen."
@@ -59,9 +59,12 @@ function MODULE:InitClient()
 	end)
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(Vermilion:GetModule("client_settings") != nil) then
-			Vermilion:GetModule("client_settings"):AddOption("vermilion_battery_meter", MODULE:TranslateStr("cl_opt"), "Checkbox", "Features", {})
+			Vermilion:GetModule("client_settings"):AddOption({
+				GuiText = MODULE:TranslateStr("cl_opt"),
+				ConVar = "vermilion_battery_meter",
+				Type = "Checkbox",
+				Category = "Features"
+			})
 		end
 	end)
 end
-
-Vermilion:RegisterModule(MODULE)

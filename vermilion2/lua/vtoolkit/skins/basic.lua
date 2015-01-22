@@ -20,15 +20,10 @@
 local Skin = {}
 
 if(CLIENT) then
-	surface.CreateFont( 'VToolkitButton', {
-		font		= 'Helvetica',
-		size		= 14,
-		weight		= 500,
-		additive 	= false,
-		antialias 	= true,
-		bold		= true,
-	} )
+	
 end
+
+Skin.CreatedBtnFont = false
 
 Skin.CheckboxCross = Material("icon16/cross.png")
 
@@ -58,6 +53,17 @@ end
 
 Skin.Button = {}
 Skin.Button.Config = function(button)
+	if(not Skin.CreatedBtnFont) then
+		surface.CreateFont( 'VToolkitButton', {
+			font		= 'Helvetica',
+			size		= 14 * (Vermilion.GetActiveLanguageFile(LocalPlayer()).ButtonFontScale or 1),
+			weight		= 500,
+			additive 	= false,
+			antialias 	= true,
+			bold		= true,
+		} )
+		Skin.CreatedBtnFont = true
+	end
 	button:SetColor(Color(0, 0, 0, 255))
 	button:SetFont("VToolkitButton")
 end

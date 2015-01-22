@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Chat Censor"
 MODULE.ID = "chat_censor"
 MODULE.Description = "Blocks certain words in chat as well as IPv4 addresses."
@@ -149,7 +149,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "chat_censor",
-		Name = "Chat Censor",
+		Name = Vermilion:TranslateStr("menu:chat_censor"),
 		Order = 6,
 		Category = "player",
 		Size = { 800, 525 },
@@ -165,7 +165,7 @@ function MODULE:InitClient()
 				net.SendToServer()
 			end
 			
-			local enabledCB = VToolkit:CreateCheckBox("Enable Chat Censor")
+			local enabledCB = VToolkit:CreateCheckBox(MODULE:TranslateStr("enable"))
 			enabledCB:SetParent(panel)
 			enabledCB:SetPos(620, 30)
 			enabledCB:SizeToContents()
@@ -175,7 +175,7 @@ function MODULE:InitClient()
 			end
 			paneldata.EnabledCheckbox = enabledCB
 			
-			local ipCensor = VToolkit:CreateCheckBox("Censor IPv4 Addresses")
+			local ipCensor = VToolkit:CreateCheckBox(MODULE:TranslateStr("ipv4"))
 			ipCensor:SetParent(panel)
 			ipCensor:SetPos(620, 50)
 			ipCensor:SizeToContents()
@@ -251,14 +251,14 @@ function MODULE:InitClient()
 			
 			
 			
-			local addPhrase = VToolkit:CreateButton("Add Phrase", function()
+			local addPhrase = VToolkit:CreateButton(MODULE:TranslateStr("add"), function()
 				addPhrasePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
 			end)
 			addPhrase:SetPos(620, 90)
 			addPhrase:SetParent(panel)
 			addPhrase:SetSize(panel:GetWide() - addPhrase:GetX() - 10, 25)
 			
-			local editPhrase = VToolkit:CreateButton("Edit Phrase", function()
+			local editPhrase = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
 				paneldata.EPhraseData:SetValue(paneldata.PhraseList:GetSelected()[1]:GetValue(1))
 				editPhrasePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
 			end)
@@ -268,7 +268,7 @@ function MODULE:InitClient()
 			editPhrase:SetDisabled(true)
 			paneldata.EditPhraseBtn = editPhrase
 			
-			local remPhrase = VToolkit:CreateButton("Remove Phrase", function()
+			local remPhrase = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
 				for i,k in pairs(paneldata.PhraseList:GetSelected()) do
 					MODULE:NetStart("VRemovePhrase")
 					net.WriteString(k:GetValue(1))
@@ -284,7 +284,7 @@ function MODULE:InitClient()
 			
 			local phraseList = VToolkit:CreateList({
 				cols = {
-					"Phrase"
+					MODULE:TranslateStr("phrase")
 				}
 			})
 			phraseList:SetParent(panel)
@@ -298,13 +298,13 @@ function MODULE:InitClient()
 				remPhrase:SetDisabled(enabled)
 			end
 			
-			local blockedBindsLabel = VToolkit:CreateHeaderLabel(phraseList, "Blocked Phrases")
+			local blockedBindsLabel = VToolkit:CreateHeaderLabel(phraseList, MODULE:TranslateStr("list"))
 			blockedBindsLabel:SetParent(panel)
 			
 			addPhrasePanel:MoveToFront()
 			editPhrasePanel:MoveToFront()
 		end,
-		Updater = function(panel, paneldata)
+		OnOpen = function(panel, paneldata)
 			MODULE:NetCommand("VPhraseListLoad")
 			MODULE:NetCommand("VGetCensorUpdate")
 			paneldata.EditPhraseBtn:SetDisabled(true)
@@ -315,5 +315,3 @@ function MODULE:InitClient()
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

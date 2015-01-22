@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "NPC Limits"
 MODULE.ID = "limit_npc"
 MODULE.Description = "Prevent players from using certain NPCs."
@@ -229,7 +229,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.NPCs == nil) then
 					paneldata.NPCs = {}
 					for i,k in pairs(list.Get("NPC")) do
@@ -254,5 +254,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)

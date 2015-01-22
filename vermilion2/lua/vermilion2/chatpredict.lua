@@ -23,7 +23,7 @@ if(SERVER) then
 	net.Receive("VChatPrediction", function(len, vplayer)
 		local current = net.ReadString()
 		
-		local command, response = Vermilion.ParseChatLineForCommand(current)
+		local command, response = Vermilion.ParseChatLineForCommand(current, vplayer)
 		
 		local predictor = nil
 		if(Vermilion.ChatAliases[command] != nil) then
@@ -39,7 +39,7 @@ if(SERVER) then
 		end
 		
 		if(string.find(current, " ") and predictor != nil) then
-			local cmdName,parts = Vermilion.ParseChatLineForParameters(current)
+			local cmdName,parts = Vermilion.ParseChatLineForParameters(current, true)
 			local dataTable = predictor(table.Count(parts), parts[table.Count(parts)], parts, vplayer)
 			if(dataTable != nil) then
 				for i,k in pairs(dataTable) do
@@ -47,9 +47,11 @@ if(SERVER) then
 						table.insert(response, k)
 					else
 						table.insert(response, { Name = k, Syntax = "" })
-					end					
+					end
 				end
 			end
+		elseif(string.find(current, " ") and predictor == nil) then
+			table.insert(response, { Name = "", Syntax = Vermilion:TranslateStr("cmd_chatpredict_nopredict", nil, vplayer) })
 		end
 		net.Start("VChatPrediction")
 		net.WriteTable(response)
@@ -57,6 +59,18 @@ if(SERVER) then
 	end)
 	
 else
+	CreateClientConVar("vermilion_chatpredict", 1, true, false)
+	
+	Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "ChatPredictOption", false, function()
+		if(Vermilion:GetModule("client_settings") == nil) then return end
+		Vermilion:GetModule("client_settings"):AddOption({
+			GuiText = Vermilion:TranslateStr("cmd_chatpredict_setting"),
+			ConVar = "vermilion_chatpredict",
+			Type = "Checkbox",
+			Category = "Features"
+		})
+	end)
+	
 	net.Receive("VChatPrediction", function()
 		local response = net.ReadTable()
 		Vermilion.ChatPredictions = response
@@ -74,7 +88,8 @@ else
 	end)
 	
 	Vermilion:AddHook("HUDShouldDraw", "ChatHideHUD", false, function(name)
-		if(Vermilion.CurrentChatText == nil) then return end
+		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
+		if(Vermilion.CurrentChatText == nil or GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(string.StartWith(Vermilion.CurrentChatText, "!") and (name == "NetGraph" or name == "CHudAmmo")) then return false end
 	end)
 	
@@ -85,6 +100,7 @@ else
 	Vermilion.MoveEnabled = true
 	
 	Vermilion:AddHook("Think", "ChatMove", false, function()
+		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(Vermilion.ChatOpen and Vermilion.MoveEnabled and table.Count(Vermilion.ChatPredictions) > 0) then
 			if(input.IsKeyDown(KEY_DOWN)) then
 				if(string.find(Vermilion.CurrentChatText, " ")) then
@@ -127,6 +143,7 @@ else
 	end)
 	
 	Vermilion:AddHook("OnChatTab", "VInsertPrediction", false, function()
+		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(table.Count(Vermilion.ChatPredictions) > 0 and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
 			if(Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name == "") then return end
 			local commandText = Vermilion.CurrentChatText
@@ -169,27 +186,25 @@ else
 	end)
 	
 	Vermilion:AddHook("HUDPaint", "PredictDraw", false, function()
+		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatOpen) then
 			local pos = 0
 			local xpos = 0
 			local maxw = 0
-			local text = "Press up/down to select a suggestion and press tab to insert it."
-			if(Vermilion:GetModule("chatbox") != nil and GetConVarNumber("vermilion_replace_chat") == 1) then
-				text = "Press up/down to select a suggestion and press right arrow key to insert it."
-			end
+			local text = Vermilion:TranslateStr("cmd_chatpredict_prompt")
 			local mapbx = nil
 			local maptx = nil
 			if(chat.GetChatBoxSize == nil) then
 				mapbx = math.Remap(545, 0, 1366, 0, ScrW())
 				maptx = math.Remap(550, 0, 1366, 0, ScrW())
-
+				
 				if(ScrW() > 1390) then
 					mapbx = mapbx + 100
 					maptx = maptx + 100
 				end
 			else
-				mapbx = select(1, chat.GetChatBoxSize()) + 10
-				mapbx = select(1, chat.GetChatBoxSize()) + 15
+				mapbx = select(1, chat.GetChatBoxSize()) + 20
+				maptx = select(1, chat.GetChatBoxSize()) + 25
 			end
 			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatBGW + 10, Vermilion.ChatBGH + 5, Color(0, 0, 0, 128))
 			draw.SimpleText(text, "Default", maptx, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
@@ -220,6 +235,7 @@ else
 	end)
 	
 	Vermilion:AddHook("ChatTextChanged", "ChatPredict", false, function(chatText)
+		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(Vermilion.CurrentChatText != chatText) then
 			if(string.find(chatText, " ")) then
 				Vermilion.ChatTabSelected = 2

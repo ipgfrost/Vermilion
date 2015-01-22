@@ -19,32 +19,41 @@
 
 
 
-function Vermilion.ParseChatLineForCommand(line)
+function Vermilion.ParseChatLineForCommand(line, forplayer)
 	local command = string.Trim(string.sub(line, 1, string.find(line, " ") or nil))
 	local response = {}
 	for i,k in pairs(Vermilion.ChatCommands) do
+		local syntax = k.Syntax
+		if(isfunction(syntax)) then
+			syntax = syntax(forplayer)
+		end
 		if(string.find(line, " ")) then
 			if(command == i) then
-				table.insert(response, { Name = i, Syntax = k.Syntax })
+				table.insert(response, { Name = i, Syntax = syntax })
 			end
 		elseif(string.StartWith(i, command)) then
-			table.insert(response, { Name = i, Syntax = k.Syntax })
+			table.insert(response, { Name = i, Syntax = syntax })
 		end
 	end
 	for i,k in pairs(Vermilion.ChatAliases) do
+		local syntax = Vermilion.ChatCommands[k].Syntax
+		if(isfunction(syntax)) then
+			syntax = syntax(forplayer)
+		end
 		if(string.find(line, " ")) then
 			if(command == i) then
-				table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. Vermilion.ChatCommands[k].Syntax })
+				table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. syntax })
 			end
 		elseif(string.StartWith(i, command)) then
-			table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. Vermilion.ChatCommands[k].Syntax })
+			table.insert(response, { Name = i, Syntax = "(alias of " .. k .. ") - " .. syntax })
 		end
 	end
 	
 	return command, response
 end
 
-function Vermilion.ParseChatLineForParameters(line)
+function Vermilion.ParseChatLineForParameters(line, includelast)
+	if(includelast == nil) then includelast = false end
 	local parts = string.Explode(" ", line, false)
 	local parts2 = {}
 	local part = ""
@@ -77,6 +86,6 @@ function Vermilion.ParseChatLineForParameters(line)
 	end
 	local cmdName = parts[1]
 	table.remove(parts, 1)
-	if(parts[table.Count(parts)] == "") then parts[table.Count(parts)] = nil end
+	if(parts[table.Count(parts)] == "" and not includelast) then parts[table.Count(parts)] = nil end
 	return cmdName, parts
 end

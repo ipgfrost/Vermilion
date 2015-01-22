@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Rank Editor"
 MODULE.ID = "rank_editor"
 MODULE.Description = "Edits ranks"
@@ -51,6 +51,53 @@ MODULE.DefaultPermissions = {
 }
 
 function MODULE:RegisterChatCommands()
+	
+	Vermilion:AddChatCommand({
+		Name = "addplayer",
+		Description = "Add a new offline player to the database",
+		Syntax = "<name> <steamid>",
+		Permissions = { "manage_ranks" },
+		Function = function(sender, text, log, glog)
+			if(table.Count(text) < 2) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return
+			end
+			local target = Vermilion:GetUserBySteamID(text[2])
+			if(target != nil) then
+				log("Cannot add duplicate SteamID!", NOTIFY_ERROR)
+				return
+			end
+			local usr = Vermilion:CreateUserObj(text[1], string.upper(text[2]), Vermilion:GetDefaultRank(), {})
+			table.insert(Vermilion.Data.Users, usr)
+			log("Added user! Name will be updated at next login. You can now use !setrank to change their rank.")
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "delplayer",
+		Description = "Delete a user from the database",
+		Syntax = "<steamid>",
+		Permissions = { "manage_ranks" },
+		Function = function(sender, text, log, glog)
+			if(table.Count(text) < 1) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return
+			end
+			local target = Vermilion:GetUserBySteamID(text[1])
+			if(target == nil) then
+				log("Cannot find SteamID in database!", NOTIFY_ERROR)
+				return
+			end
+			for i,k in pairs(Vermilion.Data.Users) do
+				if(k.SteamID == text[1]) then
+					table.RemoveByValue(Vermilion.Data.Users, k)
+					log("Removed user!")
+					break
+				end
+			end
+		end
+	})
+	
 	Vermilion:AddChatCommand({
 		Name = "setrank",
 		Description = "Set a player's rank",
@@ -80,8 +127,19 @@ function MODULE:RegisterChatCommands()
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
-				return
+				target = Vermilion:GetUserByName(text[1])
+				if(target == nil) then
+					log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+					return
+				else
+					if(Vermilion:GetRank(text[2]) == nil) then
+						log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
+						return false
+					end
+					target:SetRank(text[2])
+					log("Updated rank of offline player!", NOTIFY_GENERIC)
+					return
+				end
 			end
 			if(Vermilion:GetRank(text[2]) == nil) then
 				log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
@@ -168,7 +226,7 @@ function MODULE:InitShared()
 			return Vermilion.Data.Rank.Name
 		end
 		if(not Vermilion:HasPermission(self, "identify_as_superadmin")) then
-			if(Vermilion:HasPermission("identify_as_admin")) then
+			if(Vermilion:HasPermission(self, "identify_as_admin")) then
 				return "admin"
 			end
 		else
@@ -368,6 +426,46 @@ function MODULE:InitClient()
 		if(IsValid(player_list)) then
 			player_list:AddLine(name, rank).EntityID = entindex
 		end
+	end)
+	
+	self:AddHook("Vermilion2_TargetIDDataIcon", function(vplayer)
+		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))) then
+			vplayer.VIcon = string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))
+			vplayer.VIconMat = Material("icon16/" .. vplayer.VIcon .. ".png", "noclamp smooth")
+		end
+		return vplayer.VIconMat
+		--[[ local tr = util.GetPlayerTrace( LocalPlayer() )
+		local trace = util.TraceLine( tr )
+		if (!trace.Hit) then return end
+		if (!trace.HitNonWorld) then return end
+		
+		if (not trace.Entity:IsPlayer()) then
+			return
+		end
+		
+		local MouseX, MouseY = gui.MousePos()
+		
+		if ( MouseX == 0 && MouseY == 0 ) then
+		
+			MouseX = ScrW() / 2
+			MouseY = ScrH() / 2
+		
+		end
+		
+		local x = MouseX
+		local y = MouseY
+		
+		x = x - 22 / 2
+		y = y + 100
+
+		if(trace.Entity.VIcon == nil or trace.Entity.VIcon == "") then
+			trace.Entity.VIcon = string.lower(Vermilion:GetRankIcon(trace.Entity:GetNWString("Vermilion_Rank")))
+			trace.Entity.VIconMat = Material("icon16/" .. trace.Entity.VIcon .. ".png", "noclamp smooth")
+		end
+		
+		surface.SetMaterial(trace.Entity.VIconMat)
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.DrawTexturedRect(x, y, 24, 24) ]]
 	end)
 
 
@@ -761,7 +859,7 @@ function MODULE:InitClient()
 				end
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				Vermilion:PopulateRankTable(paneldata.RankList, true, true)
 				paneldata.delRank:SetDisabled(true)
 				paneldata.renameRank:SetDisabled(true)
@@ -901,10 +999,11 @@ function MODULE:InitClient()
 				VToolkit:CreateSearchBox(allPermissions)
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				Vermilion:PopulateRankTable(paneldata.RankList)
 				paneldata.AllPermissions:Clear()
 				for i,k in pairs(Vermilion.Data.Permissions) do
+					if(Vermilion:GetModule(k.Owner) == nil) then continue end
 					paneldata.AllPermissions:AddLine(k.Permission, Vermilion:GetModule(k.Owner).Name)
 				end
 			end,
@@ -996,7 +1095,7 @@ function MODULE:InitClient()
 				paneldata.PlayerList = playerList
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)
 				paneldata.PlayerList:Clear()
 				for i,k in pairs(VToolkit.GetValidPlayers()) do
@@ -1023,5 +1122,3 @@ function MODULE:InitClient()
 			end
 		})
 end
-
-Vermilion:RegisterModule(MODULE)

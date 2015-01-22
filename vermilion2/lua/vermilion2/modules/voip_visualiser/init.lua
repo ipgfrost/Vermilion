@@ -17,27 +17,83 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "VoIP Visualisers"
 MODULE.ID = "voip_visualiser"
 MODULE.Description = "Displays a 3D graph of the recent VoIP volume."
 MODULE.Author = "Ned"
-MODULE.Permissions = {
-
+MODULE.NetworkStrings = {
+	"VUpdateClientColour"
+}
+MODULE.ConVars = {
+	Client = {
+		{
+			Name = "vermilion_render_voip",
+			Value = 1,
+			Keep = true,
+			Userdata = false
+		},
+		{
+			Name = "vermilion_voipgraph_r",
+			Value = 0,
+			Keep = true,
+			Userdata = false
+		},
+		{
+			Name = "vermilion_voipgraph_g",
+			Value = 0,
+			Keep = true,
+			Userdata = false
+		},
+		{
+			Name = "vermilion_voipgraph_b",
+			Value = 255,
+			Keep = true,
+			Userdata = false
+		}
+	}
 }
 
 function MODULE:InitServer()
-	
+	self:NetHook("VUpdateClientColour", function(vplayer)
+		local colour = net.ReadColor()
+		vplayer:SetNWInt("VVoIPR", colour.r)
+		vplayer:SetNWInt("VVoIPG", colour.g)
+		vplayer:SetNWInt("VVoIPB", colour.b)
+	end)
 end
 
 function MODULE:InitClient()
-	CreateClientConVar("vermilion_render_voip", 1, true, false)
+
+	local function sendColourToServer()
+		MODULE:NetStart("VUpdateClientColour")
+		net.WriteColor(Color(GetConVarNumber("vermilion_voipgraph_r"), GetConVarNumber("vermilion_voipgraph_g"), GetConVarNumber("vermilion_voipgraph_b")))
+		net.SendToServer()
+	end
 
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(Vermilion:GetModule("client_settings") != nil) then
-			Vermilion:GetModule("client_settings"):AddOption("vermilion_render_voip", "Render VoIP Graphs", "Checkbox", "Features")
+			Vermilion:GetModule("client_settings"):AddOption({
+				GuiText = "Render VoIP Graphs",
+				ConVar = "vermilion_render_voip",
+				Type = "Checkbox",
+				Category = "Features"
+			})
+			Vermilion:GetModule("client_settings"):AddOption({
+				GuiText = "My VoIP graph colour",
+				UpdateFunc = function(value)
+					RunConsoleCommand("vermilion_voipgraph_r", value.r)
+					RunConsoleCommand("vermilion_voipgraph_g", value.g)
+					RunConsoleCommand("vermilion_voipgraph_b", value.b)
+					sendColourToServer()
+				end,
+				Type = "Colour",
+				Category = "Graphics"
+			})
 		end
 	end)
+	
+	sendColourToServer()
 
 	self:AddHook("PlayerStartVoice", function(vplayer)
 		vplayer.Vermilion_VoIPHistory = {}
@@ -62,8 +118,8 @@ function MODULE:InitClient()
 				end
 			end
 		end
-		surface.SetDrawColor(Color(0, 0, 255))
 		for i,k in pairs(player.GetAll()) do
+			surface.SetDrawColor(k:GetNWInt("VVoIPR", 0), k:GetNWInt("VVoIPG", 0), k:GetNWInt("VVoIPB", 255), 255)
 			if(k.Vermilion_VoIPHistory != nil and k:Alive()) then
 				local sang = k:EyeAngles()
 				sang:RotateAroundAxis(Vector(0, 0, 1), -90)
@@ -78,7 +134,7 @@ function MODULE:InitClient()
 				for i1,voiph in pairs(k.Vermilion_VoIPHistory) do
 					for i2 = -0.3, 0.3, 0.1 do
 						if(table.Count(k.Vermilion_VoIPHistory) == i1) then
-							surface.DrawLine(xpos, voiph + i2, xpos + 1, i2)
+							surface.DrawLine(xpos, voiph + i2, xpos + 1, voiph + i2)
 						else
 							surface.DrawLine(xpos, voiph + i2, xpos + 1, k.Vermilion_VoIPHistory[i1 + 1] + i2)
 						end
@@ -90,5 +146,3 @@ function MODULE:InitClient()
 		end
 	end)
 end
-
-Vermilion:RegisterModule(MODULE)

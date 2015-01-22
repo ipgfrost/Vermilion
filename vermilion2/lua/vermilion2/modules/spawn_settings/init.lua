@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Spawn Parameters"
 MODULE.ID = "spawn_settings"
 MODULE.Description = "Allows players to spawn with custom settings."
@@ -56,12 +56,12 @@ function MODULE:InitShared()
 	end, 200)
 	
 	self:AddType("Max Health", function(vplayer, data)
-		vplayer.Vermilion_MaxHealth = data
+		vplayer:SetMaxHealth(tonumber(data))
 	end, function(value)
 		return tonumber(value) != nil, "Not Number"
 	end, function(value)
 		return tonumber(value)
-	end, nil)
+	end, 100)
 	
 	self:AddType("Run Speed", function(vplayer, data)
 		vplayer:SetRunSpeed(data)
@@ -133,6 +133,7 @@ function MODULE:InitShared()
 end
 
 function MODULE:InitServer()
+	
 	self:AddHook("PlayerSpawn", function(vplayer)
 		timer.Simple(0.5, function()
 			for i,k in pairs(MODULE.DataTypes) do
@@ -166,8 +167,8 @@ function MODULE:InitServer()
 	end)
 	
 	self:AddHook("KeyRelease", function(vplayer, key)
-		timer.Simple(0.1, function()
-			if(key == IN_ZOOM) then
+		if(key == IN_ZOOM) then
+			timer.Simple(0.1, function()
 				local userData = Vermilion:GetUser(vplayer)
 				if(userData != nil) then
 					local rankData = userData:GetRank()
@@ -178,15 +179,15 @@ function MODULE:InitServer()
 						end
 					end
 				end
-			end
-		end)
+			end)
+		end
 	end)
 	
 	self:AddHook("PlayerTick", function(vplayer)
 		if(not IsValid(vplayer)) then return end
-		if(vplayer.Vermilion_MaxHealth != nil) then
-			if(vplayer:Health() > vplayer.Vermilion_MaxHealth) then
-				vplayer:SetHealth(vplayer.Vermilion_MaxHealth)
+		if(vplayer:GetMaxHealth() != nil) then
+			if(vplayer:Health() > vplayer:GetMaxHealth()) then
+				vplayer:SetHealth(vplayer:GetMaxHealth())
 			end
 		end
 	end)
@@ -199,6 +200,7 @@ function MODULE:InitServer()
 				table.insert(tab, { PrintName = i, Value = k })
 			end
 			MODULE:NetStart("VRankSpawnLoad")
+			net.WriteString(rank)
 			net.WriteTable(tab)
 			net.Send(vplayer)
 		end
@@ -208,7 +210,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
 			local rank = net.ReadString()
 			local prop = net.ReadString()
-			local val = net.ReadInt(32)
+			local val = net.ReadFloat()
 			
 			MODULE:GetData(rank, {}, true)[prop] = val
 		end
@@ -227,7 +229,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
 			local rank = net.ReadString()
 			local prop = net.ReadString()
-			local val = net.ReadInt(32)
+			local val = net.ReadFloat()
 			
 			MODULE:GetData(rank, {}, true)[prop] = val
 		end
@@ -238,7 +240,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VRankSpawnLoad", function()
 		local paneldata = Vermilion.Menu.Pages["spawn_settings"]
-		
+		if(paneldata.RankList:GetSelected()[1] == nil or paneldata.RankList:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
 		paneldata.RankRuleList:Clear()
 		for i,k in pairs(net.ReadTable()) do
 			paneldata.RankRuleList:AddLine(k.PrintName, k.Value)
@@ -352,7 +354,7 @@ function MODULE:InitClient()
 							MODULE:NetStart("VRankSpawnAdd")
 							net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 							net.WriteString(k:GetValue(1))
-							net.WriteInt(tonumber(value), 32)
+							net.WriteFloat(tonumber(value))
 							net.SendToServer()
 						end)
 						
@@ -394,7 +396,7 @@ function MODULE:InitClient()
 						MODULE:NetStart("VUpdateRule")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(rankRuleList:GetSelected()[1]:GetValue(1))
-						net.WriteInt(tonumber(rankRuleList:GetSelected()[1]:GetValue(2)), 32)
+						net.WriteFloat(tonumber(rankRuleList:GetSelected()[1]:GetValue(2)))
 						net.SendToServer()
 					end)
 				end)
@@ -408,7 +410,7 @@ function MODULE:InitClient()
 				paneldata.EditRule = editRule
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(table.Count(paneldata.AllRules:GetLines()) == 0) then
 					for i,k in pairs(MODULE.DataTypes) do
 						paneldata.AllRules:AddLine(i, k.Default)
@@ -422,5 +424,3 @@ function MODULE:InitClient()
 			end
 		})
 end
-
-Vermilion:RegisterModule(MODULE)

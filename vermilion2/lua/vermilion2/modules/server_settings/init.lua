@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Server Settings"
 MODULE.ID = "server_settings"
 MODULE.Description = "Provides a collection of basic options for administrating the server."
@@ -64,7 +64,8 @@ MODULE.NetworkStrings = {
 	"VSetCommandMuting",
 	"VUserDataList",
 	"VGetUserData",
-	"VDelUserData"
+	"VDelUserData",
+	"VResetConfiguration"
 }
 MODULE.DefaultPermissions = {
 	{ Name = "admin", Permissions = {
@@ -189,7 +190,16 @@ local options = {
 			"Allow all PvP",
 			"Disable all PvP",
 			"Permissions Based"
-		}, Category = "Limits", Default = 3 }
+		}, Category = "Limits", Default = 3 },
+	{ Name = "reset_config", GuiText = "Reset Configuration", Type = "Button", Category = "Misc", Permission = "*", Function = function()
+		VToolkit:CreateConfirmDialog("Are you sure you want to reset the configuration? This will reset the map too!", function()
+			MODULE:NetCommand("VResetConfiguration")
+		end, {
+			Confirm = "Yes",
+			Deny = "NO!",
+			Default = false
+		})
+	end }
 }
 
 function MODULE:AddCategory(name, order)
@@ -201,7 +211,7 @@ end
 
 function MODULE:AddOption(mod, name, guitext, typ, category, defaultval, permission, otherdat)
 	otherdat = otherdat or {}
-	table.insert(options, table.Merge({ Module = mod, Name = name, GuiText = guitext, Type = typ, Category = category, Default = defaultval, Permission = permission}, otherdat))
+	table.insert(options, table.Count(options) - 1, table.Merge({ Module = mod, Name = name, GuiText = guitext, Type = typ, Category = category, Default = defaultval, Permission = permission}, otherdat))
 end
 
 MODULE.MOTDVars = {}
@@ -336,7 +346,7 @@ function MODULE:RegisterChatCommands()
 			MODULE:NetStart("VRequestMOTD")
 			local str = MODULE:GetData("motd", "", true)
 			for i,k in pairs(MODULE.MOTDVars) do
-				str = string.Replace(str, "%" .. i .. "%", tostring(k(vplayer)))
+				str = string.Replace(str, "%" .. i .. "%", tostring(k(sender) or "%" .. i .. "%"))
 			end
 			net.WriteString(str)
 			net.WriteInt(MODULE:GetData("motd_type", 1, true), 32)
@@ -680,11 +690,42 @@ end
 function MODULE:InitServer()
 
 	if(self:GetData("voip_control", 3, true) > 3) then self:SetData("voip_control", 3) end
+	
+	self:NetHook("VResetConfiguration", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "*")) then
+			Vermilion:BroadcastNotification(vplayer:GetName() .. " has reset the configuration! Level reload in 30 seconds!", NOTIFY_ERROR)
+			file.Delete(Vermilion.GetFileName("settings"))
+			Vermilion:DelHook("ShutDown", "SaveConfiguration")
+			timer.Destroy("Vermilion:SaveConfiguration")
+			function Vermilion:SaveConfiguration() end
+			if(Vermilion:GetModule("map") != nil) then
+				local mod = Vermilion:GetModule("map")
+				mod.MapChangeInProgress = false
+				mod.MapChangeIn = nil
+				mod.MapChangeTo = nil
+				mod:NetStart("VAbortMapChange")
+				net.Broadcast()
+				mod.MapChangeInProgress = true
+				mod.MapChangeTo = game.GetMap()
+				mod.MapChangeIn = 30
+				mod:NetStart("VBroadcastSchedule")
+				net.WriteInt(mod.MapChangeIn, 32)
+				net.WriteString(mod.MapChangeTo)
+				net.Broadcast()
+				mod.BlockAbort = true
+			else
+				timer.Simple(30, function()
+					RunConsoleCommand("changelevel", game.GetMap())
+				end)
+			end
+		end
+	end)
 
 	self:NetHook("VServerGetProperties", function(vplayer)
 		local tab = {}
 		for i,k in pairs(options) do
 			local val = nil
+			if(k.Type == "Button") then continue end
 			if(k.Module != nil) then
 				if(k.Module == "Vermilion") then
 					val = Vermilion:GetData(k.Name, k.Default)
@@ -723,6 +764,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_server")) then
 			local data = net.ReadTable()
 			for i,k in pairs(data) do
+				if(k.DoNotUpdate) then continue end
 				if(k.Module != nil) then
 					if(k.Module == "Vermilion") then
 						Vermilion:SetData(k.Name, k.Value)
@@ -760,9 +802,9 @@ function MODULE:InitServer()
 		MODULE:NetStart("VRequestMOTD")
 		local str = MODULE:GetData("motd", "", true)
 		for i,k in pairs(MODULE.MOTDVars) do
-			if(string.find(str, "%" .. i .. "%")) then
-				str = string.Replace(str, "%" .. i .. "%", tostring(k(vplayer)))
-			end
+			//if(string.find(str, "%" .. i .. "%")) then
+				str = string.Replace(str, "%" .. i .. "%", tostring(k(vplayer) or "%" .. i .. "%"))
+			//end
 		end
 		net.WriteString(str)
 		net.WriteInt(MODULE:GetData("motd_type", 1, true), 32)
@@ -1038,11 +1080,8 @@ function MODULE:InitClient()
 	end)
 	
 	self:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, function()
-		for i,k in pairs(options) do
-			if(k.Permission != nil) then
-				k.Impl:SetEnabled(Vermilion:HasPermission(k.Permission))
-			end
-		end
+		Vermilion.Menu.Pages["server_settings"].Panel:Clear()
+		Vermilion.Menu.Pages["server_settings"].Builder(Vermilion.Menu.Pages["server_settings"].Panel, Vermilion.Menu.Pages["server_settings"]) 
 	end)
 	
 	function MODULE:DisplayMOTD(typ, text)
@@ -1282,7 +1321,7 @@ function MODULE:InitClient()
 					local slider = VToolkit:CreateSlider(k.GuiText, k.Bounds.Min, k.Bounds.Max, k.Decimals or 2)
 					slider:SetPos(10, 3)
 					slider:SetParent(panel)
-					slider:SetWide(300)
+					slider:SetWide(400)
 					
 					slider:SetValue(k.Default)
 					
@@ -1317,11 +1356,38 @@ function MODULE:InitClient()
 					-- Implement Me!
 				elseif(k.Type == "Text") then
 					-- Implement Me!
+				elseif(k.Type == "Button") then
+					if(not Vermilion:HasPermission(k.Permission)) then continue end
+					local panel = vgui.Create("DPanel")
+					
+					local btn = VToolkit:CreateButton(k.GuiText, function()
+						if(k.Function != nil) then k.Function() return end
+						MODULE:NetCommand(k.NetCommand)
+					end)
+					btn:SetPos(10, 3)
+					btn:SetParent(panel)
+					btn:SetSize(200, 25)
+					
+					panel:SetSize(btn:GetWide() + btn:GetX(), btn:GetY() + btn:GetTall() + 3)
+					panel:SetPaintBackground(false)
+					
+					local cat = nil
+					for ir,cat1 in pairs(categories) do
+						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+					end
+					
+					panel:SetContentAlignment( 4 )
+					panel:DockMargin( 1, 0, 1, 0 )
+					
+					panel:Dock(TOP)
+					panel:SetParent(cat)
+					
+					k.Impl = btn
 				end
 			end
 			MODULE.UpdatingGUI = false
 		end,
-		Updater = function(panel)
+		OnOpen = function(panel)
 			MODULE:NetCommand("VServerGetProperties")
 		end
 	})
@@ -1430,7 +1496,7 @@ function MODULE:InitClient()
 			end)
 			
 		end,
-		Updater = function(panel)
+		OnOpen = function(panel)
 			MODULE:NetCommand("VGetMOTDProperties")
 		end
 	})
@@ -1484,7 +1550,7 @@ function MODULE:InitClient()
 			paneldata.DeleteBtn = deleteBtn
 			
 		end,
-		Updater = function(panel, paneldata)
+		OnOpen = function(panel, paneldata)
 			MODULE:NetCommand("VUserDataList")
 			if(IsValid(paneldata.BaseNode)) then paneldata.BaseNode:Remove() end
 			paneldata.DeleteBtn:SetDisabled(true)
@@ -1533,10 +1599,8 @@ function MODULE:InitClient()
 			scroll:SetParent(panel)
 			paneldata.Scroll = scroll
 		end,
-		Updater = function(panel)
+		OnOpen = function(panel)
 			MODULE:NetCommand("VGetCommandMuting")
 		end
 	})
 end
-
-Vermilion:RegisterModule(MODULE)

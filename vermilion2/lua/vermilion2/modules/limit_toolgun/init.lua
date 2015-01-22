@@ -17,7 +17,7 @@
  in any way, nor claims to be so. 
 ]]
 
-local MODULE = Vermilion:CreateBaseModule()
+local MODULE = MODULE
 MODULE.Name = "Toolgun Limits"
 MODULE.ID = "limit_toolgun"
 MODULE.Description = "Prevent players from using certain tools."
@@ -219,7 +219,7 @@ function MODULE:InitClient()
 				
 				
 			end,
-			Updater = function(panel, paneldata)
+			OnOpen = function(panel, paneldata)
 				if(paneldata.Tools == nil) then
 					paneldata.Tools = {}
 					if(weapons.Get("gmod_tool") != nil) then
@@ -247,5 +247,3 @@ function MODULE:InitClient()
 		})
 	
 end
-
-Vermilion:RegisterModule(MODULE)
