@@ -26,7 +26,7 @@ https://github.com/Spennyone
 Note: Always save this file in "UTF-8 w/o BOM" instead of ASCII when using NP++ or the characters will be lost!
 ]]
 
-local lang = Vermilion:CreateLangBody("English")
+local lang = Vermilion:CreateLangBody("German")
 
 lang:Add("yes", "Ja")
 lang:Add("no", "Nein")
