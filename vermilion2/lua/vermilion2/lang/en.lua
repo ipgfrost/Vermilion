@@ -399,7 +399,7 @@ lang:Add("commands:tppos:teleported:all", "%s teleported all players to %s")
 lang:Add("commands:teleport", "%s teleported %s to %s")
 lang:Add("commands:teleport:all", "%s teleported all players to %s")
 
-lang:Add("commands:goto", "%s teleported to %")
+lang:Add("commands:goto", "%s teleported to %s")
 
 lang:Add("commands:bring", "%s brought %s to him/herself.")
 lang:Add("commands:bring:all", "%s brought all players to him/herself.")
