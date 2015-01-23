@@ -324,14 +324,14 @@ lang:Add("limit_toolgun:cannot_use", "Du kannst diesen Toolgun-Modus nicht verwe
 	//		Prop Protection		\\
 
 ]]--
-lang:Add("prop_protect:toolgun:cannotuse", "Du kannst die Toolgun nicht auf diesem Prop anwenden!")
+lang:Add("prop_protect:toolgun:cannotuse", "Du kannst die Toolgun nicht auf diesen Prop anwenden!")
 lang:Add("prop_protect:world:cannotuse", "Du kannst nicht mit Kartengegenständen interagieren.")
 lang:Add("prop_protect:gravgun:cannotuse", "Du kannst die Gravity Gun nicht auf diesen Prop anwenden!")
 lang:Add("prop_protect:physgun:cannotuse", "Du kannst die Physics Gun nicht auf diesen Prop anwenden!")
 lang:Add("prop_protect:use:cannotuse", "Du kannst diesen Prop nicht benutzen!")
 lang:Add("prop_protect:drive:cannotuse", "Du kannst diesen Prop nicht fahren!")
 lang:Add("prop_protect:break:cannotuse", "Du kannst diesen Prop nicht brechen!")
-lang:Add("prop_protect:property:cannotuse", "Du kannst diese Eigenschaft nicht auf diesem Prop anwenden!")
+lang:Add("prop_protect:property:cannotuse", "Du kannst diese Eigenschaft nicht auf diesen Prop anwenden!")
 lang:Add("prop_protect:variable:cannotuse", "Du kannst die Prop Variablen nicht editieren!")
 lang:Add("prop_protect:quotaheader", "Buddy Quota (%s/64):")
 
@@ -440,7 +440,7 @@ lang:Add("commands:time", "Uhrzeit des Servers ist: %s")
 lang:Add("commands:getpos:self", "Deine Position ist %s")
 lang:Add("commands:getpos:other", "%s's Position ist %s")
 
-lang:Add("commands:spectate:banned", "Du kannst diesem Entity nicht zuschauen!")
+lang:Add("commands:spectate:banned", "Du kannst diesen Entity nicht zuschauen!")
 lang:Add("commands:spectate:done", "Du schaust nun %s zu")
 lang:Add("commands:spectate:ent:invalid", "Das ist kein gültiges Entity.")
 lang:Add("commands:spectate:ply:self", "Du kannst dich nicht selber beobachten!")
