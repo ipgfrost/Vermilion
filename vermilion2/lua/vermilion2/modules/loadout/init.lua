@@ -338,6 +338,7 @@ function MODULE:InitClient()
 						ln.OldCursorExited = ln.OnCursorExited
 						
 						function ln:OnCursorEntered()
+							if(ln.ModelPath == nil) then return end
 							paneldata.PreviewPanel:SetVisible(true)
 							paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
 							

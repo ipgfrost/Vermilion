@@ -317,6 +317,8 @@ lang:Add("limit_toolgun:cannot_use", "You cannot use this toolgun mode!")
 	//		Prop Protection		\\
 
 ]]--
+lang:Add("server_settings:cat:prop_protect", "Prop Protection")
+lang:Add("server_settings:cat:antispam", "Anti-Spam")
 lang:Add("prop_protect:toolgun:cannotuse", "You cannot use the toolgun on this prop!")
 lang:Add("prop_protect:world:cannotuse", "You cannot interact with map-spawned props.")
 lang:Add("prop_protect:gravgun:cannotuse", "You cannot use the gravity gun on this prop!")
@@ -534,6 +536,49 @@ lang:Add("commands:setjailpos:done", "%s set the jail position to %s")
 
 --[[
 
+	//		Death Notice		\\
+
+]]--
+lang:Add("deathnotice:hitgroup:head", "head")
+lang:Add("deathnotice:hitgroup:chest", "chest")
+lang:Add("deathnotice:hitgroup:stomach", "stomach")
+lang:Add("deathnotice:hitgroup:larm", "left arm")
+lang:Add("deathnotice:hitgroup:rarm", "right arm")
+lang:Add("deathnotice:hitgroup:lleg", "left leg")
+lang:Add("deathnotice:hitgroup:rleg", "right leg")
+
+lang:Add("deathnotice:opt:enable", "Enable Death Notices")
+lang:Add("deathnotice:opt:debug", "Enable Death Notice Debug Output")
+
+lang:Add("deathnotice:die:fizzled", "%s was fizzled by %s")
+lang:Add("deathnotice:die:fizzled:unk", "%s was fizzled.")
+
+lang:Add("deathnotice:die:crush", "%s was crushed by %s")
+lang:Add("deathnotice:die:crush:self", "%s crushed him/herself.")
+lang:Add("deathnotice:die:crush:unk", "%s was crushed.")
+
+lang:Add("deathnotice:die:weapon:self", "%s killed him/herself with a %s")
+lang:Add("deathnotice:die:weapon:recordhitgroup", "%s was killed by %s with a %s from %sm away with a direct hit to the %s (NEW RECORD FOR THIS WEAPON! Old: %sm - %s)")
+lang:Add("deathnotice:die:weapon:hitgroup", "%s was killed by %s with a %s from %sm away with a direct hit to the %s")
+lang:Add("deathnotice:die:weapon:default", "%s was killed by %s with a %s from %sm away")
+lang:Add("deathnotice:die:weapon:unk", "%s was killed by %s from %sm away")
+lang:Add("deathnotice:die:weapon:unkhitgroup", "%s was killed by %s from %sm away with a direct hit to the %s")
+
+lang:Add("deathnotice:die:fall", "%s was dominated by Isaac Newton!")
+lang:Add("deathnotice:die:burn", "%s burned to death.")
+
+lang:Add("deathnotice:die:vehicle", "%s was run over by %s in a %s")
+lang:Add("deathnotice:die:vehicle:unk", "%s was run over by %s")
+
+lang:Add("deathnotice:die:expl:self", "%s has blown him/herself up with a %s")
+lang:Add("deathnotice:die:expl:record", "%s was blown up by %s with a %s from %sm away (NEW RECORD FOR THIS WEAPON! Old: %sm - %s)")
+lang:Add("deathnotice:die:expl:text", "%s was blown up by %s with a %s from %sm away.")
+lang:Add("deathnotice:die:expl:unk:self", "%s has blown him/herself up.")
+lang:Add("deathnotice:die:expl:unk", "%s was blown up by %s from %sm away.")
+
+
+--[[
+
 	//		Zones		\\
 
 ]]--
@@ -556,7 +601,117 @@ lang:Add("zones:mode:anti_pvp", "Anti-PvP")
 	
 	//		Event Log		\\
 	
+	Note that the event translations won't be used until the event logger is rewritten as the event logger will currently default to the server language instead of client languages.
+	
 ]]--
 lang:Add("event_logger:chatcommand", "%s is running the %s chat command. (%s)")
+lang:Add("event_logger:connect", "%s has connected to the server.")
+lang:Add("event_logger:disconnect", "%s has disconnected from the server.")
+lang:Add("event_logger:suicide", "%s committed suicide.")
+lang:Add("event_logger:kill", "%s was killed by %s")
+lang:Add("event_logger:spawn", "%s spawned a %s with model (%s)")
+lang:Add("event_logger:spray", "%s sprayed near %s")
+lang:Add("event_logger:break:pos", "%s broke %s with model (%s) near %s")
+lang:Add("event_logger:break:owner", "%s broke %s owned by %s")
+lang:Add("event_logger:entervehicle:pos", "%s entered %s with model (%s) near %s")
+lang:Add("event_logger:entervehicle:owner", "%s entered %s owned by %s")
+lang:Add("event_logger:exitvehicle:pos", "%s exited %s with model (%s) near %s")
+lang:Add("event_logger:exitvehicle:owner", "%s exited %s owned by %s")
+lang:Add("event_logger:drive:pos", "%s is driving %s with model (%s) near %s")
+lang:Add("event_logger:drive:owner", "%s is driving %s owned by %s")
+
+-- whereas these will
+
+
+--[[
+	
+	//		Server Settings		\\
+	
+]]--
+lang:Add("menu:basicsettings", "Basic Settings")
+lang:Add("menu:motd", "MOTD")
+lang:Add("menu:userdata", "Userdata Browser")
+lang:Add("menu:voip_channels", "VoIP Channels")
+lang:Add("menu:command_muting", "Command Muting")
+
+lang:Add("server_settings:motd:std", "Standard")
+lang:Add("server_settings:motd:html", "HTML")
+lang:Add("server_settings:motd:url", "URL")
+lang:Add("server_settings:motd:showvars", "Show Variables")
+lang:Add("server_settings:motd:varlist", "MOTD Variables")
+lang:Add("server_settings:motd:vardesc", "Description")
+lang:Add("server_settings:motd:preview", "Preview")
+lang:Add("server_settings:motd:save", "Save Changes...")
+lang:Add("server_settings:motd:unsaved", "There are unsaved changes to the MOTD! Really close?")
+
+lang:Add("server_settings:userdata:users", "Users")
+lang:Add("server_settings:userdata:userdata", "User Data")
+lang:Add("server_settings:userdata:delete", "Delete Userdata")
+
+lang:Add("server_settings:muting:desc", "Control which commands can produce global output, i.e. \"Ned cleared the decals.\". If a command isn't on this list, it doesn't produce global output.")
+
+lang:Add("server_settings:notimpl", "Feature not implemented!")
+
+lang:Add("server_settings:off", "Off")
+lang:Add("server_settings:all_players", "All Players")
+lang:Add("server_settings:permissions_based", "Permissions Based")
+lang:Add("server_settings:all_blocked", "All Players Blocked")
+lang:Add("server_settings:all_allowed", "All Players Allowed")
+
+
+lang:Add("server_settings:cat:limits", "Limits")
+lang:Add("server_settings:cat:immunity", "Immunity")
+lang:Add("server_settings:cat:misc", "Misc")
+lang:Add("server_settings:unlimited_ammo", "Unlimited ammunition")
+lang:Add("server_settings:limitremover", "Spawn Limit Remover:")
+lang:Add("server_settings:damage", "Disable Damage:")
+lang:Add("server_settings:flashlight", "Flashlight Control:")
+lang:Add("server_settings:noclipcontrol", "Noclip Control:")
+lang:Add("server_settings:spraycontrol", "Spray Control:")
+lang:Add("server_settings:voip", "VoIP Control:")
+lang:Add("server_settings:chat", "Chat Blocker:")
+lang:Add("server_settings:lockimm", "Lua Lock Immunity:")
+lang:Add("server_settings:killimm", "Lua Kill Immunity:")
+lang:Add("server_settings:kickimm", "Lua Kick Immunity:")
+lang:Add("server_settings:falldmg", "Fall Damage Modifier:")
+lang:Add("server_settings:ownernag", "Disable 'No owner detected' nag at startup")
+lang:Add("server_settings:plycoll", "Player Collisions Mode (experimental):")
+lang:Add("server_settings:pvpmode", "PvP Mode:")
+lang:Add("server_settings:resetconf", "Reset Configuration")
+
+lang:Add("server_settings:apb", "All Players Blocked")
+lang:Add("server_settings:apa", "All Players Allowed")
+
+lang:Add("server_settings:voip:dnl", "Do not limit")
+lang:Add("server_settings:voip:global", "Globally Disable VoIP")
+
+lang:Add("server_settings:chat:global", "Globally Disable Chat")
+
+lang:Add("server_settings:falldmg:reduced", "All Players Suffer Reduced Damage")
+
+lang:Add("server_settings:plycoll:no", "No Change")
+lang:Add("server_settings:plycoll:always", "Always disable collisions")
+
+lang:Add("server_settings:pvpmode:allow", "Allow All PvP")
+lang:Add("server_settings:pvpmode:disable", "Disable All PvP")
+
+lang:Add("server_settings:resetconf:question", "Are you sure you want to reset the configuration? The map will also be reset.")
+lang:Add("server_settings:noemergency", "NO!")
+
+
+--[[
+
+	//		Votes		\\
+
+]]--
+lang:Add("votes:success", "Vote succeeded with %s%% of players saying yes.")
+lang:Add("votes:failure", "Vote failed with %s%% of players saying no.")
+lang:Add("votes:nopartake", "Vote failed because nobody responded to the vote.")
+lang:Add("votes:cmd:callvote:syntax", "<type> <data>")
+lang:Add("votes:inprogress", "There is already a vote in progress. Please wait until it is finished.")
+lang:Add("votes:notype", "No such vote type.")
+lang:Add("votes:validtypes", "Valid vote types: %s")
+lang:Add("votes:invalidparatype", "Invalid parameters for this vote type!")
+
 
 Vermilion:RegisterLanguage(lang)

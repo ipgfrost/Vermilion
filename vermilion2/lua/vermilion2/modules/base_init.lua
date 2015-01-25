@@ -23,7 +23,7 @@ MODULE.ID = "base"
 MODULE.Description = "Something"
 MODULE.Author = "Ned"
 MODULE.Permissions = {
-
+	
 }
 
 function MODULE:InitServer()

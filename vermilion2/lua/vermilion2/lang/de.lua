@@ -341,12 +341,12 @@ lang:Add("prop_protect:quotaheader", "Buddy Quota (%s/64):")
 
 ]]--
 lang:Add("menu:gimps", "Gimp Editor")
-lang:Add("commands:list:text", "Gimp-Nachricht")
-lang:Add("commands:list:title", "Gimps")
-lang:Add("commands:remove", "Entferne Gimp")
-lang:Add("commands:remove:g1", "Du musst mindestens einen Gimp auswählen.")
-lang:Add("commands:new", "Neues Gimp")
-lang:Add("commands:new:add", "Gimp hinzufügen")
+lang:Add("commands:gimps:list:text", "Gimp-Nachricht")
+lang:Add("commands:gimps:list:title", "Gimps")
+lang:Add("commands:gimps:remove", "Entferne Gimp")
+lang:Add("commands:gimps:remove:g1", "Du musst mindestens einen Gimp auswählen.")
+lang:Add("commands:gimps:new", "Neues Gimp")
+lang:Add("commands:gimps:new:add", "Gimp hinzufügen")
 lang:Add("commands:gimps:newlines", "Gimp darf keine Zeilenumbrüche beinhalten!")
 
 lang:Add("commands:version", "Die aktuelle Version ist: %s")

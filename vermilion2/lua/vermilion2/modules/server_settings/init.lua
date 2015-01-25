@@ -110,103 +110,104 @@ MODULE.DefaultPermissions = {
 
 
 local categories = {
-	{ Name = "Limits", Order = 0 },
-	{ Name = "Immunity", Order = 1 },
-	{ Name = "Misc", Order = 50 }
+	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
+	{ Name = MODULE:TranslateStr("cat:immunity"), ID = "Immunity", Order = 1 },
+	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 }
 }
 
 local options = {
-	{ Name = "unlimited_ammo", GuiText = "Unlimited ammunition:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Name = "unlimited_ammo", GuiText = MODULE:TranslateStr("unlimited_ammo"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Module = "limit_spawn", Name = "enable_limit_remover", GuiText = "Spawn Limit Remover:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Module = "limit_spawn", Name = "enable_limit_remover", GuiText = MODULE:TranslateStr("limitremover"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "enable_no_damage", GuiText = "Disable Damage:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Name = "enable_no_damage", GuiText = MODULE:TranslateStr("damage"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "flashlight_control", GuiText = "Flashlight Control:", Type = "Combobox", Options = {
-			"Off",
-			"All Players Blocked",
-			"All Players Allowed",
-			"Permissions Based"
+	{ Name = "flashlight_control", GuiText = MODULE:TranslateStr("flashlight"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("apb"),
+			MODULE:TranslateStr("apa"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 4 },
-	{ Name = "noclip_control", GuiText = "Noclip Control:", Type = "Combobox", Options = {
-			"Off",
-			"All Players Blocked",
-			"All Players Allowed",
-			"Permissions Based"
+	{ Name = "noclip_control", GuiText = MODULE:TranslateStr("noclipcontrol"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("apb"),
+			MODULE:TranslateStr("apa"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 4 },
-	{ Name = "spray_control", GuiText = "Spray Control:", Type = "Combobox", Options = {
-			"Off",
-			"All Players Blocked",
-			"All Players Allowed",
-			"Permissions Based"
+	{ Name = "spray_control", GuiText = MODULE:TranslateStr("spraycontrol"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("apb"),
+			MODULE:TranslateStr("apa"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 4 },
-	{ Name = "voip_control", GuiText = "VoIP Control:", Type = "Combobox", Options = {
-			"Do not limit",
-			"Globally Disable VoIP",
-			"Permissions Based"
+	{ Name = "voip_control", GuiText = MODULE:TranslateStr("voip"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("voip:dnl"),
+			MODULE:TranslateStr("voip:global"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "limit_chat", GuiText = "Chat Blocker:", Type = "Combobox", Options = {
-			"Off",
-			"Globally Disable Chat",
-			"Permissions Based"
+	{ Name = "limit_chat", GuiText = MODULE:TranslateStr("chat"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("chat:global"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "enable_lock_immunity", GuiText = "Lua Lock Immunity:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Name = "enable_lock_immunity", GuiText = MODULE:TranslateStr("lockimm"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Immunity", Default = 3, Incomplete = true },
-	{ Name = "enable_kill_immunity", GuiText = "Lua Kill Immunity:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Name = "enable_kill_immunity", GuiText = MODULE:TranslateStr("killimm"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Immunity", Default = 3, Incomplete = true },
-	{ Name = "enable_kick_immunity", GuiText = "Lua Kick Immunity:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"Permissions Based"
+	{ Name = "enable_kick_immunity", GuiText = MODULE:TranslateStr("kickimm"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Immunity", Default = 3, Incomplete = true },
-	{ Name = "disable_fall_damage", GuiText = "Fall Damage Modifier:", Type = "Combobox", Options = {
-			"Off",
-			"All Players",
-			"All Players suffer reduced damage",
-			"Permissions Based"
+	{ Name = "disable_fall_damage", GuiText = MODULE:TranslateStr("falldmg"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("falldmg:reduced"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 4 },
-	{ Name = "disable_owner_nag", GuiText = "Disable 'No owner detected' nag at startup", Type = "Checkbox", Category = "Misc", Default = false, Incomplete = true },
-	{ Name = "player_collision_mode", GuiText = "Player Collisions Mode (experimental):", Type = "Combobox", Options = {
-			"No change",
-			"Always disable collisions",
-			"Permissions Based"
+	{ Name = "disable_owner_nag", GuiText = MODULE:TranslateStr("ownernag"), Type = "Checkbox", Category = "Misc", Default = false, Incomplete = true },
+	{ Name = "player_collision_mode", GuiText = MODULE:TranslateStr("plycoll"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("plycoll:no"),
+			MODULE:TranslateStr("plycoll:always"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Misc", Default = 3, Incomplete = true },
-	{ Name = "pvp_mode", GuiText = "PVP Mode: ", Type = "Combobox", Options = {
-			"Allow all PvP",
-			"Disable all PvP",
-			"Permissions Based"
+	{ Name = "pvp_mode", GuiText = MODULE:TranslateStr("pvpmode"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("pvpmode:allow"),
+			MODULE:TranslateStr("pvpmode:disable"),
+			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "reset_config", GuiText = "Reset Configuration", Type = "Button", Category = "Misc", Permission = "*", Function = function()
-		VToolkit:CreateConfirmDialog("Are you sure you want to reset the configuration? This will reset the map too!", function()
-			MODULE:NetCommand("VResetConfiguration")
-		end, {
-			Confirm = "Yes",
-			Deny = "NO!",
-			Default = false
-		})
-	end }
+	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Misc", Permission = "*", Function = function()
+		VToolkit:CreateConfirmDialog(MODULE:TranslateStr("resetconf:question"), function()
+				MODULE:NetCommand("VResetConfiguration")
+			end, {
+				Confirm = MODULE:TranslateStr("yes"),
+				Deny = MODULE:TranslateStr("noemergency"),
+				Default = false
+			})
+		end 
+	}
 }
 
-function MODULE:AddCategory(name, order)
+function MODULE:AddCategory(name, id, order)
 	for i,k in pairs(categories) do
-		if(k.Name == name) then return end
+		if(k.Name == MODULE:TranslateStr(name) or k.ID == id) then return end
 	end
-	table.insert(categories, { Name = name, Order = order })
+	table.insert(categories, { Name = MODULE:TranslateStr(name), ID = id, Order = order })
 end
 
 function MODULE:AddOption(mod, name, guitext, typ, category, defaultval, permission, otherdat)
@@ -1195,7 +1196,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "server_settings",
-		Name = "Basic Settings",
+		Name = Vermilion:TranslateStr("menu:basicsettings"),
 		Order = 0,
 		Category = "server",
 		Size = { 600, 560 },
@@ -1239,7 +1240,7 @@ function MODULE:InitClient()
 						dimage:SetSize(16, 16)
 						dimage:SetPos(select(1, combobox:GetPos()) - 25, 5)
 						dimage:SetParent(panel)
-						dimage:SetTooltip("Feature not implemented!")
+						dimage:SetTooltip(MODULE:TranslateStr("notimpl"))
 					end
 					
 					function combobox:OnSelect(index)
@@ -1254,7 +1255,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -1295,14 +1296,14 @@ function MODULE:InitClient()
 						dimage:SetSize(16, 16)
 						dimage:SetPos(select(1, cb:GetPos()) + cb:GetWide() + 25, 5)
 						dimage:SetParent(panel)
-						dimage:SetTooltip("Feature not implemented!")
+						dimage:SetTooltip(MODULE:TranslateStr("notimpl"))
 						panel:SetWide(panel:GetWide() + 25)
 					end
 					panel:SetPaintBackground(false)
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -1337,7 +1338,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -1373,7 +1374,7 @@ function MODULE:InitClient()
 					
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.Name == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
 					
 					panel:SetContentAlignment( 4 )
@@ -1394,7 +1395,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "motd",
-		Name = "MOTD",
+		Name = Vermilion:TranslateStr("menu:motd"),
 		Order = 1,
 		Category = "server",
 		Size = { 500, 500 },
@@ -1417,9 +1418,9 @@ function MODULE:InitClient()
 			end
 			
 			local typCombo = VToolkit:CreateComboBox({
-				"Standard",
-				"HTML",
-				"URL"
+				MODULE:TranslateStr("motd:std"),
+				MODULE:TranslateStr("motd:html"),
+				MODULE:TranslateStr("motd:url")
 			}, 1)
 			typCombo:SetParent(panel)
 			typCombo:SetPos(10, 415)
@@ -1435,21 +1436,21 @@ function MODULE:InitClient()
 			end
 			paneldata.TypeCombo = typCombo
 			
-			local motdVars = VToolkit:CreateButton("Show Variables", function()
+			local motdVars = VToolkit:CreateButton(MODULE:TranslateStr("motd:showvars"), function()
 				local motdpanel2 = VToolkit:CreateFrame(
 					{
 						['size'] = { 500, 300 },
 						['pos'] = { (ScrW() / 2) - 250, (ScrH() / 2) - 150 },
 						['closeBtn'] = true,
 						['draggable'] = true,
-						['title'] = "MOTD Variables",
+						['title'] = MODULE:TranslateStr("motd:varlist"),
 						['bgBlur'] = false
 					}
 				)
 				local varList = VToolkit:CreateList({
 					cols = {
-						"Name",
-						"Description"
+						MODULE:TranslateStr("name"),
+						MODULE:TranslateStr("motd:vardesc")
 					}
 				})
 				varList:SetPos(10, 30)
@@ -1468,14 +1469,14 @@ function MODULE:InitClient()
 			motdVars:SetSize(120, 20)
 			motdVars:SetParent(panel)
 			
-			local preview = VToolkit:CreateButton("Preview", function()
+			local preview = VToolkit:CreateButton(MODULE:TranslateStr("motd:preview"), function()
 				MODULE:DisplayMOTD(typCombo.VSelectedIndex, motdtext:GetValue())
 			end)
 			preview:SetPos(370, 445)
 			preview:SetSize(120, 20)
 			preview:SetParent(panel)
 			
-			local save = VToolkit:CreateButton("Save Changes...", function()
+			local save = VToolkit:CreateButton(MODULE:TranslateStr("motd:save"), function()
 				MODULE:NetStart("VUpdateMOTD")
 				net.WriteString(motdtext:GetValue())
 				net.SendToServer()
@@ -1487,10 +1488,10 @@ function MODULE:InitClient()
 			
 			MODULE:AddHook(Vermilion.Event.MENU_CLOSING, function()
 				if(paneldata.UnsavedChanges) then
-					VToolkit:CreateConfirmDialog("There are unsaved changes to the MOTD! Really close?", function()
+					VToolkit:CreateConfirmDialog(MODULE:TranslateStr("motd:unsaved"), function()
 						Vermilion.Menu:Close(true)
 						paneldata.UnsavedChanges = false
-					end, { Confirm = "Yes", Deny = "No", Default = false })
+					end, { Confirm = MODULE:TranslateStr("yes"), Deny = MODULE:TranslateStr("no"), Default = false })
 					return false
 				end
 			end)
@@ -1503,7 +1504,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "userdata",
-		Name = "Userdata Browser",
+		Name = Vermilion:TranslateStr("menu:userdata"),
 		Order = 2,
 		Category = "server",
 		Size = { 800, 560 },
@@ -1513,8 +1514,8 @@ function MODULE:InitClient()
 		Builder = function(panel, paneldata)
 			local userList = VToolkit:CreateList({
 				cols = {
-					"Name",
-					"Rank"
+					MODULE:TranslateStr("name"),
+					MODULE:TranslateStr("rank")
 				},
 				multiselect = false
 			})
@@ -1529,18 +1530,18 @@ function MODULE:InitClient()
 				net.SendToServer()
 			end
 			
-			VToolkit:CreateHeaderLabel(userList, "Users"):SetParent(panel)
+			VToolkit:CreateHeaderLabel(userList, MODULE:TranslateStr("userdata:users")):SetParent(panel)
 			VToolkit:CreateSearchBox(userList)
 			
 			local tree = vgui.Create("DTree")
 			tree:SetPos(270, 30)
 			tree:SetSize(panel:GetWide() - tree:GetX() - 210, panel:GetTall() - 40)
 			tree:SetParent(panel)
-			VToolkit:CreateHeaderLabel(tree, "User Data"):SetParent(panel)
+			VToolkit:CreateHeaderLabel(tree, MODULE:TranslateStr("userdata:userdata")):SetParent(panel)
 			paneldata.Tree = tree
 			
 			
-			local deleteBtn = VToolkit:CreateButton("Delete Userdata", function()
+			local deleteBtn = VToolkit:CreateButton(MODULE:TranslateStr("userdata:delete"), function()
 				
 			end)
 			deleteBtn:SetPos(tree:GetX() + tree:GetWide() + 10, (panel:GetTall() - 30) / 2)
@@ -1559,7 +1560,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "voip_channels",
-		Name = "VoIP Channels",
+		Name = Vermilion:TranslateStr("menu:voip_channels"),
 		Order = 3,
 		Category = "server",
 		Size = { 600, 560 },
@@ -1577,7 +1578,7 @@ function MODULE:InitClient()
 	
 	Vermilion.Menu:AddPage({
 		ID = "command_muting",
-		Name = "Command Muting",
+		Name = Vermilion:TranslateStr("menu:command_muting"),
 		Order = 4,
 		Category = "server",
 		Size = { 600, 560 },
@@ -1585,7 +1586,7 @@ function MODULE:InitClient()
 			return Vermilion:HasPermission("manage_server")
 		end,
 		Builder = function(panel, paneldata)
-			local label = VToolkit:CreateLabel("Control which commands can produce global output, i.e. \"Ned cleared the decals.\". If a command isn't on this list, it doesn't produce global output.")
+			local label = VToolkit:CreateLabel(MODULE:TranslateStr("muting:desc"))
 			label:SetParent(panel)
 			label:SetWrap(true)
 			label:SetTall(label:GetTall() * 2)

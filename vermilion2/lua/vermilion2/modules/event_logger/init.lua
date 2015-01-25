@@ -174,7 +174,7 @@ function MODULE:InitClient()
 				end
 				img:SizeToContents()
 				
-				local ln = paneldata.EventList:AddLine(os.date("%d/%m/%y %H:%M:%S", k.Time), "", k.Text)
+				local ln = paneldata.EventList:AddLine(os.date(Vermilion.GetActiveLanguageFile().ShortDateTimeFormat, k.Time), "", k.Text)
 				ln.Columns[2]:Add(img)
 			end)
 		end
@@ -191,7 +191,7 @@ function MODULE:InitClient()
 			img:SetImage(k.Icon)
 			img:SizeToContents()
 			
-			local ln = paneldata.EventList:AddLine(os.date("%d/%m/%y %H:%M:%S", k.Time), "", k.Text)
+			local ln = paneldata.EventList:AddLine(os.date(Vermilion.GetActiveLanguageFile().ShortDateTimeFormat, k.Time), "", k.Text)
 			ln.Columns[2]:Add(img)
 			
 			paneldata.EventList.VBar:AnimateTo(paneldata.EventList.VBar.CanvasSize + 100, 1, 0, -3)

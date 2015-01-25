@@ -421,7 +421,7 @@ function MODULE:InitClient()
 		end
 	end)
 	
-	self:AddHook("PlayerInitialSpawn", function(name, steamid, rank, entindex)
+	self:AddHook("VPlayerInitialSpawn", function(name, steamid, rank, entindex)
 		local player_list = Vermilion.Menu.Pages["rank_assignment"].PlayerList
 		if(IsValid(player_list)) then
 			player_list:AddLine(name, rank).EntityID = entindex
@@ -434,38 +434,6 @@ function MODULE:InitClient()
 			vplayer.VIconMat = Material("icon16/" .. vplayer.VIcon .. ".png", "noclamp smooth")
 		end
 		return vplayer.VIconMat
-		--[[ local tr = util.GetPlayerTrace( LocalPlayer() )
-		local trace = util.TraceLine( tr )
-		if (!trace.Hit) then return end
-		if (!trace.HitNonWorld) then return end
-		
-		if (not trace.Entity:IsPlayer()) then
-			return
-		end
-		
-		local MouseX, MouseY = gui.MousePos()
-		
-		if ( MouseX == 0 && MouseY == 0 ) then
-		
-			MouseX = ScrW() / 2
-			MouseY = ScrH() / 2
-		
-		end
-		
-		local x = MouseX
-		local y = MouseY
-		
-		x = x - 22 / 2
-		y = y + 100
-
-		if(trace.Entity.VIcon == nil or trace.Entity.VIcon == "") then
-			trace.Entity.VIcon = string.lower(Vermilion:GetRankIcon(trace.Entity:GetNWString("Vermilion_Rank")))
-			trace.Entity.VIconMat = Material("icon16/" .. trace.Entity.VIcon .. ".png", "noclamp smooth")
-		end
-		
-		surface.SetMaterial(trace.Entity.VIconMat)
-		surface.SetDrawColor(255, 255, 255, 255)
-		surface.DrawTexturedRect(x, y, 24, 24) ]]
 	end)
 
 

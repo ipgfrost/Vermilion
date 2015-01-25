@@ -151,11 +151,14 @@ MENU:AddPage({
 			{ "2.4 - 25th January 2015", {
 					"Huge update for the localisation system and added more localisation options for translators",
 					"Updated some global broadcasts to translate into player's chosen language automatically",
-					"Added German translation (courtesy of Spennyone)",
+					"Added German translation (courtesy of Spennyone and SunRed)",
 					"Fixed zone bugs",
 					"Added replacement TargetID",
 					"Rank icons now appear on TargetID",
-					"Blocked sv_cheats in the !convar command (would have errored anyway)"
+					"Blocked sv_cheats in the !convar command (would have errored anyway)",
+					"Fixed spawn caps bugs",
+					"Attempt to stop GMod from blaming Vermilion for everything",
+					"Attempted to make timer failure less frightening"
 				}
 			},
 			{ "2.3.6 - 15th January 2015", {

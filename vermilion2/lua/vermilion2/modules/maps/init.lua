@@ -451,6 +451,7 @@ function MODULE:InitClient()
 		MODULE.MapChangeIn = net.ReadInt(32)// + VToolkit.TimeDiff
 		MODULE.MapChangeTo = net.ReadString()
 		MODULE.HasMap = file.Exists("maps/" .. MODULE.MapChangeTo .. ".bsp", "GAME")
+		print("Got map schedule!")
 	end)
 	
 	self:NetHook("VAbortMapChange", function()

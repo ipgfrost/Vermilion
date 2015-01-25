@@ -471,7 +471,7 @@ function MODULE:InitShared()
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()
 		if(Vermilion:GetModule("server_settings") != nil) then
 			local mgr = Vermilion:GetModule("server_settings")
-			mgr:AddCategory("Prop Protection", 2)
+			mgr:AddCategory("cat:prop_protect", "Prop Protection", 2)
 			mgr:AddOption("prop_protect", "prop_protect_enabled", "Enable Prop Protection", "Checkbox", "Prop Protection", true, "manage_prop_protection")
 			mgr:AddOption("prop_protect", "prop_protect_use", "Block unpermitted players from \"using\" other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
 			mgr:AddOption("prop_protect", "prop_protect_physgun", "Block unpermitted players from using the physics gun on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
@@ -488,7 +488,7 @@ function MODULE:InitShared()
 			mgr:AddOption("prop_protect", "auto_cleanup_delay", "Auto-Cleanup delay (minutes)", "Slider", "Prop Protection", 2, "manage_prop_protection", { Bounds = { Min = 1, Max = 60 * 12 }, Decimals = 0 })
 		
 		
-			mgr:AddCategory("Anti-Spam", 3)
+			mgr:AddCategory("cat:antispam", "Anti-Spam", 3)
 			mgr:AddOption("prop_protect", "antispam_enabled", "Enable Anti-Spam", "Checkbox", "Anti-Spam", false, "manage_prop_protection")
 			mgr:AddOption("prop_protect", "antispam_propslimit", "Max props in time limit", "Slider", "Anti-Spam", 5, "manage_prop_protection", { Bounds = { Min = 0, Max = 50 }, Decimals = 0 })
 			mgr:AddOption("prop_protect", "antispam_timelimit", "Time limit", "Slider", "Anti-Spam", 5, "manage_prop_protection", { Bounds = { Min = 1, Max = 20 }, Decimals = 0 })

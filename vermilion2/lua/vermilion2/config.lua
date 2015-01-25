@@ -708,15 +708,31 @@ end)
 
 duplicator.RegisterEntityModifier("Vermilion_Owner", function(vplayer, entity, data)
 	entity.Vermilion_Owner = data.Owner
+	entity:SetNWString("Vermilion_Owner", data.Owner)
 end)
 
-local setOwnerFunc = function(vplayer, model, entity)
+duplicator.RegisterEntityModifier("Vermilion_Type", function(vplayer, entity, data)
+	entity.Vermilion_Type = data.Type
+end)
+
+local setOwnerFunc = function(vplayer, model, entity, hkType)
 	local tEnt = entity
 	if(tEnt == nil) then tEnt = model end
 	if(IsValid(tEnt)) then
+		local str = ""
+		if(hkType == "PlayerSpawnedRagdoll") then str = "ragdolls" end
+		if(hkType == "PlayerSpawnedProp") then str = "props" end
+		if(hkType == "PlayerSpawnedEffect") then str = "effects" end
+		if(hkType == "PlayerSpawnedVehicle") then str = "vehicles" end
+		if(hkType == "PlayerSpawnedSWEP") then str = "sents" end
+		if(hkType == "PlayerSpawnedSENT") then str = "sents" end
+		if(hkType == "PlayerSpawnedNPC") then str = "npcs" end
+		tEnt.Vermilion_Type = str
+		
 		tEnt.Vermilion_Owner = vplayer:SteamID()
 		tEnt:SetNWString("Vermilion_Owner", vplayer:SteamID())
 		duplicator.StoreEntityModifier(tEnt, "Vermilion_Owner", { Owner = vplayer:SteamID() })
+		duplicator.StoreEntityModifier(tEnt, "Vermilion_Type", { Type = str })
 	end
 end
 
@@ -731,7 +747,36 @@ local spawnedFuncs = {
 }
 
 for i,spHook in pairs(spawnedFuncs) do
-	Vermilion:AddHook(spHook, "Vermilion_SpawnCreatorSet" .. i, true, setOwnerFunc)
+	Vermilion:AddHook(spHook, "Vermilion_SpawnCreatorSet" .. i, true, function(vplayer, model, entity)
+		setOwnerFunc(vplayer, model, entity, spHook)
+	end)
+end
+
+local spawnFuncsPatch = {
+	"PlayerSpawnRagdoll",
+	"PlayerSpawnProp",
+	"PlayerSpawnEffect",
+	"PlayerSpawnVehicle",
+	"PlayerSpawnSWEP",
+	"PlayerSpawnSENT",
+	"PlayerSpawnNPC"
+}
+
+for i,spHook in pairs(spawnFuncsPatch) do
+	Vermilion:AddHook(spHook, "Vermilion_CheckLimitFixer" .. i, false, function(vplayer)
+		local str = ""
+		if(spHook == "PlayerSpawnRagdoll") then str = "ragdolls" end
+		if(spHook == "PlayerSpawnProp") then str = "props" end
+		if(spHook == "PlayerSpawnEffect") then str = "effects" end
+		if(spHook == "PlayerSpawnVehicle") then str = "vehicles" end
+		if(spHook == "PlayerSpawnSWEP") then str = "sents" end
+		if(spHook == "PlayerSpawnSENT") then str = "sents" end
+		if(spHook == "PlayerSpawnNPC") then str = "npcs" end
+		
+		
+		local hookResult = hook.Run(Vermilion.Event.CheckLimit, vplayer, str)
+		if(hookResult != nil) then return hookResult end
+	end)
 end
 
 timer.Simple(1, function()
@@ -744,12 +789,15 @@ timer.Simple(1, function()
 			return self:Vermilion_CheckLimit(str)
 		end
 	end
+	function meta:VermilionPropCount(str)
+		
+	end
 	if(meta.Vermilion_AddCount == nil) then
 		meta.Vermilion_AddCount = meta.AddCount
 		function meta:AddCount(str, ent)
 			ent.Vermilion_Owner = self:SteamID()
 			ent:SetNWString("Vermilion_Owner", self:SteamID())
-			duplicator.StoreEntityModifier(ent, "Vermilion_Owner", { Owner = self:SteamID() })
+			self:Vermilion_AddCount(str, ent)
 		end
 	end
 	

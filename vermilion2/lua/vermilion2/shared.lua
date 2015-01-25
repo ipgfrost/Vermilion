@@ -53,6 +53,7 @@ function Vermilion:CreateLangBody(locale)
 	
 	body.Locale = locale
 	body.DateTimeFormat = "%I:%M:%S %p on %d/%m/%Y"
+	body.ShortDateTimeFormat = "%d/%m/%y %H:%M:%S"
 	body.DateFormat = "%d/%m/%Y"
 	body.TimeFormat = "%I:%M:%S %p"
 	
@@ -62,9 +63,12 @@ function Vermilion:CreateLangBody(locale)
 		self.Translations[key] = value
 	end
 	
-	function body:TranslateStr(key, values)
+	function body:TranslateStr(key, values, short)
 		if(not istable(values)) then return key end
-		if(self.Translations[key] == nil) then return key end
+		if(self.Translations[key] == nil) then
+			//if(not short) then Vermilion.Log("[WHINE] Language file '" .. body.Locale .. " is missing translation for " .. key .. " please fix!") end
+			return key
+		end
 		return string.format(self.Translations[key], unpack(values))
 	end
 	
@@ -158,7 +162,7 @@ function Vermilion:DelLPHook(hookType, hookName)
 end
 
 
-local oldHook = hook.Call
+hook.oldHook = hook.Call
 
 local function destroySDHook(name)
 	if(table.HasValue(Vermilion.SelfDestructHooks, name)) then
@@ -208,7 +212,7 @@ local vHookCall = function(evtName, gmTable, ...)
 			end
 		end
 	end
-	a,b,c,d,e,f = oldHook(evtName, gmTable, ...)
+	a,b,c,d,e,f = hook.oldHook(evtName, gmTable, ...)
 	if(a != nil) then
 		destroySDHook(evtName)
 		return a, b, c, d, e, f
@@ -229,22 +233,22 @@ hook.Call = vHookCall
 
 -- hax to allow other addons with chat commands to run properly.
 
-local oHookA = hook.Add
+hook.oHookA = hook.Add
 local vHookAdd = function(evt, name, func)
 	if(evt == "PlayerSay") then
-		oHookA("VPlayerSay", name, func)
+		hook.oHookA("VPlayerSay", name, func)
 	else
-		oHookA(evt, name, func)
+		hook.oHookA(evt, name, func)
 	end
 end
 hook.Add = vHookAdd
 
-local oHookR = hook.Remove
+hook.oHookR = hook.Remove
 local vHookRemove = function(evt, name)
 	if(evt == "PlayerSay") then
-		oHookR("VPlayerSay", name)
+		hook.oHookR("VPlayerSay", name)
 	else
-		oHookR(evt, name)
+		hook.oHookR(evt, name)
 	end
 end
 hook.Remove = vHookRemove
@@ -266,6 +270,10 @@ local function doHookOverride()
 	end
 	if(hook.Remove != vHookRemove) then
 		hook.Remove = vHookRemove
+	end
+	if(not isfunction(doHookOverride)) then
+		Vermilion.Log("Hook override loop failed. This isn't bad. It's just a protection measure put in place to stop startup bugs.")
+		return
 	end
 	timer.Simple(1, doHookOverride)
 end
@@ -439,7 +447,7 @@ function Vermilion:CreateBaseModule()
 		function base:TranslateStr(key, parameters, foruser)
 			local translation = Vermilion:TranslateStr(self.ID .. ":" .. key, parameters, foruser)
 			if(translation != self.ID .. ":" .. key) then return translation end
-			return Vermilion:TranslateStr(key, parameters, foruser)
+			return Vermilion:TranslateStr(key, parameters, foruser, true)
 		end
 		
 		function base:TranslateTable(keys, parameters, foruser)
@@ -557,7 +565,7 @@ if(SERVER) then
 	end)
 else
 	net.Receive("VPlayerInitialSpawn", function()
-		hook.Run("PlayerInitialSpawn", unpack(net.ReadTable()))
+		hook.Run("VPlayerInitialSpawn", unpack(net.ReadTable()))
 	end)
 end
 
@@ -772,8 +780,8 @@ if(CLIENT) then
 			Callback = function()
 				finished = true
 				notify.DoneMain = true
-				--notify:Dock(TOP)
 				timer.Simple(time or 10, function()
+					if(not IsValid(notify) or not table.HasValue(notifications, notify)) then return end
 					notify:AlphaTo(0, 2, 0, function()
 						table.RemoveByValue(notifications, notify)
 						notify:Remove()
@@ -787,7 +795,12 @@ if(CLIENT) then
 		end
 		
 		anim:Start(3, animData)
-		
+		return function()
+			notify:AlphaTo(0, 2, 0, function()
+				table.RemoveByValue(notifications, notify)
+				notify:Remove()
+			end)
+		end
 	end
 	
 	function Vermilion:AddNotify(text, typ, time)
@@ -826,7 +839,11 @@ else
 	end
 	
 	function Vermilion:TransBroadcastNotify(text, vars, typ, time, MODULE)
-		Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
+		if(MODULE) then
+			Vermilion.Log("[Notification:TransBroadcast] " .. MODULE:TranslateStr(text, vars))
+		else
+			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
+		end
 		for i,k in pairs(VToolkit.GetValidPlayers(false)) do
 			if(MODULE) then
 				self:AddNotification(k, MODULE:TranslateStr(text, vars, k), typ, time)
