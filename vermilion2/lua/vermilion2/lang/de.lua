@@ -205,15 +205,15 @@ lang:Add("auto_promote:remove", "Eintrag entfernen")
 lang:Add("auto_promote:remove:error", "Du musst mindestens einen Eintrag auswählen.")
 lang:Add("auto_promote:save", "Einträge speichern")
 lang:Add("auto_promote:from", "Vom Rang: ")
-lang:Add("auto_promote:to", "Bis Rang: ")
+lang:Add("auto_promote:to", "Zum Rang: ")
 lang:Add("auto_promote:after", "Nach einer Spielzeit von (Ausgegangen wird vom ersten Verbinden, nicht von der letzten Beförderung!):")
 lang:Add("auto_promote:list:from", "Vom Rang")
-lang:Add("auto_promote:list:to", "Bis Rang")
+lang:Add("auto_promote:list:to", "Zum Rang")
 lang:Add("auto_promote:list:after", "Nach einer Spielzeit von")
 lang:Add("auto_promote:add", "Eintrag hinzufügen")
 lang:Add("auto_promote:add:error:inittarrank", "Bitte gebe einen gültigen Anfangs- und Ziel-Rang an!")
 lang:Add("auto_promote:add:error:diff", "Es müssen zwei unterschiedliche Ränge sein.")
-lang:Add("auto_promote:add:error:time:0", "Die Spielzeit muss größer als 0 sein!")LO
+lang:Add("auto_promote:add:error:time:0", "Die Spielzeit muss größer als 0 sein!")
 lang:Add("auto_promote:unsaved", "Es gibt nicht gespeicherte Veränderungen in den Auto-Promote Einstellungen! Sicher schließen?")
 
 
