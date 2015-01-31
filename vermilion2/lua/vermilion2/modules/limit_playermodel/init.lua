@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -83,7 +83,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VGetModelList", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -91,7 +91,7 @@ function MODULE:InitServer()
 			MODULE:NetStart("VGetModelList")
 			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.WriteBoolean(MODULE:GetData(rnk .. ":isblacklist", true, true))			
+			net.WriteBoolean(MODULE:GetData(rnk .. ":isblacklist", true, true))
 			net.Send(vplayer)
 		else
 			MODULE:NetStart("VGetModelList")
@@ -101,14 +101,14 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VModelBlacklistState", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
 			local rnk = net.ReadString()
 			MODULE:SetData(rnk .. ":isblacklist", net.ReadBoolean())
 		end
 	end)
-	
+
 	self:NetHook("VAddModel", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
 			local rnk = net.ReadString()
@@ -118,7 +118,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VDelModel", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
 			local rnk = net.ReadString()
@@ -126,7 +126,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), model)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -154,7 +154,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_playermodel",
 			Name = "Player Model",
@@ -171,10 +171,10 @@ function MODULE:InitClient()
 				local allModels = nil
 				local isBlacklist = nil
 				local rankPermissions = nil
-				
+
 				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel)
-			
-				
+
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -187,10 +187,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					addModel:SetDisabled(not (self:GetSelected()[1] != nil and allModels:GetSelected()[1] != nil))
 					delModel:SetDisabled(not (self:GetSelected()[1] != nil and rankPermissions:GetSelected()[1] != nil))
@@ -198,7 +198,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankPermissions = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -208,17 +208,17 @@ function MODULE:InitClient()
 				rankPermissions:SetSize(240, panel:GetTall() - 40)
 				rankPermissions:SetParent(panel)
 				paneldata.RankPermissions = rankPermissions
-				
+
 				local rankPermissionsHeader = VToolkit:CreateHeaderLabel(rankPermissions, "Rank Models")
 				rankPermissionsHeader:SetParent(panel)
-				
+
 				function rankPermissions:OnRowSelected(index, line)
 					delModel:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankPermissions)
-				
-				
+
+
 				allModels = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -228,17 +228,17 @@ function MODULE:InitClient()
 				allModels:SetSize(240, panel:GetTall() - 40)
 				allModels:SetParent(panel)
 				paneldata.AllModels = allModels
-				
+
 				local allModelsHeader = VToolkit:CreateHeaderLabel(allModels, "All Models")
 				allModelsHeader:SetParent(panel)
-				
+
 				function allModels:OnRowSelected(index, line)
 					addModel:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allModels)
-				
-				
+
+
 				addModel = VToolkit:CreateButton("Add Model", function()
 					for i,k in pairs(allModels:GetSelected()) do
 						local has = false
@@ -247,7 +247,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankPermissions:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VAddModel")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -258,14 +258,14 @@ function MODULE:InitClient()
 				addModel:SetWide(panel:GetWide() - 20 - select(1, allModels:GetWide()) - select(1, addModel:GetPos()))
 				addModel:SetParent(panel)
 				addModel:SetDisabled(true)
-				
+
 				delModel = VToolkit:CreateButton("Remove Model", function()
 					for i,k in pairs(rankPermissions:GetSelected()) do
 						MODULE:NetStart("VDelModel")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankPermissions:RemoveLine(k:GetID())
 					end
 				end)
@@ -273,13 +273,13 @@ function MODULE:InitClient()
 				delModel:SetWide(panel:GetWide() - 20 - select(1, allModels:GetWide()) - select(1, delModel:GetPos()))
 				delModel:SetParent(panel)
 				delModel:SetDisabled(true)
-				
+
 				isBlacklist = VToolkit:CreateCheckBox("Blacklist")
 				isBlacklist:SetPos(select(1, rankPermissions:GetPos()) + rankPermissions:GetWide() + 10, 400)
 				isBlacklist:SetDisabled(true)
 				isBlacklist:SetParent(panel)
 				isBlacklist:SizeToContents()
-				
+
 				function isBlacklist:OnChange(val)
 					if(not self:GetDisabled()) then
 						MODULE:NetStart("VModelBlacklistState")
@@ -288,11 +288,11 @@ function MODULE:InitClient()
 						net.SendToServer()
 					end
 				end
-				
+
 				paneldata.AddModel = addModel
 				paneldata.DelModel = delModel
 				paneldata.IsBlacklist = isBlacklist
-				
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.Models == nil) then
@@ -305,32 +305,32 @@ function MODULE:InitClient()
 					for i,k in pairs(paneldata.Models) do
 						local ln = paneldata.AllModels:AddLine(k.Name)
 						ln.ClassName = k.ClassName
-						
+
 						ln.ModelPath = k.ClassName
-						
+
 						ln.OldCursorMoved = ln.OnCursorMoved
 						ln.OldCursorEntered = ln.OnCursorEntered
 						ln.OldCursorExited = ln.OnCursorExited
-						
+
 						function ln:OnCursorEntered()
 							paneldata.PreviewPanel:SetVisible(true)
 							paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
-							
+
 							if(self.OldCursorEntered) then self:OldCursorEntered() end
 						end
-						
+
 						function ln:OnCursorExited()
 							paneldata.PreviewPanel:SetVisible(false)
-							
+
 							if(self.OldCursorExited) then self:OldCursorExited() end
 						end
-						
+
 						function ln:OnCursorMoved(x,y)
 							if(IsValid(paneldata.PreviewPanel)) then
 								local x, y = input.GetCursorPos()
 								paneldata.PreviewPanel:SetPos(x - 180, y - 117)
 							end
-							
+
 							if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
 						end
 					end
@@ -343,5 +343,5 @@ function MODULE:InitClient()
 				paneldata.IsBlacklist:SetValue(false)
 			end
 		})
-	
+
 end

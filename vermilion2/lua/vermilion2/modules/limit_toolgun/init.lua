@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -32,14 +32,14 @@ MODULE.NetworkStrings = {
 }
 
 function MODULE:InitServer()
-	
+
 	self:AddHook("CanTool", function(vplayer, tr, tool)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), tool)) then
 			Vermilion:AddNotification(vplayer, "You cannot use this toolgun mode!", NOTIFY_ERROR)
 			return false
 		end
 	end)
-	
+
 	self:NetHook("VGetToolgunLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -55,7 +55,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VBlockTool", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_toolgun_limits")) then
 			local rnk = net.ReadString()
@@ -65,7 +65,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnblockTool", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_toolgun_limits")) then
 			local rnk = net.ReadString()
@@ -73,7 +73,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), tool)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -97,7 +97,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_toolgun",
 			Name = "Tools",
@@ -113,8 +113,8 @@ function MODULE:InitClient()
 				local rankList = nil
 				local allTools = nil
 				local rankBlockList = nil
-			
-				
+
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -127,10 +127,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					blockTool:SetDisabled(not (self:GetSelected()[1] != nil and allTools:GetSelected()[1] != nil))
 					unblockTool:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
@@ -138,7 +138,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankBlockList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -148,17 +148,17 @@ function MODULE:InitClient()
 				rankBlockList:SetSize(240, panel:GetTall() - 40)
 				rankBlockList:SetParent(panel)
 				paneldata.RankBlockList = rankBlockList
-				
+
 				local rankBlockListHeader = VToolkit:CreateHeaderLabel(rankBlockList, "Blocked Tools")
 				rankBlockListHeader:SetParent(panel)
-				
+
 				function rankBlockList:OnRowSelected(index, line)
 					unblockTool:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankBlockList)
-				
-				
+
+
 				allTools = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -168,17 +168,17 @@ function MODULE:InitClient()
 				allTools:SetSize(240, panel:GetTall() - 40)
 				allTools:SetParent(panel)
 				paneldata.AllTools = allTools
-				
+
 				local allToolsHeader = VToolkit:CreateHeaderLabel(allTools, "All Tools")
 				allToolsHeader:SetParent(panel)
-				
+
 				function allTools:OnRowSelected(index, line)
 					blockTool:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allTools)
-				
-				
+
+
 				blockTool = VToolkit:CreateButton("Block Tool", function()
 					for i,k in pairs(allTools:GetSelected()) do
 						local has = false
@@ -187,7 +187,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VBlockTool")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -198,14 +198,14 @@ function MODULE:InitClient()
 				blockTool:SetWide(panel:GetWide() - 20 - select(1, allTools:GetWide()) - select(1, blockTool:GetPos()))
 				blockTool:SetParent(panel)
 				blockTool:SetDisabled(true)
-				
+
 				unblockTool = VToolkit:CreateButton("Unblock Tool", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockTool")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
@@ -213,11 +213,11 @@ function MODULE:InitClient()
 				unblockTool:SetWide(panel:GetWide() - 20 - select(1, allTools:GetWide()) - select(1, unblockTool:GetPos()))
 				unblockTool:SetParent(panel)
 				unblockTool:SetDisabled(true)
-				
+
 				paneldata.BlockTool = blockTool
 				paneldata.UnblockTool = unblockTool
-				
-				
+
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.Tools == nil) then
@@ -245,5 +245,5 @@ function MODULE:InitClient()
 				paneldata.UnblockTool:SetDisabled(true)
 			end
 		})
-	
+
 end

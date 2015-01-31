@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -33,7 +33,7 @@ MODULE.NetworkStrings = {
 MODULE.SessionLog = {}
 
 function MODULE:InitServer()
-	
+
 	--[[
 		Types:
 		- chat command DONE
@@ -57,14 +57,14 @@ function MODULE:InitServer()
 		- voip deactivated
 		- activate noclip
 	]]--
-	
+
 	function MODULE:AddEvent(icon, text)
 		table.insert(self.SessionLog, { Time = os.time(), Icon = "icon16/" .. icon .. ".png", Text = text })
 		MODULE:NetStart("VSendEvent")
 		net.WriteTable({ Time = os.time(), Icon = "icon16/" .. icon .. ".png", Text = text })
 		net.Send(Vermilion:GetUsersWithPermission("see_event_log"))
 	end
-	
+
 	self:NetHook("VGetEvents", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "see_event_log")) then
 			MODULE:NetStart("VGetEvents")
@@ -72,15 +72,15 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:AddHook("PlayerConnect", function(name, ip)
 		MODULE:AddEvent("connect", name .. " has connected to the server.")
 	end)
-	
+
 	self:AddHook("PlayerDisconnected", function(ply)
 		MODULE:AddEvent("disconnect", ply:GetName() .. " has disconneccted from the server.")
 	end)
-	
+
 	self:AddHook("PlayerDeath", function(victim, inflictor, attacker)
 		if(victim == attacker) then
 			MODULE:AddEvent("gun", victim:GetName() .. " committed suicide.")
@@ -88,40 +88,40 @@ function MODULE:InitServer()
 			MODULE:AddEvent("gun", victim:GetName() .. " was killed by " .. attacker:GetName())
 		end
 	end)
-	
+
 	self:AddHook("PlayerSpawnedProp", function(ply, model, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. model .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedEffect", function(ply, model, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. model .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedNPC", function(ply, ent)
 		MODULE:AddEvent("monkey", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. ent:GetModel() .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedRagdoll", function(ply, model, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. model .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedSENT", function(ply, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. ent:GetModel() .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedSWEP", function(ply, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. ent:GetModel() .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpawnedVehicle", function(ply, ent)
 		MODULE:AddEvent("bricks", ply:GetName() .. " spawned a " .. ent:GetClass() .. " with model (" .. ent:GetModel() .. ")")
 	end)
-	
+
 	self:AddHook("PlayerSpray", function(ply)
 		MODULE:AddEvent("paintcan", ply:GetName() .. " sprayed near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
 	end)
-	
-	
+
+
 	self:AddHook("PropBreak", function(attacker, prop)
 		if(not IsValid(prop) or not IsValid(attacker)) then return end
 		if(prop.Vermilion_Owner == nil) then
@@ -130,7 +130,7 @@ function MODULE:InitServer()
 		end
 		MODULE:AddEvent("link_break", attacker:GetName() .. " broke " .. prop:GetClass() .. "owned by " .. Vermilion:GetUserBySteamID(prop.Vermilion_Owner).Name)
 	end)
-	
+
 	self:AddHook("PlayerEnteredVehicle", function(ply, veh, role)
 		if(veh.Vermilion_Owner == nil) then
 			MODULE:AddEvent("car", ply:GetName() .. " entered " .. veh:GetClass() .. " with model (" .. veh:GetModel() .. ") near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
@@ -138,7 +138,7 @@ function MODULE:InitServer()
 		end
 		MODULE:AddEvent("car", ply:GetName() .. " entered " .. veh:GetClass() .. " owned by " .. Vermilion:GetUserBySteamID(veh.Vermilion_Owner).Name)
 	end)
-	
+
 	self:AddHook("PlayerLeaveVehicle", function(ply, veh)
 		if(veh.Vermilion_Owner == nil) then
 			MODULE:AddEvent("car_delete", ply:GetName() .. " exited " .. veh:GetClass() .. " with model (" .. veh:GetModel() .. ") near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
@@ -146,8 +146,8 @@ function MODULE:InitServer()
 		end
 		MODULE:AddEvent("car_delete", ply:GetName() .. " exited " .. veh:GetClass() .. " owned by " .. Vermilion:GetUserBySteamID(veh.Vermilion_Owner).Name)
 	end)
-	
-	local oldStartDriving = drive.PlayerStartDriving	
+
+	local oldStartDriving = drive.PlayerStartDriving
 	function drive.PlayerStartDriving(ply, ent, mode)
 		if(ent.Vermilion_Owner == nil) then
 			MODULE:AddEvent("lorry", ply:GetName() .. " is driving " .. ent:GetClass() .. " with model (" .. ent:GetModel() .. ") near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
@@ -156,9 +156,9 @@ function MODULE:InitServer()
 		MODULE:AddEvent("lorry", ply:GetName() .. " is driving " .. ent:GetClass() .. " owned by " .. Vermilion:GetUserBySteamID(ent.Vermilion_Owner).Name)
 		return oldStartDriving(ply, ent, mode)
 	end
-	
-	
-	
+
+
+
 end
 
 function MODULE:InitClient()
@@ -173,7 +173,7 @@ function MODULE:InitClient()
 					img:SetImage(k.Icon)
 				end
 				img:SizeToContents()
-				
+
 				local ln = paneldata.EventList:AddLine(os.date(Vermilion.GetActiveLanguageFile().ShortDateTimeFormat, k.Time), "", k.Text)
 				ln.Columns[2]:Add(img)
 			end)
@@ -182,7 +182,7 @@ function MODULE:InitClient()
 			paneldata.EventList.VBar:AnimateTo(paneldata.EventList.VBar.CanvasSize + 100, 1, 0, -3)
 		end)
 	end)
-	
+
 	self:NetHook("VSendEvent", function()
 		if(Vermilion.Menu.IsOpen) then
 			local paneldata = Vermilion.Menu.Pages["event_log"]
@@ -190,16 +190,16 @@ function MODULE:InitClient()
 			local img = vgui.Create("DImage")
 			img:SetImage(k.Icon)
 			img:SizeToContents()
-			
+
 			local ln = paneldata.EventList:AddLine(os.date(Vermilion.GetActiveLanguageFile().ShortDateTimeFormat, k.Time), "", k.Text)
 			ln.Columns[2]:Add(img)
-			
+
 			paneldata.EventList.VBar:AnimateTo(paneldata.EventList.VBar.CanvasSize + 100, 1, 0, -3)
 		end
 	end)
 
 	Vermilion.Menu:AddCategory("server", 2)
-	
+
 	Vermilion.Menu:AddPage({
 		ID = "event_log",
 		Name = "Event Log",

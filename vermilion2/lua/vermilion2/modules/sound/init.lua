@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -58,7 +58,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "playsound" },
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
-				
+
 			elseif(pos == 2) then
 				return VToolkit.MatchPlayerPart(VToolkit.GetValidPlayers(), current)
 			elseif(pos == 3) then
@@ -70,14 +70,14 @@ function MODULE:RegisterChatCommands()
 			local target = VToolkit.GetValidPlayers(false) -- don't include bots; they can't hear.
 			local loop = false
 			local volume = 100
-			
+
 			if(table.Count(text) < 1) then
 				log("Missing path!", NOTIFY_ERROR)
 				return
 			end
-			
+
 			path = text[1]
-			
+
 			if(table.Count(text) >= 2) then
 				if(text[2] != "nil") then
 					target = VToolkit.LookupPlayer(text[2])
@@ -87,7 +87,7 @@ function MODULE:RegisterChatCommands()
 					end
 				end
 			end
-			
+
 			if(table.Count(text) >= 3) then
 				if(tobool(text[3]) != nil) then
 					loop = tobool(text[3])
@@ -96,7 +96,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 			end
-			
+
 			if(table.Count(text) >= 4) then
 				if(tonumber(text[4]) != nil) then
 					volume = tonumber(text[4])
@@ -109,12 +109,12 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 			end
-			
+
 			MODULE:SendSound(target, path, "BaseSound", { Volume = volume, Loop = loop })
 			glog(sender:GetName() .. " is playing a sound.")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "playstream",
 		Description = "Plays a stream to a player.",
@@ -123,7 +123,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "playsound" },
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
-				
+
 			elseif(pos == 2) then
 				return VToolkit.MatchPlayerPart(current)
 			elseif(pos == 3) then
@@ -135,14 +135,14 @@ function MODULE:RegisterChatCommands()
 			local target = VToolkit.GetValidPlayers(false)
 			local loop = false
 			local volume = 100
-			
+
 			if(table.Count(text) < 1) then
 				log("Missing URL!", NOTIFY_ERROR)
 				return
 			end
-			
+
 			url = text[1]
-			
+
 			if(table.Count(text) >= 2) then
 				if(text[2] != "nil") then
 					target = VToolkit.LookupPlayer(text[2])
@@ -152,7 +152,7 @@ function MODULE:RegisterChatCommands()
 					end
 				end
 			end
-			
+
 			if(table.Count(text) >= 3) then
 				if(tobool(text[3]) != nil) then
 					loop = tobool(text[3])
@@ -161,7 +161,7 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 			end
-			
+
 			if(table.Count(text) >= 4) then
 				if(tonumber(text[4]) != nil) then
 					volume = tonumber(text[4])
@@ -174,12 +174,12 @@ function MODULE:RegisterChatCommands()
 					return
 				end
 			end
-			
+
 			MODULE:SendStream(target, url, "BaseSound", { Volume = volume, Loop = loop })
 			glog(sender:GetName() .. " is playing a stream.")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "stopsound",
 		Description = "Stops a sound.",
@@ -194,7 +194,7 @@ function MODULE:RegisterChatCommands()
 		Function = function(sender, text, log, glog)
 			local target = VToolkit.GetValidPlayers(false)
 			local channel = "BaseSound"
-			
+
 			if(table.Count(text) >= 1) then
 				if(text[1] != "nil") then
 					target = VToolkit.LookupPlayer(text[1])
@@ -204,19 +204,19 @@ function MODULE:RegisterChatCommands()
 					end
 				end
 			end
-			
+
 			if(table.Count(text) >= 2) then
 				channel = text[2]
 			end
-			
+
 			MODULE:NetStart("VStop")
 			net.WriteString(channel)
 			net.Send(target)
-			
+
 			glog(sender:GetName() .. " stopped the sound in the " .. channel .. " channel.")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "pausesound",
 		Description = "Pauses a sound",
@@ -231,7 +231,7 @@ function MODULE:RegisterChatCommands()
 		Function = function(sender, text, log, glog)
 			local target = VToolkit.GetValidPlayers(false)
 			local channel = "BaseSound"
-			
+
 			if(table.Count(text) >= 1) then
 				if(text[1] != "nil") then
 					target = VToolkit.LookupPlayer(text[1])
@@ -241,19 +241,19 @@ function MODULE:RegisterChatCommands()
 					end
 				end
 			end
-			
+
 			if(table.Count(text) >= 2) then
 				channel = text[2]
 			end
-			
+
 			MODULE:NetStart("VPause")
 			net.WriteString(channel)
 			net.Send(target)
-			
+
 			glog(sender:GetName() .. " paused the sound in the " .. channel .. " channel.")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "unpausesound",
 		Description = "Resumes playing a paused sound",
@@ -268,7 +268,7 @@ function MODULE:RegisterChatCommands()
 		Function = function(sender, text, log)
 			local target = VToolkit.GetValidPlayers(false)
 			local channel = "BaseSound"
-			
+
 			if(table.Count(text) >= 1) then
 				if(text[1] != "nil" and text[1] != "@") then
 					target = VToolkit.LookupPlayer(text[1])
@@ -278,19 +278,19 @@ function MODULE:RegisterChatCommands()
 					end
 				end
 			end
-			
+
 			if(table.Count(text) >= 2) then
 				channel = text[2]
 			end
-			
+
 			MODULE:NetStart("VUnpause")
 			net.WriteString(channel)
 			net.Send(target)
-			
+
 			glog(sender:GetName() .. " resumed the sound in the " .. channel .. " channel.")
 		end
 	})
-	
+
 end
 
 function MODULE:InitShared()
@@ -305,7 +305,7 @@ function MODULE:InitShared()
 end
 
 function MODULE:InitServer()
-	
+
 	function MODULE:SendSound(vplayer, path, channel, parameters)
 		MODULE:NetStart("VPlaySound")
 		net.WriteString(path)
@@ -313,11 +313,11 @@ function MODULE:InitServer()
 		net.WriteTable(parameters or {})
 		net.Send(vplayer)
 	end
-	
+
 	function MODULE:BroadcastSound(path, channel, parameters)
 		self:SendSound(VToolkit.GetValidPlayers(false), path, channel, parameters)
 	end
-	
+
 	function MODULE:SendStream(vplayer, url, channel, parameters)
 		MODULE:NetStart("VPlayStream")
 		net.WriteString(url)
@@ -325,38 +325,38 @@ function MODULE:InitServer()
 		net.WriteTable(parameters or {})
 		net.Send(vplayer)
 	end
-	
+
 	function MODULE:BroadcastStream(url, channel, parameters)
 		self:SendStream(VToolkit.GetValidPlayers(false), url, channel, parameters)
 	end
-	
+
 	self:NetHook("VPlaySound", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "playsound")) then
 			local path = net.ReadString()
 			local channel = net.ReadString()
 			local parameters = net.ReadTable()
-			
+
 			MODULE:BroadcastSound(path, channel, parameters)
 		end
 	end)
-	
+
 	self:NetHook("VPlayStream", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "playstream")) then
 			local url = net.ReadString()
 			local channel = net.ReadString()
 			local parameters = net.ReadTable()
-			
+
 			MODULE:BroadcastStream(url, channel, parameters)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
 
 	CreateClientConVar("vermilion_fft", 1, true, false)
 	CreateClientConVar("vermilion_fft_type", "Default", true, false)
-	
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(MODULE.Visualisers[GetConVarString("vermilion_fft_type")] == nil) then
 			RunConsoleCommand("vermilion_fft_type", "Default")
@@ -378,7 +378,7 @@ function MODULE:InitClient()
 			SetAs = "text"
 		})
 	end)
-	
+
 	self:NetHook("VPlaySound", function()
 		local path = net.ReadString()
 		local channel = net.ReadString()
@@ -387,7 +387,7 @@ function MODULE:InitClient()
 			MODULE:PlayChannel(channel)
 		end)
 	end)
-	
+
 	self:NetHook("VPlayStream", function()
 		local url = net.ReadString()
 		local channel = net.ReadString()
@@ -396,12 +396,12 @@ function MODULE:InitClient()
 			MODULE:PlayChannel(channel)
 		end)
 	end)
-	
+
 	self:NetHook("VStop", function()
 		local channel = net.ReadString()
 		MODULE:StopChannel(channel)
 	end)
-	
+
 	local function setChannel(name, data)
 		if(MODULE.Channels[name] != nil) then
 			if(IsValid(MODULE.Channels[name].AudioChannel)) then
@@ -410,39 +410,39 @@ function MODULE:InitClient()
 		end
 		MODULE.Channels[name] = data
 	end
-	
+
 	function MODULE:GetChannel(name)
 		return self.Channels[name]
 	end
-	
+
 	local requiredFileParamters = {
 		{ Name = "Volume", Default = 1 },
 		{ Name = "Loop", Default = false }
 	}
-	
+
 	local requiredStreamParameters = {
 		{ Name = "Volume", Default = 1 },
 		{ Name = "Loop", Default = false }
 	}
-	
+
 	function MODULE:QueueSoundFile(path, channel, parameters, callback)
 		parameters = parameters or {}
-		
+
 		for i,k in pairs(requiredFileParamters) do
 			if(parameters[k.Name] == nil) then
 				parameters[k.Name] = k.Default
 			end
 		end
-		
+
 		local data = { Type = MODULE.TYPE_FILE, Path = path, Ready = false, AudioChannel = nil }
 		table.Merge(data, parameters)
 		setChannel(channel, data)
-		
+
 		local typ = ""
 		if(data.Loop) then
 			typ = "noblock"
 		end
-		
+
 		sound.PlayFile("sound/" .. data.Path, "noplay " .. typ, function(channel, errid, errnam)
 			if(IsValid(channel)) then
 				channel:EnableLooping(data.Loop)
@@ -455,25 +455,25 @@ function MODULE:InitClient()
 			end
 		end)
 	end
-	
+
 	function MODULE:QueueSoundStream(url, channel, parameters, callback)
 		parameters = parameters or {}
-		
+
 		for i,k in pairs(requiredFileParamters) do
 			if(parameters[k.Name] == nil) then
 				parameters[k.Name] = k.Default
 			end
 		end
-		
+
 		local data = { Type = MODULE.TYPE_STREAM, URL = url, Ready = false, AudioChannel = nil }
 		table.Merge(data, parameters)
 		setChannel(channel, data)
-		
+
 		local typ = ""
 		if(data.Loop) then
 			typ = "noblock"
 		end
-		
+
 		sound.PlayURL(data.URL, "noplay " .. typ, function(channel, errid, errnam)
 			if(IsValid(channel)) then
 				channel:EnableLooping(data.Loop)
@@ -486,46 +486,46 @@ function MODULE:InitClient()
 			end
 		end)
 	end
-	
+
 	function MODULE:PlaySoundFile(path, channel, parameters)
 		self:QueueSoundFile(path, channel, parameters, function(data)
 			MODULE:PlayChannel(channel)
 		end)
 	end
-	
+
 	function MODULE:PlaySoundStream(url, channel, parameters)
 		self:QueueSoundStream(url, channel, parameters, function(data)
 			MODULE:PlayChannel(channel)
 		end)
 	end
-	
+
 	function MODULE:ValidateChannel(channel)
 		if(self:GetChannel(channel) == nil) then return false end
 		if(not self:GetChannel(channel).Ready) then return false end
 		if(not IsValid(self:GetChannel(channel).AudioChannel)) then return false end
-		
+
 		return true
 	end
-	
+
 	function MODULE:PlayChannel(channel)
 		if(not self:ValidateChannel(channel)) then return false end
 		self:GetChannel(channel).AudioChannel:Play()
 		return true
 	end
-	
+
 	function MODULE:PauseChannel(channel)
 		if(not self:ValidateChannel(channel)) then return false end
 		self:GetChannel(channel).AudioChannel:Pause()
 		return true
 	end
-	
+
 	function MODULE:StopChannel(channel)
 		if(not self:ValidateChannel(channel)) then return false end
 		self:GetChannel(channel).AudioChannel:Stop()
 		return true
 	end
-	
-	
+
+
 	self:RegisterVisualiser("Default", function(data, percent, xpos, ypos, width, spacing)
 		for i,k in pairs(data) do
 			if(i > 80) then break end -- limit to 80 channels
@@ -535,7 +535,7 @@ function MODULE:InitClient()
 			xpos = xpos + width + spacing
 		end
 	end)
-	
+
 	self:RegisterVisualiser("Scope", function(data, percent, xpos, ypos, width, spacing)
 		for i,k in pairs(data) do
 			if(i > 80) then break end -- limit to 80 channels.
@@ -562,10 +562,10 @@ function MODULE:InitClient()
 			xpos = xpos + width + spacing
 		end
 	end)
-	
+
 	--[[ local visualiserFunction = nil
 	local devData = nil
-	
+
 	self:RegisterVisualiser("Development", function(data, percent, xpos, ypos, width, spacing)
 		if(visualiserFunction == nil) then return end
 		VDATA = data
@@ -576,7 +576,7 @@ function MODULE:InitClient()
 		VSPACING = spacing
 		visualiserFunction()
 	end)
-	
+
 	concommand.Add("vermilion_visualiserbuilder", function()
 		local panel = VToolkit:CreateFrame({
 			size = { 600, 600 },
@@ -584,7 +584,7 @@ function MODULE:InitClient()
 			title = "Vermilion Visualiser Editor",
 			closeBtn = true
 		})
-		
+
 		local code = VToolkit:CreateTextbox()
 		code:SetPos(0, 30)
 		code:SetSize(600, 500)
@@ -592,24 +592,24 @@ function MODULE:InitClient()
 		code:SetMultiline(true)
 		code:SetUpdateOnType(true)
 		code:SetTabbingDisabled(true)
-		
+
 		function code:OnChange(val)
 			devData = val
 		end
-		
-		function 
-		
+
+		function
+
 		if(devData != nil) then
 			code:SetValue(devData)
 		end
-		
+
 		local compileBtn = VToolkit:CreateButton("Compile Code", function()
 			visualiserFunction = CompileString(code:GetValue(), "Vermilion_VisualiserDev")
 		end)
 		compileBtn:SetPos(490, 570)
 		compileBtn:SetSize(100, 20)
 		compileBtn:SetParent(panel)
-		
+
 		panel:MakePopup()
 		panel:DoModal()
 		panel:SetAutoDelete(true)
@@ -623,7 +623,7 @@ function MODULE:InitClient()
 			return false
 		end
 	end)
-	
+
 	self:AddHook("HUDPaint", "FFTDraw", function()
 		if(MODULE.Credits != nil) then
 			local pos = 0
@@ -633,7 +633,7 @@ function MODULE:InitClient()
 				if(w > maxw) then maxw = w end
 				pos = pos + h + 10
 			end
-			
+
 			MODULE.CreditW = maxw
 			MODULE.CreditH = pos
 		end
@@ -642,7 +642,7 @@ function MODULE:InitClient()
 			local num = MODULE:GetChannel("BaseSound").AudioChannel:FFT(tab, FFT_256)
 			local width = 5
 			local spacing = 1
-			
+
 			if(num > 80) then num = 80 end -- limit to 80 channels
 			local xpos = ScrW() - 10 - ((width + spacing) * num)
 			local totalLen = xpos
@@ -655,5 +655,5 @@ function MODULE:InitClient()
 			MODULE.Visualisers[GetConVarString("vermilion_fft_type")](tab, percent, xpos, ypos, width, spacing)
 		end
 	end)
-	
+
 end

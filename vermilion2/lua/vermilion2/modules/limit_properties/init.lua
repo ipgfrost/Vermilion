@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -33,8 +33,8 @@ MODULE.NetworkStrings = {
 }
 
 function MODULE:InitServer()
-	
-	
+
+
 	self:NetHook("VGetPropertyLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -50,7 +50,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VBlockProperty", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_property_limits")) then
 			local rnk = net.ReadString()
@@ -60,7 +60,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnblockProperty", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_property_limits")) then
 			local rnk = net.ReadString()
@@ -68,7 +68,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
-	
+
 	self:NetHook("VBuildEntityMenu", function(vplayer)
 		if(MODULE:GetData("enabled", 1, 3) == 1) then
 			MODULE:NetStart("VBuildEntityMenu")
@@ -83,11 +83,11 @@ function MODULE:InitServer()
 		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true))
 		net.Send(vplayer)
 	end)
-	
+
 	function MODULE:IsPropertyBlocked(vplayer, prop)
 		return table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), prop)
 	end
-	
+
 end
 
 function MODULE:InitClient()
@@ -113,7 +113,7 @@ function MODULE:InitClient()
 
 		if ( data.Type == "toggle" ) then return AddToggleOption( data, menu, ent, ply, tr ) end
 
-		if ( data.PrependSpacer ) then 
+		if ( data.PrependSpacer ) then
 			menu:AddSpacer()
 		end
 
@@ -130,11 +130,11 @@ function MODULE:InitClient()
 		return option
 
 	end
-	
+
 	local lent = nil
 	local ltr = nil
 	local code = nil
-	
+
 	self:NetHook("VBuildEntityMenu", function()
 		local rcode = net.ReadString()
 		if(rcode == code) then
@@ -150,7 +150,7 @@ function MODULE:InitClient()
 			menu:Open()
 		end
 	end)
-	
+
 	function properties.OpenEntityMenu(ent, tr)
 		lent = ent
 		ltr = tr
@@ -179,7 +179,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_properties",
 			Name = "Properties",
@@ -195,8 +195,8 @@ function MODULE:InitClient()
 				local rankList = nil
 				local allProperties = nil
 				local rankBlockList = nil
-			
-				
+
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -209,10 +209,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					blockProperty:SetDisabled(not (self:GetSelected()[1] != nil and allProperties:GetSelected()[1] != nil))
 					unblockProperty:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
@@ -220,7 +220,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankBlockList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -230,17 +230,17 @@ function MODULE:InitClient()
 				rankBlockList:SetSize(240, panel:GetTall() - 40)
 				rankBlockList:SetParent(panel)
 				paneldata.RankBlockList = rankBlockList
-				
+
 				local rankBlockListHeader = VToolkit:CreateHeaderLabel(rankBlockList, "Blocked Properties")
 				rankBlockListHeader:SetParent(panel)
-				
+
 				function rankBlockList:OnRowSelected(index, line)
 					unblockProperty:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankBlockList)
-				
-				
+
+
 				allProperties = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -250,17 +250,17 @@ function MODULE:InitClient()
 				allProperties:SetSize(240, panel:GetTall() - 40)
 				allProperties:SetParent(panel)
 				paneldata.AllProperties = allProperties
-				
+
 				local allPropertiesHeader = VToolkit:CreateHeaderLabel(allProperties, "All Properties")
 				allPropertiesHeader:SetParent(panel)
-				
+
 				function allProperties:OnRowSelected(index, line)
 					blockProperty:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allProperties)
-				
-				
+
+
 				blockProperty = VToolkit:CreateButton("Block Property", function()
 					for i,k in pairs(allProperties:GetSelected()) do
 						local has = false
@@ -269,7 +269,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VBlockProperty")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -280,14 +280,14 @@ function MODULE:InitClient()
 				blockProperty:SetWide(panel:GetWide() - 20 - select(1, allProperties:GetWide()) - select(1, blockProperty:GetPos()))
 				blockProperty:SetParent(panel)
 				blockProperty:SetDisabled(true)
-				
+
 				unblockProperty = VToolkit:CreateButton("Unblock Property", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockProperty")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
@@ -295,11 +295,11 @@ function MODULE:InitClient()
 				unblockProperty:SetWide(panel:GetWide() - 20 - select(1, allProperties:GetWide()) - select(1, unblockProperty:GetPos()))
 				unblockProperty:SetParent(panel)
 				unblockProperty:SetDisabled(true)
-				
+
 				paneldata.BlockProperty = blockProperty
 				paneldata.UnblockProperty = unblockProperty
-				
-				
+
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.Properties == nil) then
@@ -316,7 +316,7 @@ function MODULE:InitClient()
 					for i,k in pairs(paneldata.Properties) do
 						local ln = paneldata.AllProperties:AddLine(k.Name)
 						ln.ClassName = k.ClassName
-						
+
 					end
 				end
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)
@@ -325,5 +325,5 @@ function MODULE:InitClient()
 				paneldata.UnblockProperty:SetDisabled(true)
 			end
 		})
-	
+
 end

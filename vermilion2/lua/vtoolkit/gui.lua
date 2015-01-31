@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 VToolkit.Skins = {}
@@ -27,7 +27,7 @@ for i,k in pairs(file.Find("vtoolkit/skins/*.lua", "LUA")) do
 	Vermilion.Log("Loading skin: " .. k)
 	local func = CompileFile("vtoolkit/skins/" .. k)
 	if(isfunction(func)) then
-		if(SERVER) then 
+		if(SERVER) then
 			AddCSLuaFile("vtoolkit/skins/" .. k)
 		else
 			func()
@@ -74,14 +74,14 @@ VToolkit.NotificationAnim = Derma_Anim("VToolkit_SizeBounce", nil, function(pane
 	end
 	data.Pos = data.Pos + change
 	local pos = data.Pos
-	
+
 	local num,finished = newNotifyFormula(pos, anim.Length)
-	
+
 	panel:SetSize(panel.MaxW * num, panel.MaxH * num)
 	local addition = 0
 	if(data.OnlyOne) then addition = 0 end
 	panel:SetPos(150 - (panel:GetWide() / 2) , panel.IntendedY - (panel:GetTall() / 2) + addition )
-	
+
 	if(finished) then data.Done = true end
 end)
 
@@ -272,7 +272,7 @@ function VToolkit:CreateButton(text, onClick)
 			button.Paint = self:GetSkinComponent("Button").Paint
 		end
 	end
-	return button 
+	return button
 end
 
 function VToolkit:CreateBinder()
@@ -394,16 +394,16 @@ function VToolkit:CreateDialog(title, text)
 	panel:MakePopup()
 	panel:DoModal()
 	panel:SetAutoDelete(true)
-	
-	
-	
+
+
+
 	self:SetDark(false)
 	local textLabel = self:CreateLabel(text)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
-	
+
 	local confirmButton = self:CreateButton(Vermilion:TranslateStr("ok"), function(self)
 		panel:Close()
 	end)
@@ -411,7 +411,7 @@ function VToolkit:CreateDialog(title, text)
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
 	self:SetDark(true)
-	
+
 	return panel
 end
 
@@ -434,14 +434,14 @@ function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // 
 	--panel:DoModal()
 	--panel:SetDrawOnTop(true)
 	panel:SetAutoDelete(true)
-	
+
 	self:SetDark(false)
 	local textLabel = self:CreateLabel(text)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
-	
+
 	local combo = VToolkit:CreateComboBox(choices, selected)
 	combo:SetPos(10, 55)
 	combo:SetSize(panel:GetWide() - 20, 25)
@@ -454,14 +454,14 @@ function VToolkit:CreateComboboxPanel(text, choices, selected, completeFunc) // 
 	confirmButton:SetPos(255, 90)
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
-	
+
 	local cancelButton = self:CreateButton(Vermilion:TranslateStr("cancel"), function(self)
 		panel:Close()
 	end)
 	cancelButton:SetPos(145, 90)
 	cancelButton:SetSize(100, 20)
 	cancelButton:SetParent(panel)
-	
+
 	return panel
 end
 
@@ -479,22 +479,22 @@ function VToolkit:CreateConfirmDialog(text, completeFunc, options)
 	panel:MakePopup()
 	panel:DoModal()
 	panel:SetAutoDelete(true)
-	
+
 	self:SetDark(false)
 	local textLabel = self:CreateLabel(text)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
-	
+
 	local confirmText = Vermilion:TranslateStr("ok")
 	local denyText = Vermilion:TranslateStr("cancel")
-	
+
 	if(istable(options)) then
 		confirmText = options.Confirm or confirmText
 		denyText = options.Deny or denyText
 	end
-	
+
 	local confirmButton = self:CreateButton(confirmText, function(self)
 		completeFunc()
 		panel:Close()
@@ -502,14 +502,14 @@ function VToolkit:CreateConfirmDialog(text, completeFunc, options)
 	confirmButton:SetPos(255, 75)
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
-	
+
 	local cancelButton = self:CreateButton(denyText, function(self)
 		panel:Close()
 	end)
 	cancelButton:SetPos(145, 75)
 	cancelButton:SetSize(100, 20)
 	cancelButton:SetParent(panel)
-	
+
 	panel.OldThink = panel.Think
 	function panel:Think()
 		if(istable(options)) then
@@ -523,9 +523,9 @@ function VToolkit:CreateConfirmDialog(text, completeFunc, options)
 		end
 		if(isfunction(self.OldThink)) then self:OldThink() end
 	end
-	
+
 	self:SetDark(true)
-	
+
 	return panel
 end
 
@@ -543,14 +543,14 @@ function VToolkit:CreateTextInput(text, completeFunc)
 	panel:MakePopup()
 	panel:DoModal()
 	panel:SetAutoDelete(true)
-	
+
 	self:SetDark(false)
 	local textLabel = self:CreateLabel(text)
 	textLabel:SizeToContents()
 	textLabel:SetPos(250 - (textLabel:GetWide() / 2), 30)
 	textLabel:SetParent(panel)
 	textLabel:SetBright(true)
-	
+
 	local textbox = self:CreateTextbox("", panel)
 	textbox:SetPos( 10, 50 )
 	textbox:SetSize( panel:GetWide() - 20, 20 )
@@ -559,7 +559,7 @@ function VToolkit:CreateTextInput(text, completeFunc)
 		completeFunc(self:GetValue())
 		panel:Close()
 	end
-	
+
 	local confirmButton = self:CreateButton(Vermilion:TranslateStr("ok"), function(self)
 		completeFunc(textbox:GetValue())
 		panel:Close()
@@ -567,14 +567,14 @@ function VToolkit:CreateTextInput(text, completeFunc)
 	confirmButton:SetPos(255, 75)
 	confirmButton:SetSize(100, 20)
 	confirmButton:SetParent(panel)
-	
+
 	local cancelButton = self:CreateButton(Vermilion:TranslateStr("cancel"), function(self)
 		panel:Close()
 	end)
 	cancelButton:SetPos(145, 75)
 	cancelButton:SetSize(100, 20)
 	cancelButton:SetParent(panel)
-	
+
 	self:SetDark(true)
 	return panel
 end
@@ -614,7 +614,7 @@ function VToolkit:CreateList(data)
 			data.colrunner(i, colimpl)
 		end
 	end
-	
+
 	lst.OldAddLineb = lst.AddLine
 	function lst:AddLine(...)
 		local ln = self:OldAddLineb(...)
@@ -624,7 +624,7 @@ function VToolkit:CreateList(data)
 		end
 		return ln
 	end
-	
+
 	if(not data.sortable) then
 		lst:SetSortable(false)
 		function lst:SortByColumn(ColumnID, Desc) end
@@ -651,7 +651,7 @@ function VToolkit:CreatePropertySheet()
 		local tab = self:AddSheet(label, panel, material, false, false, tooltip)
 		return panel,tab
 	end
-	
+
 	sheet.OldAddSheet = sheet.AddSheet
 	function sheet:AddSheet(label, panel, material, NoStretchX, NoStretchY, Tooltip)
 		local sheet1 = self:OldAddSheet(label, panel, material, NoStretchX, NoStretchY, Tooltip)
@@ -750,7 +750,7 @@ function VToolkit:CreateSearchBox(listView, changelogic)
 	local box = self:CreateTextbox()
 	box:SetUpdateOnType(true)
 	box:SetTall(25)
-	
+
 	listView.OldAddLine = listView.AddLine
 	function listView:AddLine(...)
 		local ln = self:OldAddLine(...)
@@ -765,7 +765,7 @@ function VToolkit:CreateSearchBox(listView, changelogic)
 		end
 		return ln
 	end
-	
+
 	changelogic = changelogic or function()
 		local val = box:GetValue()
 		if(val == "" or val == nil) then
@@ -792,28 +792,28 @@ function VToolkit:CreateSearchBox(listView, changelogic)
 			listView:InvalidateLayout()
 		end
 	end
-	
+
 	box.OnChange = changelogic
-	
-	
+
+
 	local searchLogo = vgui.Create("DImage")
 	searchLogo:SetParent(box)
 	searchLogo:SetPos(box:GetWide() - 25, 5)
 	searchLogo:SetImage("icon16/magnifier.png")
 	searchLogo:SizeToContents()
-	
+
 	box.OldSetWide = box.SetWide
 	function box:SetWide(val)
 		box:OldSetWide(val)
 		searchLogo:SetPos(box:GetWide() - 25, 5)
 	end
-	
+
 	listView:SetTall(listView:GetTall() - 35)
 
 	box:SetParent(listView:GetParent())
 	box:SetPos(select(1, listView:GetPos()), select(2, listView:GetPos()) + listView:GetTall() + 10)
 	box:SetWide(listView:GetWide())
-	
+
 	return box
 end
 
@@ -825,7 +825,7 @@ function VToolkit:CreatePreviewPanel(typ, parent, move)
 	PreviewPanel:SetParent(parent)
 	PreviewPanel:SetDrawOnTop(true)
 	PreviewPanel:SetVisible(false)
-	
+
 	if(typ == "model") then
 		move = move or function() end
 		local dmodel = vgui.Create("DModelPanel")
@@ -836,18 +836,18 @@ function VToolkit:CreatePreviewPanel(typ, parent, move)
 			ent:SetAngles(Angle(0, RealTime() * 80, 0))
 			move(ent)
 		end
-					
+
 		PreviewPanel.ModelView = dmodel
 	elseif(typ == "html") then
 		local dhtml = vgui.Create("DHTML")
 		dhtml:SetPos(10, 10)
 		dhtml:SetSize(128, 128)
 		dhtml:SetParent(PreviewPanel)
-		
+
 		PreviewPanel.HtmlView = dhtml
 	end
-	
-	
+
+
 	return PreviewPanel
 end
 
@@ -868,17 +868,17 @@ function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 		cRKPanel:SetSize(50, 20)
 		cRKPanel:SetParent(drawer)
 	end
-	
+
 	function drawer:Open()
 		self:MoveTo(0, 0, 0.25, 0, -3)
 		self.IsOpen = true
 	end
-	
+
 	function drawer:Close()
 		self:MoveTo(-self:GetWide(), 0, 0.25, 0, -3)
 		self.IsOpen = false
 	end
-	
+
 	function drawer:Toggle()
 		if(self.IsOpen) then
 			self:Close()
@@ -886,7 +886,7 @@ function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
-	
+
 	return drawer
 end
 
@@ -907,17 +907,17 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 		cRKPanel:SetSize(50, 20)
 		cRKPanel:SetParent(drawer)
 	end
-	
+
 	function drawer:Open()
 		self:MoveTo((parent:GetWide() / 2) - 50 - sizeOffset, 0, 0.25, 0, -3)
 		self.IsOpen = true
 	end
-	
+
 	function drawer:Close()
 		self:MoveTo(parent:GetWide(), 0, 0.25, 0, -3)
 		self.IsOpen = false
 	end
-	
+
 	function drawer:Toggle()
 		if(self.IsOpen) then
 			self:Close()
@@ -925,6 +925,6 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
-	
+
 	return drawer
 end

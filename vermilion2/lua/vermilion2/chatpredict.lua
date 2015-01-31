@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,21 +10,21 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 if(SERVER) then
 	util.AddNetworkString("VChatPrediction")
-	
+
 	net.Receive("VChatPrediction", function(len, vplayer)
 		local current = net.ReadString()
-		
+
 		local command, response = Vermilion.ParseChatLineForCommand(current, vplayer)
-		
+
 		local predictor = nil
 		if(Vermilion.ChatAliases[command] != nil) then
 			local cmdObj = Vermilion.ChatCommands[Vermilion.ChatAliases[command]]
@@ -37,7 +37,7 @@ if(SERVER) then
 				predictor = cmdObj.Predictor
 			end
 		end
-		
+
 		if(string.find(current, " ") and predictor != nil) then
 			local cmdName,parts = Vermilion.ParseChatLineForParameters(current, true)
 			local dataTable = predictor(table.Count(parts), parts[table.Count(parts)], parts, vplayer)
@@ -57,10 +57,10 @@ if(SERVER) then
 		net.WriteTable(response)
 		net.Send(vplayer)
 	end)
-	
+
 else
 	CreateClientConVar("vermilion_chatpredict", 1, true, false)
-	
+
 	Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "ChatPredictOption", false, function()
 		if(Vermilion:GetModule("client_settings") == nil) then return end
 		Vermilion:GetModule("client_settings"):AddOption({
@@ -70,35 +70,35 @@ else
 			Category = "Features"
 		})
 	end)
-	
+
 	net.Receive("VChatPrediction", function()
 		local response = net.ReadTable()
 		Vermilion.ChatPredictions = response
 	end)
-	
+
 	Vermilion.ChatOpen = false
-	
+
 	Vermilion:AddHook("StartChat", "VOpenChatbox", false, function()
 		Vermilion.ChatOpen = true
 	end)
-	
+
 	Vermilion:AddHook("FinishChat", "VCloseChatbox", false, function()
 		Vermilion.ChatOpen = false
 		Vermilion.ChatPredictions = {}
 	end)
-	
+
 	Vermilion:AddHook("HUDShouldDraw", "ChatHideHUD", false, function(name)
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(Vermilion.CurrentChatText == nil or GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(string.StartWith(Vermilion.CurrentChatText, "!") and (name == "NetGraph" or name == "CHudAmmo")) then return false end
 	end)
-	
+
 	Vermilion.ChatPredictions = {}
 	Vermilion.ChatTabSelected = 1
 	Vermilion.ChatBGW = 0
 	Vermilion.ChatBGH = 0
 	Vermilion.MoveEnabled = true
-	
+
 	Vermilion:AddHook("Think", "ChatMove", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(Vermilion.ChatOpen and Vermilion.MoveEnabled and table.Count(Vermilion.ChatPredictions) > 0) then
@@ -141,7 +141,7 @@ else
 			end
 		end
 	end)
-	
+
 	Vermilion:AddHook("OnChatTab", "VInsertPrediction", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(table.Count(Vermilion.ChatPredictions) > 0 and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
@@ -173,7 +173,7 @@ else
 				--end
 			end
 			parts[table.Count(parts)] = Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name
-			
+
 			return table.concat(parts, " ", 1) .. " "
 		end
 		if(Vermilion.ChatPredictions != nil and table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatTabSelected == 0) then
@@ -184,7 +184,7 @@ else
 			return "!" .. Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name .. " "
 		end
 	end)
-	
+
 	Vermilion:AddHook("HUDPaint", "PredictDraw", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatOpen) then
@@ -197,7 +197,7 @@ else
 			if(chat.GetChatBoxSize == nil) then
 				mapbx = math.Remap(545, 0, 1366, 0, ScrW())
 				maptx = math.Remap(550, 0, 1366, 0, ScrW())
-				
+
 				if(ScrW() > 1390) then
 					mapbx = mapbx + 100
 					maptx = maptx + 100
@@ -233,7 +233,7 @@ else
 			Vermilion.ChatBGW = xpos + maxw
 		end
 	end)
-	
+
 	Vermilion:AddHook("ChatTextChanged", "ChatPredict", false, function(chatText)
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
 		if(Vermilion.CurrentChatText != chatText) then
@@ -244,13 +244,13 @@ else
 			end
 		end
 		Vermilion.CurrentChatText = chatText
-		
+
 		if(string.StartWith(chatText, "!")) then
 			net.Start("VChatPrediction")
 			local space = nil
 			if(string.find(chatText, " ")) then
 				space = string.find(chatText, " ") - 1
-				
+
 			end
 			net.WriteString(string.sub(chatText, 2))
 			net.SendToServer()

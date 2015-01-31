@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -55,11 +55,11 @@ MODULE.Permissions = {
 	"edit_property_all",
 	"edit_property_others",
 	"edit_property_own",
-	
-	
+
+
 	"immune_to_antispam",
 	"antispam_notify",
-	
+
 	"immune_to_cleanup",
 	"delayed_cleanup"
 }
@@ -86,10 +86,10 @@ MODULE.DefaultPermissions = {
 			"edit_variable_others",
 			"edit_property_own",
 			"edit_property_others",
-			
+
 			"immune_to_antispam",
 			"antispam_notify",
-			
+
 			"immune_to_cleanup"
 		}
 	},
@@ -280,7 +280,7 @@ function MODULE:CanUse(vplayer, ent)
 		end
 	end
 	if(not Vermilion:HasPermission(vplayer, "use_all") and MODULE:GetData("prop_protect_use", true)) then
-		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "use_own")) then 
+		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "use_own")) then
 			if(vplayer.VLastProp != ent) then
 				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
 				vplayer.VLastProp = ent
@@ -290,7 +290,7 @@ function MODULE:CanUse(vplayer, ent)
 			end
 			return false
 		end
-		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "use_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "use"))) then 
+		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "use_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "use"))) then
 			if(vplayer.VLastProp != ent) then
 				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
 				vplayer.VLastProp = ent
@@ -308,11 +308,11 @@ function MODULE:CanDrive(vplayer, ent)
 	if(not MODULE:GetData("prop_protect_enabled", true, true)) then return true end
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(not Vermilion:HasPermission(vplayer, "drive_all") and MODULE:GetData("prop_protect_drive", true)) then
-		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "drive_own")) then 
+		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "drive_own")) then
 			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
 			return false
 		end
-		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "drive_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "drive"))) then 
+		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "drive_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "drive"))) then
 			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
 			return false
 		end
@@ -325,7 +325,7 @@ function MODULE:CanBreak(vplayer, ent)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(ent:IsPlayer() or not vplayer:IsPlayer()) then return true end
 	if(not Vermilion:HasPermission(vplayer, "break_all") and MODULE:GetData("prop_protect_break", true)) then
-		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "break_own")) then 
+		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "break_own")) then
 			if(vplayer.VLastProp != ent and ent:Health() > 0) then
 				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("break:cannotuse", nil, vplayer), NOTIFY_ERROR)
 				vplayer.VLastProp = ent
@@ -360,11 +360,11 @@ function MODULE:CanProperty(vplayer, ent, property)
 		end
 	end
 	if(not Vermilion:HasPermission(vplayer, "edit_property_all") and MODULE:GetData("prop_protect_property", true)) then
-		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_property_own")) then 
+		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_property_own")) then
 			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
 			return false
 		end
-		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "edit_property_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "property"))) then 
+		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "edit_property_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "property"))) then
 			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
 			return false
 		end
@@ -376,7 +376,7 @@ function MODULE:CanEditVariable(vplayer, ent, key, val, edit)
 	if(not MODULE:GetData("prop_protect_enabled", true, true)) then return true end
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(not Vermilion:HasPermission(vplayer, "edit_variable_all") and MODULE:GetData("prop_protect_variable", true)) then
-		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_variable_own")) then 
+		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_variable_own")) then
 			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("variable:cannotuse", nil, vplayer), NOTIFY_ERROR)
 			return false
 		end
@@ -431,22 +431,22 @@ function MODULE:RegisterChatCommands()
 end
 
 function MODULE:InitShared()
-	
+
 	CPPI.CPPI_DEFER = -666888
 	CPPI.CPPI_NOTIMPLEMENTED = -999333
-	
+
 	function CPPI.GetName()
 		return "Vermilion CPPI Module"
 	end
-	
+
 	function CPPI.GetVersion()
 		return Vermilion.GetVersionString()
 	end
-	
+
 	function CPPI.GetInterfaceVersion()
 		return 1.3
 	end
-	
+
 	function CPPI.GetNameFromUID( uid )
 		if(MODULE.UidCache[uid] != nil) then return MODULE.UidCache[uid] end
 		for i,k in pairs(player.GetAll()) do
@@ -459,7 +459,7 @@ function MODULE:InitShared()
 		if(MODULE.UidCache[uid] != nil) then return MODULE.UidCache[uid] end
 		return nil
 	end
-	
+
 	local pMeta = FindMetaTable("Player")
 	function pMeta:CPPIGetFriends()
 		if(SERVER) then
@@ -467,76 +467,227 @@ function MODULE:InitShared()
 		end
 		return CPPI.CPPI_NOTIMPLEMENTED
 	end
-	
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()
 		if(Vermilion:GetModule("server_settings") != nil) then
 			local mgr = Vermilion:GetModule("server_settings")
 			mgr:AddCategory("cat:prop_protect", "Prop Protection", 2)
-			mgr:AddOption("prop_protect", "prop_protect_enabled", "Enable Prop Protection", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_use", "Block unpermitted players from \"using\" other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_physgun", "Block unpermitted players from using the physics gun on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_gravgun", "Block unpermitted players from using the gravity gun on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_toolgun", "Block unpermitted players from using the toolgun on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_break", "Block unpermitted players from breaking other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_drive", "Block unpermitted players from driving other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_variable", "Block unpermitted players from editing variables on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_property", "Block unpermitted players from editing properties on other player's props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "prop_protect_world", "Blanket ban all physgun/toolgun interaction on map spawned props", "Checkbox", "Prop Protection", true, "manage_prop_protection")
-			
-			
-			mgr:AddOption("prop_protect", "auto_cleanup_enabled", "Enable Auto-Cleanup", "Checkbox", "Prop Protection", false, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "auto_cleanup_delay", "Auto-Cleanup delay (minutes)", "Slider", "Prop Protection", 2, "manage_prop_protection", { Bounds = { Min = 1, Max = 60 * 12 }, Decimals = 0 })
-		
-		
+
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_enabled",
+				GuiText = "Enable Prop Protection",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_use",
+				GuiText = "Block unpermitted players from \"using\" other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_physgun",
+				GuiText = "Block unpermitted players from using the physics gun on other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_gravgun",
+				GuiText = "Block unpermitted players from using the gravity gun on other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_toolgun",
+				GuiText = "Block unpermitted players from using the toolgun on other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_break",
+				GuiText = "Block unpermitted players from breaking other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_drive",
+				GuiText = "Block unpermitted players from driving other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_variable",
+				GuiText = "Block unpermitted players from editing variables on other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_property",
+				GuiText = "Block unpermitted players from editing properties on other player's props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "prop_protect_world",
+				GuiText = "Blanket ban all physgun/toolgun interaction on map spawned props",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+
+
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "auto_cleanup_enabled",
+				GuiText = "Enable Auto-Cleanup",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "auto_cleanup_delay",
+				GuiText = "Auto-Cleanup delay (minutes)",
+				Type = "Slider",
+				Category = "Prop Protection",
+				Default = 2,
+				Permission = "manage_prop_protection",
+				Bounds = { Min = 1, Max = 60 * 12 },
+				Decimals = 0
+				})
+
 			mgr:AddCategory("cat:antispam", "Anti-Spam", 3)
-			mgr:AddOption("prop_protect", "antispam_enabled", "Enable Anti-Spam", "Checkbox", "Anti-Spam", false, "manage_prop_protection")
-			mgr:AddOption("prop_protect", "antispam_propslimit", "Max props in time limit", "Slider", "Anti-Spam", 5, "manage_prop_protection", { Bounds = { Min = 0, Max = 50 }, Decimals = 0 })
-			mgr:AddOption("prop_protect", "antispam_timelimit", "Time limit", "Slider", "Anti-Spam", 5, "manage_prop_protection", { Bounds = { Min = 1, Max = 20 }, Decimals = 0 })
-			mgr:AddOption("prop_protect", "antispam_action1", "First Infraction", "Combobox", "Anti-Spam", 1, "manage_prop_protection", { Options = {
-					"Warn Only",
-					"Block spawning for 30 seconds",
-					"Block spawning for 1 minute",
-					"Kick",
-					"Ban for 5 minutes",
-					"Ban for 10 minutes",
-					"Ban for 20 minutes",
-					"Ban for 30 minutes",
-					"Ban for 1 hour",
-					"Ban for 1 day",
-					"Permanently Ban",
-					"Notify Administrators"
-				}
-			})
-			mgr:AddOption("prop_protect", "antispam_action2", "Second Infraction", "Combobox", "Anti-Spam", 1, "manage_prop_protection", { Options = {
-					"Warn Only",
-					"Block spawning for 30 seconds",
-					"Block spawning for 1 minute",
-					"Kick",
-					"Ban for 5 minutes",
-					"Ban for 10 minutes",
-					"Ban for 20 minutes",
-					"Ban for 30 minutes",
-					"Ban for 1 hour",
-					"Ban for 1 day",
-					"Permanently Ban",
-					"Notify Administrators"
-				}
-			})
-			mgr:AddOption("prop_protect", "antispam_action3", "Third Infraction", "Combobox", "Anti-Spam", 1, "manage_prop_protection", { Options = {
-					"Warn Only",
-					"Block spawning for 30 seconds",
-					"Block spawning for 1 minute",
-					"Kick",
-					"Ban for 5 minutes",
-					"Ban for 10 minutes",
-					"Ban for 20 minutes",
-					"Ban for 30 minutes",
-					"Ban for 1 hour",
-					"Ban for 1 day",
-					"Permanently Ban",
-					"Notify Administrators"
-				}
-			})
+
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_enabled",
+				GuiText = "Enable Anti-Spam",
+				Type = "Checkbox",
+				Category = "Anti-Spam",
+				Default = false,
+				Permission = "manage_prop_protection"
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_propslimit",
+				GuiText = "Max props in time limit",
+				Type = "Slider",
+				Category = "Anti-Spam",
+				Default = true,
+				Permission = "manage_prop_protection",
+				Bounds = { Min = 0, Max = 50 },
+				Decimals = 0
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_timelimit",
+				GuiText = "Enable Prop Protection",
+				Type = "Slider",
+				Category = "Anti-Spam",
+				Default = true,
+				Permission = "manage_prop_protection",
+				Bounds = { Min = 1, Max = 20 },
+				Decimals = 0
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_action1",
+				GuiText = "Enable Prop Protection",
+				Type = "Combobox",
+				Category = "Anti-Spam",
+				Default = 1,
+				Permission = "manage_prop_protection",
+				Options = {
+						"Warn Only",
+						"Block spawning for 30 seconds",
+						"Block spawning for 1 minute",
+						"Kick",
+						"Ban for 5 minutes",
+						"Ban for 10 minutes",
+						"Ban for 20 minutes",
+						"Ban for 30 minutes",
+						"Ban for 1 hour",
+						"Ban for 1 day",
+						"Permanently Ban",
+						"Notify Administrators"
+					}
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_action2",
+				GuiText = "Enable Prop Protection",
+				Type = "Combobox",
+				Category = "Anti-Spam",
+				Default = 1,
+				Permission = "manage_prop_protection",
+				Options = {
+						"Warn Only",
+						"Block spawning for 30 seconds",
+						"Block spawning for 1 minute",
+						"Kick",
+						"Ban for 5 minutes",
+						"Ban for 10 minutes",
+						"Ban for 20 minutes",
+						"Ban for 30 minutes",
+						"Ban for 1 hour",
+						"Ban for 1 day",
+						"Permanently Ban",
+						"Notify Administrators"
+					}
+				})
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "antispam_action3",
+				GuiText = "Enable Prop Protection",
+				Type = "Combobox",
+				Category = "Anti-Spam",
+				Default = 1,
+				Permission = "manage_prop_protection",
+				Options = {
+						"Warn Only",
+						"Block spawning for 30 seconds",
+						"Block spawning for 1 minute",
+						"Kick",
+						"Ban for 5 minutes",
+						"Ban for 10 minutes",
+						"Ban for 20 minutes",
+						"Ban for 30 minutes",
+						"Ban for 1 hour",
+						"Ban for 1 day",
+						"Permanently Ban",
+						"Notify Administrators"
+					}
+				})
 		end
 	end)
 end
@@ -554,47 +705,47 @@ function MODULE:InitServer()
 	self:AddHook("GravGunPickupAllowed", function(vplayer, ent)
 		if(not MODULE:CanGravGunPickup( vplayer, ent )) then return false end
 	end)
-	
+
 	self:AddHook("GravGunPunt", function(vplayer, ent)
 		if(not MODULE:CanGravGunPunt( vplayer, ent )) then return false end
 	end)
-	
+
 	self:AddHook("PhysgunPickup", function(vplayer, ent)
 		return MODULE:CanPhysgun( vplayer, ent )
 	end)
-	
+
 	self:AddHook("CanTool", function(vplayer, tr, tool)
 		if(tr.Hit and tr.Entity != nil and not MODULE:CanTool(vplayer, tr.Entity, tool)) then return false end
 	end)
-	
+
 	self:AddHook("PlayerUse", function(vplayer, ent)
 		if(not MODULE:CanUse(vplayer, ent)) then return false end
 	end)
-	
+
 	self:AddHook("CanDrive", function(vplayer, ent)
 		if(not MODULE:CanDrive(vplayer, ent)) then return false end
 	end)
-	
+
 	self:AddHook("CanProperty", function(vplayer, prop, ent)
 		if(not MODULE:CanProperty(vplayer, ent, prop)) then return false end
 	end)
-	
+
 	self:AddHook("CanEditVariable", function(ent, vplayer, key, val, editor)
 		if(not MODULE:CanEditVariable(vplayer, ent, key, val, editor)) then return false end
 	end)
-	
+
 	self:AddHook("EntityTakeDamage", function(target, dmg)
 		if(not MODULE:CanBreak(dmg:GetAttacker(), target)) then dmg:ScaleDamage(0) return dmg end
 	end)
-	
+
 	local eMeta = FindMetaTable("Entity")
 	function eMeta:CPPIGetOwner()
 		if(self.Vermilion_Owner == nil) then return nil, nil end
 		local oPlayer = VToolkit:LookupPlayerBySteamID(self.Vermilion_Owner)
 		return oPlayer, CPPI.CPPI_NOTIMPLEMENTED
 	end
-	
-	
+
+
 	function eMeta:CPPISetOwner(vplayer)
 		if(IsValid(vplayer)) then
 			if(hook.Call("CPPIAssignOwnership", nil, vplayer, self) != false) then
@@ -606,7 +757,7 @@ function MODULE:InitServer()
 		end
 		return false
 	end
-	
+
 	function eMeta:CPPISetOwnerUID( uid )
 		local vplayer = VToolkit:LookupPlayerByName(CPPI.GetNameFromUID(uid))
 		if(IsValid(vplayer)) then
@@ -618,43 +769,43 @@ function MODULE:InitServer()
 		end
 		return false
 	end
-	
+
 	function eMeta:CPPICanTool( vplayer, tool )
 		return MODULE:CanTool(vplayer, self, tool) == nil
 	end
-	
+
 	function eMeta:CPPICanPhysgun( vplayer )
 		return MODULE:CanPhysgun( vplayer, self )
 	end
-	
+
 	function eMeta:CPPICanPickup( vplayer )
 		return MODULE:CanGravGunPickup( vplayer, self )
 	end
-	
+
 	function eMeta:CPPICanPunt( vplayer )
 		return MODULE:CanGravGunPunt( vplayer, self )
 	end
-	
+
 	function eMeta:CPPICanUse( vplayer )
 		return MODULE:CanUse(vplayer, self)
 	end
-	
+
 	function eMeta:CPPICanDamage( vplayer )
 		return MODULE:CanBreak(vplayer, self)
 	end
-	
+
 	function eMeta:CPPIDrive(vplayer)
 		return MODULE:CanDrive(vplayer, self)
 	end
-	
+
 	function eMeta:CPPICanProperty(vplayer, prop)
 		return MODULE:CanProperty(vplayer, self, prop)
 	end
-	
+
 	function eMeta:CPPICanEditVariable(vplayer, key, val, edit)
 		return MODULE:CanEditVariable(vplayer, self, key, val, edit)
 	end
-	
+
 	local function doInfraction(ply, num)
 		local infractionMode = 1
 		if(num == 1) then
@@ -664,9 +815,9 @@ function MODULE:InitServer()
 		else
 			infractionMode = MODULE:GetData("antispam_action3", 1, true)
 		end
-		
+
 		local UserData = Vermilion:GetUser(ply)
-		
+
 		if(infractionMode == 1) then
 			Vermilion:AddNotification(ply, "You have spawned too many props in a short space of time. Please wait for the quota to reset in " .. tostring(math.Round(timer.TimeLeft("VAntiSpam_Reset"), 2)) .. " seconds. Infraction: " .. tostring(num) .. ".", NOTIFY_HINT)
 		elseif(infractionMode == 2) then
@@ -695,7 +846,7 @@ function MODULE:InitServer()
 		elseif(infractionMode == 12) then
 			Vermilion:AddNotification(Vermilion:GetUsersWithPermission("antispam_notify"), ply:GetName() .. " is spamming props.")
 		end
-		
+
 		UserData.AntiSpamInfractionsExpire = os.time() + (60 * 60 * 24)
 		UserData.AntiSpamWaitUntilReset = true
 		UserData.AntiSpamNextInfractionLevel = num + 1
@@ -703,7 +854,7 @@ function MODULE:InitServer()
 			UserData.AntiSpamNextInfractionLevel = 1
 		end
 	end
-	
+
 	local function doSpawnChecks(ply)
 		if(Vermilion:GetUser(ply).AntiSpamBlockedUntil != nil) then
 			if(os.time() <= Vermilion:GetUser(ply).AntiSpamBlockedUntil) then
@@ -730,7 +881,7 @@ function MODULE:InitServer()
 		if(Vermilion:GetUser(ply).AntiSpamCooldown == nil) then Vermilion:GetUser(ply).AntiSpamCooldown = 0 end
 		Vermilion:GetUser(ply).AntiSpamCooldown = Vermilion:GetUser(ply).AntiSpamCooldown + 1
 	end
-	
+
 	local antiSpamHooks = {
 		"PlayerSpawnProp",
 		"PlayerSpawnEffect",
@@ -740,14 +891,14 @@ function MODULE:InitServer()
 		"PlayerSpawnSWEP",
 		"PlayerSpawnVehicle"
 	}
-	
+
 	for i,k in pairs(antiSpamHooks) do
 		self:AddHook(k, k .. tostring(i), function(ply)
 			if(Vermilion:HasPermission(ply, "immune_to_antispam")) then return end
 			return doSpawnChecks(ply)
 		end)
 	end
-	
+
 	local function doAntiSpamReset()
 		for i,ply in pairs(VToolkit.GetValidPlayers()) do
 			if(Vermilion:GetUser(ply).AntiSpamCooldown == nil) then Vermilion:GetUser(ply).AntiSpamCooldown = 0 end
@@ -757,18 +908,18 @@ function MODULE:InitServer()
 			Vermilion:GetUser(ply).AntiSpamCooldown = 0
 		end
 	end
-	
+
 	timer.Create("VAntiSpam_Reset", MODULE:GetData("antispam_timelimit", 5, true), 0, function()
 		doAntiSpamReset()
 	end)
-	
+
 	self:AddDataChangeHook("antispam_timelimit", "reloadantispam", function(val)
 		timer.Destroy("VAntiSpam_Reset")
 		timer.Create("VAntiSpam_Reset", val, 0, function()
 			doAntiSpamReset()
 		end)
 	end)
-	
+
 	local function cleanupPlayerProps(steamid)
 		Vermilion:BroadcastNotification("Cleaning up " .. Vermilion:GetUserBySteamID(steamid).Name .. "'s props...", NOTIFY_HINT)
 		for i,k in pairs(ents.GetAll()) do
@@ -777,12 +928,13 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	self:AddHook("PlayerInitialSpawn", function(vplayer)
 		timer.Destroy("VPropCleanup" .. vplayer:SteamID())
 	end)
-	
+
 	self:AddHook("PlayerDisconnected", function(vplayer)
+		if(not MODULE:GetData("auto_cleanup_enabled", true, true)) then return end
 		if(Vermilion:HasPermission(vplayer, "immune_to_cleanup")) then return end
 		if(not Vermilion:HasPermission(vplayer, "delayed_cleanup")) then
 			cleanupPlayerProps(vplayer:SteamID())
@@ -794,18 +946,18 @@ function MODULE:InitServer()
 			cleanupPlayerProps(steamid)
 		end)
 	end)
-	
+
 	include("vermilion2/modules/prop_protection/buddylist.lua")
 	self:BuddyListInitServer()
-	
+
 end
 
-function MODULE:InitClient()		
+function MODULE:InitClient()
 	local eMeta = FindMetaTable("Entity")
 	function eMeta:CPPIGetOwner()
 		return CPPI.CPPI_NOTIMPLEMENTED
 	end
-	
+
 	include("vermilion2/modules/prop_protection/buddylist.lua")
 	self:BuddyListInitClient()
 end

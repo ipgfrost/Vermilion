@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -112,7 +112,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "kick",
 		Description = "Kicks a player",
@@ -148,7 +148,7 @@ function MODULE:RegisterChatCommands()
 			return MODULE:TranslateStr("kick:allplayers", { sender:GetName(), reason })
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "unban",
 		Description = "Unbans a player",
@@ -189,7 +189,7 @@ function MODULE:RegisterChatCommands()
 			tglog("bans:unban:text", { candidates[1].Name, sender:GetName() })
 		end
 	})
-	
+
 end
 
 function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog, tglog)
@@ -232,6 +232,22 @@ function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog, tglog)
 	vplayer:Kick(reason or MODULE:TranslateStr("noreason", nil, vplayer))
 end
 
+function MODULE:UnbanPlayer(name)
+  local candidates = {}
+  for i,k in pairs(MODULE:GetData("bans", {}, true)) do
+    if(string.find(string.lower(k.Name), string.lower(name))) then
+      table.insert(candidates, k)
+    end
+  end
+  if(table.Count(candidates) > 1) then
+    return
+  end
+  if(table.Count(candidates) == 0) then
+    return
+  end
+  table.RemoveByValue(MODULE:GetData("bans", {}, true), candidates[1])
+end
+
 function MODULE:GetBanData(steamid)
 	for i,k in pairs(MODULE:GetData("bans", {}, true)) do
 		if(k.SteamID == steamid) then return k end
@@ -267,28 +283,28 @@ function MODULE:InitServer()
 			return false, MODULE:TranslateStr("retorttext", { os.date("%d/%m/%y", MODULE:GetBanData(util.SteamIDFrom64(steamid)).ExpiryTime), MODULE:GetBanData(util.SteamIDFrom64(steamid)).Reason or MODULE:TranslateStr("noreason") })
 		end
 	end)
-	
+
 	local function sendBanRecords(vplayer)
 		MODULE:NetStart("VGetBanRecords")
 		net.WriteTable(MODULE:GetData("bans", {}, true))
 		net.Send(vplayer)
 	end
-	
+
 	self:NetHook("VGetBanRecords", function(vplayer)
 		sendBanRecords(vplayer)
 	end)
-	
+
 	self:NetHook("VBanPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
 			local ent = net.ReadEntity()
 			if(IsValid(ent)) then
 				MODULE:BanPlayer(ent, vplayer, net.ReadInt(32), net.ReadString())
-				
+
 				sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
 			end
 		end
 	end)
-	
+
 	self:NetHook("VKickPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
 			local ent = net.ReadEntity()
@@ -300,7 +316,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnbanPlayer", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
 			local steamid = net.ReadString()
@@ -314,12 +330,12 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUpdateBanReason", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
 			local steamid = net.ReadString()
 			local newreason = net.ReadString()
-			
+
 			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
 				if(k.SteamID == steamid) then
 					k.Reason = newreason
@@ -345,23 +361,23 @@ function MODULE:InitClient()
 				['bgBlur'] = true
 			}
 		)
-		
+
 		VToolkit:SetDark(false)
-		
+
 		local yearsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("yearslabel"))
 		yearsLabel:SetPos(10 + ((64 - yearsLabel:GetWide()) / 2), 30)
 		yearsLabel:SetParent(bTimePanel)
-		
+
 		local yearsWang = VToolkit:CreateNumberWang(0, 1000)
 		yearsWang:SetPos(10, 45)
 		yearsWang:SetParent(bTimePanel)
-		
-		
-		
+
+
+
 		local monthsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("monthslabel"))
 		monthsLabel:SetPos(84 + ((64 - monthsLabel:GetWide()) / 2), 30)
 		monthsLabel:SetParent(bTimePanel)
-		
+
 		local monthsWang = VToolkit:CreateNumberWang(0, 12)
 		monthsWang:SetPos(84, 45)
 		monthsWang:SetParent(bTimePanel)
@@ -371,13 +387,13 @@ function MODULE:InitClient()
 				yearsWang:SetValue(yearsWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local weeksLabel = VToolkit:CreateLabel(MODULE:TranslateStr("weekslabel"))
 		weeksLabel:SetPos(158 + ((64 - weeksLabel:GetWide()) / 2), 30)
 		weeksLabel:SetParent(bTimePanel)
-		
+
 		local weeksWang = VToolkit:CreateNumberWang(0, 4)
 		weeksWang:SetPos(158, 45)
 		weeksWang:SetParent(bTimePanel)
@@ -387,13 +403,13 @@ function MODULE:InitClient()
 				monthsWang:SetValue(monthsWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
 		daysLabel:SetPos(232 + ((64 - daysLabel:GetWide()) / 2), 30)
 		daysLabel:SetParent(bTimePanel)
-		
+
 		local daysWang = VToolkit:CreateNumberWang(0, 7)
 		daysWang:SetPos(232, 45)
 		daysWang:SetParent(bTimePanel)
@@ -403,13 +419,13 @@ function MODULE:InitClient()
 				weeksWang:SetValue(weeksWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local hoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
 		hoursLabel:SetPos(306 + ((64 - hoursLabel:GetWide()) / 2), 30)
 		hoursLabel:SetParent(bTimePanel)
-		
+
 		local hoursWang = VToolkit:CreateNumberWang(0, 24)
 		hoursWang:SetPos(306, 45)
 		hoursWang:SetParent(bTimePanel)
@@ -419,13 +435,13 @@ function MODULE:InitClient()
 				daysWang:SetValue(daysWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local minsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
 		minsLabel:SetPos(380 + ((64 - minsLabel:GetWide()) / 2), 30)
 		minsLabel:SetParent(bTimePanel)
-		
+
 		local minsWang = VToolkit:CreateNumberWang(0, 60)
 		minsWang:SetPos(380, 45)
 		minsWang:SetParent(bTimePanel)
@@ -435,13 +451,13 @@ function MODULE:InitClient()
 				hoursWang:SetValue(hoursWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local secondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
 		secondsLabel:SetPos(454 + ((64 - secondsLabel:GetWide()) / 2), 30)
 		secondsLabel:SetParent(bTimePanel)
-		
+
 		local secondsWang = VToolkit:CreateNumberWang(0, 60)
 		secondsWang:SetPos(454, 45)
 		secondsWang:SetParent(bTimePanel)
@@ -451,9 +467,9 @@ function MODULE:InitClient()
 				minsWang:SetValue(minsWang:GetValue() + 1)
 			end
 		end
-		
-		
-		
+
+
+
 		local confirmButton = VToolkit:CreateButton(MODULE:TranslateStr("ok"), function(self)
 			local times = { yearsWang:GetValue(), monthsWang:GetValue(), weeksWang:GetValue(), daysWang:GetValue(), hoursWang:GetValue(), minsWang:GetValue(), secondsWang:GetValue() }
 			bTimePanel:Close()
@@ -471,31 +487,31 @@ function MODULE:InitClient()
 		confirmButton:SetPos(528, 30)
 		confirmButton:SetSize(100, 20)
 		confirmButton:SetParent(bTimePanel)
-		
-		
-		
+
+
+
 		local cancelButton = VToolkit:CreateButton(MODULE:TranslateStr("cancel"), function(self)
 			bTimePanel:Close()
 		end)
 		cancelButton:SetPos(528, 60)
 		cancelButton:SetSize(100, 20)
 		cancelButton:SetParent(bTimePanel)
-				
+
 		VToolkit:SetDark(true)
-		
+
 		bTimePanel:MakePopup()
 		bTimePanel:DoModal()
 		bTimePanel:SetAutoDelete(true)
-		
+
 	end
 
 	Vermilion.Menu:AddCategory("player", 4)
-	
+
 	self:NetHook("VGetBanRecords", function()
 		if(not Vermilion.Menu.IsOpen) then return end
 		local paneldata = Vermilion.Menu.Pages["bans"]
 		paneldata.UnbanPlayer:SetDisabled(true)
-		
+
 		paneldata.BanList:Clear()
 		for i,k in pairs(net.ReadTable()) do
 			local ln = nil
@@ -506,7 +522,7 @@ function MODULE:InitClient()
 			end
 			ln.BSteamID = k.SteamID
 			ln.BBSteamID = k.BannerSteamID
-			
+
 			steamworks.RequestPlayerInfo(util.SteamIDTo64(k.SteamID))
 			if(k.BannerSteamID != "VERMILION") then steamworks.RequestPlayerInfo(util.SteamIDTo64(k.BannerSteamID)) end
 			timer.Simple(3, function()
@@ -516,7 +532,7 @@ function MODULE:InitClient()
 				local bannedName = steamworks.GetPlayerName(util.SteamIDTo64(k.SteamID))
 				local bannerName = k.BannerName
 				if(k.BannerSteamID != "VERMILION") then bannerName = steamworks.GetPlayerName(util.SteamIDTo64(k.BannerSteamID)) end
-				
+
 				if(bannedName != nil) then
 					ln:SetValue(1, bannedName)
 				end
@@ -542,7 +558,7 @@ function MODULE:InitClient()
 				local unbanPlayer = nil
 				local editReason = nil
 				local viewReasonDetail = nil
-			
+
 				local banList = VToolkit:CreateList({
 					cols = {
 						MODULE:TranslateStr("name"),
@@ -556,26 +572,26 @@ function MODULE:InitClient()
 				banList:SetSize(700, panel:GetTall() - 40)
 				banList:SetParent(panel)
 				paneldata.BanList = banList
-				
+
 				function banList:OnRowSelected(index, line)
 					local enabled = self:GetSelected()[1] == nil
 					unbanPlayer:SetDisabled(enabled)
 					editReason:SetDisabled(enabled)
 					viewReasonDetail:SetDisabled(enabled)
 				end
-				
+
 				local banHeader = VToolkit:CreateHeaderLabel(banList, MODULE:TranslateStr("listings"))
 				banHeader:SetParent(panel)
-				
+
 				VToolkit:CreateSearchBox(banList)
-				
-				
+
+
 				local banUserPanel = VToolkit:CreateRightDrawer(panel, 0)
 				paneldata.BanUserPanel = banUserPanel
-				
-				
+
+
 				local banUserList = VToolkit:CreateList({
-					cols = { 
+					cols = {
 						MODULE:TranslateStr("name")
 					}
 				})
@@ -583,12 +599,12 @@ function MODULE:InitClient()
 				banUserList:SetSize(300, panel:GetTall() - 50)
 				banUserList:SetParent(banUserPanel)
 				paneldata.BanUserList = banUserList
-				
+
 				VToolkit:CreateSearchBox(banUserList)
-				
+
 				local banUserHeader = VToolkit:CreateHeaderLabel(banUserList, MODULE:TranslateStr("activeplayers"))
 				banUserHeader:SetParent(banUserPanel)
-				
+
 				local banUserButton = VToolkit:CreateButton(MODULE:TranslateStr("banbtn"), function()
 					if(table.Count(banUserList:GetSelected()) == 0) then
 						VToolkit:CreateErrorDialog(MODULE:TranslateStr("banbtn:error:0"))
@@ -605,14 +621,14 @@ function MODULE:InitClient()
 				banUserButton:SetPos(banUserPanel:GetWide() - 185, (banUserPanel:GetTall() - banUserButton:GetTall()) / 2)
 				banUserButton:SetWide(banUserPanel:GetWide() - banUserButton:GetX() - 15)
 				banUserButton:SetParent(banUserPanel)
-				
-				
-				
+
+
+
 				local kickUserPanel = VToolkit:CreateRightDrawer(panel, 0)
 				paneldata.KickUserPanel = kickUserPanel
-				
+
 				local kickUserList = VToolkit:CreateList({
-					cols = { 
+					cols = {
 						MODULE:TranslateStr("name")
 					}
 				})
@@ -620,12 +636,12 @@ function MODULE:InitClient()
 				kickUserList:SetSize(300, panel:GetTall() - 50)
 				kickUserList:SetParent(kickUserPanel)
 				paneldata.KickUserList = kickUserList
-				
+
 				VToolkit:CreateSearchBox(kickUserList)
-				
+
 				local kickUserHeader = VToolkit:CreateHeaderLabel(kickUserList, MODULE:TranslateStr("activeplayers"))
 				kickUserHeader:SetParent(kickUserPanel)
-				
+
 				local kickUserButton = VToolkit:CreateButton(MODULE:TranslateStr("kickbtn"), function()
 					if(table.Count(kickUserList:GetSelected()) == 0) then
 						VToolkit:CreateErrorDialog(MODULE:TranslateStr("kickbtn:error:0"))
@@ -645,36 +661,36 @@ function MODULE:InitClient()
 				kickUserButton:SetPos(kickUserPanel:GetWide() - 185, (kickUserPanel:GetTall() - kickUserButton:GetTall()) / 2)
 				kickUserButton:SetWide(kickUserPanel:GetWide() - kickUserButton:GetX() - 15)
 				kickUserButton:SetParent(kickUserPanel)
-				
-				
-				
+
+
+
 				banPlayer = VToolkit:CreateButton(MODULE:TranslateStr("banply"), function()
 					banUserPanel:Open()
 				end)
 				banPlayer:SetPos(panel:GetWide() - 185, 30)
 				banPlayer:SetSize(panel:GetWide() - banPlayer:GetX() - 5, 30)
 				banPlayer:SetParent(panel)
-				
+
 				local banImg = vgui.Create("DImage")
 				banImg:SetImage("icon16/user_delete.png")
 				banImg:SetSize(16, 16)
 				banImg:SetParent(banPlayer)
 				banImg:SetPos(10, (banPlayer:GetTall() - 16) / 2)
-				
+
 				kickPlayer = VToolkit:CreateButton(MODULE:TranslateStr("kickply"), function()
 					kickUserPanel:Open()
 				end)
 				kickPlayer:SetPos(panel:GetWide() - 185, 70)
 				kickPlayer:SetSize(panel:GetWide() - kickPlayer:GetX() - 5, 30)
 				kickPlayer:SetParent(panel)
-				
+
 				local kickImg = vgui.Create("DImage")
 				kickImg:SetImage("icon16/disconnect.png")
 				kickImg:SetSize(16, 16)
 				kickImg:SetParent(kickPlayer)
 				kickImg:SetPos(10, (kickPlayer:GetTall() - 16) / 2)
-				
-				
+
+
 				editReason = VToolkit:CreateButton(MODULE:TranslateStr("editreason"), function()
 					VToolkit:CreateTextInput(MODULE:TranslateStr("editreason:dialog"), function(text)
 						banList:GetSelected()[1]:SetValue(5, text)
@@ -688,13 +704,13 @@ function MODULE:InitClient()
 				editReason:SetSize(panel:GetWide() - editReason:GetX() - 5, 30)
 				editReason:SetParent(panel)
 				editReason:SetDisabled(true)
-				
+
 				local editImg = vgui.Create("DImage")
 				editImg:SetImage("icon16/pencil.png")
 				editImg:SetSize(16, 16)
 				editImg:SetParent(editReason)
 				editImg:SetPos(10, (editReason:GetTall() - 16) / 2)
-				
+
 				viewReasonDetail = VToolkit:CreateButton(MODULE:TranslateStr("details"), function()
 					Vermilion:CreateErrorDialog("Not implemented!")
 				end)
@@ -702,13 +718,13 @@ function MODULE:InitClient()
 				viewReasonDetail:SetSize(panel:GetWide() - viewReasonDetail:GetX() - 5, 30)
 				viewReasonDetail:SetParent(panel)
 				viewReasonDetail:SetDisabled(true)
-				
+
 				local detailImg = vgui.Create("DImage")
 				detailImg:SetImage("icon16/report.png")
 				detailImg:SetSize(16, 16)
 				detailImg:SetParent(viewReasonDetail)
 				detailImg:SetPos(10, (viewReasonDetail:GetTall() - 16) / 2)
-				
+
 				updateDuration = VToolkit:CreateButton(MODULE:TranslateStr("editduration"), function()
 					Vermilion:CreateErrorDialog("Not implemented!")
 				end)
@@ -716,13 +732,13 @@ function MODULE:InitClient()
 				updateDuration:SetSize(panel:GetWide() - updateDuration:GetX() - 5, 30)
 				updateDuration:SetParent(panel)
 				updateDuration:SetDisabled(true)
-				
+
 				local durationImg = vgui.Create("DImage")
 				durationImg:SetImage("icon16/clock.png")
 				durationImg:SetSize(16, 16)
 				durationImg:SetParent(updateDuration)
 				durationImg:SetPos(10, (updateDuration:GetTall() - 16) / 2)
-				
+
 				unbanPlayer = VToolkit:CreateButton(MODULE:TranslateStr("unbanbtn"), function()
 					MODULE:NetStart("VUnbanPlayer")
 					net.WriteString(banList:GetSelected()[1].BSteamID)
@@ -733,20 +749,20 @@ function MODULE:InitClient()
 				unbanPlayer:SetParent(panel)
 				unbanPlayer:SetDisabled(true)
 				paneldata.UnbanPlayer = unbanPlayer
-				
+
 				local unbanImg = vgui.Create("DImage")
 				unbanImg:SetImage("icon16/accept.png")
 				unbanImg:SetSize(16, 16)
 				unbanImg:SetParent(unbanPlayer)
 				unbanImg:SetPos(10, (unbanPlayer:GetTall() - 16) / 2)
-				
+
 				banUserPanel:MoveToFront()
 				kickUserPanel:MoveToFront()
-				
+
 			end,
 			OnOpen = function(panel, paneldata)
 				MODULE:NetCommand("VGetBanRecords")
-				
+
 				paneldata.BanUserList:Clear()
 				paneldata.KickUserList:Clear()
 				for i,k in pairs(VToolkit.GetValidPlayers()) do

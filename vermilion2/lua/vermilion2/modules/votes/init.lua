@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,15 +10,15 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
-MODULE.Name = "Votes (Incomplete)"
+MODULE.Name = "Votes"
 MODULE.ID = "votes"
 MODULE.Description = "Allows players to vote on things."
 MODULE.Author = "Ned"
@@ -67,7 +67,7 @@ function MODULE:AddVoteType(name, createFunc, sfunc, predictor, localisationStri
 end
 
 function MODULE:RegisterChatCommands()
-	
+
 	Vermilion:AddChatCommand({
 		Name = "callvote",
 		Description = "Start a vote",
@@ -103,22 +103,104 @@ function MODULE:RegisterChatCommands()
 				log(MODULE:TranslateStr("validtypes", { str }, sender), 15)
 				return
 			end
+			if(not MODULE:GetData("vote_" .. typ, true, true)) then
+				log(MODULE:TranslateStr("disabled", nil, sender), NOTIFY_ERROR)
+				return
+			end
 			local tcopy = table.Copy(text)
 			table.remove(tcopy, 1)
-			local vtext, data, pars = MODULE.VoteTypes[typ].Create(tcopy, sender)
+			local vtext, data = MODULE.VoteTypes[typ].Create(tcopy, sender, log)
 			if(not vtext) then
-				log(MODULE:TranslateStr("invalidparatype", nil, sender), NOTIFY_ERROR)
-				log(pars)
 				return
 			end
 			MODULE:BroadcastVote(typ, vtext, data, 30, sender, tcopy)
 		end
 	})
-	
+
+end
+
+function MODULE:InitShared()
+
+	MODULE:AddVoteType("map", function(data, sender, log)
+		if(table.Count(data) < 1) then log(MODULE:TranslateStr("maps:syntax", nil, sender), NOTIFY_ERROR) return end
+		if(not file.Exists("maps/" .. data[1] .. ".bsp", "GAME")) then log(MODULE:TranslateStr("maps:dne", nil, sender), NOTIFY_ERROR) return end
+		return "votes:maps:question", { data[1] }
+	end, function(data)
+		RunConsoleCommand("vermilion", "changelevel", data[1], 60)
+	end, function(pos, current, all)
+		if(pos == 2) then
+			if(Vermilion:GetModule("map") != nil) then
+				local mps = {}
+				for i,k in pairs(Vermilion:GetModule("map").MapCache) do
+					table.insert(mps, k[1])
+				end
+				return VToolkit.MatchStringPart(mps, current)
+			end
+		end
+	end)
+
+	MODULE:AddVoteType("ban", function(data, sender, log)
+		if(table.Count(data) < 2) then log(MODULE:TranslateStr("ban:syntax", nil, sender), NOTIFY_ERROR) return end
+		if(VToolkit.LookupPlayer(data[1]) == nil) then log(MODULE:TranslateStr("no_users", nil, sender), NOTIFY_ERROR) return end
+		if(tonumber(data[2]) == nil) then log(MODULE:TranslateStr("not_number", nil, sender), NOTIFY_ERROR) return end
+		return "votes:ban:question", data[1]
+	end, function(data)
+		Vermilion:GetModule("bans"):BanPlayer(VToolkit.LookupPlayer(data[1]), nil, tonumber(data[2]), "Votebanned", nil, nil, Vermilion.TransBroadcastNotify)
+	end, function(pos, current, all)
+		if(pos == 2) then
+			return VToolkit.MatchPlayerPart(current)
+		end
+	end)
+
+	MODULE:AddVoteType("unban", function(data, sender, log)
+		if(table.Count(data) < 1) then log(MODULE:TranslateStr("unban:syntax", nil, sender), NOTIFY_ERROR) return end
+		local has = false
+		for i,k in pairs(Vermilion:GetModuleData("bans", "bans", {})) do
+			if(Vermilion:GetUserBySteamID(k[1]).Name == data[1]) then has = true break end
+		end
+		if(not has) then log(MODULE:TranslateStr("unban:notbanned", nil, sender), NOTIFY_ERROR) return end
+		return "votes:unban:question", data[1]
+	end, function(data)
+		Vermilion:GetModule("bans"):UnbanPlayer(Vermilion:GetUserByName(data[1]).Name)
+	end)
+
+	MODULE:AddVoteType("kick", function(data, sender, log)
+		if(table.Count(data) < 1) then log(MODULE:TranslateStr("kick:syntax", nil, sender), NOTIFY_ERROR) return end
+		if(VToolkit.LookupPlayer(data[1]) == nil) then log(MODULE:TranslateStr("no_users", nil, sender), NOTIFY_ERROR) return end
+		return "votes:kick:question", data[1]
+	end, function(data)
+		local tplayer = VToolkit.LookupPlayer(data[1])
+		if(not IsValid(tplayer)) then return end
+		Vermilion:TransBroadcastNotify("votes:kick:done", { data[1] }, NOTIFY_ERROR)
+		tplayer:Kick("Kicked by Console: Votekicked")
+	end, function(pos, current, all)
+		if(pos == 2) then
+			return VToolkit.MatchPlayerPart(current)
+		end
+	end)
+
+
+	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()
+		if(Vermilion:GetModule("server_settings") != nil) then
+			local mgr = Vermilion:GetModule("server_settings")
+			mgr:AddCategory("cat:votes", "Votes", 16)
+			for i,k in pairs(MODULE.VoteTypes) do
+				mgr:AddOption({
+					Module = "votes",
+					Name = "vote_" .. i,
+					GuiText = MODULE:TranslateStr("enabletext", { i }),
+					Type = "Checkbox",
+					Category = "Votes",
+					Default = true,
+					Permission = "vote_management"
+					})
+			end
+		end
+	end)
 end
 
 function MODULE:InitServer()
-	
+
 	function MODULE:BroadcastVote(typ, text, data, time, caller, data)
 		self.VoteInProgress = true
 		self.VoteType = typ
@@ -132,7 +214,7 @@ function MODULE:InitServer()
 		net.WriteInt(time, 32)
 		net.WriteString(caller:GetName())
 		net.Send(Vermilion:GetUsersWithPermission("participate_in_vote"))
-		timer.Simple(valid_time + 1, function()
+		timer.Simple(time + 1, function()
 			MODULE.VoteInProgress = false
 			local win = MODULE.VoteResults.Yes > MODULE.VoteResults.No
 			if(win) then
@@ -153,9 +235,54 @@ function MODULE:InitServer()
 			end
 		end)
 	end
-	
+
+
+
+
+	self:AddHook("ShowHelp", function(vplayer)
+		if(MODULE.VoteInProgress and not table.HasValue(MODULE.Voters, vplayer:SteamID())) then
+			MODULE.VoteResults.Yes = MODULE.VoteResults.Yes + 1
+			table.insert(MODULE.Voters, vplayer:SteamID())
+		end
+	end)
+
+	self:AddHook("ShowTeam", function(vplayer)
+		if(MODULE.VoteInProgress and not table.HasValue(MODULE.Voters, vplayer:SteamID())) then
+			MODULE.VoteResults.No = MODULE.VoteResults.No + 1
+			table.insert(MODULE.Voters, vplayer:SteamID())
+		end
+	end)
+
+
 end
 
 function MODULE:InitClient()
-	
+	self:NetHook("VCallVote", function()
+		local text = net.ReadString()
+		local data = net.ReadTable()
+		local time = net.ReadInt(32)
+    local caller = net.ReadString()
+		local ttext = MODULE:TranslateStr("header", { caller }) .. "\n\n" .. MODULE:TranslateStr(text, data) .. "\n\n" .. MODULE:TranslateStr("footer", { input.LookupBinding("gm_showhelp"), input.LookupBinding("gm_showteam") })
+		MODULE.VoteWindow = Vermilion:AddNotification(ttext, NOTIFY_HINT, time)
+		MODULE.VoteInProgress = true
+		timer.Simple(time, function()
+			MODULE.VoteInProgress = false
+		end)
+	end)
+
+	self:AddHook("PlayerBindPress", function(vplayer, bind, pressed)
+		if((bind == "gm_showhelp" or bind == "gm_showteam") and pressed) then
+			if(MODULE.VoteInProgress or true) then
+				MODULE.VoteWindow()
+				MODULE.VoteInProgress = false
+				RunConsoleCommand(bind)
+				if(bind == "gm_showhelp") then
+					Vermilion:AddNotification(MODULE:TranslateStr("vyes"))
+				else
+					Vermilion:AddNotification(MODULE:TranslateStr("vno"))
+				end
+				return false
+			end
+		end
+	end)
 end

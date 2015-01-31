@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -93,7 +93,7 @@ function MODULE:RegisterChatCommands()
 			glog(sender:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo .. ".")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "reloadmap",
 		Description = "Reloads the map.",
@@ -123,7 +123,7 @@ function MODULE:RegisterChatCommands()
 			glog(sender:GetName() .. " has instigated a level reload.")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "abortlevelchange",
 		Description = "Stops an active level change.",
@@ -142,27 +142,27 @@ function MODULE:RegisterChatCommands()
 			glog(sender:GetName() .. " has halted the level change.")
 		end
 	})
-	
+
 end
 
 function MODULE:InitServer()
-	
+
 	-- The map codes are borrowed from getmaps.lua (garrysmod/lua/menu/getmaps.lua)
 	local MapPatterns = {
 		[ "^aoc_" ] = "Age of Chivalry",
 		[ "^asi-" ] = "Alien Swarm",
-		
+
 		[ "lobby" ] = "Alien Swarm",
-		
+
 		[ "^ar_" ] = "Counter-Strike",
 		[ "^cs_" ] = "Counter-Strike",
 		[ "^de_" ] = "Counter-Strike",
 		[ "^es_" ] = "Counter-Strike",
 		[ "^fy_" ] = "Counter-Strike",
 		[ "training1" ] = "Counter-Strike",
-		
+
 		[ "^dod_" ] = "Day Of Defeat",
-		
+
 		[ "cp_pacentro" ] = "Dino D-Day",
 		[ "cp_snowypark" ] = "Dino D-Day",
 		[ "cp_troina" ] = "Dino D-Day",
@@ -205,7 +205,7 @@ function MODULE:InitServer()
 		[ "^ep1_" ] = "Half-Life 2: Episode 1",
 		[ "^ep2_" ] = "Half-Life 2: Episode 2",
 		[ "^ep3_" ] = "Half-Life 2: Episode 3", -- very funny Garry. *clap clap*
-		
+
 		[ "d2_lostcoast" ] = "Half-Life 2: Lost Coast",
 
 		[ "^c0a" ] = "Half-Life: Source",
@@ -315,7 +315,7 @@ function MODULE:InitServer()
 		[ "^zombiesurvival_" ] = "Zombie Survival",
 		[ "^zs_" ] = "Zombie Survival",
 	}
-	
+
 	-- load in the gamemode ones
 	for i,gm in pairs(engine.GetGamemodes()) do
 		local Name = gm.title or "Unnamed Gamemode"
@@ -326,7 +326,7 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	local IgnoredMaps = { "background", "^test_", "^styleguide", "^devtest", "sdk_shader_samples", "^vst_", "d2_coast_02", "c4a1y", "d3_c17_02_camera", "ep1_citadel_00_demo", "credits", "intro" }
 
 	local cache = file.Find("maps/*.bsp", "GAME")
@@ -348,13 +348,13 @@ function MODULE:InitServer()
 			table.insert(MODULE.MapCache, { string.StripExtension(k), Cat })
 		end
 	end
-	
+
 	self:NetHook("VGetMapList", function(vplayer)
 		MODULE:NetStart("VGetMapList")
 		net.WriteTable(MODULE.MapCache)
 		net.Send(vplayer)
 	end)
-	
+
 	timer.Create("Vermilion_MapTicker", 1, 0, function()
 		if(MODULE.MapChangeInProgress) then
 			if(MODULE.MapChangeIn <= 0) then
@@ -370,7 +370,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VScheduleMapChange", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_map")) then
 			if(MODULE.MapChangeInProgress) then
@@ -387,7 +387,7 @@ function MODULE:InitServer()
 			net.Broadcast()
 		end
 	end)
-	
+
 	self:NetHook("VAbortMapChange", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_map")) then
 			MODULE.MapChangeInProgress = false
@@ -398,7 +398,7 @@ function MODULE:InitServer()
 			Vermilion:BroadcastNotify(vplayer:GetName() .. " has halted the level change.")
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -413,39 +413,39 @@ function MODULE:InitClient()
 				if(not IsValid(map_list)) then return end
 				local k = maps[counter]
 				local ln = map_list:AddLine(k[1], k[2])
-				
+
 				ln.OldCursorMoved = ln.OnCursorMoved
 				ln.OldCursorEntered = ln.OnCursorEntered
 				ln.OldCursorExited = ln.OnCursorExited
-				
+
 				function ln:OnCursorEntered()
 					paneldata.PreviewPanel:SetVisible(true)
 					paneldata.PreviewPanel.HtmlView:OpenURL("asset://mapimage/" .. self:GetValue(1))
-					
+
 					if(self.OldCursorEntered) then self:OldCursorEntered() end
 				end
-				
+
 				function ln:OnCursorExited()
 					paneldata.PreviewPanel:SetVisible(false)
-					
+
 					if(self.OldCursorExited) then self:OldCursorExited() end
 				end
-				
+
 				function ln:OnCursorMoved(x,y)
 					if(IsValid(paneldata.PreviewPanel)) then
 						local x, y = input.GetCursorPos()
 						paneldata.PreviewPanel:SetPos(x - 275, y - 202)
 					end
-					
+
 					if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
 				end
-				
+
 				counter = counter + 1
 				paneldata.LoadProgress:SetFraction(counter / table.Count(maps))
 			end)
 		end
 	end)
-	
+
 	self:NetHook("VBroadcastSchedule", function()
 		MODULE.MapChangeInProgress = true
 		MODULE.MapChangeIn = net.ReadInt(32)// + VToolkit.TimeDiff
@@ -453,14 +453,14 @@ function MODULE:InitClient()
 		MODULE.HasMap = file.Exists("maps/" .. MODULE.MapChangeTo .. ".bsp", "GAME")
 		print("Got map schedule!")
 	end)
-	
+
 	self:NetHook("VAbortMapChange", function()
 		MODULE.MapChangeInProgress = false
 		MODULE.MapChangeIn = nil
 		MODULE.MapChangeTo = nil
 		MODULE.HasMap = nil
 	end)
-	
+
 	timer.Create("Vermilion_MapTicker", 1, 0, function()
 		if(MODULE.MapChangeInProgress) then
 			if(MODULE.MapChangeIn <= 0) then
@@ -472,7 +472,7 @@ function MODULE:InitClient()
 			end
 		end
 	end)
-	
+
 	self:AddHook("HUDPaint", function()
 		if(MODULE.MapChangeInProgress) then
 			if(MODULE.SoundTimer != MODULE.MapChangeIn) then
@@ -538,14 +538,14 @@ function MODULE:InitClient()
 			end
 			local w,h = draw.WordBox( 8, ScrW() - MODULE.DisplayXPos1 - 10, 10, "Server is changing level to " .. tostring(MODULE.MapChangeTo) .. " in ".. time, "Default", col, Color(255, 255, 255, 255))
 			MODULE.DisplayXPos1 = w
-			
+
 			if(not MODULE.HasMap and os.time() % 2 == 0) then
 				local w1,h1 = draw.WordBox( 8, ScrW() - MODULE.DisplayXPos2 - 10, h + 20, "Warning: you do not have this map!", "Default", Color(255, 0, 0, 255), Color(255, 255, 255, 255))
 				MODULE.DisplayXPos2 = w1
 			end
 		end
 	end)
-	
+
 	Vermilion.Menu:AddCategory("server", 2)
 
 	Vermilion.Menu:AddPage({
@@ -559,7 +559,7 @@ function MODULE:InitClient()
 			end,
 			Builder = function(panel, paneldata)
 				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("html", panel)
-			
+
 				local mapList = VToolkit:CreateList({
 					cols = {
 						"Name",
@@ -571,12 +571,12 @@ function MODULE:InitClient()
 				mapList:SetPos(10, 30)
 				mapList:SetSize(450, 520)
 				paneldata.MapList = mapList
-				
+
 				local mapHeader = VToolkit:CreateHeaderLabel(mapList, "Maps")
 				mapHeader:SetParent(panel)
-				
+
 				VToolkit:CreateSearchBox(mapList)
-				
+
 				local times = {
 					{ "Immediately", 0, 0 },
 					{ "In 30 seconds", 1, 30 },
@@ -600,7 +600,7 @@ function MODULE:InitClient()
 					{ "In 20 hours", 19, 60 * 60 * 20 },
 					{ "In 1 day", 20, 60 * 60 * 24 }
 				}
-					
+
 				local timeDelayComboBox = VToolkit:CreateComboBox()
 				timeDelayComboBox:SetText("Time Delay")
 				timeDelayComboBox.OnSelect = function(panel, index, value, data)
@@ -614,23 +614,23 @@ function MODULE:InitClient()
 				timeDelayComboBox:SetParent(panel)
 				timeDelayComboBox:SetPos(470, 120)
 				timeDelayComboBox:SetSize(300, 25)
-				
-				
+
+
 				local changeTimeHeader = VToolkit:CreateHeaderLabel(timeDelayComboBox, "Change to the selected map:")
 				changeTimeHeader:SetParent(panel)
-				
+
 				local currentMapLabel = VToolkit:CreateHeaderLabel(timeDelayComboBox, "Current Map:")
 				local cmx, cmy = currentMapLabel:GetPos()
 				currentMapLabel:SetPos(cmx, 30)
 				currentMapLabel:SetParent(panel)
-				
+
 				local currentMap = VToolkit:CreateHeaderLabel(timeDelayComboBox, game.GetMap())
 				local cmx1, cmy1 = currentMap:GetPos()
 				currentMap:SetPos(cmx1, 50)
 				currentMap:SetParent(panel)
-				
-				
-				
+
+
+
 				local changeMapButton = VToolkit:CreateButton("GO!", function()
 					if(table.Count(mapList:GetSelected()) == 0) then
 						VToolkit:CreateErrorDialog("Must select a map to change to!")
@@ -649,8 +649,8 @@ function MODULE:InitClient()
 				changeMapButton:SetPos(582.5, 170)
 				changeMapButton:SetSize(75, 25)
 				changeMapButton:SetParent(panel)
-				
-				
+
+
 				local abortLevelChangeButton = VToolkit:CreateButton("Abort Level Change", function()
 					VToolkit:CreateConfirmDialog("Are you sure you want to abort the level change?", function()
 						MODULE:NetStart("VAbortMapChange")
@@ -660,18 +660,18 @@ function MODULE:InitClient()
 				abortLevelChangeButton:SetPos(557.5, 220)
 				abortLevelChangeButton:SetSize(120, 30)
 				abortLevelChangeButton:SetParent(panel)
-				
-				
+
+
 				local loadProgress = vgui.Create("DProgress")
 				loadProgress:SetPos(470, 400)
 				loadProgress:SetSize(300, 20)
 				loadProgress:SetFraction(0)
 				loadProgress:SetParent(panel)
 				paneldata.LoadProgress = loadProgress
-				
+
 				local loadHeader = VToolkit:CreateHeaderLabel(loadProgress, "Maps Loaded:")
 				loadHeader:SetParent(panel)
-				
+
 				local reload = VToolkit:CreateButton("Reload Maps", function()
 					VToolkit:CreateConfirmDialog("Really reload all maps?", function()
 						mapList:Clear()

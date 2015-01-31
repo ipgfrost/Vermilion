@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,17 +10,17 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local Skin = {}
 
 if(CLIENT) then
-	
+
 end
 
 Skin.CreatedBtnFont = false
@@ -104,7 +104,7 @@ Skin.Frame.Config = function(frame)
 	frame.lblTitle:SetBright(true)
 end
 
-Skin.Frame.Paint = function( self, w, h ) 
+Skin.Frame.Paint = function( self, w, h )
 	-- body
 	surface.SetDrawColor( 100, 0, 0, math.Remap(self:GetAlpha(), 0, 255, 0, 200) )
 	surface.DrawRect( 0, 0, w, h )
@@ -188,7 +188,7 @@ Skin.ScrollBarUp.Paint = function(self, w, h)
 		{ x = w / 2, y = 5 },
 		{ x = (w / 2) + (w / 3), y = h - 5 }
 	})
-	
+
 end
 
 Skin.ScrollBarDown = {}
@@ -206,10 +206,10 @@ Skin.ScrollBarDown.Paint = function(self, w, h)
 	draw.NoTexture()
 	surface.DrawPoly({
 		{ x = (w / 2) - (w / 3), y = 5 },
-		
+
 		{ x = (w / 2) + (w / 3), y = 5 }, { x = w / 2, y = h - 5 },
 	})
-	
+
 end
 
 VToolkit:RegisterSkin("Basic", Skin)

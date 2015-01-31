@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -73,7 +73,7 @@ function MODULE:RegisterChatCommands()
 end
 
 function MODULE:InitServer()
-	
+
 	local function updateClient(vplayer)
 		MODULE:NetStart("VGetSpawnpoints")
 		local tab = {}
@@ -85,7 +85,7 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
-	
+
 	local function sendRankAllocs(vplayer)
 		local tab = {}
 		for i,k in pairs(Vermilion.Data.Ranks) do
@@ -95,10 +95,10 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
-	
+
 	self:NetHook("VGetSpawnpoints", updateClient)
 	self:NetHook("VGetRankSpawnpoints", sendRankAllocs)
-	
+
 	self:NetHook("VDelSpawnpoint", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
 			local point = net.ReadString()
@@ -109,11 +109,11 @@ function MODULE:InitServer()
 				end
 			end
 		end
-		
+
 		updateClient(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 		sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 	end)
-	
+
 	self:NetHook("VGoto", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
 			local point = net.ReadString()
@@ -122,7 +122,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	local function spawnThink(ply, rankpoint)
 		local tpos = rankpoint.Pos + Vector(math.Rand(-rankpoint.Radius, rankpoint.Radius), math.Rand(-rankpoint.Radius, rankpoint.Radius), 0)
 			local Ents = ents.FindInBox(tpos + Vector(-16, -16, 0), tpos + Vector(16, 16, 72))
@@ -137,7 +137,7 @@ function MODULE:InitServer()
 					Blockers = Blockers + 1
 				end
 			end
-			
+
 			if(Blockers > 0) then
 				timer.Simple(1, function()
 					spawnThink(ply, rankpoint)
@@ -146,7 +146,7 @@ function MODULE:InitServer()
 			end
 			ply:SetPos(tpos)
 	end
-	
+
 	function MODULE:DoSpawning(vplayer)
 		local rankpoint = MODULE:GetData("allocations", {}, true)[Vermilion:GetUser(vplayer):GetRankName() .. game.GetMap()]
 		if(rankpoint != nil) then
@@ -154,30 +154,30 @@ function MODULE:InitServer()
 			spawnThink(vplayer, rankpoint)
 		end
 	end
-	
+
 	self:AddHook("PlayerSpawn", function(vplayer)
 		MODULE:DoSpawning(vplayer)
 	end)
-	
+
 	self:NetHook("VAssignSpawnpoint", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
 			local rank = net.ReadString()
 			local point = net.ReadString()
-			
+
 			MODULE:GetData("allocations", {}, true)[rank .. game.GetMap()] = point
 			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 		end
 	end)
-	
+
 	self:NetHook("VResetSpawnpoint", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
 			local rank = net.ReadString()
-			
+
 			MODULE:GetData("allocations", {}, true)[rank .. game.GetMap()] = nil
 			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -189,7 +189,7 @@ function MODULE:InitClient()
 			paneldata.SpawnpointList:AddLine(i, table.concat({math.Round(k.p.x), math.Round(k.p.y), math.Round(k.p.z)}, ":"), k.r)
 		end
 	end)
-	
+
 	self:NetHook("VGetRankSpawnpoints", function()
 		local paneldata = Vermilion.Menu.Pages['spawnpoint']
 		local data = net.ReadTable()
@@ -209,7 +209,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("player", 4)
-	
+
 	Vermilion.Menu:AddPage({
 		ID = "spawnpoint",
 		Name = "Custom Spawnpoints",
@@ -232,10 +232,10 @@ function MODULE:InitClient()
 			spawnpointList:SetSize(300, panel:GetTall() - 75)
 			spawnpointList:SetParent(panel)
 			paneldata.SpawnpointList = spawnpointList
-			
+
 			VToolkit:CreateSearchBox(spawnpointList)
 			VToolkit:CreateHeaderLabel(spawnpointList, "Spawnpoints"):SetParent(panel)
-			
+
 			local gotoBtn = VToolkit:CreateButton("Goto", function()
 				MODULE:NetStart("VGoto")
 				net.WriteString(spawnpointList:GetSelected()[1]:GetValue(1))
@@ -246,7 +246,7 @@ function MODULE:InitClient()
 			gotoBtn:SetSize(145, 25)
 			gotoBtn:SetDisabled(true)
 			paneldata.GotoBtn = gotoBtn
-			
+
 			local delBtn = VToolkit:CreateButton("Delete", function()
 				MODULE:NetStart("VDelSpawnpoint")
 				net.WriteString(spawnpointList:GetSelected()[1]:GetValue(1))
@@ -257,7 +257,7 @@ function MODULE:InitClient()
 			delBtn:SetSize(145, 25)
 			delBtn:SetDisabled(true)
 			paneldata.DelBtn = delBtn
-			
+
 			local rnkList = VToolkit:CreateList({
 				cols = {
 					"Name",
@@ -270,10 +270,10 @@ function MODULE:InitClient()
 			rnkList:SetPos(320, 30)
 			rnkList:SetSize(250, panel:GetTall() - 40)
 			paneldata.RankList = rnkList
-			
+
 			VToolkit:CreateSearchBox(rnkList)
 			VToolkit:CreateHeaderLabel(rnkList, "Ranks"):SetParent(panel)
-			
+
 			local assignPointBtn = VToolkit:CreateButton("Assign Spawnpoint", function()
 				MODULE:NetStart("VAssignSpawnpoint")
 				net.WriteString(rnkList:GetSelected()[1]:GetValue(1))
@@ -285,7 +285,7 @@ function MODULE:InitClient()
 			assignPointBtn:SetDisabled(true)
 			assignPointBtn:SetParent(panel)
 			paneldata.AssignPointBtn = assignPointBtn
-			
+
 			local resetPointBtn = VToolkit:CreateButton("Reset Spawnpoint", function()
 				MODULE:NetStart("VResetSpawnpoint")
 				net.WriteString(rnkList:GetSelected()[1]:GetValue(1))
@@ -296,18 +296,18 @@ function MODULE:InitClient()
 			resetPointBtn:SetDisabled(true)
 			resetPointBtn:SetParent(panel)
 			paneldata.ResetPointBtn = resetPointBtn
-			
+
 			function spawnpointList:OnRowSelected(index, line)
 				gotoBtn:SetDisabled(self:GetSelected()[1] == nil)
 				delBtn:SetDisabled(self:GetSelected()[1] == nil)
-				assignPointBtn:SetDisabled(not (self:GetSelected()[1] != nil and rnkList:GetSelected()[1] != nil)) 
+				assignPointBtn:SetDisabled(not (self:GetSelected()[1] != nil and rnkList:GetSelected()[1] != nil))
 			end
-			
+
 			function rnkList:OnRowSelected(index, line)
 				assignPointBtn:SetDisabled(not (self:GetSelected()[1] != nil and spawnpointList:GetSelected()[1] != nil))
 				resetPointBtn:SetDisabled(self:GetSelected()[1] == nil)
 			end
-			
+
 		end,
 		OnOpen = function(panel, paneldata)
 			Vermilion:PopulateRankTable(paneldata.RankList, false, true)

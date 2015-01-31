@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -33,23 +33,23 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
-	
+
 	self:AddHook("PlayerSpawnVehicle", function(vplayer, model, class, data)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), model)) then // <-- this could backfire...
 			Vermilion:AddNotification(vplayer, "You cannot spawn this vehicle!", NOTIFY_ERROR)
 			return false
 		end
 	end)
-	
+
 	self:AddHook("Vermilion_IsEntityDuplicatable", function(vplayer, class, model)
 		if(not IsValid(vplayer)) then return end
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), model)) then
 			return false
 		end
 	end)
-	
-	
-	
+
+
+
 	self:NetHook("VGetVehicleLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -65,7 +65,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VBlockVehicle", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_vehicle_limits")) then
 			local rnk = net.ReadString()
@@ -75,7 +75,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnblockVehicle", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_vehicle_limits")) then
 			local rnk = net.ReadString()
@@ -83,7 +83,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -107,7 +107,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_vehicle",
 			Name = "Vehicles",
@@ -123,13 +123,13 @@ function MODULE:InitClient()
 				local rankList = nil
 				local allVehicles = nil
 				local rankBlockList = nil
-				
+
 				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel, function(ent)
 					if(paneldata.PreviewPanel.EntityClass != "prop_vehicle_prisoner_pod") then
 						ent:SetPos(Vector(-120, -120, 0))
 					end
 				end)
-				
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -142,10 +142,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					blockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and allVehicles:GetSelected()[1] != nil))
 					unblockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
@@ -153,7 +153,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankBlockList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -163,17 +163,17 @@ function MODULE:InitClient()
 				rankBlockList:SetSize(240, panel:GetTall() - 40)
 				rankBlockList:SetParent(panel)
 				paneldata.RankBlockList = rankBlockList
-				
+
 				local rankBlockListHeader = VToolkit:CreateHeaderLabel(rankBlockList, "Blocked Vehicles")
 				rankBlockListHeader:SetParent(panel)
-				
+
 				function rankBlockList:OnRowSelected(index, line)
 					unblockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankBlockList)
-				
-				
+
+
 				allVehicles = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -183,17 +183,17 @@ function MODULE:InitClient()
 				allVehicles:SetSize(240, panel:GetTall() - 40)
 				allVehicles:SetParent(panel)
 				paneldata.AllVehicles = allVehicles
-				
+
 				local allVehiclesHeader = VToolkit:CreateHeaderLabel(allVehicles, "All Vehicles")
 				allVehiclesHeader:SetParent(panel)
-				
+
 				function allVehicles:OnRowSelected(index, line)
 					blockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allVehicles)
-				
-				
+
+
 				blockVehicle = VToolkit:CreateButton("Block Vehicle", function()
 					for i,k in pairs(allVehicles:GetSelected()) do
 						local has = false
@@ -202,7 +202,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VBlockVehicle")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -213,14 +213,14 @@ function MODULE:InitClient()
 				blockVehicle:SetWide(panel:GetWide() - 20 - select(1, allVehicles:GetWide()) - select(1, blockVehicle:GetPos()))
 				blockVehicle:SetParent(panel)
 				blockVehicle:SetDisabled(true)
-				
+
 				unblockVehicle = VToolkit:CreateButton("Unblock Vehicle", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockVehicle")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
@@ -228,11 +228,11 @@ function MODULE:InitClient()
 				unblockVehicle:SetWide(panel:GetWide() - 20 - select(1, allVehicles:GetWide()) - select(1, unblockVehicle:GetPos()))
 				unblockVehicle:SetParent(panel)
 				unblockVehicle:SetDisabled(true)
-				
+
 				paneldata.BlockVehicle = blockVehicle
 				paneldata.UnblockVehicle = unblockVehicle
-				
-				
+
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.Vehicles == nil) then
@@ -249,34 +249,34 @@ function MODULE:InitClient()
 					for i,k in pairs(paneldata.Vehicles) do
 						local ln = paneldata.AllVehicles:AddLine(k.Name)
 						ln.ClassName = k.ClassName
-						
+
 						ln.ModelPath = k.ClassName
-						
+
 						ln.OldCursorMoved = ln.OnCursorMoved
 						ln.OldCursorEntered = ln.OnCursorEntered
 						ln.OldCursorExited = ln.OnCursorExited
-						
+
 						function ln:OnCursorEntered()
 							paneldata.PreviewPanel:SetVisible(true)
 							paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
 							paneldata.PreviewPanel.EntityClass = k.StdClass
-							
-							
+
+
 							if(self.OldCursorEntered) then self:OldCursorEntered() end
 						end
-						
+
 						function ln:OnCursorExited()
 							paneldata.PreviewPanel:SetVisible(false)
-							
+
 							if(self.OldCursorExited) then self:OldCursorExited() end
 						end
-						
+
 						function ln:OnCursorMoved(x,y)
 							if(IsValid(paneldata.PreviewPanel)) then
 								local x, y = input.GetCursorPos()
 								paneldata.PreviewPanel:SetPos(x - 180, y - 117)
 							end
-							
+
 							if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
 						end
 					end
@@ -287,5 +287,5 @@ function MODULE:InitClient()
 				paneldata.UnblockVehicle:SetDisabled(true)
 			end
 		})
-	
+
 end

@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 if(Vermilion) then
@@ -26,16 +26,16 @@ if(Vermilion) then
 	end
 end
 
-if(SERVER) then 
+if(SERVER) then
 	AddCSLuaFile()
 	NOTIFY_GENERIC = 0
 	NOTIFY_ERROR = 1
 	NOTIFY_UNDO = 2
 	NOTIFY_HINT = 3
 	NOTIFY_CLEANUP = 4
-	
+
 	--[[ local tab = {}
-	
+
 	local netstart = net.Start
 	local currmsg = nil
 	function net.Start(msg)
@@ -52,7 +52,7 @@ if(SERVER) then
 		tab[currmsg].Size = tab[currmsg].Size + net.BytesWritten()
 		netsend(vplayer)
 	end
-	
+
 	concommand.Add("v_networktracker", function()
 		PrintTable(tab)
 	end) ]]
@@ -205,7 +205,7 @@ if(SERVER) then
 		" to the client."
 	})
 else
-	
+
 	Vermilion.Log({
 		"Started in ",
 		Vermilion.Colours.Blue,

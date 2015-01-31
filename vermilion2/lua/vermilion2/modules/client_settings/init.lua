@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -50,7 +50,7 @@ function MODULE:InitClient()
 		Category = "Graphics",
 		Options = table.GetKeys(VToolkit.Skins)
 	})
-	
+
 	self:AddOption({
 		GuiText = MODULE:TranslateStr("opt:lang"),
 		ConVar = "vermilion_interfacelang",
@@ -75,20 +75,20 @@ function MODULE:InitClient()
 			sl:SetParent(panel)
 			sl:SetPos(0, 0)
 			sl:SetSize(600, 560)
-			
+
 			for i,k in SortedPairsByMemberValue(categories, "Order") do
 				k.Impl = sl:Add(k.Name)
 			end
-			
+
 			for i,k in pairs(options) do
 				if(k.Type == "Combobox") then
 					local panel = vgui.Create("DPanel")
-				
+
 					local label = VToolkit:CreateLabel(k.GuiText)
 					label:SetDark(true)
 					label:SetPos(10, 6)
 					label:SetParent(panel)
-					
+
 					local combobox = VToolkit:CreateComboBox()
 					combobox:SetPos(sl:GetWide() - 230, 3)
 					combobox:SetParent(panel)
@@ -96,7 +96,7 @@ function MODULE:InitClient()
 						combobox:AddChoice(k1)
 					end
 					combobox:SetWide(200)
-					
+
 					if(k.Incomplete) then
 						local dimage = vgui.Create("DImage")
 						dimage:SetImage("icon16/error.png")
@@ -105,7 +105,7 @@ function MODULE:InitClient()
 						dimage:SetParent(panel)
 						dimage:SetTooltip("Feature not implemented!")
 					end
-					
+
 					function combobox:OnSelect(index)
 						if(paneldata.UpdatingGUI) then return end
 						if(k.SetAs == "text") then
@@ -114,38 +114,38 @@ function MODULE:InitClient()
 							RunConsoleCommand(k.ConVar, index)
 						end
 					end
-					
+
 					panel:SetSize(select(1, combobox:GetPos()) + combobox:GetWide() + 10, combobox:GetTall() + 5)
 					panel:SetPaintBackground(false)
-					
+
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
 						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
-					
+
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
-					
+
 					panel:Dock(TOP)
 					panel:SetParent(cat)
-					
-					
+
+
 					if(tonumber(GetConVarString(k.ConVar)) == nil) then
 						combobox:ChooseOptionID(table.KeyFromValue(k.Options, GetConVarString(k.ConVar)))
 					else
 						combobox:ChooseOptionID(GetConVarNumber(k.ConVar))
 					end
-					
+
 					k.Impl = combobox
 				elseif(k.Type == "Checkbox") then
 					local panel = vgui.Create("DPanel")
-					
+
 					local cb = VToolkit:CreateCheckBox(k.GuiText, k.ConVar)
 					cb:SetDark(true)
 					cb:SetPos(10, 3)
 					cb:SetParent(panel)
-					
-					
+
+
 					panel:SetSize(cb:GetWide() + 10, cb:GetTall() + 5)
 					if(k.Incomplete) then
 						local dimage = vgui.Create("DImage")
@@ -157,64 +157,64 @@ function MODULE:InitClient()
 						panel:SetWide(panel:GetWide() + 25)
 					end
 					panel:SetPaintBackground(false)
-					
+
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
 						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
-					
+
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
-					
+
 					panel:Dock(TOP)
 					panel:SetParent(cat)
-					
+
 					k.Impl = cb
 				elseif(k.Type == "Slider") then
 					local panel = vgui.Create("DPanel")
-					
+
 					local slider = VToolkit:CreateSlider(k.GuiText, k.Bounds.Min, k.Bounds.Max, 2)
 					slider:SetPos(10, 3)
 					slider:SetParent(panel)
 					slider:SetWide(300)
-					
+
 					slider:SetValue(k.Default)
-					
+
 					function slider:OnChange(index)
 						if(paneldata.UpdatingGUI) then return end
 						RunConsoleCommand(k.ConVar, tostring(index))
 					end
-					
+
 					panel:SetSize(slider:GetWide() + 10, slider:GetTall() + 5)
 					panel:SetPaintBackground(false)
-					
+
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
 						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
-					
+
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
-					
+
 					panel:Dock(TOP)
 					panel:SetParent(cat)
-					
+
 					if(k.Permission != nil) then
 						slider:SetEnabled(Vermilion:HasPermission(k.Permission))
 					end
 					k.Impl = slider
 				elseif(k.Type == "Colour") then
 					local panel = vgui.Create("DPanel")
-				
+
 					local label = VToolkit:CreateLabel(k.GuiText)
 					label:SetDark(true)
 					label:SetPos(10, 6)
 					label:SetParent(panel)
-					
+
 					local mixer = VToolkit:CreateColourMixer(true, false, true, Color(0, 0, 255, 255), k.UpdateFunc)
 					mixer:SetPos(sl:GetWide() - mixer:GetWide() - 10, 3)
 					mixer:SetParent(panel)
-					
+
 					if(k.Incomplete) then
 						local dimage = vgui.Create("DImage")
 						dimage:SetImage("icon16/error.png")
@@ -223,21 +223,21 @@ function MODULE:InitClient()
 						dimage:SetParent(panel)
 						dimage:SetTooltip("Feature not implemented!")
 					end
-					
+
 					panel:SetSize(select(1, mixer:GetPos()) + mixer:GetWide() + 10, mixer:GetTall() + 5)
 					panel:SetPaintBackground(false)
-					
+
 					local cat = nil
 					for ir,cat1 in pairs(categories) do
 						if(cat1.ID == k.Category) then cat = cat1.Impl break end
 					end
-					
+
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
-					
+
 					panel:Dock(TOP)
 					panel:SetParent(cat)
-					
+
 					k.Impl = mixer
 				elseif(k.Type == "NumberWang") then
 					-- Implement Me!

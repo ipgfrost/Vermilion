@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 --[[
@@ -55,7 +55,7 @@ end
 
 function Vermilion.Menu:AddPage(data)
 	local mustHave = { "ID", "Name", "Order", "Category", "Size" }
-	local shouldHave = { 
+	local shouldHave = {
 		{ "Conditional", function() return true end },
 		{ "Builder", function() end },
 		{ "Destroyer", function() end },
@@ -129,26 +129,26 @@ MENU:AddPage({
 		welcomeLabel:SizeToContents()
 		welcomeLabel:SetPos((580 - welcomeLabel:GetWide()) / 2, 30)
 		welcomeLabel:SetParent(panel)
-		
+
 		local tabs = VToolkit:CreatePropertySheet()
 		tabs:SetPos(0, 90)
 		tabs:SetSize(580, 470)
 		tabs:SetParent(panel)
 		tabs.VHideBG = true
-		
-		
+
+
 		local changelogPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:changelog"), "icon16/report.png", "", false)
 		local faqPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:faq"), "icon16/user_comment.png", "", false)
 		--local bugReport = tabs:AddBlankSheet(Vermilion:TranslateStr("welcome:bugreport"), "icon16/bug.png", "", false)
-		
-		
+
+
 		local clContainer = VToolkit:CreateCategoryList(true)
 		clContainer:SetParent(changelogPanel)
 		clContainer:Dock(FILL)
 		clContainer:DockMargin(2, 2, 2, 2)
-		
+
 		local changelog = {
-			{ "2.4 - 25th January 2015", {
+			{ "2.4 - 31st January 2015", {
 					"Huge update for the localisation system and added more localisation options for translators",
 					"Updated some global broadcasts to translate into player's chosen language automatically",
 					"Added German translation (courtesy of Spennyone and SunRed)",
@@ -158,7 +158,10 @@ MENU:AddPage({
 					"Blocked sv_cheats in the !convar command (would have errored anyway)",
 					"Fixed spawn caps bugs",
 					"Attempt to stop GMod from blaming Vermilion for everything",
-					"Attempted to make timer failure less frightening"
+					"Attempted to make timer failure less frightening",
+          "Fixed newlines (\\n) in notifications",
+          "Added Votes module",
+					"Fixed a bug that prevented auto-cleanup being turned off"
 				}
 			},
 			{ "2.3.6 - 15th January 2015", {
@@ -315,14 +318,14 @@ MENU:AddPage({
 				}
 			}
 		}
-		
+
 		for i,k in pairs(changelog) do
 			local version = clContainer:Add(k[1])
 			for i1,k1 in pairs(k[2]) do
 				version:Add(k1)
 			end
 		end
-		
+
 		local faqContainer = VToolkit:CreateCategoryList(true)
 		faqContainer:SetParent(faqPanel)
 		faqContainer:Dock(FILL)
@@ -354,7 +357,7 @@ MENU:AddPage({
 			{ "Can you sort out the text on OS X?", "The text will be fixed an a future GMod update where the default text on OS X will be easier to read." },
 			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
 		}
-		
+
 		for i,k in pairs(faqs) do
 			local question = faqContainer:Add(k[1])
 			local lab = vgui.Create("DLabel")
@@ -366,7 +369,7 @@ MENU:AddPage({
 			lab:Dock(TOP)
 			lab:SetDark(true)
 		end
-		
+
 	end
 })
 
@@ -387,25 +390,25 @@ MENU:AddPage({
 		mlist:SetParent(panel)
 		mlist:SetWide(200)
 		paneldata.ModuleList = mlist
-		
+
 		local infopanel = vgui.Create("DPanel")
 		infopanel:SetDrawBackground(false)
 		infopanel:Dock(FILL)
 		infopanel:DockMargin(10, 10, 10, 10)
 		infopanel:SetParent(panel)
-		
+
 		local title = VToolkit:CreateLabel(Vermilion:TranslateStr("modules:clickon"))
 		title:SetFont("DermaLarge")
 		title:SizeToContents()
 		title:Dock(TOP)
 		title:SetParent(infopanel)
 		paneldata.TitleLabel = title
-		
+
 		local author = VToolkit:CreateLabel("")
 		author:Dock(TOP)
 		author:SetParent(infopanel)
 		paneldata.AuthorLabel = author
-		
+
 		local enablerPanel = vgui.Create("DPanel")
 		enablerPanel:SetParent(infopanel)
 		enablerPanel:Dock(TOP)
@@ -415,7 +418,7 @@ MENU:AddPage({
 		enablerPanel:SetVisible(false)
 
 		paneldata.EnablerPanel = enablerPanel
-		
+
 		local enableCB = VToolkit:CreateCheckBox(Vermilion:TranslateStr("modules:enabled"))
 		enableCB:Dock(FILL)
 		enableCB:SetParent(enablerPanel)
@@ -428,8 +431,8 @@ MENU:AddPage({
 			net.SendToServer()
 		end
 		paneldata.EnableCB = enableCB
-		
-		
+
+
 		local description = vgui.Create("DTextEntry")
 		description:SetDrawBackground(false)
 		description:SetMultiline(true)
@@ -440,22 +443,22 @@ MENU:AddPage({
 		description:SetValue("")
 		description:SetEditable(false)
 		paneldata.Description = description
-		
-		
-		
-		
+
+
+
+
 		local scrollp = vgui.Create("DScrollPanel")
 		scrollp:SetParent(infopanel)
 		scrollp:Dock(FILL)
 		scrollp:DockMargin(0, 10, 0, 0)
 		scrollp:SetVisible(false)
-		
+
 		net.Receive("VModuleDataUpdate", function()
 			enableCB.CanUpdate = false
 			enableCB:SetValue(net.ReadBoolean())
 			enableCB.CanUpdate = true
 		end)
-		
+
 	end,
 	OnOpen = function(panel, paneldata)
 		if(table.Count(paneldata.ModuleList:GetLines()) == 0) then
@@ -465,22 +468,22 @@ MENU:AddPage({
 				function ln:OnMousePressed(mc)
 					paneldata.TitleLabel:SetText(k.Name)
 					paneldata.TitleLabel:SizeToContents()
-					
+
 					paneldata.AuthorLabel:SetText("Author: " .. k.Author)
 					paneldata.AuthorLabel:SizeToContents()
-					
+
 					paneldata.Description:SetValue(k.Description)
 					paneldata.Description:SetEditable(false)
-					
+
 					paneldata.EnableCB.ModuleID = k.ID
-					
-					
+
+
 					paneldata.EnablerPanel:SetVisible(Vermilion:HasPermission("*") and not k.PreventDisable)
-					
+
 					net.Start("VModuleDataUpdate")
 					net.WriteString(k.ID)
 					net.SendToServer()
-					
+
 					self:OldClick(mc)
 				end
 			end
@@ -517,11 +520,11 @@ MENU:AddPage({
 		title:SetParent(panel)
 		title:Dock(TOP)
 		title:DockMargin((600 - title:GetWide()) / 2, 10, 0, 10)
-		
+
 		local scrollPanel = vgui.Create("DScrollPanel")
 		scrollPanel:SetParent(panel)
 		scrollPanel:Dock(FILL)
-		
+
 		local contributors = {
 			{
 				Name = "Ned",
@@ -539,9 +542,9 @@ MENU:AddPage({
 				Role = "Ideas, Persuasion, Bug Reports and Workshop Icon"
 			}
 		}
-		
+
 		local size = 64
-		
+
 		for i,k in pairs(contributors) do
 			local contributorPanel = vgui.Create("DPanel")
 			contributorPanel:SetDrawBackground(false)
@@ -549,23 +552,23 @@ MENU:AddPage({
 			contributorPanel:DockPadding(10, 2, 10, 2)
 			contributorPanel:SetParent(scrollPanel)
 			contributorPanel:SetTall(68)
-			
+
 			local avb = vgui.Create("DButton")
 			avb:SetSize(size, size)
 			avb:SetParent(contributorPanel)
 			avb:Dock(LEFT)
 			avb:DockMargin(0, 0, 10, 0)
-			
+
 			local av = VToolkit:CreateAvatarImage(k.SteamID, size)
 			av:SetParent(avb)
 			av:SetMouseInputEnabled(false)
-			
+
 			function avb:DoClick(mc)
 				gui.OpenURL("http://steamcommunity.com/profiles/" .. util.SteamIDTo64(k.SteamID))
 			end
-			
+
 			av:SetCursor("hand")
-			
+
 			local dataPanel = vgui.Create("DPanel")
 			dataPanel:SetTall(64)
 			dataPanel:Dock(LEFT)
@@ -573,7 +576,7 @@ MENU:AddPage({
 			dataPanel:SetWide(300)
 			dataPanel:SetParent(contributorPanel)
 			dataPanel:SetDrawBackground(false)
-			
+
 			local name = vgui.Create("DLabel")
 			steamworks.RequestPlayerInfo(util.SteamIDTo64(k.SteamID))
 			timer.Simple(3, function()
@@ -587,7 +590,7 @@ MENU:AddPage({
 			name:Dock(TOP)
 			name:SetDark(true)
 			name:SetParent(dataPanel)
-			
+
 			local role = vgui.Create("DLabel")
 			role:SetText(k.Role)
 			role:SizeToContents()
@@ -595,7 +598,7 @@ MENU:AddPage({
 			role:SetDark(true)
 			role:SetParent(dataPanel)
 		end
-		
+
 		local thanks = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:thanks"))
 		thanks:Dock(TOP)
 		thanks:DockMargin(10, 10, 10, 10)
@@ -603,7 +606,7 @@ MENU:AddPage({
 		thanks:SetDark(true)
 		thanks:SetWrap(true)
 		thanks:SetTall(thanks:GetTall() * 2)
-		
+
 		local poweredBySoundCloud = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:scapi"))
 		poweredBySoundCloud:Dock(TOP)
 		poweredBySoundCloud:SetWrap(true)
@@ -611,7 +614,7 @@ MENU:AddPage({
 		poweredBySoundCloud:DockMargin(10, 10, 10, 10)
 		poweredBySoundCloud:SetParent(scrollPanel)
 		poweredBySoundCloud:SetDark(true)
-		
+
 		local poweredByFGIP = VToolkit:CreateLabel(Vermilion:TranslateStr("credits:fgip"))
 		poweredByFGIP:Dock(TOP)
 		poweredByFGIP:SetWrap(true)
@@ -619,29 +622,29 @@ MENU:AddPage({
 		poweredByFGIP:DockMargin(10, 10, 10, 10)
 		poweredByFGIP:SetParent(scrollPanel)
 		poweredByFGIP:SetDark(true)
-		
-		
+
+
 		local buttonBar = vgui.Create("DPanel")
 		buttonBar:Dock(TOP)
 		buttonBar:DockMargin(10, 10, 10, 10)
 		buttonBar:SetParent(scrollPanel)
 		buttonBar:SetTall(25)
 		buttonBar:SetDrawBackground(false)
-		
+
 		local gotoWorkshop = VToolkit:CreateButton(Vermilion:TranslateStr("credits:workshop"), function()
 			steamworks.ViewFile("338063408")
 		end)
 		gotoWorkshop:Dock(LEFT)
 		gotoWorkshop:SetSize(200, 25)
 		gotoWorkshop:SetParent(buttonBar)
-		
+
 		local openGithub = VToolkit:CreateButton(Vermilion:TranslateStr("credits:github"), function()
 			gui.OpenURL("http://github.com/nedhyett/Vermilion")
 		end)
 		openGithub:Dock(RIGHT)
 		openGithub:SetSize(200, 25)
 		openGithub:SetParent(buttonBar)
-		
+
 		local openSteamGroup = VToolkit:CreateButton(Vermilion:TranslateStr("credits:group"), function()
 			gui.OpenURL("http://steamcommunity.com/groups/VSM-GMOD")
 		end)
@@ -649,13 +652,13 @@ MENU:AddPage({
 		openSteamGroup:SetSize(scrollPanel:GetWide(), 25)
 		openSteamGroup:DockMargin(5, 0, 5, 0)
 		openSteamGroup:SetParent(buttonBar)
-		
+
 		local workshopRating = vgui.Create("DProgress")
 		workshopRating:SetParent(scrollPanel)
 		workshopRating:Dock(TOP)
 		workshopRating:DockMargin(5, 5, 5, 5)
 		paneldata.WorkshopRating = workshopRating
-		
+
 		local workshopRatingLabel = vgui.Create("DLabel")
 		workshopRatingLabel:SetText(Vermilion:TranslateStr("credits:workshoprating"))
 		workshopRatingLabel:SizeToContents()
@@ -699,7 +702,7 @@ function MENU:ChangeTab(to, quiet)
 		self.CatList:UnselectAll()
 		self:GetActivePage().TabButton:SetSelected(true)
 		self.ContentPanel:SetSize(self:GetActivePage().Size[1] + 20, self:GetActivePage().Size[2] + 40)
-		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())	
+		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
 		self.ContentPanel:SetTitle("Vermilion Menu - " .. self:GetActivePage().Name)
 	else
 		self.Animating = true
@@ -731,7 +734,7 @@ end
 
 Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 	-- assume that all modules have run their code to register their pages
-	
+
 	MENU.TabPanel = VToolkit:CreateFrame({
 		size = { 170, 600 },
 		pos = { -170, 10 },
@@ -740,7 +743,7 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 		title = "",
 		bgBlur = false
 	})
-	
+
 	MENU.ContentPanel = VToolkit:CreateFrame({
 		size = { 600, 600 },
 		pos = { 200, ScrH() },
@@ -749,18 +752,18 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 		title = "Vermilion Menu",
 		bgBlur = false
 	})
-	
+
 	MENU.ContentPanel.lblTitle.UpdateColours = function() end
-	
-	
+
+
 	-- add a list thingy
 	local catList = VToolkit:CreateCategoryList()
 	catList:SetPos(5, 5)
 	catList:SetSize(160, 590)
 	catList:SetParent(MENU.TabPanel)
-	
+
 	MENU.CatList = catList
-	
+
 	MENU.TabPanel:SetVisible(false)
 	MENU.ContentPanel:SetVisible(false)
 	MENU.TabPanel:MakePopup()
@@ -772,7 +775,7 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 
 	function MENU:Open()
 		if(hook.Run(Vermilion.Event.MENU_OPENING) == false or MENU.IsOpen or not MENU.Built) then return end
-		
+
 		for i,k in pairs(MENU.Pages) do
 			if(k.Conditional(LocalPlayer()) and k.Updater != nil) then
 				xpcall(k.Updater, function(err)
@@ -781,9 +784,9 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 				end, k.Panel, k)
 			end
 		end
-		
+
 		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
-		
+
 		MENU.IsOpen = true
 		MENU.TabPanel:SetVisible(true)
 		MENU.ContentPanel:SetVisible(true)
@@ -797,7 +800,7 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 
 	function MENU:Close(force)
 		if(not force and (hook.Run(Vermilion.Event.MENU_CLOSING) == false or not MENU.IsOpen)) then return end
-		
+
 		MENU.TabPanel:MoveTo(-170, 10, 0.5, 0, -3)
 		MENU.ContentPanel:MoveTo(200, ScrH(), 0.5, 0, -3, function()
 			MENU.TabPanel:SetVisible(false)
@@ -812,13 +815,13 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 			hook.Run(Vermilion.Event.MENU_CLOSED)
 		end)
 	end
-	
+
 	local categories = {}
 	for index,catData in SortedPairsByMemberValue(MENU.Categories, "Order", false) do
 		categories[catData.ID] = MENU.CatList:Add(catData.Name)
 		catData.Impl = categories[catData.ID]
 	end
-	
+
 	for index,pageData in SortedPairsByMemberValue(MENU.Pages, "Order", false) do
 		local cat = categories[pageData.Category]
 		local btn = cat:Add(pageData.Name)
@@ -829,34 +832,34 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 		end
 		btn.TabID = pageData.ID
 		MENU.Pages[pageData.ID].TabButton = btn
-		
+
 		local panel = vgui.Create("DPanel")
 		panel:SetParent(MENU.ContentPanel)
 		panel:SetSize(pageData.Size[1], pageData.Size[2])
 		panel:SetPos(10, 30)
-		if(pageData.ID != "welcome") then 
+		if(pageData.ID != "welcome") then
 			panel:SetVisible(false)
 		end
-		
+
 		MENU.Pages[pageData.ID].Panel = panel
-		
+
 		xpcall(pageData.Builder, function(err)
 			Vermilion.Log("Error building page: " .. err)
 			debug.Trace()
 		end, panel, pageData)
-		
+
 		btn:SetVisible(pageData.Conditional(LocalPlayer()))
-		
+
 	end
-	
-	for i,k in pairs(categories) do		
+
+	for i,k in pairs(categories) do
 		local visibleChildren = 0
 		for i1,k1 in pairs(k:GetChildren()) do
 			if(k1:IsVisible()) then visibleChildren = visibleChildren + 1 end
 		end
 		k:SetVisible(visibleChildren > 1)
 	end
-	
+
 	MENU.Pages["welcome"].TabButton:SetSelected(true)
 	MENU.Built = true
 end)
@@ -876,7 +879,7 @@ Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, "UpdateMenuAccess", true, fu
 	for i,k in pairs(MENU.Pages) do
 		k.TabButton:SetVisible(k.Conditional(LocalPlayer()))
 	end
-	
+
 	for i,k in pairs(MENU.Categories) do
 		local visibleChildren = 0
 		for i1,k1 in pairs(k.Impl:GetChildren()) do

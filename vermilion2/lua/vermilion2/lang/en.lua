@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local lang = Vermilion:CreateLangBody("English")
@@ -94,6 +94,7 @@ lang:Add("config:join", "%s has joined the server.")
 lang:Add("config:join:first", "%s has joined the server for the first time!")
 
 lang:Add("config:left", "%s left the server: %s")
+lang:Add("config:joinleave_enabled", "Enable Join/Leave Messages")
 
 
 --[[
@@ -104,6 +105,12 @@ lang:Add("config:left", "%s left the server: %s")
 lang:Add("geoip:enablesetting", "Enable GeoIP Services")
 lang:Add("geoip:cache:expired", "GeoIP cache has expired. Removing...")
 
+--[[
+
+	//		Skybox Protector		\\
+
+]]--
+lang:Add("skybox_protect:opt:enable", "Enable Skybox Protector")
 
 --[[
 
@@ -158,9 +165,9 @@ lang:Add("welcome:faq", "FAQ")
 
 ]]--
 lang:Add("addon_validator:title", "Vermilion Addon Alert")
-lang:Add("addon_validator:windowtext", [[Vermilion has detected that you are missing some addons. 
+lang:Add("addon_validator:windowtext", [[Vermilion has detected that you are missing some addons.
 
-Subscribing to these addons will significantly decrease the time taken to connect to this server as you will not have to download the addons each time you connect, and will also solve any missing textures that you are seeing as a result of missing these addons! 
+Subscribing to these addons will significantly decrease the time taken to connect to this server as you will not have to download the addons each time you connect, and will also solve any missing textures that you are seeing as a result of missing these addons!
 
 Please consider fixing this by using the list below!]])
 lang:Add("addon_validator:open_workshop_page", "Open Workshop Page")
@@ -168,6 +175,7 @@ lang:Add("addon_validator:open_workshop_page:g1", "Must select at least one addo
 lang:Add("addon_validator:dna", "Close and do not ask again")
 lang:Add("addon_validator:dna:confirm", "Are you sure?\nThis will take effect on every server you join.\nTo reset it, type \"vermilion_addonnag_do_not_ask 0\" into the console!")
 
+lang:Add("addon_validator:settingstext", "Enable Addon Validator")
 
 --[[
 
@@ -534,6 +542,9 @@ lang:Add("commands:jail:jail", "%s has placed %s in jail!")
 lang:Add("commands:setjailpos:world", "That isn't inside the world...")
 lang:Add("commands:setjailpos:done", "%s set the jail position to %s")
 
+lang:Add("commands:convarvote:question", "Set %s to %s?")
+lang:Add("commands:convarvote:syntax", "Syntax: <convar> <value>")
+
 --[[
 
 	//		Death Notice		\\
@@ -598,11 +609,11 @@ lang:Add("zones:mode:no_gravity", "Zero Gravity")
 lang:Add("zones:mode:anti_pvp", "Anti-PvP")
 
 --[[
-	
+
 	//		Event Log		\\
-	
+
 	Note that the event translations won't be used until the event logger is rewritten as the event logger will currently default to the server language instead of client languages.
-	
+
 ]]--
 lang:Add("event_logger:chatcommand", "%s is running the %s chat command. (%s)")
 lang:Add("event_logger:connect", "%s has connected to the server.")
@@ -624,9 +635,9 @@ lang:Add("event_logger:drive:owner", "%s is driving %s owned by %s")
 
 
 --[[
-	
+
 	//		Server Settings		\\
-	
+
 ]]--
 lang:Add("menu:basicsettings", "Basic Settings")
 lang:Add("menu:motd", "MOTD")
@@ -704,6 +715,8 @@ lang:Add("server_settings:noemergency", "NO!")
 	//		Votes		\\
 
 ]]--
+lang:Add("cat:votes", "Votes")
+lang:Add("votes:enabletext", "Enable %s voting")
 lang:Add("votes:success", "Vote succeeded with %s%% of players saying yes.")
 lang:Add("votes:failure", "Vote failed with %s%% of players saying no.")
 lang:Add("votes:nopartake", "Vote failed because nobody responded to the vote.")
@@ -712,6 +725,27 @@ lang:Add("votes:inprogress", "There is already a vote in progress. Please wait u
 lang:Add("votes:notype", "No such vote type.")
 lang:Add("votes:validtypes", "Valid vote types: %s")
 lang:Add("votes:invalidparatype", "Invalid parameters for this vote type!")
+lang:Add("votes:disabled", "This vote type is disabled.")
+lang:Add("votes:header", "VOTE - Called by %s")
+lang:Add("votes:footer", "%s - Yes | %s - No")
+
+lang:Add("votes:vyes", "YES vote acknowledged.")
+lang:Add("votes:vno", "NO vote acknowledged.")
+
+lang:Add("votes:maps:question", "Change level to %s?")
+lang:Add("votes:maps:syntax", "Syntax: <map>")
+lang:Add("votes:maps:dne", "Map does not exist!")
+
+lang:Add("votes:ban:question", "Ban player %s?")
+lang:Add("votes:ban:syntax", "Syntax: <player> <time in minutes>")
+
+lang:Add("votes:unban:question", "Unban player %s?")
+lang:Add("votes:unban:syntax", "Syntax: <player>")
+lang:Add("votes:unban:notbanned", "This player has not been banned!")
+
+lang:Add("votes:kick:question", "Kick player %s?")
+lang:Add("votes:kick:syntax", "Syntax: <player>")
+lang:Add("votes:kick:done", "%s was kicked from the server!")
 
 
 Vermilion:RegisterLanguage(lang)

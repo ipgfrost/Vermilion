@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local VermilionMem = {}
@@ -59,7 +59,7 @@ if(CLIENT) then
 		repeatParseTree(net.ReadTable(), baseNode)
 		VermilionMem.BaseNode = baseNode
 	end)
-	
+
 	concommand.Add("vermilion_memory", function()
 		local panel = VToolkit:CreateFrame({
 			['size'] = { 600, 600 },
@@ -72,7 +72,7 @@ if(CLIENT) then
 		panel:MakePopup()
 		panel:DoModal()
 		panel:SetAutoDelete(true)
-		
+
 		local refresh = VToolkit:CreateButton("Refresh", function()
 			net.Start("VermilionMem")
 			net.SendToServer()
@@ -80,7 +80,7 @@ if(CLIENT) then
 		refresh:Dock(RIGHT)
 		refresh:SetTall(25)
 		refresh:SetParent(panel)
-		
+
 		local tree = vgui.Create("DTree")
 		VermilionMem.Tree = tree
 		tree:Dock(FILL)
@@ -88,7 +88,7 @@ if(CLIENT) then
 	end)
 else
 	util.AddNetworkString("VermilionMem")
-	
+
 	local function trimData(tab)
 		for i,k in pairs(tab) do
 			if(istable(k)) then
@@ -104,7 +104,7 @@ else
 			end
 		end
 	end
-	
+
 	net.Receive("VermilionMem", function(len, vplayer)
 		if(not Vermilion:HasPermission(vplayer, "*")) then return end
 		local data = table.Copy(Vermilion)
@@ -113,5 +113,5 @@ else
 		net.WriteTable(data)
 		net.Send(vplayer)
 	end)
-	
+
 end

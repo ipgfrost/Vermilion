@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 
@@ -53,7 +53,7 @@ util.AddNetworkString("VModuleConfig")
 --[[
 
 	//		Ranks		\\
-	
+
 ]]--
 
 function Vermilion:GetDefaultRank()
@@ -70,7 +70,7 @@ end
 
 function Vermilion:CreateRankObj(name, permissions, protected, colour, icon, inherits)
 	local rnk = {}
-	
+
 	rnk.Name = name
 	rnk.Permissions = permissions or {}
 	rnk.Protected = protected or false
@@ -79,30 +79,30 @@ function Vermilion:CreateRankObj(name, permissions, protected, colour, icon, inh
 	end
 	rnk.Icon = icon
 	rnk.InheritsFrom = inherits
-	
+
 	rnk.Metadata = {}
-	
+
 	self:AttachRankFunctions(rnk)
-	
+
 	return rnk
 end
 
 function Vermilion:AttachRankFunctions(rankObj)
-	
+
 	if(Vermilion.RankMetaTable == nil) then
 		local meta = {}
 		function meta:GetName()
 			return self.Name
 		end
-		
+
 		function meta:IsImmuneToRank(rank)
 			return self:GetImmunity() < rank:GetImmunity()
 		end
-		
+
 		function meta:GetImmunity()
 			return table.KeyFromValue(Vermilion.Data.Ranks, self)
 		end
-		
+
 		function meta:MoveUp()
 			if(self:GetImmunity() <= 2) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmoveup"))
@@ -118,7 +118,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 			return true
 		end
-		
+
 		function meta:MoveDown()
 			if(self:GetImmunity() == table.Count(Vermilion.Data.Ranks)) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmovedown"))
@@ -134,7 +134,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 			return true
 		end
-		
+
 		function meta:GetUsers()
 			local users = {}
 			for i,k in pairs(Vermilion.Data.Users) do
@@ -144,7 +144,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			return users
 		end
-		
+
 		function meta:Rename(newName)
 			if(self.Protected) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
@@ -159,7 +159,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			Vermilion:BroadcastRankData()
 			return true
 		end
-		
+
 		function meta:Delete()
 			if(self.Protected) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:deleteprotected"))
@@ -179,7 +179,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			hook.Run(Vermilion.Event.RankDeleted, self.Name)
 			return true
 		end
-		
+
 		function meta:SetParent(parent)
 			if(parent == nil) then
 				self.InheritsFrom = nil
@@ -189,7 +189,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			self.InheritsFrom = parent:GetName()
 			Vermilion:BroadcastRankData()
 		end
-		
+
 		function meta:AddPermission(permission)
 			if(self.Protected) then return end
 			if(not istable(permission)) then permission = { permission } end
@@ -208,7 +208,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion:SyncClientRank(k)
 			end
 		end
-		
+
 		function meta:RevokePermission(permission)
 			if(self.Protected) then return end
 			if(not istable(permission)) then permission = { permission } end
@@ -227,7 +227,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion:SyncClientRank(k)
 			end
 		end
-		
+
 		function meta:HasPermission(permission)
 			if(permission != "*") then
 				local has = false
@@ -243,7 +243,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			return table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")
 		end
-		
+
 		function meta:SetColour(colour)
 			if(IsColor(colour)) then
 				self.Colour = { colour.r, colour.g, colour.b }
@@ -255,15 +255,15 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:badcolour", { type(colour) }))
 			end
 		end
-		
+
 		function meta:GetColour()
 			return Color(self.Colour[1], self.Colour[2], self.Colour[3])
 		end
-		
+
 		function meta:GetIcon()
 			return self.Icon
 		end
-		
+
 		function meta:SetIcon(icon)
 			self.Icon = icon
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
@@ -311,14 +311,14 @@ end
 
 
 --[[
-	
+
 	//		Users		\\
-	
+
 ]]--
 
 function Vermilion:CreateUserObj(name, steamid, rank, permissions)
 	local usr = {}
-	
+
 	usr.Name = name
 	usr.SteamID = steamid
 	usr.Rank = rank
@@ -328,12 +328,12 @@ function Vermilion:CreateUserObj(name, steamid, rank, permissions)
 	usr.Deaths = 0
 	usr.Achievements = {}
 	usr.Karma = { Positive = {}, Negative = {} }
-	
-	
+
+
 	usr.Metadata = {}
-	
+
 	self:AttachUserFunctions(usr)
-	
+
 	return usr
 end
 
@@ -343,17 +343,17 @@ function Vermilion:AttachUserFunctions(usrObject)
 		function meta:GetRank()
 			return Vermilion:GetRank(self.Rank)
 		end
-		
+
 		function meta:GetRankName()
 			return self.Rank
 		end
-		
+
 		function meta:GetEntity()
 			for i,k in pairs(VToolkit.GetValidPlayers()) do
 				if(k:SteamID() == self.SteamID) then return k end
 			end
 		end
-		
+
 		function meta:IsImmune(other)
 			if(istable(other)) then
 				return self:GetRank():IsImmuneToRank(other)
@@ -362,7 +362,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				return self:GetRank():IsImmuneToRank(Vermilion:GetUser(other):GetRank())
 			end
 		end
-		
+
 		function meta:SetRank(rank)
 			if(Vermilion:HasRank(rank)) then
 				local old = self.Rank
@@ -376,7 +376,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				end
 			end
 		end
-		
+
 		function meta:HasPermission(permission)
 			if(permission != "*") then
 				local has = false
@@ -390,13 +390,13 @@ function Vermilion:AttachUserFunctions(usrObject)
 			if(table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")) then return true end
 			return self:GetRank():HasPermission(permission)
 		end
-		
+
 		function meta:GetColour()
 			return self:GetRank():GetColour()
 		end
 		Vermilion.PlayerMetaTable = meta
 	end
-	
+
 	setmetatable(usrObject, { __index = Vermilion.PlayerMetaTable }) // <-- The metatable creates phantom functions.
 end
 
@@ -475,7 +475,7 @@ end
 ]]--
 
 function Vermilion:GetData(name, default, set)
-	if(self.Data.Global[name] == nil) then 
+	if(self.Data.Global[name] == nil) then
 		if(set) then
 			self.Data.Global[name] = default
 			self:TriggerInternalDataChangeHooks(name)
@@ -568,25 +568,25 @@ function Vermilion:LoadConfiguration()
 	else
 		if(file.Size(self.GetFileName("settings"), "DATA") == 0) then
 			Vermilion.Log({Vermilion.Colours.Red, "[CRITICAL WARNING]", Vermilion.Colours.White, " I lost the configuration file... Usually a result of GMod unexpectedly stopping, most likely due to a BSoD or Kernel Panic. Sorry about that :( I'll try to restore a backup for you."})
-			
+
 			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
-			
+
 			if(table.Count(fls) == 0) then
 				Vermilion.Log({ Vermilion.Colours.Red, "NO BACKUPS FOUND! Did you delete them? Restoring configuration file to defaults." })
 				self:CreateDefaultDataStructs()
 				return
-			end			
-			
+			end
+
 			local max = 0
 			for i,k in pairs(fls) do
 				if(tonumber(string.Replace(k, ".txt", "")) > max) then
 					max = tonumber(string.Replace(k, ".txt", ""))
 				end
 			end
-			
+
 			local content = file.Read("vermilion2/backup/" .. tostring(max) .. ".txt")
 			file.Write(self.GetFileName("settings"), content)
-			
+
 			Vermilion.Log("Restored configuration with timestamp " .. tostring(max) .. "!")
 		else
 			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
@@ -601,11 +601,11 @@ function Vermilion:LoadConfiguration()
 					end
 				end
 			--end
-		
+
 			Vermilion.Log(Vermilion:TranslateStr("config:backup"))
 			local code = tostring(os.time())
 			local content = file.Read(self.GetFileName("settings"), "DATA")
-			
+
 			file.Write("vermilion2/backup/" .. code .. ".txt", content)
 		end
 		local data = util.JSONToTable(util.Decompress(file.Read(self.GetFileName("settings"), "DATA")))
@@ -644,9 +644,9 @@ end)
 
 
 --[[
-	
+
 	//		Player Registration		\\
-	
+
 ]]--
 
 Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer)
@@ -668,7 +668,7 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	net.Start("VBroadcastPermissions")
 	net.WriteTable(Vermilion.AllPermissions)
 	net.Send(vplayer)
-	
+
 	net.Start("VUpdatePlayerLists")
 	local tab = {}
 	for i,k in pairs(VToolkit.GetValidPlayers()) do
@@ -676,14 +676,14 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	end
 	net.WriteTable(tab)
 	net.Broadcast()
-	
-	
+
+
 	timer.Simple(1, function()
 		if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 		if(new) then
-			Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:join:first", { vplayer:GetName() }))
+			Vermilion:TransBroadcastNotify("config:join:first", { vplayer:GetName() })
 		else
-			Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:join", { vplayer:GetName() }))
+			Vermilion:TransBroadcastNotify("config:join", { vplayer:GetName() })
 		end
 	end)
 end)
@@ -693,7 +693,7 @@ gameevent.Listen("player_disconnect")
 Vermilion:AddHook("player_disconnect", "DisconnectMessage", true, function(data)
 	if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 	if(string.find(data.reason, "Kicked by")) then return end
-	Vermilion:BroadcastNotification(Vermilion:TranslateStr("config:left", { data.name, data.reason }))
+	Vermilion:TransBroadcastNotify("config:left", { data.name, data.reason })
 end)
 
 
@@ -728,7 +728,7 @@ local setOwnerFunc = function(vplayer, model, entity, hkType)
 		if(hkType == "PlayerSpawnedSENT") then str = "sents" end
 		if(hkType == "PlayerSpawnedNPC") then str = "npcs" end
 		tEnt.Vermilion_Type = str
-		
+
 		tEnt.Vermilion_Owner = vplayer:SteamID()
 		tEnt:SetNWString("Vermilion_Owner", vplayer:SteamID())
 		duplicator.StoreEntityModifier(tEnt, "Vermilion_Owner", { Owner = vplayer:SteamID() })
@@ -772,8 +772,8 @@ for i,spHook in pairs(spawnFuncsPatch) do
 		if(spHook == "PlayerSpawnSWEP") then str = "sents" end
 		if(spHook == "PlayerSpawnSENT") then str = "sents" end
 		if(spHook == "PlayerSpawnNPC") then str = "npcs" end
-		
-		
+
+
 		local hookResult = hook.Run(Vermilion.Event.CheckLimit, vplayer, str)
 		if(hookResult != nil) then return hookResult end
 	end)
@@ -790,7 +790,7 @@ timer.Simple(1, function()
 		end
 	end
 	function meta:VermilionPropCount(str)
-		
+
 	end
 	if(meta.Vermilion_AddCount == nil) then
 		meta.Vermilion_AddCount = meta.AddCount
@@ -800,7 +800,7 @@ timer.Simple(1, function()
 			self:Vermilion_AddCount(str, ent)
 		end
 	end
-	
+
 	if(cleanup) then
 		cleanup.OldAdd = cleanup.Add
 		function cleanup.Add(vplayer, typ, ent)

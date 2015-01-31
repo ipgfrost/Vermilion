@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -44,11 +44,11 @@ if(engine.ActiveGamemode() == "terrortown") then
 end
 
 function MODULE:InitServer()
-	if(engine.ActiveGamemode() != "terrortown") then 
+	if(engine.ActiveGamemode() != "terrortown") then
 		Vermilion.Log("Not loading TTT Integration; not running TTT.")
 		return
 	end
-	
+
 	Vermilion:AddChatCommand({
 		Name = "settraitor",
 		Description = "Makes a player a traitor",
@@ -78,7 +78,7 @@ function MODULE:InitServer()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "setdetective",
 		Description = "Makes a player a detective",
@@ -108,7 +108,7 @@ function MODULE:InitServer()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "setinnocent",
 		Description = "Makes a player a innocent",
@@ -138,7 +138,7 @@ function MODULE:InitServer()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "setcredits",
 		Description = "Set the player's credits",
@@ -172,7 +172,7 @@ function MODULE:InitServer()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "restartround",
 		Description = "Restart the round.",
@@ -182,7 +182,7 @@ function MODULE:InitServer()
 			RunConsoleCommand("ttt_roundrestart")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "haste",
 		Description = "Change haste mode.",
@@ -205,7 +205,7 @@ function MODULE:InitServer()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "roundtime",
 		Description = "Change round time.",
@@ -224,5 +224,5 @@ function MODULE:InitServer()
 			RunConsoleCommand("ttt_roundtime_minutes", res)
 		end
 	})
-	
+
 end

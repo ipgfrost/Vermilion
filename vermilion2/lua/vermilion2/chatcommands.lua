@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 Vermilion.ChatCommands = {}
@@ -97,7 +97,7 @@ function Vermilion:AddChatCommand(props)
 					Vermilion:GetModule("event_logger"):AddEvent("script", Vermilion:TranslateStr("event_logger:chatcommand", { sender:GetName(), props.Name, table.concat(args, ", ") }))
 				end
 			end
-			
+
 			local success = props.Function(sender, args, function(text) Vermilion.Log(text) end, function(text, typ, time) commandGLOG(props.Name, text, typ, time) end, function(text, values, typ, time) commandTGLog(props.Name, text, values, typ, time) end)
 			if(success == nil) then success = true end
 			if(not success) then
@@ -194,7 +194,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 					end
 					local success = command.Function(vplayer, edittable, logFunc, function() end, function() end) // <-- we ignore global output here, otherwise we get spammed.
 					if(success == nil) then success = true end
-					if(not success) then 
+					if(not success) then
 						return "" // <-- we can assume that this error will happen again, so don't bother repeating.
 					end
 				end
@@ -211,8 +211,8 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 				end
 				local success = command.Function(vplayer, parts, logFunc, function(text, typ, time) commandGLOG(commandName, text, typ, time) end, function(text, values, typ, time) commandTGLog(commandName, text, values, typ, time) end)
 				if(success == nil) then success = true end
-				if(not success) then 
-					Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, vplayer)) 
+				if(not success) then
+					Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, vplayer))
 				end
 			end
 			return ""

@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -100,7 +100,7 @@ local modeShouldHave = {
 
 --[[
 	Mode components:
-	
+
 	- Name = unlocalised version of the name
 	- Handler = function run on every item in a zone each tick
 	- Events = string-indexed table of events that the zone mode should listen to
@@ -138,7 +138,7 @@ function MODULE:UpdateClients(client)
 		end
 	end
 	net.WriteTable(stab)
-	if(not client) then 
+	if(not client) then
 		net.Broadcast()
 	else
 		net.Send(client)
@@ -147,7 +147,7 @@ end
 
 function MODULE:LoadSettings()
 	local stab = self:GetData("zones", {})
-	if(table.Count(stab) == 0) then 
+	if(table.Count(stab) == 0) then
 		self:ResetSettings()
 		self:SaveSettings()
 	end
@@ -197,7 +197,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "anti_noclip",
 		Handler = function(zone, ent, properties)
@@ -216,7 +216,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "confiscate_weapons",
 		Handler = function(zone, ent, properties)
@@ -258,14 +258,14 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "no_gravity",
 		Events = {
 			["Vermilion_Object_Entered_Zone"] = function(zone, ent)
 				if(not zone:HasMode("no_gravity") or ent:IsPlayer()) then return end
 				local phys = ent:GetPhysicsObject()
-				if(not IsValid(phys)) then 
+				if(not IsValid(phys)) then
 					ent:SetGravity(-0.00000001)
 					return
 				end
@@ -274,7 +274,7 @@ function MODULE:InitShared()
 			["Vermilion_Object_Left_Zone"] = function(zone, ent)
 				if(not zone:HasMode("no_gravity") or ent:IsPlayer()) then return end
 				local phys = ent:GetPhysicsObject()
-				if(not IsValid(phys)) then 
+				if(not IsValid(phys)) then
 					ent:SetGravity(0)
 					return
 				end
@@ -283,7 +283,7 @@ function MODULE:InitShared()
 			["Vermilion_Player_Entered_Zone"] = function(zone, vplayer)
 				if(not zone:HasMode("no_gravity")) then return end
 				local phys = vplayer:GetPhysicsObject()
-				if(not IsValid(phys)) then 
+				if(not IsValid(phys)) then
 					vplayer:SetGravity(-0.00000001)
 					return
 				end
@@ -293,7 +293,7 @@ function MODULE:InitShared()
 			["Vermilion_Player_Left_Zone"] = function(zone, vplayer)
 				if(not zone:HasMode("no_gravity")) then return end
 				local phys = vplayer:GetPhysicsObject()
-				if(not IsValid(phys)) then 
+				if(not IsValid(phys)) then
 					vplayer:SetGravity(0)
 					return
 				end
@@ -302,7 +302,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "speed",
 		Events = {
@@ -342,24 +342,24 @@ function MODULE:InitShared()
 			end
 		end,
 		GuiBuilder = function(zoneName, completeFunction, drawer)
-			
+
 			local speedSlider = VToolkit:CreateSlider("Speed", 0.1, 20, 2)
 			speedSlider:SetPos(20, 60)
 			speedSlider:SetWide(300)
 			speedSlider:SetParent(drawer)
 			speedSlider:SetValue(10)
-			
+
 			local complete = VToolkit:CreateButton("Add Mode", function()
 				completeFunction( { tostring(speedSlider:GetValue()) } )
 			end)
 			complete:SetPos(20, 100)
 			complete:SetSize(drawer:GetWide() - 40, 25)
 			complete:SetParent(drawer)
-			
-			
+
+
 		end
 	})
-	
+
 	self:RegisterMode({
 		Name = "sudden_death",
 		Events = {
@@ -387,7 +387,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "no_vehicles",
 		Handler = function(zone, ent, properties)
@@ -413,7 +413,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "anti_propspawn",
 		Events = {
@@ -495,10 +495,10 @@ function MODULE:InitShared()
 			end
 		end,
 		GuiBuilder = function(zoneName, completeFunction, drawer)
-			
+
 		end
 	})
-	
+
 	self:RegisterMode({
 		Name = "anti_rank",
 		Handler = function(zone, ent, properties)
@@ -525,14 +525,14 @@ function MODULE:InitShared()
 			end
 		end
 	})
-	
+
 	self:RegisterMode({
 		Name = "kill",
 		Handler = function(zone, ent, properties)
 			if(ent:IsPlayer() and ent:Alive()) then ent:Kill() end
 		end
 	})
-	
+
 	self:RegisterMode({
 		Name = "notify_enter",
 		Events = {
@@ -546,7 +546,7 @@ function MODULE:InitShared()
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "notify_leave",
 		Events = {
@@ -566,7 +566,7 @@ function MODULE:InitServer()
 	self:NetHook("VUpdateBlocks", function(vplayer)
 		MODULE:UpdateClients(vplayer)
 	end)
-	
+
 	self:AddHook("Think", function()
 		for i,zone in pairs(MODULE.Zones) do
 			for ipl,ent in pairs(ents.FindInBox(zone.Bound.Point1, zone.Bound.Point2)) do
@@ -611,7 +611,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	local function sendZones(vplayer)
 		MODULE:NetStart("VGetZones")
 		local tab = {}
@@ -623,7 +623,7 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
-	
+
 	local function sendZoneModes(vplayer, name, zone)
 		if(zone == nil) then return end
 		MODULE:NetStart("VGetZoneModes")
@@ -631,84 +631,84 @@ function MODULE:InitServer()
 		net.WriteTable(table.GetKeys(zone.Modes))
 		net.Send(vplayer)
 	end
-	
+
 	self:NetHook("VGetZones", sendZones)
 	self:NetHook("VGetZoneModes", function(vplayer)
 		local name = net.ReadString()
 		sendZoneModes(vplayer, name, MODULE.Zones[name])
 	end)
-	
+
 	self:NetHook("VAddZoneMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
 			local name = net.ReadString()
 			local mode = net.ReadString()
-			
+
 			if(MODULE.Zones[name] != nil) then
 				MODULE.Zones[name]:AddMode(mode)
 			end
-			
+
 			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 		end
 	end)
-	
+
 	self:NetHook("VAddZoneModeAdv", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
 			local name = net.ReadString()
 			local mode = net.ReadString()
-			
+
 			if(MODULE.Zones[name] != nil) then
 				MODULE.Zones[name]:AddMode(mode, net.ReadTable())
 			end
-			
+
 			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 		end
 	end)
-	
+
 	self:NetHook("VDelZoneMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
 			local name = net.ReadString()
 			local mode = net.ReadString()
-			
+
 			if(MODULE.Zones[name] != nil) then
 				MODULE.Zones[name]:RemoveMode(mode)
 			end
-			
+
 			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 		end
 	end)
-	
+
 	self:NetHook("VRenameZone", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
 			local name = net.ReadString()
 			local nname = net.ReadString()
-			
+
 			if(MODULE.Zones[name] != nil) then
 				MODULE.Zones[nname] = MODULE.Zones[name]
 				MODULE.Zones[name] = nil
 			end
-			
+
 			sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
 			MODULE:UpdateClients(player.GetHumans())
 		end
 	end)
-	
+
 	self:NetHook("VDelZone", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
 			local name = net.ReadString()
-			
+
 			if(MODULE.Zones[name] != nil) then
 				MODULE.Zones[name] = nil
 			end
-			
+
 			sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
 			MODULE:UpdateClients(player.GetHumans())
 		end
 	end)
-	
+
 	self:AddHook(Vermilion.Event.ShuttingDown, function()
 		MODULE:SaveSettings()
 	end)
-	
+
 	MODULE:LoadSettings()
 end
 
@@ -761,7 +761,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "cancelzone",
 		Description = "Stops the zone definition process",
@@ -778,7 +778,7 @@ function MODULE:RegisterChatCommands()
 			net.Send(sender)
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "removezone",
 		Description = "Removes a zone.",
@@ -804,7 +804,7 @@ function MODULE:RegisterChatCommands()
 			MODULE:UpdateClients()
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "listmodes",
 		Description = "Lists the modes applied to the zone",
@@ -826,7 +826,7 @@ function MODULE:RegisterChatCommands()
 			log("Active modes: " .. table.concat(tab, ", "))
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "setmode",
 		Description = "Sets a mode on a zone",
@@ -878,7 +878,7 @@ function MODULE:RegisterChatCommands()
 			log("Zone updated!")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "unsetmode",
 		Description = "Removes a mode from a zone",
@@ -923,7 +923,7 @@ function MODULE:RegisterChatCommands()
 			log("Zone updated!")
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "listzones",
 		Description = "Lists all zones",
@@ -939,13 +939,13 @@ function MODULE:RegisterChatCommands()
 			log("Active zones: " .. table.concat(tab, ", "))
 		end
 	})
-	
-	
+
+
 end
 
 function MODULE:InitClient()
 	CreateClientConVar("vermilion_render_zones", 1, true, false)
-	
+
 	self:NetHook("VUpdateBlocks", function()
 		local stab = {}
 		for i,k in pairs(net.ReadTable()) do
@@ -953,7 +953,7 @@ function MODULE:InitClient()
 		end
 		MODULE.Zones = stab
 	end)
-	
+
 	self:NetHook("VDrawCreateBlocks", function()
 		local vec = net.ReadTable()
 		if(vec[1] == nil and vec[2] == nil and vec[3] == nil) then
@@ -962,7 +962,7 @@ function MODULE:InitClient()
 			MODULE.DrawingFrom = Vector(vec[1], vec[2], vec[3])
 		end
 	end)
-	
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(Vermilion:GetModule("client_settings") != nil) then
 			Vermilion:GetModule("client_settings"):AddOption({
@@ -973,7 +973,7 @@ function MODULE:InitClient()
 			})
 		end
 	end)
-	
+
 	self:AddHook("PostDrawOpaqueRenderables", function(bDrawingDepth, bDrawingSkybox)
 		if(bDrawingSkybox or bDrawingDepth or GetConVarNumber("vermilion_render_zones") == 0) then return end
 		for i,k in pairs(MODULE.Zones) do
@@ -991,7 +991,7 @@ function MODULE:InitClient()
 			cam.End3D2D()
 		end
 	end)
-	
+
 	self:NetHook("VGetZones", function()
 		local paneldata = Vermilion.Menu.Pages["zones"]
 		local data = net.ReadTable()
@@ -1000,7 +1000,7 @@ function MODULE:InitClient()
 			paneldata.ZoneList:AddLine(k)
 		end
 	end)
-	
+
 	self:NetHook("VGetZoneModes", function()
 		local paneldata = Vermilion.Menu.Pages["zones"]
 		if(paneldata.ZoneList:GetSelected()[1] == nil or paneldata.ZoneList:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
@@ -1010,9 +1010,9 @@ function MODULE:InitClient()
 			paneldata.ZoneModes:AddLine(MODULE:TranslateStr("mode:" .. k)).ClassName = k
 		end
 	end)
-	
+
 	Vermilion.Menu:AddCategory("server", 2)
-	
+
 	Vermilion.Menu:AddPage({
 		ID = "zones",
 		Name = "Zones",
@@ -1030,7 +1030,7 @@ function MODULE:InitClient()
 			local zoneList = nil
 			local allPermissions = nil
 			local zoneModes = nil
-			
+
 			zoneList = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -1042,12 +1042,12 @@ function MODULE:InitClient()
 			zoneList:SetSize(200, panel:GetTall() - 75)
 			zoneList:SetParent(panel)
 			paneldata.ZoneList = zoneList
-			
+
 			VToolkit:CreateSearchBox(zoneList)
-			
+
 			local zoneHeader = VToolkit:CreateHeaderLabel(zoneList, "Zones")
 			zoneHeader:SetParent(panel)
-			
+
 			function zoneList:OnRowSelected(index, line)
 				giveWeapon:SetDisabled(not (self:GetSelected()[1] != nil and allPermissions:GetSelected()[1] != nil))
 				takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and zoneModes:GetSelected()[1] != nil))
@@ -1057,15 +1057,15 @@ function MODULE:InitClient()
 				net.WriteString(self:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end
-			
+
 			local renZonePanel = VToolkit:CreateLeftDrawer(panel)
 			paneldata.RenZonePanel = renZonePanel
-			
+
 			local newZoneName = VToolkit:CreateTextbox()
 			newZoneName:SetPos(10, 40)
 			newZoneName:SetSize(renZonePanel:GetWide() - 25, 25)
 			newZoneName:SetParent(renZonePanel)
-			
+
 			local renZoneFinalButton = VToolkit:CreateButton("Rename Zone", function()
 				local fZoneName = newZoneName:GetValue()
 				if(fZoneName == nil or fZoneName == "") then
@@ -1090,7 +1090,7 @@ function MODULE:InitClient()
 			renZoneFinalButton:SetPos(10, 75)
 			renZoneFinalButton:SetSize(renZonePanel:GetWide() - 25, 25)
 			renZoneFinalButton:SetParent(renZonePanel)
-			
+
 			renZone = VToolkit:CreateButton("Rename Zone", function()
 				newZoneName:SetValue(zoneList:GetSelected()[1]:GetValue(1))
 				renZonePanel:Open()
@@ -1100,8 +1100,8 @@ function MODULE:InitClient()
 			renZone:SetDisabled(true)
 			renZone:SetParent(panel)
 			paneldata.RenZone = renZone
-			
-			
+
+
 			delZone = VToolkit:CreateButton("Delete Zone", function()
 				VToolkit:CreateConfirmDialog("Really delete zone?", function()
 					MODULE:NetStart("VDelZone")
@@ -1117,9 +1117,9 @@ function MODULE:InitClient()
 			delZone:SetParent(panel)
 			delZone:SetDisabled(true)
 			paneldata.DelZone = delZone
-			
-			
-			
+
+
+
 			zoneModes = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -1129,17 +1129,17 @@ function MODULE:InitClient()
 			zoneModes:SetSize(240, panel:GetTall() - 40)
 			zoneModes:SetParent(panel)
 			paneldata.ZoneModes = zoneModes
-			
+
 			local zoneModesHeader = VToolkit:CreateHeaderLabel(zoneModes, "Zone Modes")
 			zoneModesHeader:SetParent(panel)
-			
+
 			function zoneModes:OnRowSelected(index, line)
 				takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and zoneList:GetSelected()[1] != nil))
 			end
-			
+
 			VToolkit:CreateSearchBox(zoneModes)
-			
-			
+
+
 			allPermissions = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -1150,18 +1150,18 @@ function MODULE:InitClient()
 			allPermissions:SetSize(240, panel:GetTall() - 40)
 			allPermissions:SetParent(panel)
 			paneldata.AllPermissions = allPermissions
-			
+
 			local allPermissionsHeader = VToolkit:CreateHeaderLabel(allPermissions, "All Modes")
 			allPermissionsHeader:SetParent(panel)
-			
+
 			function allPermissions:OnRowSelected(index, line)
 				giveWeapon:SetDisabled(not (self:GetSelected()[1] != nil and zoneList:GetSelected()[1] != nil))
 			end
-			
+
 			VToolkit:CreateSearchBox(allPermissions)
-			
-			
-			
+
+
+
 			giveWeapon = VToolkit:CreateButton("Add Mode", function()
 				for i,k in pairs(allPermissions:GetSelected()) do
 					local has = false
@@ -1174,7 +1174,7 @@ function MODULE:InitClient()
 						local title = VToolkit:CreateLabel(MODULE:TranslateStr("mode_params") .. " - " .. MODULE:TranslateStr("mode:" .. k.ClassName))
 						title:SetPos((drawer:GetWide() - title:GetWide()) / 2, 15)
 						title:SetParent(drawer)
-						
+
 						drawer.OClose = drawer.Close
 						function drawer:Close()
 							timer.Simple(0.5, function()
@@ -1195,9 +1195,9 @@ function MODULE:InitClient()
 						paneldata.ModeDrawer = drawer
 						return
 					end
-					
+
 					zoneModes:AddLine(k:GetValue(1)).ClassName = k.ClassName
-					
+
 					MODULE:NetStart("VAddZoneMode")
 					net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
@@ -1208,14 +1208,14 @@ function MODULE:InitClient()
 			giveWeapon:SetWide(panel:GetWide() - 20 - select(1, allPermissions:GetWide()) - select(1, giveWeapon:GetPos()))
 			giveWeapon:SetParent(panel)
 			giveWeapon:SetDisabled(true)
-			
+
 			takeWeapon = VToolkit:CreateButton("Remove Mode", function()
 				for i,k in pairs(zoneModes:GetSelected()) do
 					MODULE:NetStart("VDelZoneMode")
 					net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
 					net.SendToServer()
-					
+
 					zoneModes:RemoveLine(k:GetID())
 				end
 			end)
@@ -1223,9 +1223,9 @@ function MODULE:InitClient()
 			takeWeapon:SetWide(panel:GetWide() - 20 - select(1, allPermissions:GetWide()) - select(1, takeWeapon:GetPos()))
 			takeWeapon:SetParent(panel)
 			takeWeapon:SetDisabled(true)
-			
+
 			renZonePanel:MoveToFront()
-			
+
 			paneldata.GiveWeapon = giveWeapon
 			paneldata.TakeWeapon = takeWeapon
 		end,

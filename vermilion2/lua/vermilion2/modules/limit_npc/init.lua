@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -33,23 +33,23 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
-	
+
 	self:AddHook("PlayerSpawnNPC", function(vplayer, npc_type)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), npc_type)) then
 			Vermilion:AddNotification(vplayer, "You cannot spawn this NPC!", NOTIFY_ERROR)
 			return false
 		end
 	end)
-	
+
 	self:AddHook("Vermilion_IsEntityDuplicatable", function(vplayer, class)
 		if(not IsValid(vplayer)) then return end
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), class)) then
 			return false
 		end
 	end)
-	
-	
-	
+
+
+
 	self:NetHook("VGetNPCLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -65,7 +65,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VBlockNPC", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_npc_limits")) then
 			local rnk = net.ReadString()
@@ -75,7 +75,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnblockNPC", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_npc_limits")) then
 			local rnk = net.ReadString()
@@ -83,7 +83,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -107,7 +107,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_npc",
 			Name = "NPCs",
@@ -123,8 +123,8 @@ function MODULE:InitClient()
 				local rankList = nil
 				local allNPCs = nil
 				local rankBlockList = nil
-							
-				
+
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -137,10 +137,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					blockNPC:SetDisabled(not (self:GetSelected()[1] != nil and allNPCs:GetSelected()[1] != nil))
 					unblockNPC:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
@@ -148,7 +148,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankBlockList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -158,17 +158,17 @@ function MODULE:InitClient()
 				rankBlockList:SetSize(240, panel:GetTall() - 40)
 				rankBlockList:SetParent(panel)
 				paneldata.RankBlockList = rankBlockList
-				
+
 				local rankBlockListHeader = VToolkit:CreateHeaderLabel(rankBlockList, "Blocked NPCs")
 				rankBlockListHeader:SetParent(panel)
-				
+
 				function rankBlockList:OnRowSelected(index, line)
 					unblockNPC:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankBlockList)
-				
-				
+
+
 				allNPCs = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -178,17 +178,17 @@ function MODULE:InitClient()
 				allNPCs:SetSize(240, panel:GetTall() - 40)
 				allNPCs:SetParent(panel)
 				paneldata.AllNPCs = allNPCs
-				
+
 				local allNPCsHeader = VToolkit:CreateHeaderLabel(allNPCs, "All NPCs")
 				allNPCsHeader:SetParent(panel)
-				
+
 				function allNPCs:OnRowSelected(index, line)
 					blockNPC:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allNPCs)
-				
-				
+
+
 				blockNPC = VToolkit:CreateButton("Block NPC", function()
 					for i,k in pairs(allNPCs:GetSelected()) do
 						local has = false
@@ -197,7 +197,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VBlockNPC")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -208,14 +208,14 @@ function MODULE:InitClient()
 				blockNPC:SetWide(panel:GetWide() - 20 - select(1, allNPCs:GetWide()) - select(1, blockNPC:GetPos()))
 				blockNPC:SetParent(panel)
 				blockNPC:SetDisabled(true)
-				
+
 				unblockNPC = VToolkit:CreateButton("Unblock NPC", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockNPC")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
@@ -223,11 +223,11 @@ function MODULE:InitClient()
 				unblockNPC:SetWide(panel:GetWide() - 20 - select(1, allNPCs:GetWide()) - select(1, unblockNPC:GetPos()))
 				unblockNPC:SetParent(panel)
 				unblockNPC:SetDisabled(true)
-				
+
 				paneldata.BlockNPC = blockNPC
 				paneldata.UnblockNPC = unblockNPC
-				
-				
+
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.NPCs == nil) then
@@ -252,5 +252,5 @@ function MODULE:InitClient()
 				paneldata.UnblockNPC:SetDisabled(true)
 			end
 		})
-	
+
 end

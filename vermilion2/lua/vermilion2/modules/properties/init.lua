@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -35,11 +35,11 @@ function MODULE:InitServer()
 	self:NetHook("VCopySteamID", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. net.ReadEntity():SteamID() .. "')")
 	end)
-	
+
 	self:NetHook("VCopySteamID64", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():SteamID64()) .. "')")
 	end)
-	
+
 	self:NetHook("VCopyIP", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():IPAddress()) .. "')")
 	end)
@@ -61,7 +61,7 @@ function MODULE:InitShared()
 			net.SendToServer()
 		end
 	})
-	
+
 	properties.Add("copysteamid64", {
 		MenuLabel = "Copy 64-Bit SteamID",
 		Order = 10001,
@@ -77,7 +77,7 @@ function MODULE:InitShared()
 			net.SendToServer()
 		end
 	})
-	
+
 	properties.Add("copyip", {
 		MenuLabel = "Copy IP",
 		Order = 10002,
@@ -94,7 +94,7 @@ function MODULE:InitShared()
 			net.SendToServer()
 		end
 	})
-	
+
 	properties.Add("copyname", {
 		MenuLabel = "Copy Name",
 		Order = 10003,

@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -41,8 +41,20 @@ function MODULE:InitShared()
 		local mod = Vermilion:GetModule("server_settings")
 		if(mod != nil) then
 			if(SERVER) then MODULE:GetData("enabled", true, true) end -- create variable if it doesn't exist.
-			mod:AddOption("deathnotice", "enabled", MODULE:TranslateStr("opt:enable"), "Checkbox", "Misc")
-			mod:AddOption("deathnotice", "debugmode", MODULE:TranslateStr("opt:debug"), "Checkbox", "Misc")
+			mod:AddOption({
+				Module = "deathnotice",
+				Name = "enabled",
+				GuiText = MODULE:TranslateStr("opt:enable"),
+				Type = "Checkbox",
+				Category = "Misc"
+				})
+			mod:AddOption({
+				Module = "deathnotice",
+				Name = "debugmode",
+				GuiText = MODULE:TranslateStr("opt:debug"),
+				Type = "Checkbox",
+				Category = "Misc"
+				})
 		end
 	end)
 end
@@ -53,26 +65,26 @@ function MODULE:InitServer()
 			ent:SetPhysicsAttacker(vplayer, 5)
 		end
 	end)
-	
+
 	self:AddHook("DoPlayerDeath", "DeathNotice", function(victim, attacker, dmg)
 		if(not MODULE:GetData("enabled", true, true)) then return end
 		local inflictor = dmg:GetInflictor()
-		
+
 		if(attacker == nil or victim == nil) then return end
-		
+
 		local typ = dmg:GetDamageType()
-		
+
 		local suicide = false
-		
+
 		if(victim == attacker) then
 			suicide = true
 		end
-		
+
 		local distance = nil
 		if(not suicide) then
 			distance = math.Round(victim:GetPos():Distance(attacker:GetPos()) * 0.01905)
 		end
-		
+
 		local weapon_types = {
 			0,
 			8194,
@@ -80,7 +92,7 @@ function MODULE:InitServer()
 			536875010,
 			67112960
 		}
-		
+
 		if(typ == DMG_CRUSH) then
 			local dropper = attacker
 			if(inflictor:GetPhysicsAttacker(5) != nil) then
@@ -103,7 +115,7 @@ function MODULE:InitServer()
 			MODULE:HandleGeneric(victim, attacker, inflictor, dmg, suicide, distance)
 		end
 	end)
-	
+
 	function MODULE:HandleGeneric(victim, attacker, inflictor, dmg, suicide, distance)
 		if(self:GetData("debugmode", false, true)) then Msg("[GENERIC]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(dmg:GetDamageType() == DMG_DISSOLVE or dmg:GetDamageType() == 67108865) then
@@ -114,7 +126,7 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	function MODULE:HandlePhysics(victim, attacker, inflictor, dmg, suicide)
 		if(self:GetData("debugmode", false, true)) then Msg("[PHYSICS]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(attacker:IsPlayer()) then
@@ -127,7 +139,7 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	function MODULE:HandleWeapon(victim, attacker, inflictor, dmg, suicide, distance)
 		if(self:GetData("debugmode", false, true)) then Msg("[WEAPON]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(IsValid(attacker) and attacker:IsPlayer()) then
@@ -169,7 +181,7 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	function MODULE:HandleEnvironmental(victim, attacker, inflictor, dmg, suicide)
 		if(self:GetData("debugmode", false, true)) then Msg("[ENV]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(dmg:GetDamageType() == DMG_FALL) then
@@ -178,7 +190,7 @@ function MODULE:InitServer()
 			Vermilion:TransBroadcastNotify("die:burn", { victim:GetName() }, nil, nil, MODULE)
 		end
 	end
-	
+
 	function MODULE:HandleVehicle(victim, attacker, inflictor, dmg)
 		if(self:GetData("debugmode", false, true)) then Msg("[VEHICLE]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(attacker:IsPlayer()) then
@@ -196,7 +208,7 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	function MODULE:HandleExplosive(victim, attacker, inflictor, dmg, suicide, distance)
 		if(self:GetData("debugmode", false, true)) then Msg("[EXPLOSIVE]\n", "Victim: ", victim, "\n", "Attacker: ", attacker, "\n", "Inflictor: ", inflictor, "\n", "Type: ", dmg:GetDamageType(), "\n") end
 		if(IsValid(attacker) and attacker:IsPlayer()) then

@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 Vermilion.Languages = {}
@@ -22,7 +22,7 @@ Vermilion.Modules = {}
 
 Vermilion.CoreAddon = {
 	APIFuncs = {
-		
+
 	}
 }
 
@@ -48,32 +48,36 @@ function Vermilion.GetActiveLanguageFile(forplayer)
 end
 
 function Vermilion:CreateLangBody(locale)
-	
+
 	local body = {}
-	
+
 	body.Locale = locale
 	body.DateTimeFormat = "%I:%M:%S %p on %d/%m/%Y"
 	body.ShortDateTimeFormat = "%d/%m/%y %H:%M:%S"
 	body.DateFormat = "%d/%m/%Y"
 	body.TimeFormat = "%I:%M:%S %p"
-	
+
 	body.Translations = {}
-	
+
 	function body:Add(key, value)
 		self.Translations[key] = value
 	end
-	
+
 	function body:TranslateStr(key, values, short)
 		if(not istable(values)) then return key end
 		if(self.Translations[key] == nil) then
 			//if(not short) then Vermilion.Log("[WHINE] Language file '" .. body.Locale .. " is missing translation for " .. key .. " please fix!") end
 			return key
 		end
+    if(table.Count(values) != VToolkit.Count_Substring(self.Translations[key], "%s")) then
+      Vermilion.Log("Oops... Something called for a translation of " .. key .. " but did not provide enough filler parameters...")
+      return key
+    end
 		return string.format(self.Translations[key], unpack(values))
 	end
-	
+
 	return body
-	
+
 end
 
 function Vermilion:RegisterLanguage(body)
@@ -83,7 +87,7 @@ end
 function Vermilion:TranslateStr(key, values, forplayer)
 	if(CLIENT and forplayer == nil) then forplayer = LocalPlayer() end
 	if(self.Languages[self.GetActiveLanguage(forplayer)] != nil) then
-		local translation = self.Languages[self.GetActiveLanguage(forplayer)]:TranslateStr(key, values or {})
+		local translation = self.GetActiveLanguageFile(forplayer):TranslateStr(key, values or {})
 		if(translation != key or self.Languages["English"] == nil) then return translation end
 		return self.Languages["English"]:TranslateStr(key, values or {})
 	end
@@ -291,7 +295,7 @@ end
 
 if(SERVER) then
 	util.AddNetworkString("Vermilion_ClientStart")
-	
+
 	Vermilion:AddHook("PlayerInitialSpawn", "SendVermilionActivate", true, function(ply)
 		net.Start("Vermilion_ClientStart")
 		net.WriteTable(Vermilion:GetData("addon_load_states", {}, true))
@@ -368,15 +372,15 @@ function Vermilion:CreateBaseModule()
 		base.ID = "BaseModule"
 		base.Description = "The author of this module doesn't know how to customise the module data. Get rid of it!"
 		base.Author = "n00b"
-		
-		
+
+
 		function base:InitClient() end
 		function base:InitServer() end
 		function base:InitShared() end
 		function base:Destroy() end
-		
+
 		function base:RegisterChatCommands() end
-		
+
 		function base:GetData(name, default, set)
 			if(Vermilion.Data.Module[self.ID] == nil) then Vermilion.Data.Module[self.ID] = {} end
 			if(Vermilion.Data.Module[self.ID][name] == nil) then
@@ -385,21 +389,21 @@ function Vermilion:CreateBaseModule()
 			end
 			return Vermilion:GetModuleData(self.ID, name, default)
 		end
-		
+
 		function base:SetData(name, value)
 			Vermilion:SetModuleData(self.ID, name, value)
 		end
-		
+
 		function base:AddDataChangeHook(dataName, hookName, cHook)
 			if(self.DataChangeHooks[dataName] == nil) then self.DataChangeHooks[dataName] = {} end
 			self.DataChangeHooks[dataName][hookName] = cHook
 		end
-		
+
 		function base:RemoveDataChangeHook(dataName, hookName)
 			if(self.DataChangeHooks[dataName] == nil) then return end
 			self.DataChangeHooks[dataName][hookName] = nil
 		end
-		
+
 		function base:AddHook(evtName, id, func)
 			if(func == nil) then
 				func = id
@@ -410,24 +414,24 @@ function Vermilion:CreateBaseModule()
 			end
 			self.Hooks[evtName][id] = func
 		end
-		
+
 		function base:RemoveHook(evtName, id)
 			if(self.Hooks[evtName] != nil) then
 				self.Hooks[evtName][id] = nil
 			else
-			
+
 			end
 		end
-		
+
 		function base:NetHook(nstr, func)
 			self.NetworkHooks[nstr] = func
 		end
-		
+
 		function base:NetStart(msg)
 			net.Start("V:" .. self.ID)
 			net.WriteString(msg)
 		end
-		
+
 		function base:NetCommand(msg, target)
 			net.Start("V:" .. self.ID)
 			net.WriteString(msg)
@@ -437,19 +441,19 @@ function Vermilion:CreateBaseModule()
 				net.SendToServer()
 			end
 		end
-		
+
 		function base:DidGetNetStr(str, vplayer)
 			if(self.NetworkHooks[str] != nil) then
 				self.NetworkHooks[str](vplayer)
 			end
 		end
-		
+
 		function base:TranslateStr(key, parameters, foruser)
 			local translation = Vermilion:TranslateStr(self.ID .. ":" .. key, parameters, foruser)
 			if(translation != self.ID .. ":" .. key) then return translation end
 			return Vermilion:TranslateStr(key, parameters, foruser, true)
 		end
-		
+
 		function base:TranslateTable(keys, parameters, foruser)
 			local tab = {}
 			parameters = parameters or {}
@@ -458,19 +462,19 @@ function Vermilion:CreateBaseModule()
 			end
 			return tab
 		end
-		
+
 		function base:TransBroadcastNotify(key, parameters, typ, time)
 			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
 			for i,k in pairs(VToolkit.GetValidPlayers(false)) do
 				Vermilion:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
 			end
 		end
-		
+
 		function base:DistributeEvent(event, parameters) end
-		
+
 		Vermilion.ModuleBase = base
 	end
-	
+
 	local base = {}
 	base.Hooks = {}
 	base.Localisations = {}
@@ -478,13 +482,13 @@ function Vermilion:CreateBaseModule()
 	base.PermissionDefinitions = {}
 	base.DataChangeHooks = {}
 	base.NetworkHooks = {}
-	
+
 	setmetatable(base, { __index = Vermilion.ModuleBase })
-	
+
 	base:AddHook("VDefinePermission", function(permission)
 		if(base.PermissionDefinitions[permission] != nil) then return base.PermissionDefinitions[permission] end
 	end)
-	
+
 	return base
 end
 
@@ -541,14 +545,14 @@ end
 if(SERVER) then
 	util.AddNetworkString("VModuleDataEnableChange")
 	util.AddNetworkString("VModuleDataUpdate")
-	
+
 	net.Receive("VModuleDataUpdate", function(len, vplayer)
 		local mod = net.ReadString()
 		net.Start("VModuleDataUpdate")
 		net.WriteBoolean(Vermilion:GetData("addon_load_states", {}, true)[mod] != false)
 		net.Send(vplayer)
 	end)
-	
+
 	net.Receive("VModuleDataEnableChange", function(len, vplayer)
 		if(Vermilion:HasPermission(vplayer, "*")) then
 			local mod = net.ReadString()
@@ -557,7 +561,7 @@ if(SERVER) then
 	end)
 
 	util.AddNetworkString("VPlayerInitialSpawn")
-	
+
 	Vermilion:AddHook("PlayerInitialSpawn", "VClientNotify", true, function(vplayer)
 		net.Start("VPlayerInitialSpawn")
 		net.WriteTable({vplayer:GetName(), vplayer:SteamID(), Vermilion:GetUser(vplayer):GetRankName(), vplayer:EntIndex()})
@@ -590,9 +594,9 @@ if(SERVER) then
 				count = count + 1
 			end
 		end
-		
+
 		if(count > 0) then Vermilion:AddNotify(vplayer, "Removed " .. tostring(count) .. " banned entities from this duplication.", NOTIFY_ERROR) end
-		
+
 		return oldDupePaste(vplayer, entlist2, constraints)
 	end
 end
@@ -611,29 +615,35 @@ end
 	HINT = Green ("Help Orb")
 ]]--
 
-
 Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "AddJoinLeaveOption", true, function()
 	local mod = Vermilion:GetModule("server_settings")
 	if(mod != nil) then
-		mod:AddOption("Vermilion", "joinleave_enabled", "Enable Join/Leave messages", "Checkbox", "Misc", true)
+		mod:AddOption({
+			Module = "Vermilion",
+			Name = "joinleave_enabled",
+			GuiText = Vermilion:TranslateStr("config:joinleave_enabled"),
+			Type = "Checkbox",
+			Category = "Misc",
+			Default = true
+			})
 	end
 end)
 
 if(CLIENT) then
 	local notifications = {}
-	
+
 	local notifybg = nil
-	
+
 	timer.Simple(1, function()
 		notifybg = vgui.Create("DPanel")
 		notifybg:SetDrawBackground(false)
 		notifybg:SetPos(ScrW() - 298, 100)
 		notifybg:SetSize(300, ScrH() + 100)
-		
-		
+
+
 	end)
-	
-	
+
+
 	timer.Create("VOrganiseNotify", 0.1, 0, function()
 		local currentY = 0
 		for i,k in pairs(notifications) do
@@ -675,7 +685,7 @@ if(CLIENT) then
 		end
 		surface.DrawText( '!' )
 	end
-	
+
 	local function DrawHintSign(x, y, w, h)
 		surface.SetTextColor( 50, 255, 50, 255 * math.Clamp(math.sin(CurTime() * 4), 0.5, 1))
 		surface.SetFont('DermaLarge')
@@ -691,13 +701,26 @@ if(CLIENT) then
 		local wordsBuffer = {}
 		local lines = {}
 
-		for i,word in ipairs(string.Split(text, " ")) do -- iterate over words
+		local u = string.Split(text, " ")
+		local f = {}
+		for i,k in pairs(u) do
+			local m = string.Split(k, "\n")
+			local j = {}
+			for q,r in pairs(m) do
+				table.insert(j, r)
+				table.insert(j, "\n")
+			end
+			table.remove(j, table.Count(j))
+			table.Add(f, j)
+		end
+
+		for i,word in ipairs(f) do -- iterate over words
 			local w, h = surface.GetTextSize(table.concat(wordsBuffer, " "))
-			if (w > max) then
+			if (w > max or word == "\n") then
 				table.insert(lines, table.concat(wordsBuffer, " "))
 				table.Empty(wordsBuffer)
-				table.insert(wordsBuffer, word)
-			else
+				if(word != "\n") then table.insert(wordsBuffer, word) end
+			elseif(word != "\n") then
 				table.insert(wordsBuffer, word)
 			end
 		end
@@ -706,27 +729,28 @@ if(CLIENT) then
 			table.insert(lines, table.concat(wordsBuffer, " "))
 		end
 
-		return lines 
+		return lines
 	end
 
 	local function buildNotify(text, typ)
 		local notify = vgui.Create("DPanel")
 		notify:DockMargin(0, 0, 0, 5)
-		
+
 		surface.SetFont('DermaDefaultBold')
 		local size = select(2, surface.GetTextSize("Vermilion")) + 3
 		surface.SetFont("DermaDefault")
 		local data = breakNotification(text, 220)
 		for i,k in pairs(data) do
+			if(k == "\n") then continue end
 			size = size + select(2, surface.GetTextSize(k)) + 1
 		end
 		notify.MaxW = 300
 		notify.MaxH = size + 5
 		notify:SetSize(0, 0)
-		
+
 		notify.TYPE = typ or NOTIFY_GENERIC
 		notify.TEXT = data
-		
+
 		notify.Paint = function( self, w, h )
 			surface.SetDrawColor( 5, 5, 5, 220 )
 			surface.DrawRect( 0, 0, w, h )
@@ -735,21 +759,22 @@ if(CLIENT) then
 			if(self.TYPE == NOTIFY_GENERIC) then DrawNoteSign( w - 30, 2, 20, 20 ) surface.SetDrawColor( 100, 150, 255, 255 ) surface.SetTextColor( 100, 150, 255, 255 ) end
 			if(self.TYPE == NOTIFY_HINT) then DrawHintSign( w - 30, 2, 20, 20 ) surface.SetDrawColor( 50, 255, 50, 255) surface.SetTextColor( 50, 255, 50, 255) end
 			surface.DrawOutlinedRect( 0, 0, w, h )
-			
+
 			surface.SetTextPos( 5, 2 )
 			surface.SetFont( 'DermaDefaultBold' )
 			surface.DrawText( 'Vermilion' )
-			
+
 			local offset = 1
 			surface.SetTextPos( 5, select(2, surface.GetTextSize("Vermilion")) + 4)
 			surface.SetFont( 'DermaDefault' )
 			for i,k in pairs(data) do
+				if(k == "\n") then continue end
 				surface.SetTextPos( 5, select(2, surface.GetTextSize("Vermilion")) + 3 + (select(2, surface.GetTextSize(data[1])) * (i - 1)))
 				surface.DrawText(k)
 			end
-			
+
 		end
-		
+
 		return notify
 	end
 
@@ -770,7 +795,7 @@ if(CLIENT) then
 		notify.IntendedY = stser + (notify.MaxH / 2)
 		notify:SetParent(notifybg)
 		table.insert(notifications, notify)
-		
+
 		local anim = VToolkit:CreateNotificationAnimForPanel(notify)
 		local finished = false
 		local animData = {
@@ -789,11 +814,11 @@ if(CLIENT) then
 				end)
 			end
 		}
-		
+
 		notify.AnimationThink = function()
 			if(not finished) then anim:Run() else notify.AnimationThink = nil end
 		end
-		
+
 		anim:Start(3, animData)
 		return function()
 			notify:AlphaTo(0, 2, 0, function()
@@ -802,18 +827,18 @@ if(CLIENT) then
 			end)
 		end
 	end
-	
+
 	function Vermilion:AddNotify(text, typ, time)
 		self:AddNotification(text, typ, time)
 	end
-	
+
 	net.Receive("VNotify", function()
 		Vermilion:AddNotification(net.ReadString(), net.ReadInt(32), net.ReadInt(32))
 	end)
 
 else
 	util.AddNetworkString("VNotify")
-	
+
 	function Vermilion:AddNotification(recipient, text, typ, time)
 		typ = typ or NOTIFY_GENERIC
 		time = time or 10
@@ -823,21 +848,21 @@ else
 		net.WriteInt(time, 32)
 		net.Send(recipient)
 	end
-	
+
 	function Vermilion:AddNotify(recipient, text, typ, time)
 		self:AddNotification(recipient, text, typ, time)
 	end
-	
+
 	function Vermilion:BroadcastNotification(text, typ, time)
 		Vermilion.Log("[Notification:Broadcast] " .. tostring(text))
 		self:AddNotification(VToolkit.GetValidPlayers(false), text, typ, time)
 	end
-	
+
 	function Vermilion:BroadcastNotify(text, typ, time)
 		Vermilion.Log("[Notification:Broadcast] " .. tostring(text))
 		self:AddNotification(VToolkit.GetValidPlayers(false), text, typ, time)
 	end
-	
+
 	function Vermilion:TransBroadcastNotify(text, vars, typ, time, MODULE)
 		if(MODULE) then
 			Vermilion.Log("[Notification:TransBroadcast] " .. MODULE:TranslateStr(text, vars))
@@ -852,7 +877,7 @@ else
 			self:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
 		end
 	end
-	
+
 	function Vermilion:TransNotify(recipient, text, vars, typ, time, MODULE)
 		if(istable(recipient)) then
 			if(MODULE) then
@@ -872,5 +897,5 @@ else
 			end
 		end
 	end
-	
+
 end

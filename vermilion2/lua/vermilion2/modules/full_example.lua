@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 --[[
@@ -24,7 +24,7 @@
 
 --[[
 	MODULE is defined by Vermilion before loading the file. It is in the global scope.
-	
+
 	It will only be defined by Vermilion in your init.lua file. It will be nil outside
 	of the init.lua file where you must define it as a local variable yourself.
 ]]--
@@ -40,11 +40,11 @@ MODULE.Permissions = { -- a list of permissions that Vermilion should load. Note
 
 
 function MODULE:InitServer()
-	
+
 end
 
 function MODULE:InitClient()
-	
+
 end
 
 Vermilion:RegisterModule(MODULE)

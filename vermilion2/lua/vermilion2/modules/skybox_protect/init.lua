@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -32,7 +32,7 @@ MODULE.Point1 = {}
 
 function MODULE:LoadSettings()
 	local rawskyboxes = self:GetData("skyboxes", {})
-	if(table.Count(rawskyboxes) == 0) then 
+	if(table.Count(rawskyboxes) == 0) then
 		self:ResetSettings()
 		self:SaveSettings()
 	end
@@ -88,7 +88,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "cancelskybox",
 		Description = "Cancels the editing process.",
@@ -108,7 +108,15 @@ function MODULE:InitShared()
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		local mod = Vermilion:GetModule("server_settings")
 		if(mod != nil) then
-			mod:AddOption("skybox_protect", "enabled", "Enable Skybox Protector", "Checkbox", "Misc", false, "manage_skybox_protector")
+			mod:AddOption({
+				Module = "skybox_protect",
+				Name = "enabled",
+				GuiText = MODULE:TranslateStr("opt:enable"),
+				Type = "Checkbox",
+				Category = "Misc",
+				Default = false,
+				Permission = "manage_skybox_protector"
+				})
 		end
 	end)
 end
@@ -121,13 +129,13 @@ function MODULE:InitServer()
 			end)
 		end
 	end)
-	
+
 	local badClasses = {
 		"gmod_hands",
 		"predicted_viewmodel",
 		"physgun_beam"
 	}
-	
+
 	local function buildTimer()
 		timer.Create("Vermilion_Skyboxes", 1, 0, function()
 			if(MODULE.Skyboxes[game.GetMap()] != nil) then
@@ -148,11 +156,11 @@ function MODULE:InitServer()
 			end
 		end)
 	end
-	
+
 	if(MODULE:GetData("enabled", false)) then
 		buildTimer()
 	end
-	
+
 	self:AddDataChangeHook("enabled", "startprotect", function(val)
 		if(val) then
 			buildTimer()
@@ -160,12 +168,12 @@ function MODULE:InitServer()
 			timer.Destroy("Vermilion_Skyboxes")
 		end
 	end)
-	
+
 	self:AddHook(Vermilion.Event.ShuttingDown, "skybox_save", function()
 		MODULE:SaveSettings()
 	end)
 end
 
 function MODULE:InitClient()
-	
+
 end

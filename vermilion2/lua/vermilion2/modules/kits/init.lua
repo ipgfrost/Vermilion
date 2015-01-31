@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -76,7 +76,7 @@ function MODULE:RegisterChatCommands()
 			MODULE:GetData("subscriptions", {}, true)[sender:SteamID()] = text[1]
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "kitunsubscribe",
 		Description = "Clears a subscription to a kit.",
@@ -111,7 +111,7 @@ function MODULE:InitServer()
 			return true
 		end
 	end)
-	
+
 	local function sendKitList(vplayer)
 		local tab = {}
 		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
@@ -121,7 +121,7 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
-	
+
 	local function sendKitContent(vplayer, kitname)
 		MODULE:NetStart("VGetKitContents")
 		net.WriteString(kitname)
@@ -133,11 +133,11 @@ function MODULE:InitServer()
 		end
 		net.Send(vplayer)
 	end
-	
+
 	self:NetHook("VListKits", function(vplayer)
 		sendKitList(vplayer)
 	end)
-	
+
 	self:NetHook("VAddKit", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
@@ -152,7 +152,7 @@ function MODULE:InitServer()
 			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 		end
 	end)
-	
+
 	self:NetHook("VDelKit", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
@@ -165,19 +165,19 @@ function MODULE:InitServer()
 			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 		end
 	end)
-	
+
 	self:NetHook("VGetKitContents", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
 			sendKitContent(vplayer, name)
 		end
 	end)
-	
+
 	self:NetHook("VAddKitContents", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
 			local weapon = net.ReadString()
-			
+
 			local kit = nil
 			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 				if(k.Name == name) then
@@ -192,12 +192,12 @@ function MODULE:InitServer()
 			sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 		end
 	end)
-	
+
 	self:NetHook("VDelKitContents", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
 			local weapon = net.ReadString()
-			
+
 			local kit = nil
 			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 				if(k.Name == name) then
@@ -210,16 +210,16 @@ function MODULE:InitServer()
 			sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 		end
 	end)
-	
+
 	self:NetHook("VRenameKit", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
 			local newName = net.ReadString()
-			
+
 			for i,k in pairs(MODULE:GetData("subscriptions", {}, true)) do
 				if(k == name) then k = newName end
 			end
-			
+
 			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 				if(k.Name == name) then
 					k.Name = newName
@@ -229,7 +229,7 @@ function MODULE:InitServer()
 			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 		end
 	end)
-	
+
 	self:NetHook("VGetAllowedRanks", function(vplayer)
 		local name = net.ReadString()
 		local kit = nil
@@ -245,7 +245,7 @@ function MODULE:InitServer()
 		net.WriteTable(kit.RanksAllowed)
 		net.Send(vplayer)
 	end)
-	
+
 	self:NetHook("VAddAllowedRank", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
@@ -261,7 +261,7 @@ function MODULE:InitServer()
 			if(not table.HasValue(kit.RanksAllowed, rankname)) then table.insert(kit.RanksAllowed, rankname) end
 		end
 	end)
-	
+
 	self:NetHook("VDelAllowedRank", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
 			local name = net.ReadString()
@@ -277,7 +277,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(kit.RanksAllowed, rankname)
 		end
 	end)
-	
+
 	self:AddHook(Vermilion.Event.RankRenamed, function(oldName, newName)
 		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 			for i1,k1 in pairs(k.RanksAllowed) do
@@ -285,7 +285,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook(Vermilion.Event.RankDeleted, function(name)
 		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 			for i1,k1 in pairs(k.RanksAllowed) do
@@ -293,7 +293,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -306,7 +306,7 @@ function MODULE:InitClient()
 			paneldata.KitList:AddLine(k)
 		end
 	end)
-	
+
 	self:NetHook("VGetKitContents", function()
 		if(Vermilion.Menu.Pages["kit_creator"].KitList:GetSelected()[1] == nil) then return end
 		if(Vermilion.Menu.Pages["kit_creator"].KitList:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
@@ -324,7 +324,7 @@ function MODULE:InitClient()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VGetAllowedRanks", function(vplayer)
 		local name = net.ReadString()
 		local data = net.ReadTable()
@@ -335,9 +335,9 @@ function MODULE:InitClient()
 			allowedrnks:AddLine(k)
 		end
 	end)
-	
+
 	Vermilion.Menu:AddCategory("player", 4)
-	
+
 	Vermilion.Menu:AddPage({
 		ID = "kit_creator",
 		Name = "Kit Creator",
@@ -357,7 +357,7 @@ function MODULE:InitClient()
 			local kitList = nil
 			local allPermissions = nil
 			local kitContents = nil
-		
+
 			local default = {
 				["weapon_crowbar"] = "models/weapons/w_crowbar.mdl",
 				["weapon_pistol"] = "models/weapons/w_pistol.mdl",
@@ -378,12 +378,12 @@ function MODULE:InitClient()
 				if(default[class] != nil) then return default[class] end
 				return weapons.Get(class).WorldModel
 			end
-			
+
 			paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel, function(ent)
 				ent:SetPos(Vector(20, 20, 45))
 			end)
-		
-			
+
+
 			kitList = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -395,12 +395,12 @@ function MODULE:InitClient()
 			kitList:SetSize(200, panel:GetTall() - 110)
 			kitList:SetParent(panel)
 			paneldata.KitList = kitList
-			
+
 			VToolkit:CreateSearchBox(kitList)
-			
+
 			local kitHeader = VToolkit:CreateHeaderLabel(kitList, "Kits")
 			kitHeader:SetParent(panel)
-			
+
 			function kitList:OnRowSelected(index, line)
 				giveWeapon:SetDisabled(not (self:GetSelected()[1] != nil and allPermissions:GetSelected()[1] != nil))
 				takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and kitContents:GetSelected()[1] != nil))
@@ -411,15 +411,15 @@ function MODULE:InitClient()
 				net.WriteString(self:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end
-			
+
 			local addKitPanel = VToolkit:CreateLeftDrawer(panel)
 			paneldata.AddKitPanel = addKitPanel
-			
+
 			local kitName = VToolkit:CreateTextbox()
 			kitName:SetPos(10, 40)
 			kitName:SetSize(addKitPanel:GetWide() - 25, 25)
 			kitName:SetParent(addKitPanel)
-			
+
 			local addKitFinalButton = VToolkit:CreateButton("Add Kit", function()
 				local fKitName = kitName:GetValue()
 				if(fKitName == nil or fKitName == "") then
@@ -442,14 +442,14 @@ function MODULE:InitClient()
 			addKitFinalButton:SetPos(10, 75)
 			addKitFinalButton:SetSize(addKitPanel:GetWide() - 25, 25)
 			addKitFinalButton:SetParent(addKitPanel)
-			
+
 			addKit = VToolkit:CreateButton("New Kit", function()
 				addKitPanel:Open()
 			end)
 			addKit:SetPos(10, panel:GetTall() - 70)
 			addKit:SetSize(98, 25)
 			addKit:SetParent(panel)
-			
+
 			delKit = VToolkit:CreateButton("Delete Kit", function()
 				VToolkit:CreateConfirmDialog("Really delete kit?", function()
 					MODULE:NetStart("VDelKit")
@@ -466,15 +466,15 @@ function MODULE:InitClient()
 			delKit:SetParent(panel)
 			delKit:SetDisabled(true)
 			paneldata.DelKit = delKit
-			
+
 			local renKitPanel = VToolkit:CreateLeftDrawer(panel)
 			paneldata.RenKitPanel = renKitPanel
-			
+
 			local newKitName = VToolkit:CreateTextbox()
 			newKitName:SetPos(10, 40)
 			newKitName:SetSize(renKitPanel:GetWide() - 25, 25)
 			newKitName:SetParent(renKitPanel)
-			
+
 			local renKitFinalButton = VToolkit:CreateButton("Rename Kit", function()
 				local fKitName = newKitName:GetValue()
 				if(fKitName == nil or fKitName == "") then
@@ -499,7 +499,7 @@ function MODULE:InitClient()
 			renKitFinalButton:SetPos(10, 75)
 			renKitFinalButton:SetSize(renKitPanel:GetWide() - 25, 25)
 			renKitFinalButton:SetParent(renKitPanel)
-			
+
 			renKit = VToolkit:CreateButton("Rename Kit", function()
 				newKitName:SetValue(kitList:GetSelected()[1]:GetValue(1))
 				renKitPanel:Open()
@@ -509,10 +509,10 @@ function MODULE:InitClient()
 			renKit:SetDisabled(true)
 			renKit:SetParent(panel)
 			paneldata.RenKit = renKit
-			
+
 			local kitPermissionPanel = VToolkit:CreateLeftDrawer(panel, 100)
 			paneldata.KitPermissionPanel = kitPermissionPanel
-			
+
 			local kitPermissionsAllRanks = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -524,9 +524,9 @@ function MODULE:InitClient()
 			kitPermissionsAllRanks:SetPos(10, 40)
 			kitPermissionsAllRanks:SetSize(200, kitPermissionPanel:GetTall() - 50)
 			paneldata.KitPermissionsAllRanks = kitPermissionsAllRanks
-			
+
 			VToolkit:CreateHeaderLabel(kitPermissionsAllRanks, "Ranks"):SetParent(kitPermissionPanel)
-			
+
 			local kitPermissionsAllowedRanks = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -538,10 +538,10 @@ function MODULE:InitClient()
 			kitPermissionsAllowedRanks:SetPos(380, 40)
 			kitPermissionsAllowedRanks:SetSize(200, kitPermissionPanel:GetTall() - 50)
 			paneldata.KitPermissionsAllowedRanks = kitPermissionsAllowedRanks
-			
+
 			VToolkit:CreateHeaderLabel(kitPermissionsAllowedRanks, "Allowed Ranks"):SetParent(kitPermissionPanel)
 			VToolkit:CreateHeaderLabel(kitPermissionsAllRanks, "Ranks"):SetParent(kitPermissionPanel)
-			
+
 			local addKitPermission = VToolkit:CreateButton("Allow", function()
 				if(kitPermissionsAllRanks:GetSelected()[1] == nil) then
 					VToolkit:CreateErrorDialog("Must select at least one rank to add to the list of allowed ranks!")
@@ -567,7 +567,7 @@ function MODULE:InitClient()
 			addKitPermission:SetPos(220, 100)
 			addKitPermission:SetSize(150, 20)
 			addKitPermission:SetParent(kitPermissionPanel)
-			
+
 			local remKitPermission = VToolkit:CreateButton("Deny", function()
 				if(kitPermissionsAllowedRanks:GetSelected()[1] == nil) then
 					VToolkit:CreateErrorDialog("Must select at least one rank to remove from the list of allowed ranks!")
@@ -584,8 +584,8 @@ function MODULE:InitClient()
 			remKitPermission:SetPos(220, 130)
 			remKitPermission:SetSize(150, 20)
 			remKitPermission:SetParent(kitPermissionPanel)
-			
-			
+
+
 			openKitPermissions = VToolkit:CreateButton("Permissions", function()
 				MODULE:NetStart("VGetAllowedRanks")
 				net.WriteString(kitList:GetSelected()[1]:GetValue(1))
@@ -597,9 +597,9 @@ function MODULE:InitClient()
 			openKitPermissions:SetParent(panel)
 			openKitPermissions:SetDisabled(true)
 			paneldata.OpenKitPermissions = openKitPermissions
-			
-			
-			
+
+
+
 			kitContents = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -609,17 +609,17 @@ function MODULE:InitClient()
 			kitContents:SetSize(240, panel:GetTall() - 40)
 			kitContents:SetParent(panel)
 			paneldata.KitContents = kitContents
-			
+
 			local kitContentsHeader = VToolkit:CreateHeaderLabel(kitContents, "Kit Contents")
 			kitContentsHeader:SetParent(panel)
-			
+
 			function kitContents:OnRowSelected(index, line)
 				takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and kitList:GetSelected()[1] != nil))
 			end
-			
+
 			VToolkit:CreateSearchBox(kitContents)
-			
-			
+
+
 			allPermissions = VToolkit:CreateList({
 				cols = {
 					"Name"
@@ -629,18 +629,18 @@ function MODULE:InitClient()
 			allPermissions:SetSize(240, panel:GetTall() - 40)
 			allPermissions:SetParent(panel)
 			paneldata.AllPermissions = allPermissions
-			
+
 			local allPermissionsHeader = VToolkit:CreateHeaderLabel(allPermissions, "All Weapons")
 			allPermissionsHeader:SetParent(panel)
-			
+
 			function allPermissions:OnRowSelected(index, line)
 				giveWeapon:SetDisabled(not (self:GetSelected()[1] != nil and kitList:GetSelected()[1] != nil))
 			end
-			
+
 			VToolkit:CreateSearchBox(allPermissions)
-			
-			
-			
+
+
+
 			giveWeapon = VToolkit:CreateButton("Add Weapon", function()
 				for i,k in pairs(allPermissions:GetSelected()) do
 					local has = false
@@ -649,7 +649,7 @@ function MODULE:InitClient()
 					end
 					if(has) then continue end
 					kitContents:AddLine(k:GetValue(1)).ClassName = k.ClassName
-					
+
 					MODULE:NetStart("VAddKitContents")
 					net.WriteString(kitList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
@@ -660,14 +660,14 @@ function MODULE:InitClient()
 			giveWeapon:SetWide(panel:GetWide() - 20 - select(1, allPermissions:GetWide()) - select(1, giveWeapon:GetPos()))
 			giveWeapon:SetParent(panel)
 			giveWeapon:SetDisabled(true)
-			
+
 			takeWeapon = VToolkit:CreateButton("Remove Weapon", function()
 				for i,k in pairs(kitContents:GetSelected()) do
 					MODULE:NetStart("VDelKitContents")
 					net.WriteString(kitList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
 					net.SendToServer()
-					
+
 					kitContents:RemoveLine(k:GetID())
 				end
 			end)
@@ -675,11 +675,11 @@ function MODULE:InitClient()
 			takeWeapon:SetWide(panel:GetWide() - 20 - select(1, allPermissions:GetWide()) - select(1, takeWeapon:GetPos()))
 			takeWeapon:SetParent(panel)
 			takeWeapon:SetDisabled(true)
-			
+
 			addKitPanel:MoveToFront()
 			renKitPanel:MoveToFront()
 			kitPermissionPanel:MoveToFront()
-			
+
 			paneldata.GiveWeapon = giveWeapon
 			paneldata.TakeWeapon = takeWeapon
 		end,
@@ -698,32 +698,32 @@ function MODULE:InitClient()
 				for i,k in pairs(paneldata.Weapons) do
 					local ln = paneldata.AllPermissions:AddLine(k.Name)
 					ln.ClassName = k.ClassName
-					
+
 					ln.ModelPath = paneldata.getMdl(k.ClassName)
-					
+
 					ln.OldCursorMoved = ln.OnCursorMoved
 					ln.OldCursorEntered = ln.OnCursorEntered
 					ln.OldCursorExited = ln.OnCursorExited
-					
+
 					function ln:OnCursorEntered()
 						paneldata.PreviewPanel:SetVisible(true)
 						paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
-						
+
 						if(self.OldCursorEntered) then self:OldCursorEntered() end
 					end
-					
+
 					function ln:OnCursorExited()
 						paneldata.PreviewPanel:SetVisible(false)
-						
+
 						if(self.OldCursorExited) then self:OldCursorExited() end
 					end
-					
+
 					function ln:OnCursorMoved(x,y)
 						if(IsValid(paneldata.PreviewPanel)) then
 							local x, y = input.GetCursorPos()
 							paneldata.PreviewPanel:SetPos(x - 180, y - 117)
 						end
-						
+
 						if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
 					end
 				end
@@ -734,13 +734,13 @@ function MODULE:InitClient()
 			paneldata.DelKit:SetDisabled(true)
 			paneldata.RenKit:SetDisabled(true)
 			paneldata.OpenKitPermissions:SetDisabled(true)
-			
+
 			paneldata.KitPermissionPanel:Close()
 			paneldata.AddKitPanel:Close()
 			paneldata.RenKitPanel:Close()
-			
+
 			Vermilion:PopulateRankTable(paneldata.KitPermissionsAllRanks, false, true)
-			
+
 			MODULE:NetCommand("VListKits")
 		end
 	})

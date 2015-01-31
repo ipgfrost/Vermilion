@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 AddCSLuaFile()
@@ -35,7 +35,7 @@ function MODULE:BuddyListInitServer()
 		end
 		return lists[vplayer:SteamID()]
 	end
-	
+
 	function MODULE:GetBuddyListSteamID(steamid)
 		local lists = self:GetBuddyLists()
 		if(lists[steamid] == nil) then
@@ -43,7 +43,7 @@ function MODULE:BuddyListInitServer()
 		end
 		return lists[steamid]
 	end
-	
+
 	function MODULE:IsBuddyOf(vplayer, buddy)
 		if(not IsValid(vplayer) or not IsValid(buddy) or not vplayer:IsPlayer() or not buddy:IsPlayer()) then return false end
 		for i,k in pairs(self:GetBuddyList(vplayer)) do
@@ -51,7 +51,7 @@ function MODULE:BuddyListInitServer()
 		end
 		return false
 	end
-	
+
 	function MODULE:BuddyCanRunAction(vplayer, buddy, action)
 		if(not IsValid(buddy) or not buddy:IsPlayer()) then return false end
 		if(vplayer == nil) then return true end
@@ -64,27 +64,27 @@ function MODULE:BuddyListInitServer()
 		end
 		return false
 	end
-	
+
 	function MODULE:AddBuddy(vplayer, buddy)
 		if(not IsValid(vplayer) or not IsValid(buddy) or not vplayer:IsPlayer() or not buddy:IsPlayer()) then return end
 		if(table.Count(self:GetBuddyList(vplayer)) >= 64) then return end
 		table.insert(self:GetBuddyList(vplayer), { SteamID = buddy:SteamID(), Permissions = {} })
 	end
-	
+
 	function MODULE:DelBuddy(vplayer, buddy)
 		if(not IsValid(vplayer) or not IsValid(buddy) or not vplayer:IsPlayer() or not buddy:IsPlayer()) then return end
 		for i,k in pairs(self:GetBuddyList(vplayer)) do
 			if(k.SteamID == buddy:SteamID()) then self:GetBuddyList(vplayer)[i] = nil end
 		end
 	end
-	
+
 	function MODULE:DelBuddyBySteamID(vplayer, buddy)
 		if(not IsValid(vplayer) or not vplayer:IsPlayer()) then return end
 		for i,k in pairs(self:GetBuddyList(vplayer)) do
 			if(k.SteamID == buddy) then self:GetBuddyList(vplayer)[i] = nil end
 		end
 	end
-	
+
 	function MODULE:GetActiveBuddies(vplayer)
 		if(not IsValid(vplayer) or not vplayer:IsPlayer()) then return end
 		local tab = {}
@@ -94,7 +94,7 @@ function MODULE:BuddyListInitServer()
 		end
 		return tab
 	end
-	
+
 	local function sendBuddyList(vplayer, steamid)
 		MODULE:NetStart("VGetBuddyList")
 		local blist = MODULE:GetBuddyListSteamID(steamid)
@@ -107,18 +107,18 @@ function MODULE:BuddyListInitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
-	
+
 	self:NetHook("VGetBuddyList", function(vplayer)
 		sendBuddyList(vplayer, net.ReadString())
 	end)
-	
+
 	self:NetHook("VAddBuddy", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		if(table.Count(blist) >= 64) then return end
 		table.insert(blist, { SteamID = net.ReadString(), Permissions = {} })
 		sendBuddyList(vplayer, vplayer:SteamID())
 	end)
-	
+
 	self:NetHook("VDelBuddy", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
@@ -127,11 +127,11 @@ function MODULE:BuddyListInitServer()
 		end
 		sendBuddyList(vplayer, vplayer:SteamID())
 	end)
-	
+
 	self:NetHook("VGetBuddyPermissions", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
-		
+
 		local has = false
 		for i,k in pairs(blist) do
 			if(k.SteamID == tplayer) then
@@ -140,18 +140,18 @@ function MODULE:BuddyListInitServer()
 			end
 		end
 		if(not has) then return end
-		
+
 		MODULE:NetStart("VGetBuddyPermissions")
 		net.WriteTable(has.Permissions)
 		net.Send(vplayer)
 	end)
-	
+
 	self:NetHook("VUpdateBuddyPermissions", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
 		local typ = net.ReadString()
 		local val = net.ReadBoolean()
-		
+
 		local has = false
 		for i,k in pairs(blist) do
 			if(k.SteamID == tplayer) then
@@ -166,19 +166,19 @@ function MODULE:BuddyListInitServer()
 			table.RemoveByValue(has.Permissions, typ)
 		end
 	end)
-	
+
 end
 
 function MODULE:BuddyListInitClient()
-	
+
 	self:NetHook("VGetBuddyList", function()
 		local blist = net.ReadTable()
 		local paneldata = Vermilion.Menu.Pages["buddylist"]
-		
+
 		paneldata.BuddyList:Clear()
 		paneldata.QuotaBar:SetFraction(table.Count(blist) / 64)
 		paneldata.QuotaHeader:SetText(MODULE:TranslateStr("quotaheader", { tostring(table.Count(blist)) }))
-		
+
 		for i,k in pairs(blist) do
 			local plyr = VToolkit.LookupPlayerBySteamID(k.SteamID)
 			local friendStatus = "Unknown"
@@ -192,18 +192,18 @@ function MODULE:BuddyListInitClient()
 			paneldata.BuddyList:AddLine(k.Name, k.SteamID, friendStatus)
 		end
 	end)
-	
+
 	self:NetHook("VGetBuddyPermissions", function()
 		local paneldata = Vermilion.Menu.Pages["buddylist"]
 		local data = net.ReadTable()
-		
+
 		for i,k in pairs(paneldata.PermissionsCheckboxes) do
 			k.UpdatingFromServer = true
 			k:SetChecked(table.HasValue(data, i))
 			k.UpdatingFromServer = false
 		end
 	end)
-	
+
 	Vermilion.Menu:AddPage({
 		ID = "buddylist",
 		Name = "Buddy List",
@@ -222,26 +222,26 @@ function MODULE:BuddyListInitClient()
 			buddies:SetParent(panel)
 			buddies:SetSize(500, 600)
 			paneldata.BuddyList = buddies
-			
-			
-			
+
+
+
 			VToolkit:CreateHeaderLabel(buddies, "Buddies"):SetParent(panel)
-			
+
 			local quotaBar = vgui.Create("DProgress")
 			quotaBar:SetPos(520, 600)
 			quotaBar:SetSize(panel:GetWide() - quotaBar:GetX() - 10, 20)
 			quotaBar:SetParent(panel)
 			paneldata.QuotaBar = quotaBar
-			
+
 			local quotaHeader = VToolkit:CreateHeaderLabel(quotaBar, MODULE:TranslateStr("quotaheader", { "0" }))
 			quotaHeader:SetParent(panel)
 			paneldata.QuotaHeader = quotaHeader
-			
+
 			local addBuddyDrawer = VToolkit:CreateRightDrawer(panel, 0)
 			paneldata.AddBuddyDrawer = addBuddyDrawer
-			
+
 			local addBuddyList = VToolkit:CreateList({
-				cols = { 
+				cols = {
 					"Name"
 				}
 			})
@@ -249,12 +249,12 @@ function MODULE:BuddyListInitClient()
 			addBuddyList:SetSize(200, panel:GetTall() - 50)
 			addBuddyList:SetParent(addBuddyDrawer)
 			paneldata.AddBuddyList = addBuddyList
-			
+
 			VToolkit:CreateSearchBox(addBuddyList)
-			
+
 			local addBuddyHeader = VToolkit:CreateHeaderLabel(addBuddyList, "Active Players")
 			addBuddyHeader:SetParent(addBuddyDrawer)
-			
+
 			local addBuddyFinalBtn = VToolkit:CreateButton("Add Player(s)", function()
 				if(table.Count(addBuddyList:GetSelected()) == 0) then
 					VToolkit:CreateErrorDialog("Must select at least one player to add.")
@@ -269,18 +269,18 @@ function MODULE:BuddyListInitClient()
 			addBuddyFinalBtn:SetPos(addBuddyDrawer:GetWide() - 185, (addBuddyDrawer:GetTall() - addBuddyFinalBtn:GetTall()) / 2)
 			addBuddyFinalBtn:SetWide(addBuddyDrawer:GetWide() - addBuddyFinalBtn:GetX() - 15)
 			addBuddyFinalBtn:SetParent(addBuddyDrawer)
-			
+
 			local addBuddyBtn = VToolkit:CreateButton("Add Buddy", function()
 				addBuddyDrawer:Open()
 			end)
 			addBuddyBtn:SetParent(panel)
 			addBuddyBtn:SetPos(520, 30)
 			addBuddyBtn:SetSize(panel:GetWide() - addBuddyBtn:GetX() - 10, 20)
-			
-			
+
+
 			local editBuddyDrawer = VToolkit:CreateRightDrawer(panel, 0)
 			paneldata.EditBuddyDrawer = editBuddyDrawer
-			
+
 			local permissionsList = VToolkit:CreateList({
 				cols = {
 					"Name",
@@ -291,10 +291,10 @@ function MODULE:BuddyListInitClient()
 			permissionsList:SetPos(10, 50)
 			permissionsList:SetParent(editBuddyDrawer)
 			permissionsList:SetSize(editBuddyDrawer:GetWide() - 20, editBuddyDrawer:GetTall() - 70)
-			
+
 			permissionsList.Columns[2]:SetMaxWidth(20)
-			
-			
+
+
 			local permissions = {
 				{ "Toolgun", "toolgun" },
 				{ "Gravity Gun", "gravgun" },
@@ -305,9 +305,9 @@ function MODULE:BuddyListInitClient()
 				{ "Edit Properties", "property" },
 				{ "Edit Variables", "variable" }
 			}
-			
+
 			local permissionsCB = {}
-			
+
 			for i,k in pairs(permissions) do
 				local ln = permissionsList:AddLine(k[1])
 				ln.MachineText = k[2]
@@ -329,7 +329,7 @@ function MODULE:BuddyListInitClient()
 				permissionsCB[k[2]] = cb
 			end
 			paneldata.PermissionsCheckboxes = permissionsCB
-			
+
 			local editPermissionsBtn = VToolkit:CreateButton("Edit Buddy Permissions", function()
 				MODULE:NetStart("VGetBuddyPermissions")
 				net.WriteString(buddies:GetSelected()[1]:GetValue(2))
@@ -341,9 +341,9 @@ function MODULE:BuddyListInitClient()
 			editPermissionsBtn:SetSize(panel:GetWide() - editPermissionsBtn:GetX() - 10, 20)
 			editPermissionsBtn:SetDisabled(true)
 			paneldata.EditPermissionsButton = editPermissionsBtn
-			
-			
-			
+
+
+
 			local deleteBuddyBtn = VToolkit:CreateButton("Delete Buddy", function()
 				MODULE:NetStart("VDelBuddy")
 				net.WriteString(buddies:GetSelected()[1]:GetValue(2))
@@ -354,12 +354,12 @@ function MODULE:BuddyListInitClient()
 			deleteBuddyBtn:SetSize(panel:GetWide() - deleteBuddyBtn:GetX() - 10, 20)
 			deleteBuddyBtn:SetDisabled(true)
 			paneldata.DelBuddyBtn = deleteBuddyBtn
-			
+
 			function buddies:OnRowSelected(index, line)
 				editPermissionsBtn:SetDisabled(self:GetSelected()[1] == nil)
 				deleteBuddyBtn:SetDisabled(self:GetSelected()[1] == nil)
 			end
-			
+
 			addBuddyDrawer:MoveToFront()
 			editBuddyDrawer:MoveToFront()
 		end,
@@ -370,7 +370,7 @@ function MODULE:BuddyListInitClient()
 			MODULE:NetStart("VGetBuddyList")
 			net.WriteString(LocalPlayer():SteamID())
 			net.SendToServer()
-			
+
 			paneldata.AddBuddyList:Clear()
 			for i,k in pairs(VToolkit.GetValidPlayers()) do
 				if(k:SteamID() == LocalPlayer():SteamID()) then continue end
@@ -382,5 +382,5 @@ function MODULE:BuddyListInitClient()
 			paneldata.DelBuddyBtn:SetDisabled(true)
 		end
 	})
-	
+
 end

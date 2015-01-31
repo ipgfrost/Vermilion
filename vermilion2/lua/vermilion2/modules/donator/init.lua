@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -32,12 +32,12 @@ MODULE.NetworkStrings = {
 
 --[[
 	Specs for the backend:
-	
+
 	- Must return a properly formatted JSON table.
 	- Must return a "status" property in the table. If the request failed, return "failed" in this property. Anything else is a success.
 	- Must return a "query_result" property if successful. This must be "true" if the player is registered as a donator.
 	- May return a "rank_promote" property if successful. This gives the player a new rank.
-	- May return an "amount" property if successful. This will be used in the message that is broadcast to all players. Must be a string with the currency information as well. (i.e. £15)
+	- May return an "amount" property if successful. This will be used in the message that is broadcast to all players. Must be a string with the currency information as well. (i.e. ï¿½15)
 ]]--
 
 function MODULE:InitServer()
@@ -65,14 +65,14 @@ function MODULE:InitServer()
 			end)
 		end
 	end)
-	
+
 	self:NetHook("VUpdateDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
 			MODULE:SetData("enabled", net.ReadBoolean())
 			MODULE:SetData("donator_url", net.ReadString())
 		end
 	end)
-	
+
 	self:NetHook("VGetDonatorMode", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
 			MODULE:NetStart("VGetDonatorMode")
@@ -97,7 +97,7 @@ function MODULE:InitClient()
 		end,
 		Builder = function(panel, paneldata)
 			local urltb = nil
-			
+
 			local enabled = VToolkit:CreateCheckBox("Enable donator promotion mode")
 			enabled:SizeToContents()
 			enabled:SetPos(10, 10)
@@ -110,7 +110,7 @@ function MODULE:InitClient()
 				net.SendToServer()
 			end
 			paneldata.EnableDonatorMode = enabled
-			
+
 			urltb = VToolkit:CreateTextbox("", panel)
 			urltb:SetPos(10, 200)
 			urltb:SetSize(panel:GetWide() - 20, 20)
@@ -122,18 +122,18 @@ function MODULE:InitClient()
 				net.SendToServer()
 			end
 			paneldata.DonatorURL = urltb
-			
+
 			local tblab = VToolkit:CreateLabel("")
 			tblab:SetPos(10, 50)
 			tblab:SetParent(panel)
-			tblab:SetText("This is the URL that Vermilion will contact to obtain the information to check which players are donators or not. Place %steamid% as\nthe value of one of the GET parameters. The server has to return a JSON table.\n\nSpecs:\n- Must return a properly formatted JSON table.\n- Must return a \"status\" property in the table. If the request failed, return \"failed\" in this property. Anything else is a success.\n- Must return a \"query_result\" property if successful. This must be \"true\" if the player is registered as a donator.\n- May return a \"rank_promote\" property if successful. This gives the player a new rank.\n- May return an \"amount\" property if successful. This will be used in the message that is broadcast to all players.\n Must be a string with the currency information as well. (i.e. £15)")
+			tblab:SetText("This is the URL that Vermilion will contact to obtain the information to check which players are donators or not. Place %steamid% as\nthe value of one of the GET parameters. The server has to return a JSON table.\n\nSpecs:\n- Must return a properly formatted JSON table.\n- Must return a \"status\" property in the table. If the request failed, return \"failed\" in this property. Anything else is a success.\n- Must return a \"query_result\" property if successful. This must be \"true\" if the player is registered as a donator.\n- May return a \"rank_promote\" property if successful. This gives the player a new rank.\n- May return an \"amount\" property if successful. This will be used in the message that is broadcast to all players.\n Must be a string with the currency information as well. (i.e. ï¿½15)")
 			tblab:SetWide(panel:GetWide() - 10)
 			tblab:SetTall(150)
 			tblab:SetDark(true)
 			tblab:SizeToContents()
 		end,
 		OnOpen = function(panel)
-		
+
 		end
 	})
 end

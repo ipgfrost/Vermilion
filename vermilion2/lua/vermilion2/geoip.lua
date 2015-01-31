@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett
+ Copyright 2015 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 Vermilion.GeoIP = {}
@@ -31,9 +31,9 @@ Vermilion.GeoIP.BlockedIPs = {
 
 if(SERVER) then
 	util.AddNetworkString("VGetClientIP")
-	
+
 	Vermilion.GeoIP.Requests = {}
-	
+
 	net.Receive("VGetClientIP", function(len, vplayer)
 		local requestData = Vermilion.GeoIP.Requests[vplayer:SteamID()]
 		local ip = net.ReadString()
@@ -57,19 +57,25 @@ end)
 Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "GeoIPOptions", true, function()
 	local mod = Vermilion:GetModule("server_settings")
 	if(mod != nil) then
-		mod:AddOption("Vermilion", "geoip_enabled", Vermilion:TranslateStr("geoip:enablesetting"), "Checkbox", "Misc")
+		mod:AddOption({
+			Module = "Vermilion",
+			Name = "geoip_enabled",
+			GuiText = Vermilion:TranslateStr("geoip:enablesetting"),
+			Type = "Checkbox",
+			Category = "Misc"
+			})
 	end
 end)
 
 
 if(SERVER) then
 	Vermilion:GetData("geoip_enabled", true, true) -- create the variable if it doesn't exist.
-	
+
 	Vermilion:AddDataChangeHook("geoip_enabled", "network_geoip", function(val)
 		SetGlobalBool("geoip_enabled", val)
 	end)
 	SetGlobalBool("geoip_enabled", Vermilion:GetData("geoip_enabled", true, true))
-	
+
 	Vermilion.GeoIP.Cache = {}
 
 	function Vermilion.GeoIP:LoadConfiguration()
@@ -173,16 +179,16 @@ if(SERVER) then
 		end
 		self:Trace(addr, callback, fcallback, vplayer)
 	end
-	
+
 	Vermilion:AddHook("PlayerInitialSpawn", "GeoIPUpdate", true, function(vplayer)
 		Vermilion.GeoIP:TracePlayer(vplayer, function(ip, data)
 			vplayer:SetNWString("CountryCode", data.CountryCode)
 		end)
 	end)
-	
+
 
 else
-	
+
 	--- temp code until I add the new TargetID
 	Vermilion:AddHook("Vermilion2_TargetIDDataGeoIP", "GeoIPTargetID", false, function(vplayer)
 		if(not GetGlobalBool("geoip_enabled")) then return end
@@ -190,28 +196,28 @@ else
 			vplayer.VCountry = string.lower(vplayer:GetNWString("CountryCode"))
 			vplayer.VCountryMat = Material("flags16/" .. vplayer.VCountry .. ".png", "noclamp smooth")
 		end
-		return vplayer.VCountryMat 
+		return vplayer.VCountryMat
 		--[[ local tr = util.GetPlayerTrace( LocalPlayer() )
 		local trace = util.TraceLine( tr )
 		if (!trace.Hit) then return end
 		if (!trace.HitNonWorld) then return end
-		
+
 		if (not trace.Entity:IsPlayer() or trace.Entity:IsBot()) then
 			return
 		end
-		
+
 		local MouseX, MouseY = gui.MousePos()
-		
+
 		if ( MouseX == 0 && MouseY == 0 ) then
-		
+
 			MouseX = ScrW() / 2
 			MouseY = ScrH() / 2
-		
+
 		end
-		
+
 		local x = MouseX
 		local y = MouseY
-		
+
 		x = x - 22 / 2
 		y = y + 75
 
@@ -219,10 +225,10 @@ else
 			trace.Entity.VCountry = string.lower(trace.Entity:GetNWString("CountryCode"))
 			trace.Entity.VCountryMat = Material("flags16/" .. trace.Entity.VCountry .. ".png", "noclamp smooth")
 		end
-		
+
 		surface.SetMaterial(trace.Entity.VCountryMat)
 		surface.SetDrawColor(255, 255, 255, 255)
 		surface.DrawTexturedRect(x, y, 24, 16.5) ]]
 	end)
-	
+
 end

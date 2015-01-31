@@ -1,5 +1,5 @@
 --[[
- Copyright 2014 Ned Hyett, 
+ Copyright 2015 Ned Hyett, 
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,11 +10,11 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
- 
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
+
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so. 
+ in any way, nor claims to be so.
 ]]
 
 local MODULE = MODULE
@@ -39,26 +39,26 @@ function MODULE:InitServer()
 			return false
 		end
 	end)
-	
+
 	self:AddHook("PlayerCanPickupWeapon", function(vplayer, weapon)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), weapon:GetClass())) then
 			return false
 		end
 	end)
-	
+
 	self:AddHook("Vermilion_IsEntityDuplicatable", function(vplayer, class)
 		if(not IsValid(vplayer)) then return end
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), class)) then
 			return false
 		end
 	end)
-	
+
 	self:AddHook("PlayerSpawnSENT", function(vplayer, class)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), class)) then
 			return false
 		end
 	end)
-	
+
 	function MODULE:ScanForIllegalWeapons(vplayer)
 		if(not IsValid(vplayer)) then return end
 		if(not Vermilion:HasUser(vplayer)) then return end
@@ -70,20 +70,20 @@ function MODULE:InitServer()
 			end
 		end
 	end
-	
+
 	self:AddHook("PlayerSpawn", function(vplayer)
-		timer.Simple(1, function() 
+		timer.Simple(1, function()
 			MODULE:ScanForIllegalWeapons(vplayer)
 		end)
 	end)
-	
+
 	self:AddHook("PlayerSwitchWeapon", function(vplayer, old, new)
 		MODULE:ScanForIllegalWeapons(vplayer)
 	end)
-	
-	
-	
-	
+
+
+
+
 	self:NetHook("VGetWeaponLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -99,7 +99,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VBlockWeapon", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
 			local rnk = net.ReadString()
@@ -109,7 +109,7 @@ function MODULE:InitServer()
 			end
 		end
 	end)
-	
+
 	self:NetHook("VUnblockWeapon", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
 			local rnk = net.ReadString()
@@ -117,7 +117,7 @@ function MODULE:InitServer()
 			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
-	
+
 end
 
 function MODULE:InitClient()
@@ -141,7 +141,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("limits", 5)
-	
+
 	Vermilion.Menu:AddPage({
 			ID = "limit_weapons",
 			Name = "Weapons",
@@ -157,7 +157,7 @@ function MODULE:InitClient()
 				local rankList = nil
 				local allWeapons = nil
 				local rankBlockList = nil
-			
+
 				local default = {
 					["weapon_crowbar"] = "models/weapons/w_crowbar.mdl",
 					["weapon_pistol"] = "models/weapons/w_pistol.mdl",
@@ -178,12 +178,12 @@ function MODULE:InitClient()
 					if(default[class] != nil) then return default[class] end
 					return weapons.Get(class).WorldModel
 				end
-				
+
 				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel, function(ent)
 					ent:SetPos(Vector(20, 20, 45))
 				end)
-			
-				
+
+
 				rankList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -196,10 +196,10 @@ function MODULE:InitClient()
 				rankList:SetSize(200, panel:GetTall() - 40)
 				rankList:SetParent(panel)
 				paneldata.RankList = rankList
-				
+
 				local rankHeader = VToolkit:CreateHeaderLabel(rankList, "Ranks")
 				rankHeader:SetParent(panel)
-				
+
 				function rankList:OnRowSelected(index, line)
 					blockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and allWeapons:GetSelected()[1] != nil))
 					unblockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
@@ -207,7 +207,7 @@ function MODULE:InitClient()
 					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 				end
-				
+
 				rankBlockList = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -217,17 +217,17 @@ function MODULE:InitClient()
 				rankBlockList:SetSize(240, panel:GetTall() - 40)
 				rankBlockList:SetParent(panel)
 				paneldata.RankBlockList = rankBlockList
-				
+
 				local rankBlockListHeader = VToolkit:CreateHeaderLabel(rankBlockList, "Blocked Weapons")
 				rankBlockListHeader:SetParent(panel)
-				
+
 				function rankBlockList:OnRowSelected(index, line)
 					unblockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(rankBlockList)
-				
-				
+
+
 				allWeapons = VToolkit:CreateList({
 					cols = {
 						"Name"
@@ -237,17 +237,17 @@ function MODULE:InitClient()
 				allWeapons:SetSize(240, panel:GetTall() - 40)
 				allWeapons:SetParent(panel)
 				paneldata.AllWeapons = allWeapons
-				
+
 				local allWeaponsHeader = VToolkit:CreateHeaderLabel(allWeapons, "All Weapons")
 				allWeaponsHeader:SetParent(panel)
-				
+
 				function allWeapons:OnRowSelected(index, line)
 					blockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and rankList:GetSelected()[1] != nil))
 				end
-				
+
 				VToolkit:CreateSearchBox(allWeapons)
-				
-				
+
+
 				blockWeapon = VToolkit:CreateButton("Block Weapon", function()
 					for i,k in pairs(allWeapons:GetSelected()) do
 						local has = false
@@ -256,7 +256,7 @@ function MODULE:InitClient()
 						end
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
-						
+
 						MODULE:NetStart("VBlockWeapon")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
@@ -267,14 +267,14 @@ function MODULE:InitClient()
 				blockWeapon:SetWide(panel:GetWide() - 20 - select(1, allWeapons:GetWide()) - select(1, blockWeapon:GetPos()))
 				blockWeapon:SetParent(panel)
 				blockWeapon:SetDisabled(true)
-				
+
 				unblockWeapon = VToolkit:CreateButton("Unblock Weapon", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockWeapon")
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k.ClassName)
 						net.SendToServer()
-						
+
 						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
@@ -282,11 +282,11 @@ function MODULE:InitClient()
 				unblockWeapon:SetWide(panel:GetWide() - 20 - select(1, allWeapons:GetWide()) - select(1, unblockWeapon:GetPos()))
 				unblockWeapon:SetParent(panel)
 				unblockWeapon:SetDisabled(true)
-				
+
 				paneldata.BlockWeapon = blockWeapon
 				paneldata.UnblockWeapon = unblockWeapon
-				
-				
+
+
 			end,
 			OnOpen = function(panel, paneldata)
 				if(paneldata.Weapons == nil) then
@@ -303,32 +303,32 @@ function MODULE:InitClient()
 					for i,k in pairs(paneldata.Weapons) do
 						local ln = paneldata.AllWeapons:AddLine(k.Name)
 						ln.ClassName = k.ClassName
-						
+
 						ln.ModelPath = paneldata.getMdl(k.ClassName)
-						
+
 						ln.OldCursorMoved = ln.OnCursorMoved
 						ln.OldCursorEntered = ln.OnCursorEntered
 						ln.OldCursorExited = ln.OnCursorExited
-						
+
 						function ln:OnCursorEntered()
 							paneldata.PreviewPanel:SetVisible(true)
 							paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
-							
+
 							if(self.OldCursorEntered) then self:OldCursorEntered() end
 						end
-						
+
 						function ln:OnCursorExited()
 							paneldata.PreviewPanel:SetVisible(false)
-							
+
 							if(self.OldCursorExited) then self:OldCursorExited() end
 						end
-						
+
 						function ln:OnCursorMoved(x,y)
 							if(IsValid(paneldata.PreviewPanel)) then
 								local x, y = input.GetCursorPos()
 								paneldata.PreviewPanel:SetPos(x - 180, y - 117)
 							end
-							
+
 							if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
 						end
 					end
@@ -339,5 +339,5 @@ function MODULE:InitClient()
 				paneldata.UnblockWeapon:SetDisabled(true)
 			end
 		})
-	
+
 end
