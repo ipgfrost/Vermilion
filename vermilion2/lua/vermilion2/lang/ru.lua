@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett
+ Copyright 2014 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -10,25 +10,18 @@
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  or implied. See the License for the specific language governing permissions and limitations under
  the License.
-
- The right to upload this project to the Steam Workshop (which is operated by Valve Corporation)
+ 
+ The right to upload this project to the Steam Workshop (which is operated by Valve Corporation) 
  is reserved by the original copyright holder, regardless of any modifications made to the code,
  resources or related content. The original copyright holder is not affiliated with Valve Corporation
- in any way, nor claims to be so.
+ in any way, nor claims to be so. 
 ]]
-
 --[[
 Translated by BatyaMedic
 http://steamcommunity.com/id/batyamedic
 ]]
 
---[[
-	Note: Always save this file in "UTF-8 w/o BOM" when using NP++ or the characters will be lost!
-]]
-
 local lang = Vermilion:CreateLangBody("Russian")
-
-lang.ButtonFontScale = 0.9 -- this is needed to make all the text fit onto most of the buttons because it would be a pain to re-build all the GUIs to accommodate for this.
 
 lang:Add("yes", "Да")
 lang:Add("no", "Нет")
@@ -80,9 +73,9 @@ lang:Add("category:limits", "Лимиты")
 
 ]]--
 lang:Add("addon_validator:title", "Аддоны мастерской")
-lang:Add("addon_validator:windowtext", [[Vermilion обнаружил что у вас нет этих аддонов.
+lang:Add("addon_validator:windowtext", [[Vermilion обнаружил что у вас нет этих аддонов. 
 
-Скачайте эти аддоны и вам будет легче заходить на сервер и у вас не будет ERROR`ов и эмо-текстур!
+Скачайте эти аддоны и вам будет легче заходить на сервер,и у вас не будет ERROR`ов и эмо-текстур! 
 
 Используйте этот лист!]])
 lang:Add("addon_validator:open_workshop_page", "Открыть страницу мастерской")
@@ -113,10 +106,10 @@ lang:Add("autobroadcast:new:gz", "Интервал не может быть ра
 	//		Battery Meter		\\
 
 ]]--
-lang:Add("battery_meter:unplugged", "Компьютер отключен!")
-lang:Add("battery_meter:pluggedin", "Компьютер подключен!")
-lang:Add("battery_meter:low", "Батарея разряжена: %s%%!")
-lang:Add("battery_meter:critical", "Критический статус батареи: %s%%!")
+lang:Add("battery_meter:unplugged", "Ноут отключен!")
+lang:Add("battery_meter:pluggedin", "Ноут подключен!")
+lang:Add("battery_meter:low", "Батарея разряжена: %s%!")
+lang:Add("battery_meter:critical", "Критический заряд батареи: %s%!")
 lang:Add("battery_meter:interface", "Уровень Заряда: %s%%")
 lang:Add("battery_meter:cl_opt", "Включить Смотрителя заряда батареи")
 
