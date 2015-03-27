@@ -26,6 +26,10 @@ Vermilion.ChatCommandConst = {
 	NumberRangeArg = 5
 }
 
+net.Receive("VClientPrint", function()
+	Vermilion.Log(net.ReadString(), "Server CMD")
+end)
+
 function Vermilion:AddChatCommand(props)
 	Vermilion.ChatCommandsClient[props.Name] = props
 end

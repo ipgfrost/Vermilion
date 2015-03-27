@@ -105,7 +105,7 @@ function Vermilion.GetVersionString()
 end
 
 function Vermilion.GetVersion()
-	return 2, 4, 0
+	return 2, 5, 0
 end
 
 Vermilion.Internal = {}
@@ -128,13 +128,14 @@ Vermilion.Event = {
 	["PlayerChangeRank"] = "Vermilion2_PlayerRankChange"
 }
 
-function Vermilion.Log( str )
+function Vermilion.Log( str, forceside )
 	local side = "UNKNOWN"
 	if(SERVER) then
 		side = "Server"
 	elseif(CLIENT) then
 		side = "Client"
 	end
+	if(forceside != nil) then side = forceside end
 	if(not istable(str)) then
 		str = { Color(255, 0, 0), "[Vermilion2 - " .. side .. "] ", Color(255, 255, 255), str }
 	else
@@ -150,6 +151,7 @@ function Vermilion.Log( str )
 			table.insert(texttab, tostring(k))
 		end
 	end
+	if(forceside != nil) then return end
 	file.Append("vermilion2/vermilion_" .. string.lower(side) .. "_log.txt", util.DateStamp() .. " " .. table.concat(texttab, " ") .. "\n")
 end
 

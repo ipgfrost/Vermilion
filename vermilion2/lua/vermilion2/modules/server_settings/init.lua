@@ -922,6 +922,7 @@ function MODULE:InitServer()
 	end)
 
 	self:AddHook("EntityTakeDamage", function(victim, dmg)
+		if(dmg:IsDamageType(DMG_FALL)) then return end
 		local attacker = dmg:GetAttacker()
 		if(IsValid(victim) and victim:IsPlayer()) then
 			local damageMode = MODULE:GetData("enable_no_damage", 3)
@@ -993,7 +994,7 @@ function MODULE:InitServer()
 			MODULE:NetStart("VUserDataList")
 			local tab = {}
 			for i,k in pairs(Vermilion.Data.Users) do
-				table.insert(tab, { Name = k.Name, Rank = k.Rank })
+				table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
 			end
 			net.WriteTable(tab)
 			net.Send(vplayer)
@@ -1004,6 +1005,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
 			MODULE:NetStart("VGetUserData")
 			local username = net.ReadString()
+			net.WriteBoolean(true)
 			net.WriteString(username)
 			for i,k in pairs(Vermilion.Data.Users) do
 				if(k.Name == username) then
@@ -1012,6 +1014,28 @@ function MODULE:InitServer()
 				end
 			end
 			net.Send(vplayer)
+		end
+	end)
+	
+	self:NetHook("VDelUserData", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
+			local tSteamID = net.ReadString()
+			for i,k in pairs(Vermilion.Data.Users) do
+				if(k.SteamID == tSteamID) then
+					table.RemoveByValue(Vermilion.Data.Users, k)
+					MODULE:NetStart("VUserDataList")
+					local tab = {}
+					for i,k in pairs(Vermilion.Data.Users) do
+						table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
+					end
+					net.WriteTable(tab)
+					net.Send(vplayer)
+					MODULE:NetStart("VGetUserData")
+					net.WriteBoolean(false)
+					net.Send(vplayer)
+					return
+				end
+			end
 		end
 	end)
 
@@ -1161,7 +1185,7 @@ function MODULE:InitClient()
 
 		paneldata.UserList:Clear()
 		for i,k in pairs(net.ReadTable()) do
-			paneldata.UserList:AddLine(k.Name, k.Rank)
+			paneldata.UserList:AddLine(k.Name, k.Rank).SteamID = k.SteamID
 		end
 	end)
 
@@ -1194,10 +1218,15 @@ function MODULE:InitClient()
 		local paneldata = Vermilion.Menu.Pages["userdata"]
 		local panel = paneldata.Panel
 
+		if(not net.ReadBoolean()) then
+			if(IsValid(paneldata.BaseNode)) then paneldata.BaseNode:Remove() end
+			return
+		end
+		
 		local username = net.ReadString()
 		local data = net.ReadTable()
 
-		if(paneldata.BaseNode != nil) then paneldata.BaseNode:Remove() end
+		if(IsValid(paneldata.BaseNode)) then paneldata.BaseNode:Remove() end
 
 		paneldata.BaseNode = paneldata.Tree:AddNode(username)
 		repeatParseTree(data, paneldata.BaseNode)
@@ -1236,7 +1265,10 @@ function MODULE:InitClient()
 					label:SetPos(10, 3 + 3)
 					label:SetParent(panel)
 
-					local combobox = VToolkit:CreateComboBox()
+					local nonalphabetical = k.NonAlphabetical
+					if(nonalphabetical == nil) then nonalphabetical = true end
+					
+					local combobox = VToolkit:CreateComboBox(nil, nil, nonalphabetical)
 					combobox:SetPos(paneldata.SettingsList:GetWide() - 230, 3)
 					combobox:Dock(RIGHT)
 					combobox:DockMargin(0, 2, 5, 2)
@@ -1433,7 +1465,7 @@ function MODULE:InitClient()
 				MODULE:TranslateStr("motd:std"),
 				MODULE:TranslateStr("motd:html"),
 				MODULE:TranslateStr("motd:url")
-			}, 1)
+			}, 1, true)
 			typCombo:SetParent(panel)
 			typCombo:SetPos(10, 415)
 			typCombo:SetSize(200, 20)
@@ -1540,6 +1572,7 @@ function MODULE:InitClient()
 				MODULE:NetStart("VGetUserData")
 				net.WriteString(line:GetValue(1))
 				net.SendToServer()
+				paneldata.DeleteBtn:SetDisabled(false)
 			end
 
 			VToolkit:CreateHeaderLabel(userList, MODULE:TranslateStr("userdata:users")):SetParent(panel)
@@ -1554,7 +1587,12 @@ function MODULE:InitClient()
 
 
 			local deleteBtn = VToolkit:CreateButton(MODULE:TranslateStr("userdata:delete"), function()
-
+				VToolkit:CreateConfirmDialog("Really delete this userdata?", function()
+						MODULE:NetStart("VDelUserData")
+						net.WriteString(userList:GetSelected()[1].SteamID)
+						net.SendToServer()
+						paneldata.DeleteBtn:SetDisabled(true)
+					end, { Confirm = "Yes", Deny = "No", Default = false })
 			end)
 			deleteBtn:SetPos(tree:GetX() + tree:GetWide() + 10, (panel:GetTall() - 30) / 2)
 			deleteBtn:SetSize(panel:GetWide() - deleteBtn:GetX() - 10, 30)
@@ -1565,7 +1603,6 @@ function MODULE:InitClient()
 		end,
 		OnOpen = function(panel, paneldata)
 			MODULE:NetCommand("VUserDataList")
-			if(IsValid(paneldata.BaseNode)) then paneldata.BaseNode:Remove() end
 			paneldata.DeleteBtn:SetDisabled(true)
 		end
 	})

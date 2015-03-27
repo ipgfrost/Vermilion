@@ -40,8 +40,10 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 
 	local x = MouseX
 	local y = MouseY
+	
+	local rawName = Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")).Name
 
-	local caseRank = string.SetChar(trace.Entity:GetNWString("Vermilion_Rank"), 1, string.upper(string.GetChar(trace.Entity:GetNWString("Vermilion_Rank"), 1)))
+	local caseRank = string.SetChar(rawName, 1, string.upper(string.GetChar(rawName, 1)))
 
 	surface.SetFont( 'DermaDefaultBold' )
 	local maxW = math.max(surface.GetTextSize(trace.Entity:GetName()), surface.GetTextSize(tostring(trace.Entity:Health()) .. "%"), surface.GetTextSize(caseRank))
@@ -55,7 +57,11 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 	local geoIPData = hook.Run("Vermilion2_TargetIDDataGeoIP", trace.Entity)
 	local iconData = hook.Run("Vermilion2_TargetIDDataIcon", trace.Entity)
 
-	surface.SetTextColor(Vermilion:GetRankColour(trace.Entity:GetNWString("Vermilion_Rank")))
+	if(Vermilion:GetRankColour(trace.Entity:GetNWString("Vermilion_Rank")) != nil) then
+		surface.SetTextColor(Vermilion:GetRankColour(trace.Entity:GetNWString("Vermilion_Rank")))
+	else
+		surface.SetTextColor(Vermilion.Colours.White) -- what?
+	end
 	surface.SetTextPos(x + 31, y + 3)
 	surface.DrawText(trace.Entity:GetName())
 

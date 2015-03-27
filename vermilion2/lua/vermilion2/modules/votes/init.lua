@@ -272,7 +272,7 @@ function MODULE:InitClient()
 
 	self:AddHook("PlayerBindPress", function(vplayer, bind, pressed)
 		if((bind == "gm_showhelp" or bind == "gm_showteam") and pressed) then
-			if(MODULE.VoteInProgress or true) then
+			if(MODULE.VoteInProgress) then
 				MODULE.VoteWindow()
 				MODULE.VoteInProgress = false
 				RunConsoleCommand(bind)

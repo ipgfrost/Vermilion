@@ -26,7 +26,9 @@ MODULE.Permissions = {
 	"zone_manager",
 	"create_zone",
 	"remove_zone",
-	"ignore_zones"
+	"ignore_zones",
+	
+	"jail"
 }
 MODULE.PermissionDefintions = {
 	["zone_manager"] = "This player is able to see the Zones tab on the Vermilion Menu and modify the settings within.",
@@ -58,6 +60,9 @@ MODULE.ModeDefinitions = {}
 MODULE.BaseZone = {}
 function MODULE.BaseZone:HasMode(mode)
 	return table.HasValue(table.GetKeys(self.Modes), mode)
+end
+function MODULE.BaseZone:ValidInMap()
+	return self.Map == game.GetMap()
 end
 function MODULE.BaseZone:AddMode(mode, parameters)
 	self.Modes[mode] = parameters or {}
@@ -129,6 +134,12 @@ function MODULE:GetZonesWithMode(mode)
 	return VToolkit.FindInTable(self.Zones, function(k) return table.HasValue(table.GetKeys(k.Modes), mode) and k.Map == game.GetMap() end)
 end
 
+function MODULE:GetZonesWithName(name)
+	for i,k in pairs(self.Zones) do
+		if(i == name) then return k end
+	end
+end
+
 function MODULE:UpdateClients(client)
 	MODULE:NetStart("VUpdateBlocks")
 	local stab = {}
@@ -192,6 +203,7 @@ function MODULE:InitShared()
 				if(not IsTableOfEntitiesValid({vplayer, attacker})) then return end
 				if(not attacker:IsPlayer()) then return end
 				for i,zone in pairs(MODULE:GetZonesWithMode("anti_pvp")) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(vplayer)) then return false end
 				end
 			end
@@ -211,6 +223,7 @@ function MODULE:InitShared()
 			["PlayerNoClip"] = function(vplayer, state)
 				if(not IsValid(vplayer)) then return end
 				for i,zone in pairs(MODULE:GetZonesWithMode("anti_noclip")) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(vplayer)) then return false end
 				end
 			end
@@ -371,6 +384,7 @@ function MODULE:InitShared()
 						local targetValid = false
 						local attackerValid = false
 						for i,zone in pairs(zones) do
+							if(not zone:ValidInMap()) then continue end
 							if(zone.Bound:IsInside(target)) then
 								targetValid = true
 							end
@@ -420,6 +434,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedProp"] = function(ply, model, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -430,6 +445,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedRagdoll"] = function(ply, model, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -440,6 +456,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedSENT"] = function(ply, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -450,6 +467,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedSWEP"] = function(ply, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -460,6 +478,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedVehicle"] = function(ply, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -470,6 +489,7 @@ function MODULE:InitShared()
 			["PlayerSpawnedEffect"] = function(ply, model, ent)
 				local zones = MODULE:GetZonesWithMode("anti_propspawn")
 				for i,zone in pairs(zones) do
+					if(not zone:ValidInMap()) then continue end
 					if(zone.Bound:IsInside(ent)) then
 						if(not table.HasValue(zone:GetModeProps("anti_propspawn"), ply:SteamID())) then
 							ent:Remove()
@@ -560,6 +580,19 @@ function MODULE:InitShared()
 			end
 		}
 	})
+	
+	self:RegisterMode({
+		Name = "jail",
+		Events = {
+			["Vermilion_Player_Left_Zone"] = function(zone, vplayer)
+				if(not zone:HasMode("jail")) then return end
+				local vervplayer = Vermilion:GetUser(vplayer)
+				if(vervplayer.Jailed and vervplayer.AssignedJail == zone:GetName()) then
+					vplayer:SetPos(zone.Bound:CentreBase())
+				end
+			end
+		}
+	})
 end
 
 function MODULE:InitServer()
@@ -569,6 +602,7 @@ function MODULE:InitServer()
 
 	self:AddHook("Think", function()
 		for i,zone in pairs(MODULE.Zones) do
+			if(not zone:ValidInMap()) then continue end
 			for ipl,ent in pairs(ents.FindInBox(zone.Bound.Point1, zone.Bound.Point2)) do
 				if(ent:IsPlayer()) then
 					if(zone.ActivePlayers[ent:SteamID()] == nil) then
@@ -702,6 +736,49 @@ function MODULE:InitServer()
 
 			sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
 			MODULE:UpdateClients(player.GetHumans())
+		end
+	end)
+	
+	local hooks = {
+		"PlayerSpawnEffect",
+		"PlayerSpawnNPC",
+		"PlayerSpawnObject",
+		"PlayerSpawnProp",
+		"PlayerSpawnRagdoll",
+		"PlayerSpawnSENT",
+		"PlayerSpawnSWEP",
+		"PlayerSpawnVehicle",
+		"CanDrive",
+		"CanTool",
+		"CanProperty",
+		"PlayerUse",
+		"PlayerSpray",
+		"PlayerNoClip",
+		"PhysgunPickup",
+		"CanPlayerSuicide",
+		"CanPlayerUnfreeze",
+		"CanPlayerEnterVehicle"
+	}
+
+	for i,k in pairs(hooks) do
+		self:AddHook(k, "jail" .. k, function(vplayer)
+			if(not IsValid(vplayer)) then return end
+			if(Vermilion:GetUser(vplayer).Jailed) then return false end
+		end)
+	end
+
+	self:AddHook("PlayerSpawn", function(vplayer)
+		if(Vermilion:GetUser(vplayer).Jailed) then
+			if(Vermilion:GetUser(vplayer).AssignedJail != nil) then
+				if(MODULE:GetZonesWithName(Vermilion:GetUser(vplayer).AssignedJail) != nil and MODULE:GetZonesWithName(Vermilion:GetUser(vplayer).AssignedJail):HasMode("jail") and MODULE:GetZonesWithName(Vermilion:GetUser(vplayer).AssignedJail):ValidInMap()) then
+					vplayer:SetPos(MODULE:GetZonesWithName(Vermilion:GetUser(vplayer).AssignedJail).Bound:CentreBase())
+				else
+					Vermilion.Log("Can't send player to jail; the assigned jail zone doesn't exist!")
+					Vermilion:GetUser(vplayer).Jailed = false
+					Vermilion:GetUser(vplayer).AssignedJail = nil
+				end
+			end
+			
 		end
 	end)
 
@@ -937,6 +1014,63 @@ function MODULE:RegisterChatCommands()
 				end
 			end
 			log("Active zones: " .. table.concat(tab, ", "))
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "jail",
+		Description = "Send a player to jail.",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:jail:syntax", nil, vplayer) end,
+		BasicParameters = {
+			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
+			{ Type = Vermilion.ChatCommandConst.StringArg }
+		},
+		Category = "Utils",
+		CommandFormat = "\"%s\" \"%s\"",
+		Permissions = { "jail" },
+		AllValid = {
+			{ Size = nil, Indexes = { 1 } }
+		},
+		CanMute = true,
+		Predictor = function(pos, current, all, vplayer)
+			if(pos == 1) then
+				return VToolkit.MatchPlayerPart(current)
+			end
+			if(pos == 2) then
+				if(VToolkit.LookupPlayer(all[1]) == nil) then return end
+				if(not Vermilion:GetUser(VToolkit.LookupPlayer(all[1])).Jailed) then
+					local tab = {}
+					for i,k in pairs(MODULE.Zones) do
+						if(k:HasMode("jail") and k:ValidInMap()) then table.insert(tab, i) end
+					end
+					return tab
+				end
+			end
+		end,
+		Function = function(sender, text, log, glog, tglog)
+			if(table.Count(text) < 2) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+
+			local tplayer = VToolkit.LookupPlayer(text[1])
+			if(not IsValid(tplayer)) then
+				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			if(Vermilion:GetUser(tplayer).Jailed) then
+				Vermilion:GetUser(tplayer).Jailed = false
+				tplayer:Spawn()
+				tglog("zones:jail:release", { sender:GetName(), tplayer:GetName() })
+				return
+			end
+			if(MODULE:GetZonesWithName(text[2]) == nil or not MODULE:GetZonesWithName(text[2]):HasMode("jail")) then
+				log(MODULE:TranslateStr("jail:nojail", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			Vermilion:GetUser(tplayer).Jailed = true
+			Vermilion:GetUser(tplayer).AssignedJail = text[2]
+			tglog("zones:jail:jail", { sender:GetName(), tplayer:GetName() })
 		end
 	})
 

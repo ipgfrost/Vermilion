@@ -148,6 +148,53 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+			{ "2.5.0 - TBA", {
+					"Rebuilt module data storage mechanisms",
+					"Ranks are now addressed by unique identifiers",
+					"Updated default rank data to be more complex",
+					"Fixed combobox option sorting",
+					"Standardised VToolkit comboboxes",
+					"Maps module API has been standardised",
+					"Map changes with a delay of 0 now work instantly",
+					"The 'vermilion' console command now works on the client as if it were run on the server, except for setrank",
+					"Rewritten the Auto-Promotion module from scratch",
+					"Added an edit button to the Auto-Broadcaster",
+					"Auto-Broadcaster now uses a multi-select list",
+					"Auto-Broadcast buttons brought inline with my new GUI standards",
+					"Auto-Broadcast now uses VToolkit Horizontal Drawers",
+					"Configuration loading should now automatically detect errors and address them before a catastrophic failure",
+					"Hook system no longer blames Vermilion for EVERYTHING (however errors are not reported properly)",
+					"VToolkit drawers now use blankers to hide parts of the menu when they are open"
+				}
+			},
+			{ "2.4.4 - 10th March 2015", {
+					"Fixed disable damage interfering with fall damage settings",
+					"Bugfixes for latest GMod version",
+					"VToolkit now defaults to net.Read/WriteBool on newer GMod versions",
+					"Button text now updates correctly",
+					"Fixed Userdata Browser - can now delete unwanted user data",
+					"Bugfixes for edgecases in the Rank Editor",
+					"Chat bug fixes",
+					"Fixed script error when unable to retrieve rank colour",
+					"Prop owners are now shown on the bottom right when looking at a prop",
+					"Renaming a rank now properly transfers users to the new rank name"
+				}
+			},
+			{ "2.4.3 - 8th March 2015", {
+					"Fixed zones working in maps where they were not created",
+					"Jails are now created and managed through the zones system",
+					"Fixed being unable to remove broadcasts from the server",
+					"Fixed TargetID bugs"
+				}
+			},
+			{ "2.4.2 - 7th February 2015", {
+					"Fix for votes module problems"
+				}
+			},
+			{ "2.4.1 - 5th February 2015", {
+					"Bugfix for notification blunder"
+				}
+			},
 			{ "2.4 - 31st January 2015", {
 					"Huge update for the localisation system and added more localisation options for translators",
 					"Updated some global broadcasts to translate into player's chosen language automatically",
@@ -159,8 +206,8 @@ MENU:AddPage({
 					"Fixed spawn caps bugs",
 					"Attempt to stop GMod from blaming Vermilion for everything",
 					"Attempted to make timer failure less frightening",
-          "Fixed newlines (\\n) in notifications",
-          "Added Votes module",
+					"Fixed newlines (\\n) in notifications",
+					"Added Votes module",
 					"Fixed a bug that prevented auto-cleanup being turned off"
 				}
 			},
@@ -354,7 +401,7 @@ MENU:AddPage({
 			{ "How do I enable anti-spam?", "Look in the Basic Settings panel." },
 			{ "How do I select all players in a chat command?", "Replace the player argument with \"@\"" },
 			{ "How often do you update?", "I don't have a schedule, but I will usually release a minor update after a bug report and large releases will take place every now and then.", 30 },
-			{ "Can you sort out the text on OS X?", "The text will be fixed an a future GMod update where the default text on OS X will be easier to read." },
+			{ "How do I use MOTD Variables?", "Place \"%\" around the name of the variable, for example, %player_name%." },
 			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
 		}
 
@@ -529,7 +576,7 @@ MENU:AddPage({
 			{
 				Name = "Ned",
 				SteamID = "STEAM_0:0:44370296",
-				Role = "Project Lead - Coding",
+				Role = "Project Lead - Coding, PR",
 			},
 			{
 				Name = "Wheatley",
@@ -539,7 +586,7 @@ MENU:AddPage({
 			{
 				Name = "TehAngel",
 				SteamID = "STEAM_0:1:79012222",
-				Role = "Ideas, Persuasion, Bug Reports and Workshop Icon"
+				Role = "Ideas, Persuasion, Bug Reports and Workshop Icon, PR"
 			}
 		}
 

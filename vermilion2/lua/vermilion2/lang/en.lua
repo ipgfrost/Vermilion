@@ -186,8 +186,8 @@ lang:Add("menu:autobroadcast", "Auto-Broadcast")
 lang:Add("autobroadcast:list:text", "Text")
 lang:Add("autobroadcast:list:interval", "Interval")
 lang:Add("autobroadcast:list:title", "Auto-Broadcast Listings")
+lang:Add("autobroadcast:edit", "Edit Listing...")
 lang:Add("autobroadcast:remove", "Remove Listing")
-lang:Add("autobroadcast:remove:g1", "Must select at least one listing to remove.")
 lang:Add("autobroadcast:new", "New Listing...")
 lang:Add("autobroadcast:new:interval", "Broadcast every:")
 lang:Add("autobroadcast:new:add", "Add Listing")
@@ -396,7 +396,6 @@ lang:Add("commands:cmd:adminchat:syntax", "<msg>")
 lang:Add("commands:cmd:gimp:syntax", "<player>")
 lang:Add("commands:cmd:mute:syntax", "<player>")
 lang:Add("commands:cmd:gag:syntax", "<player>")
-lang:Add("commands:cmd:jail:syntax", "<player>")
 
 lang:Add("commands:tplook:text:self", "%s teleported %s to his/her look position.")
 lang:Add("commands:tplook:text", "%s teleported %s to %s's look position.")
@@ -535,9 +534,6 @@ lang:Add("commands:gag:gagged:done", "%s gagged %s")
 lang:Add("commands:gag:ungagged:done", "%s ungagged %s")
 lang:Add("commands:gag:help", "Run the gag command again to ungag this player.")
 
-lang:Add("commands:jail:release", "%s has released %s from jail!")
-lang:Add("commands:jail:nojail", "No jail position set!")
-lang:Add("commands:jail:jail", "%s has placed %s in jail!")
 
 lang:Add("commands:setjailpos:world", "That isn't inside the world...")
 lang:Add("commands:setjailpos:done", "%s set the jail position to %s")
@@ -607,6 +603,13 @@ lang:Add("zones:mode:kill", "Kill")
 lang:Add("zones:mode:anti_propspawn", "Prevent Prop Spawning")
 lang:Add("zones:mode:no_gravity", "Zero Gravity")
 lang:Add("zones:mode:anti_pvp", "Anti-PvP")
+
+
+lang:Add("zones:cmd:jail:syntax", "<player> <jail zone>")
+
+lang:Add("zones:jail:release", "%s has released %s from jail!")
+lang:Add("zones:jail:nojail", "There is no such jail zone!")
+lang:Add("zones:jail:jail", "%s has placed %s in jail!")
 
 --[[
 

@@ -354,6 +354,38 @@ function MODULE:InitServer()
 		net.WriteTable(MODULE.MapCache)
 		net.Send(vplayer)
 	end)
+	
+	function MODULE:ScheduleMapChange(map, time)
+		if(MODULE.MapChangeInProgress) then
+			Vermilion.Log("Map change already in progress!")
+			return false
+		end
+		
+		if(time == 0) then
+			RunConsoleCommand("changelevel", map)
+		end
+		
+		MODULE.MapChangeInProgress = true
+		MODULE.MapChangeTo = map
+		MODULE.MapChangeIn = time
+		
+		MODULE:NetStart("VBroadcastSchedule")
+		net.WriteInt(MODULE.MapChangeIn, 32)
+		net.WriteString(MODULE.MapChangeTo)
+		net.Broadcast()
+		
+		return true
+	end
+	
+	function MODULE:AbortMapChange()
+		if(not MODULE.MapChangeInProgress) then return false end
+		MODULE.MapChangeInProgress = false
+		MODULE.MapChangeIn = nil
+		MODULE.MapChangeTo = nil
+		MODULE:NetStart("VAbortMapChange")
+		net.Broadcast()
+		return true
+	end
 
 	timer.Create("Vermilion_MapTicker", 1, 0, function()
 		if(MODULE.MapChangeInProgress) then
@@ -377,24 +409,16 @@ function MODULE:InitServer()
 				--Vermilion:SendMessageBox(vplayer, "A map change is already in progress. Abort the map change to change to a new map!")
 				return
 			end
-			MODULE.MapChangeInProgress = true
-			MODULE.MapChangeTo = net.ReadString()
-			MODULE.MapChangeIn = net.ReadInt(32)
-			MODULE:NetStart("VBroadcastSchedule")
+			
+			MODULE:ScheduleMapChange(net.ReadString(), net.ReadInt(32))
 			Vermilion:BroadcastNotify(vplayer:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo)
-			net.WriteInt(MODULE.MapChangeIn, 32)
-			net.WriteString(MODULE.MapChangeTo)
-			net.Broadcast()
+			
 		end
 	end)
 
 	self:NetHook("VAbortMapChange", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_map")) then
-			MODULE.MapChangeInProgress = false
-			MODULE.MapChangeIn = nil
-			MODULE.MapChangeTo = nil
-			MODULE:NetStart("VAbortMapChange")
-			net.Broadcast()
+			MODULE:AbortMapChange()
 			Vermilion:BroadcastNotify(vplayer:GetName() .. " has halted the level change.")
 		end
 	end)
@@ -601,7 +625,7 @@ function MODULE:InitClient()
 					{ "In 1 day", 20, 60 * 60 * 24 }
 				}
 
-				local timeDelayComboBox = VToolkit:CreateComboBox()
+				local timeDelayComboBox = VToolkit:CreateComboBox(nil, nil, true)
 				timeDelayComboBox:SetText("Time Delay")
 				timeDelayComboBox.OnSelect = function(panel, index, value, data)
 					timeDelayComboBox.Vermilion_Value = value

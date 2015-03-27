@@ -145,6 +145,22 @@ function VToolkit.CBound(Point1, Point2)
 	function CBound:SurfaceArea()
 		return -1 --cba to do this now
 	end
+	
+	function CBound:CentreBase()
+		local x = (self.Point1.x + self.Point2.x) / 2
+		local y = (self.Point1.y + self.Point2.y) / 2
+		local z = math.min(self.Point1.z, self.Point2.z)
+		
+		return Vector(x, y, z)
+	end
+	
+	function CBound:Centre()
+		local x = (self.Point1.x + self.Point2.x) / 2
+		local y = (self.Point1.y + self.Point2.y) / 2
+		local z = (self.Point1.z + self.Point2.z) / 2
+		
+		return Vector(x, y, z)
+	end
 
 	return CBound
 end

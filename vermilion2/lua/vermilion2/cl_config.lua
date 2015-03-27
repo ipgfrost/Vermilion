@@ -18,8 +18,8 @@
 ]]
 
 Vermilion.Data = {}
-Vermilion.Data.Rank = {}
-Vermilion.Data.RankOverview = {}
+Vermilion.Data.Rank = {} -- active rank (for localplayer)
+Vermilion.Data.RankOverview = {} -- basic data for all ranks
 Vermilion.Data.Permissions = {}
 Vermilion.Data.Module = {}
 
@@ -43,9 +43,15 @@ function Vermilion:LookupPermissionOwner(permission)
 	end
 end
 
-function Vermilion:GetRankColour(name)
+function Vermilion:GetRankByID(id)
 	for i,k in pairs(self.Data.RankOverview) do
-		if(k.Name == name) then
+		if(k.UniqueID == id) then return k end
+	end
+end
+
+function Vermilion:GetRankColour(id)
+	for i,k in pairs(self.Data.RankOverview) do
+		if(k.UniqueID == id) then
 			if(not IsColor(k.Colour)) then
 				k.Colour = Color(k.Colour.r, k.Colour.g, k.Colour.b)
 			end
@@ -54,9 +60,9 @@ function Vermilion:GetRankColour(name)
 	end
 end
 
-function Vermilion:GetRankIcon(name)
+function Vermilion:GetRankIcon(id)
 	for i,k in pairs(self.Data.RankOverview) do
-		if(k.Name == name) then
+		if(k.UniqueID == id) then
 			return k.Icon
 		end
 	end
@@ -92,9 +98,12 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 	if(detailed) then
 		for i,k in pairs(self.Data.RankOverview) do
 			if(not protected and k.Protected) then continue end
+			local inherits = Vermilion:GetRankByID(k.InheritsFrom)
+			if(inherits != nil) then inherits = inherits.Name end
 			if(k.IsDefault) then
-				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("yes"))
+				local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("yes"))
 				ln.Protected = k.Protected
+				ln.UniqueRankID = k.UniqueID
 				for i1,k1 in pairs(ln.Columns) do
 					k1:SetContentAlignment(5)
 				end
@@ -102,9 +111,11 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 				img:SetImage("icon16/" .. k.Icon .. ".png")
 				img:SetSize(16, 16)
 				ln:Add(img)
+				if(isfunction(customiser)) then customiser(ln, k) end
 			else
-				local ln = ranklist:AddLine(k.Name, k.InheritsFrom or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("no"))
+				local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("no"))
 				ln.Protected = k.Protected
+				ln.UniqueRankID = k.UniqueID
 				for i1,k1 in pairs(ln.Columns) do
 					k1:SetContentAlignment(5)
 				end
@@ -120,6 +131,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 			if(not protected and k.Protected) then continue end
 			local ln = ranklist:AddLine(k.Name)
 			ln.Protected = k.Protected
+			ln.UniqueRankID = k.UniqueID
 			if(isfunction(customiser)) then customiser(ln, k) end
 		end
 	end

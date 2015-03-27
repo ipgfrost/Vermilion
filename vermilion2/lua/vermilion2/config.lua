@@ -57,7 +57,11 @@ util.AddNetworkString("VModuleConfig")
 ]]--
 
 function Vermilion:GetDefaultRank()
-	return self:GetData("default_rank", "player")
+	local duid = ""
+	if(Vermilion:HasRank("player")) then
+		duid = Vermilion:GetRank("player"):GetUID()
+	end
+	return self:GetData("default_rank", duid)
 end
 
 function Vermilion:AddRank(name, permissions, protected, colour, icon)
@@ -68,10 +72,25 @@ function Vermilion:AddRank(name, permissions, protected, colour, icon)
 	Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 end
 
+function Vermilion:CreateRankID()
+	local vars = string.ToTable("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") -- source array, modify this to make more complex IDs.
+	local out = ""
+	for i=1,15,1 do -- 15 chars long
+		out = out .. table.Random(vars)
+	end
+	
+	for i,k in pairs(Vermilion.Data.Ranks) do
+		if(k.UniqueID == out) then return self:CreateRankID() end -- make completely sure that we are not duplicating rank IDs.
+	end
+	
+	return out
+end
+
 function Vermilion:CreateRankObj(name, permissions, protected, colour, icon, inherits)
 	local rnk = {}
 
 	rnk.Name = name
+	rnk.UniqueID = Vermilion:CreateRankID()
 	rnk.Permissions = permissions or {}
 	rnk.Protected = protected or false
 	if(colour == nil) then rnk.Colour = { 255, 255, 255 } else
@@ -91,8 +110,13 @@ function Vermilion:AttachRankFunctions(rankObj)
 
 	if(Vermilion.RankMetaTable == nil) then
 		local meta = {}
+		
 		function meta:GetName()
 			return self.Name
+		end
+		
+		function meta:GetUID()
+			return self.UniqueID
 		end
 
 		function meta:IsImmuneToRank(rank)
@@ -151,10 +175,10 @@ function Vermilion:AttachRankFunctions(rankObj)
 				return false
 			end
 			for i,k in pairs(self:GetUsers()) do
-				k:SetRank(newName)
+				k:SetRank(newName, true)
 			end
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
-			hook.Run(Vermilion.Event.RankRenamed, self.Name, newName)
+			hook.Run(Vermilion.Event.RankRenamed, self.UniqueID, self.Name, newName)
 			self.Name = newName
 			Vermilion:BroadcastRankData()
 			return true
@@ -169,14 +193,14 @@ function Vermilion:AttachRankFunctions(rankObj)
 				k:SetRank(Vermilion:GetDefaultRank())
 			end
 			for i,k in pairs(Vermilion.Data.Ranks) do
-				if(k.InheritsFrom == self.Name) then
+				if(k.InheritsFrom == self.UniqueID) then
 					k.InheritsFrom = nil
 				end
 			end
 			table.RemoveByValue(Vermilion.Data.Ranks, self)
 			Vermilion:BroadcastRankData()
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:deleted", { self.Name }))
-			hook.Run(Vermilion.Event.RankDeleted, self.Name)
+			hook.Run(Vermilion.Event.RankDeleted, self.UniqueID)
 			return true
 		end
 
@@ -186,7 +210,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion:BroadcastRankData()
 				return
 			end
-			self.InheritsFrom = parent:GetName()
+			self.InheritsFrom = parent:GetUID()
 			Vermilion:BroadcastRankData()
 		end
 
@@ -239,7 +263,12 @@ function Vermilion:AttachRankFunctions(rankObj)
 				end
 			end
 			if(self.InheritsFrom != nil) then
-				if(Vermilion:GetRank(self.InheritsFrom):HasPermission(permission)) then return true end
+				if(Vermilion:GetRank(self.InheritsFrom) == nil) then
+					Vermilion.Log("Bad rank inheritance for '" .. self.Name .. "'; Cannot find parent rank. Removing link.")
+					self.InheritsFrom = nil
+				else
+					if(Vermilion:GetRank(self.InheritsFrom):HasPermission(permission)) then return true end
+				end
 			end
 			return table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")
 		end
@@ -270,6 +299,13 @@ function Vermilion:AttachRankFunctions(rankObj)
 		end
 		Vermilion.RankMetaTable = meta
 	end
+	
+	if(rankObj.UniqueID == nil) then -- upgrade existing configurations.
+		Vermilion.Log("Old-style rank detected (" .. rankObj.Name .. "); upgrading to UID...")
+		rankObj.UniqueID = Vermilion:CreateRankID()
+		Vermilion.Log("Rank given UID '" .. rankObj.UniqueID .. "'!")
+	end
+	
 	setmetatable(rankObj, { __index = Vermilion.RankMetaTable }) // <-- The metatable creates phantom functions.
 end
 
@@ -289,21 +325,31 @@ function Vermilion:BroadcastRankData(target)
 	target = target or VToolkit:GetValidPlayers()
 	local normalData = {}
 	for i,k in pairs(self.Data.Ranks) do
-		table.insert(normalData, { Name = k.Name, Colour = k:GetColour(), IsDefault = k.Name == Vermilion:GetDefaultRank(), Protected = k.Protected, Icon = k.Icon, InheritsFrom = k.InheritsFrom })
+		table.insert(normalData, { Name = k.Name, UniqueID = k.UniqueID, Colour = k:GetColour(), IsDefault = k.UniqueID == Vermilion:GetDefaultRank(), Protected = k.Protected, Icon = k.Icon, InheritsFrom = k.InheritsFrom })
 	end
 	net.Start("VBroadcastRankData")
 	net.WriteTable(normalData)
 	net.Send(target)
 end
 
-function Vermilion:GetRank(name)
+function Vermilion:GetRank(name) -- this is now only to get ranks from player inputs, not used in the code. Use GetRankByID instead!
 	for i,k in pairs(self.Data.Ranks) do
 		if(k.Name == name) then return k end
 	end
 end
 
+function Vermilion:GetRankByID(id)
+	for i,k in pairs(self.Data.Ranks) do
+		if(k.UniqueID == id) then return k end
+	end
+end
+
 function Vermilion:HasRank(name)
 	return self:GetRank(name) != nil
+end
+
+function Vermilion:HasRankID(id)
+	return self:GetRankByID(id) != nil
 end
 
 
@@ -341,11 +387,15 @@ function Vermilion:AttachUserFunctions(usrObject)
 	if(Vermilion.PlayerMetaTable == nil) then
 		local meta = {}
 		function meta:GetRank()
-			return Vermilion:GetRank(self.Rank)
+			return Vermilion:GetRankByID(self.Rank)
 		end
 
-		function meta:GetRankName()
+		function meta:GetRankUID()
 			return self.Rank
+		end
+		
+		function meta:GetRankName()
+			return self:GetRank():GetName()
 		end
 
 		function meta:GetEntity()
@@ -363,8 +413,8 @@ function Vermilion:AttachUserFunctions(usrObject)
 			end
 		end
 
-		function meta:SetRank(rank)
-			if(Vermilion:HasRank(rank)) then
+		function meta:SetRank(rank, override)
+			if(Vermilion:HasRankID(rank) or override) then
 				local old = self.Rank
 				self.Rank = rank
 				hook.Run(Vermilion.Event.PlayerChangeRank, self, old, rank)
@@ -396,7 +446,13 @@ function Vermilion:AttachUserFunctions(usrObject)
 		end
 		Vermilion.PlayerMetaTable = meta
 	end
-
+	
+	if(not Vermilion:GetData("UIDUpgraded", false)) then
+		if(Vermilion:GetRank(usrObject.Rank) != nil) then 
+			usrObject.Rank = Vermilion:GetRank(usrObject.Rank):GetUID()
+		end
+	end
+	
 	setmetatable(usrObject, { __index = Vermilion.PlayerMetaTable }) // <-- The metatable creates phantom functions.
 end
 
@@ -554,40 +610,62 @@ end
 
 function Vermilion:CreateDefaultDataStructs()
 	Vermilion.Data.Ranks = {
-		Vermilion:CreateRankObj("owner", { "*" }, true, Color(255, 0, 0), "key"),
-		Vermilion:CreateRankObj("admin", nil, false, Color(0, 255, 0), "shield"),
-		Vermilion:CreateRankObj("player", nil, false, Color(0, 0, 255), "user"),
-		Vermilion:CreateRankObj("guest", nil, false, Color(0, 0, 0), "user_orange")
+		Vermilion:CreateRankObj("owner", { "*" }, true, Color(255, 0, 0), "key_add"),
+		Vermilion:CreateRankObj("co-owner", nil, false, Color(0, 63, 255), "key"),
+		Vermilion:CreateRankObj("server manager", nil, false, Color(0, 255, 255), "cog"),
+		Vermilion:CreateRankObj("super admin", nil, false, Color(255, 0, 97), "shield_add"),
+		Vermilion:CreateRankObj("admin", nil, false, Color(255, 93, 0), "shield"),
+		Vermilion:CreateRankObj("donator", nil, false, Color(191, 127, 255), "heart"),
+		Vermilion:CreateRankObj("respected", nil, false, Color(255, 191, 0), "user_red"),
+		Vermilion:CreateRankObj("player", nil, false, Color(0, 161, 255), "user"),
+		Vermilion:CreateRankObj("guest", { "chat" }, false, Color(255, 255, 255), "user_orange")
 	}
+	Vermilion:GetRank("player").InheritsFrom = Vermilion:GetRank("guest"):GetUID()
+	Vermilion:GetRank("respected").InheritsFrom = Vermilion:GetRank("player"):GetUID()
+	Vermilion:GetRank("donator").InheritsFrom = Vermilion:GetRank("respected"):GetUID()
+	Vermilion:GetRank("admin").InheritsFrom = Vermilion:GetRank("donator"):GetUID()
+	Vermilion:GetRank("super admin").InheritsFrom = Vermilion:GetRank("admin"):GetUID()
+	Vermilion:GetRank("server manager").InheritsFrom = Vermilion:GetRank("super admin"):GetUID()
+	Vermilion:GetRank("co-owner").InheritsFrom = Vermilion:GetRank("server manager"):GetUID()
+	
+	Vermilion.Data.Global = {}
+	Vermilion.Data.Module = {}
+	Vermilion.Data.Ranks = {} -- temp
+	Vermilion.Data.Users = {}
+	Vermilion.Data.Bans = {}
 end
 
-function Vermilion:LoadConfiguration()
+function Vermilion:RestoreBackup()
+	Vermilion.Log({Vermilion.Colours.Red, "[CRITICAL WARNING]", Vermilion.Colours.White, " I lost the configuration file... Usually a result of GMod unexpectedly stopping, most likely due to a BSoD or Kernel Panic. Sorry about that :( I'll try to restore a backup for you."})
+
+	local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
+
+	if(table.Count(fls) == 0) then
+		Vermilion.Log({ Vermilion.Colours.Red, "NO BACKUPS FOUND! Did you delete them? Restoring configuration file to defaults." })
+		self:CreateDefaultDataStructs()
+		return
+	end
+
+	local max = 0
+	for i,k in pairs(fls) do
+		if(tonumber(string.Replace(k, ".txt", "")) > max) then
+			max = tonumber(string.Replace(k, ".txt", ""))
+		end
+	end
+
+	local content = file.Read("vermilion2/backup/" .. tostring(max) .. ".txt")
+	file.Write(self.GetFileName("settings"), content)
+
+	Vermilion.Log("Restored configuration with timestamp " .. tostring(max) .. "!")
+end
+
+function Vermilion:LoadConfiguration(crashOnErr)
 	if(Vermilion.FirstRun) then
 		self:CreateDefaultDataStructs()
 		file.CreateDir("vermilion2/backup")
 	else
 		if(file.Size(self.GetFileName("settings"), "DATA") == 0) then
-			Vermilion.Log({Vermilion.Colours.Red, "[CRITICAL WARNING]", Vermilion.Colours.White, " I lost the configuration file... Usually a result of GMod unexpectedly stopping, most likely due to a BSoD or Kernel Panic. Sorry about that :( I'll try to restore a backup for you."})
-
-			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
-
-			if(table.Count(fls) == 0) then
-				Vermilion.Log({ Vermilion.Colours.Red, "NO BACKUPS FOUND! Did you delete them? Restoring configuration file to defaults." })
-				self:CreateDefaultDataStructs()
-				return
-			end
-
-			local max = 0
-			for i,k in pairs(fls) do
-				if(tonumber(string.Replace(k, ".txt", "")) > max) then
-					max = tonumber(string.Replace(k, ".txt", ""))
-				end
-			end
-
-			local content = file.Read("vermilion2/backup/" .. tostring(max) .. ".txt")
-			file.Write(self.GetFileName("settings"), content)
-
-			Vermilion.Log("Restored configuration with timestamp " .. tostring(max) .. "!")
+			self:RestoreBackup()
 		else
 			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
 			--if(table.Count(fls) > 100) then
@@ -608,16 +686,36 @@ function Vermilion:LoadConfiguration()
 
 			file.Write("vermilion2/backup/" .. code .. ".txt", content)
 		end
-		local data = util.JSONToTable(util.Decompress(file.Read(self.GetFileName("settings"), "DATA")))
-		for i,rank in pairs(data.Ranks) do
+		local succ,err = pcall(function() 
+			Vermilion.Data = util.JSONToTable(util.Decompress(file.Read(self.GetFileName("settings"), "DATA")))
+		end)
+		if(!succ) then
+			if(crashOnErr) then
+				Vermilion.Log("There was a fatal error loading the configuration file... oops...")
+				self:CreateDefaultDataStructs()
+				file.Delete(self.GetFileName("settings"))
+				Vermilion:SetData("UIDUpgraded", true)
+				return
+			end
+			self:RestoreBackup()
+			Vermilion:LoadConfiguration(true)
+		end
+		for i,rank in pairs(Vermilion.Data.Ranks) do
 			self:AttachRankFunctions(rank)
 		end
-		for i,usr in pairs(data.Users) do
+		if(not Vermilion:GetData("UIDUpgraded", false)) then
+			for i,k in pairs(Vermilion.Data.Ranks) do
+				if(k.InheritsFrom != nil) then
+					k.InheritsFrom = Vermilion:GetRank(k.InheritsFrom):GetUID()
+				end
+			end
+		end
+		for i,usr in pairs(Vermilion.Data.Users) do
 			self:AttachUserFunctions(usr)
 		end
-		Vermilion.Data = data
 		self.Log(Vermilion:TranslateStr("config:loaded"))
 	end
+	Vermilion:SetData("UIDUpgraded", true)
 end
 
 Vermilion:LoadConfiguration()
@@ -660,9 +758,9 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 		Vermilion:GetUser(vplayer).Name = vplayer:GetName()
 	end
 	if(table.Count(Vermilion:GetRank("owner"):GetUsers()) == 0 and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
-		Vermilion:GetUser(vplayer):SetRank("owner")
+		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetRank("owner"):GetUID())
 	end
-	vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRankName())
+	vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
 	Vermilion:SyncClientRank(vplayer)
 	Vermilion:BroadcastRankData(vplayer)
 	net.Start("VBroadcastPermissions")
@@ -843,6 +941,10 @@ end
 timer.Create("V-UpdatePlaytime", 5, 0, function()
 	for i,k in pairs(VToolkit.GetValidPlayers(false)) do
 		local vdata = Vermilion:GetUser(k)
+		if(vdata == nil) then
+			Vermilion.Log("Cannot update playtime; the management engine is missing userdata...")
+			return
+		end
 		vdata.Playtime = vdata.Playtime + 5
 	end
 end)

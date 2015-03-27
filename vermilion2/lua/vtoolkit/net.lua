@@ -30,11 +30,16 @@ function VToolkit.NetSanitiseTable(tab)
 end
 
 function net.ReadBoolean()
+	if(net.ReadBool) then return net.ReadBool() end -- only do this on newer versions to keep compatibility with old GMod servers.
 	return net.ReadBit() == 1
 end
 
 -- just to make it look nicer
 function net.WriteBoolean(bool)
+	if(net.WriteBool) then -- only do this on newer versions to keep compatibility with old GMod servers.
+		net.WriteBool(bool)
+		return
+	end
 	net.WriteBit(bool)
 end
 

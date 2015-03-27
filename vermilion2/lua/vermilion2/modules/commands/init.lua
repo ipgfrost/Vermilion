@@ -62,9 +62,7 @@ MODULE.Permissions = {
 	"edit_gimps",
 	"gimp",
 	"mute",
-	"gag",
-	"jail",
-	"setjailpos"
+	"gag"
 }
 
 MODULE.NetworkStrings = {
@@ -2162,55 +2160,7 @@ function MODULE:RegisterChatCommands()
 		end
 	})
 
-	Vermilion:AddChatCommand({
-		Name = "jail",
-		Description = "Send a player to jail.",
-		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:jail:syntax", nil, vplayer) end,
-		BasicParameters = {
-			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg },
-		},
-		Category = "Utils",
-		CommandFormat = "\"%s\"",
-		Permissions = { "jail" },
-		AllValid = {
-			{ Size = nil, Indexes = { 1 } }
-		},
-		CanMute = true,
-		Predictor = function(pos, current, all, vplayer)
-			if(pos == 1) then
-				return VToolkit.MatchPlayerPart(current)
-			end
-		end,
-		Function = function(sender, text, log, glog, tglog)
-			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
-				return false
-			end
-
-			local tplayer = VToolkit.LookupPlayer(text[1])
-			if(not IsValid(tplayer)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
-				return false
-			end
-			if(Vermilion:GetUser(tplayer).Jailed) then
-				Vermilion:GetUser(tplayer).Jailed = false
-				tplayer:SetNWBool("v_jailed", false)
-				tplayer:Spawn()
-				tglog("commands:jail:release", { sender:GetName(), tplayer:GetName() })
-				return
-			end
-			if(MODULE:GetData("jailpos", nil, true) == nil) then
-				log(MODULE:TranslateStr("jail:nojail", nil, sender), NOTIFY_ERROR)
-				return false
-			end
-			Vermilion:GetUser(tplayer).Jailed = true
-			tplayer:SetNWBool("v_jailed", true)
-			tplayer:SetPos(MODULE:GetData("jailpos", nil, true))
-			tglog("commands:jail:jail", { sender:GetName(), target:GetName() })
-		end
-	})
-
-	Vermilion:AddChatCommand({
+	--[[ Vermilion:AddChatCommand({
 		Name = "setjailpos",
 		Description = "Set the new jail position.",
 		Permissions = { "jail", "setjailpos" },
@@ -2225,74 +2175,14 @@ function MODULE:RegisterChatCommands()
 			MODULE:SetData("jailpos", pos)
 			tglog("commands:setjailpos:done", { sender:GetName(), table.concat({ math.Round(pos.x), math.Round(pos.y), math.Round(pos.z) }, ":") })
 		end
-	})
+	}) ]]
 
 
 end
 
 function MODULE:InitServer()
 
-	local hooks = {
-		"PlayerSpawnEffect",
-		"PlayerSpawnNPC",
-		"PlayerSpawnObject",
-		"PlayerSpawnProp",
-		"PlayerSpawnRagdoll",
-		"PlayerSpawnSENT",
-		"PlayerSpawnSWEP",
-		"PlayerSpawnVehicle",
-		"CanDrive",
-		"CanTool",
-		"CanProperty",
-		"PlayerUse",
-		"PlayerSpray",
-		"PlayerNoClip",
-		"PhysgunPickup",
-		"CanPlayerSuicide",
-		"CanPlayerUnfreeze",
-		"CanPlayerEnterVehicle"
-	}
-
-	for i,k in pairs(hooks) do
-		self:AddHook(k, "jail" .. k, function(vplayer)
-			if(not IsValid(vplayer)) then return end
-			if(Vermilion:GetUser(vplayer).Jailed) then return false end
-		end)
-	end
-
-	self:AddHook("PlayerSpawn", function(vplayer)
-		vplayer:SetNWBool("v_jailed", Vermilion:GetUser(vplayer).Jailed == true)
-		if(Vermilion:GetUser(vplayer).Jailed) then
-			if(MODULE:GetData("jailpos", nil, true) != nil) then
-				vplayer:SetPos(MODULE:GetData("jailpos", nil, true))
-			end
-		end
-	end)
-
-	self:AddDataChangeHook("jailpos", "jailpos_network", function(value)
-		if(value == nil) then return end
-		SetGlobalVector("v_jailpos", value)
-	end)
-
-	//SetGlobalVector("v_jailpos", MODULE:GetData("jailpos", nil, true))
-
-	local jailsize = 250
-
-	self:AddHook("FinishMove", function(ply, mv)
-		if(not Vermilion:GetUser(ply)) then return end
-		if(Vermilion:GetUser(ply).Jailed and MODULE:GetData("jailpos", nil, true) != nil) then
-			local jp = MODULE:GetData("jailpos", nil, true)
-			local ang = mv:GetMoveAngles()
-			local vel = mv:GetVelocity()
-			vel = vel + ang:Forward() * mv:GetForwardSpeed()
-			vel = vel + ang:Right() * mv:GetSideSpeed()
-			vel = vel + ang:Up() * mv:GetSideSpeed()
-			if(jp:Distance(mv:GetOrigin() + (vel * 0.1)) <= jp:Distance(mv:GetOrigin())) then return end
-			if(jp:Distance(mv:GetOrigin()) >= jailsize) then
-				return true
-			end
-		end
-	end)
+	
 
 	self:AddHook("VPlayerSay", function(vplayer)
 		if(MODULE:GetData("muted_players", {}, true)[vplayer:SteamID()]) then return "" end
@@ -2340,23 +2230,6 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
-
-	local jailsize = 250
-
-	self:AddHook("FinishMove", function(ply, mv)
-		if(ply:GetNWBool("v_jailed") and GetGlobalVector("v_jailpos") != nil) then
-			local jp = GetGlobalVector("v_jailpos")
-			local ang = mv:GetMoveAngles()
-			local vel = mv:GetVelocity()
-			vel = vel + ang:Forward() * mv:GetForwardSpeed()
-			vel = vel + ang:Right() * mv:GetSideSpeed()
-			vel = vel + ang:Up() * mv:GetSideSpeed()
-			if(jp:Distance(mv:GetOrigin() + (vel * 0.1)) <= jp:Distance(mv:GetOrigin())) then return end
-			if(jp:Distance(mv:GetOrigin()) >= jailsize) then
-				return true
-			end
-		end
-	end)
 
 	self:NetHook("VGetGimpList", function()
 		local paneldata = Vermilion.Menu.Pages["gimps"]

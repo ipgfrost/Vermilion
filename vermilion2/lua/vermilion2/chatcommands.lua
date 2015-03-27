@@ -28,10 +28,19 @@ Vermilion.ChatCommandConst = {
 }
 
 util.AddNetworkString("VFakeChat")
+util.AddNetworkString("VClientCMD")
 util.AddNetworkString("VSendCommands")
+util.AddNetworkString("VClientPrint")
+
 net.Receive("VFakeChat", function(len, vplayer)
 	Vermilion:HandleChat(vplayer, net.ReadString(), vplayer, false, { vplayer, "", false } )
 end)
+
+net.Receive("VClientCMD", function(len, vplayer)
+	Vermilion:HandleChat(vplayer, net.ReadString(), vplayer, true, { vplayer, "", false } )
+end)
+
+
 
 local commandMustHave = { "Name", "Function" }
 local commandShouldHave = {
@@ -134,13 +143,17 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 		logFunc = targetLogger
 	else
 		if(isConsole) then
-			logFunc = function(text) if(sender == nil) then Vermilion.Log(text) else sender:PrintMessage(HUD_PRINTCONSOLE, text) end end
-			if(sender == nil) then
-				sender = {}
-				function sender:GetName()
+			logFunc = function(text) if(vplayer == nil and vplayer:SteamID() != "CONSOLE") then Vermilion.Log(text) else 
+				net.Start("VClientPrint")
+				net.WriteString(text)
+				net.Send(vplayer)
+			end end
+			if(vplayer == nil) then
+				vplayer = {}
+				function vplayer:GetName()
 					return "Console"
 				end
-				function sender:SteamID()
+				function vplayer:SteamID()
 					return "CONSOLE"
 				end
 			end

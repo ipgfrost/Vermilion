@@ -19,11 +19,11 @@
 
 if(SERVER) then
 	AddCSLuaFile()
-	AddCSLuaFile("interface.lua")
+	//AddCSLuaFile("interface.lua")
 
 
 	return
 else
 	VInterfaceBuilder = {}
-	include("interface.lua")
+	//include("interface.lua")
 end

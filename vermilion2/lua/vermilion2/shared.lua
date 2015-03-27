@@ -216,7 +216,18 @@ local vHookCall = function(evtName, gmTable, ...)
 			end
 		end
 	end
-	a,b,c,d,e,f = hook.oldHook(evtName, gmTable, ...)
+	local vars = { ... }
+	if(not xpcall(function()
+		a,b,c,d,e,f = hook.oldHook(evtName, gmTable, unpack(vars))
+	end, function(err)
+		hook.Run("OnLuaError") -- bring up the standard "script errors" notification.
+		Vermilion.Log("An error has been detected in the base GMod hook system. This most likely has nothing to do with Vermilion.")
+		print(err)
+		debug.Trace()
+	end)) then return end
+	
+	
+	
 	if(a != nil) then
 		destroySDHook(evtName)
 		return a, b, c, d, e, f
@@ -464,9 +475,9 @@ function Vermilion:CreateBaseModule()
 		end
 
 		function base:TransBroadcastNotify(key, parameters, typ, time)
-			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
+			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(key, parameters))
 			for i,k in pairs(VToolkit.GetValidPlayers(false)) do
-				Vermilion:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
+				Vermilion:AddNotification(k, self:TranslateStr(key, parameters, k), typ, time)
 			end
 		end
 

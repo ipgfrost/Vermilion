@@ -48,6 +48,13 @@ function PanelMeta:GetY()
 	return select(2, self:GetPos())
 end
 
+function PanelMeta:SetX(x)
+	self:SetPos(x, self:GetY())
+end
+
+function PanelMeta:SetY(y)
+	self:SetPos(self:GetX(), y)
+end
 
 local function newNotifyFormula(x)
 	if(x < 0) then
@@ -148,7 +155,7 @@ function VToolkit:CreateHeaderLabel(object, text)
 	return label
 end
 
-function VToolkit:CreateComboBox(options, selected)
+function VToolkit:CreateComboBox(options, selected, nonalphabetical)
 	local cbox = vgui.Create("DComboBox")
 	options = options or {}
 	for i,k in pairs(options) do
@@ -157,6 +164,40 @@ function VToolkit:CreateComboBox(options, selected)
 	if(isnumber(selected)) then
 		cbox:ChooseOptionID(selected)
 	end
+	
+	if(nonalphabetical) then
+		-- I don't want alphabetical sorting, thanks.
+		function cbox:OpenMenu(pControlOpener)
+			if ( pControlOpener ) then
+				if ( pControlOpener == self.TextEntry ) then
+					return
+				end
+			end
+
+			-- Don't do anything if there aren't any options..
+			if ( #self.Choices == 0 ) then return end
+			
+			-- If the menu still exists and hasn't been deleted
+			-- then just close it and don't open a new one.
+			if ( IsValid( self.Menu ) ) then
+				self.Menu:Remove()
+				self.Menu = nil
+			end
+
+			self.Menu = DermaMenu()
+			
+			
+			for k, v in pairs( self.Choices ) do
+				self.Menu:AddOption( v, function() self:ChooseOption( v, k ) end )
+			end
+			
+			local x, y = self:LocalToScreen( 0, self:GetTall() )
+			
+			self.Menu:SetMinimumWidth( self:GetWide() )
+			self.Menu:Open( x, y, false, self )
+		end
+	end
+	
 	if(self:GetSkinComponent("ComboBox") != nil) then
 		if(self:GetSkinComponent("ComboBox").Config != nil) then
 			self:GetSkinComponent("ComboBox").Config(cbox)
@@ -259,6 +300,7 @@ function VToolkit:CreateButton(text, onClick)
 			self:SetTextColor(Vermilion.Colours.Black)
 		end
 		self:SetAlpha(255)
+		self:InvalidateLayout(true)
 	end
 	function button:SetEnabled(is)
 		self:SetDisabled(not is)
@@ -851,6 +893,36 @@ function VToolkit:CreatePreviewPanel(typ, parent, move)
 	return PreviewPanel
 end
 
+function VToolkit:CreateHider(parent)
+	local panel = vgui.Create("DPanel")
+	
+	panel:SetSize(parent:GetSize())
+	panel:Hide()
+	panel:SetParent(parent)
+	panel:SetAlpha(0)
+	
+	function panel:Paint(w,h)
+		surface.SetDrawColor(Color(0, 0, 0, self:GetAlpha()))
+		surface.DrawRect(0, 0, w, h)
+	end
+	
+	function panel:HiderShow()
+		self:SetAlpha(0)
+		self:Show()
+		self:AlphaTo(170, 0.25, 0)
+	end
+	
+	function panel:HiderHide()
+		self:Show()
+		self:SetAlpha(170)
+		self:AlphaTo(0, 0.25, 0, function()
+			self:Hide()
+		end)
+	end
+	
+	return panel
+end
+
 function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 	sizeOffset = sizeOffset or 0
 	if(closeBtn == nil) then closeBtn = true end
@@ -869,13 +941,17 @@ function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 		cRKPanel:SetParent(drawer)
 	end
 
+	local hider = VToolkit:CreateHider(parent)
+
 	function drawer:Open()
 		self:MoveTo(0, 0, 0.25, 0, -3)
+		hider:HiderShow()
 		self.IsOpen = true
 	end
 
 	function drawer:Close()
 		self:MoveTo(-self:GetWide(), 0, 0.25, 0, -3)
+		hider:HiderHide()
 		self.IsOpen = false
 	end
 
@@ -886,6 +962,15 @@ function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
+	
+	drawer.OMTF = drawer.MoveToFront
+	function drawer:MoveToFront()
+		hider:MoveToFront()
+		self:OMTF()
+	end
+	
+	hider:MoveToFront()
+	drawer:MoveToFront()
 
 	return drawer
 end
@@ -907,14 +992,18 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 		cRKPanel:SetSize(50, 20)
 		cRKPanel:SetParent(drawer)
 	end
+	
+	local hider = VToolkit:CreateHider(parent)
 
 	function drawer:Open()
 		self:MoveTo((parent:GetWide() / 2) - 50 - sizeOffset, 0, 0.25, 0, -3)
+		hider:HiderShow()
 		self.IsOpen = true
 	end
 
 	function drawer:Close()
 		self:MoveTo(parent:GetWide(), 0, 0.25, 0, -3)
+		hider:HiderHide()
 		self.IsOpen = false
 	end
 
@@ -925,6 +1014,15 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
+	
+	drawer.OMTF = drawer.MoveToFront
+	function drawer:MoveToFront()
+		hider:MoveToFront()
+		self:OMTF()
+	end
 
+	hider:MoveToFront()
+	drawer:MoveToFront()
+	
 	return drawer
 end

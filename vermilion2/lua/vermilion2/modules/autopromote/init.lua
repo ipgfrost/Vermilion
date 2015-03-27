@@ -26,287 +26,484 @@ MODULE.Permissions = {
 	"manage_autopromote"
 }
 MODULE.NetworkStrings = {
-	"VGetAutoPromoteListing",
-	"VSetAutoPromoteListing"
+	"VGetAutoPromoteListings",
+	"VDelAutoPromoteListings"
 }
 
 function MODULE:InitServer()
-
-	-- automatically alter the promotion listings whenever a rank is deleted or renamed.
-
-	self:AddHook(Vermilion.Event.RankDeleted, function(name)
-		for i,k in pairs(MODULE:GetData("promotion_listings", {}, true)) do
-			if(k.Rank == name or k.ToRank == name) then
-				table.RemoveByValue(MODULE:GetData("promotion_listings", {}, true), k)
+	
+	-- check the listings for consistency when a rank is deleted to make sure we
+	-- are not promoting people from or to a non-existent rank.
+	self:AddHook(Vermilion.Event.RankDeleted, function(uid)
+		for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+			if(k.Rank == uid or k.ToRank == uid) then
+				table.RemoveByValue(MODULE:GetData("promotion_listings_mk2", {}, true), k)
 			end
 		end
 	end)
-
-	self:AddHook(Vermilion.Event.RankRenamed, function(oldname, newname)
+	
+	function MODULE:CreateListingUID()
+		local vars = string.ToTable("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") -- source array, modify this to make more complex IDs.
+		local out = ""
+		for i=1,15,1 do -- 15 chars long
+			out = out .. table.Random(vars)
+		end
+		
+		for i,k in pairs(self:GetData("promotion_listings_mk2", {}, true)) do
+			if(k.UniqueID == out) then return self:CreateListingUID() end -- make completely sure that we are not duplicating rank IDs.
+		end
+		
+		return out
+	end
+	
+	-- upgrade the old format
+	if(not self:GetData("promotion_listings_mk2", nil) and self:GetData("promotion_listings", nil)) then
+		Vermilion.Log("Updating Auto-Promote data storage to UID model...")
+		self:SetData("promotion_listings_mk2", {})
 		for i,k in pairs(MODULE:GetData("promotion_listings", {}, true)) do
-			if(k.Rank == oldname) then k.Rank = newname end
-			if(k.ToRank == oldname) then k.ToRank = newname end
+			local tab = {}
+			tab.UniqueID = self:CreateListingUID()
+			tab.Rank = Vermilion:GetRank(k.Rank):GetUID()
+			tab.ToRank = Vermilion:GetRank(k.ToRank):GetUID()
+			tab.TimerValues = {
+				S = k.Playtime % 60,
+				M = math.floor((k.Playtime % 3600) / 60),
+				H = math.floor((k.Playtime % 86400) / 3600),
+				D = math.floor((k.Playtime % 2592000) / 86400)
+			}
+			table.insert(self:GetData("promotion_listings_mk2", {}, true), tab)
+		end
+		MODULE:SetData("promotion_listings", nil)
+		Vermilion.Log("Auto-Promote data storage upgraded...")
+	end
+	
+	local pDataMeta = {}
+	function pDataMeta:GetTotalTime()
+		return (self.TimerValues.S) + (self.TimerValues.M * 60) + (self.TimerValues.H * 3600) + (self.TimerValues.D * 86400)
+	end
+	function pDataMeta:GetTotalTimeString()
+		return tostring(self.TimerValues.D) .. "d " .. tostring(self.TimerValues.H) .. "h " .. tostring(self.TimerValues.M) .. "m " .. tostring(self.TimerValues.S) .. "s"
+	end
+	
+	
+	for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+		setmetatable(k, { __index = pDataMeta })
+	end
+	
+	function sendAutoPromoteListings(vplayer)
+		MODULE:NetStart("VGetAutoPromoteListings")
+			
+			local tab = {}
+			for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+				local t1 = {}
+				t1.UniqueID = k.UniqueID
+				t1.Rank = k.Rank
+				t1.ToRank = k.ToRank
+				
+				-- add these two values since the metatable doesn't exist on the client.
+				t1.TimerValues = t1.TimerValues
+				t1.TValuesString = k:GetTotalTimeString()
+				
+				
+				table.insert(tab, t1)
+			end
+			
+			net.WriteTable(tab)
+			net.Send(vplayer)
+	end
+	
+	
+	self:NetHook("VGetAutoPromoteListings", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
+			sendAutoPromoteListings(vplayer)
 		end
 	end)
-
-	timer.Create("V-AutoPromote", 10, 0, function()
-		local promotionData = MODULE:GetData("promotion_listings", {}, true)
-		for i,k in pairs(player.GetHumans()) do
-			local vdata = Vermilion:GetUser(k)
-			local rank = vdata:GetRank()
-			for i1,k1 in pairs(promotionData) do
-				if(k1.Rank == rank.Name) then
-					if(vdata.Playtime >= k1.Playtime) then
-						vdata:SetRank(k1.ToRank)
-						MODULE:TransBroadcastNotify("autodone", { k:GetName(), k1.ToRank, k1.PlaytimeString })
+	
+	self:NetHook("VAddAutoPromoteListing", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
+			local tab = net.ReadTable()
+			tab.UniqueID = self:CreateListingUID()
+			setmetatable(tab, { __index = pDataMeta })
+			table.insert(MODULE:GetData("promotion_listings_mk2", {}, true), tab)
+			sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+		end
+	end)
+	
+	self:NetHook("VDelAutoPromoteListings", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
+			local tab = net.ReadTable()
+			for i,k in pairs(tab) do
+				for i1,k1 in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+					if(k1.UniqueID == k) then
+						table.RemoveByValue(MODULE:GetData("promotion_listings_mk2", {}, true), k1)
+						break
 					end
-					break
+				end
+			end
+			sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+		end
+	end)
+	
+	timer.Create("V-AutoPromote", 10, 0, function()
+		local pdata = MODULE:GetData("promotion_listings_mk2", {}, true)
+		for i,k in pairs(player.GetHumans()) do
+			local vPlayerData = Vermilion:GetUser(k)
+			if(vPlayerData == nil) then
+				Vermilion.Log("Cannot autopromote; the management engine is missing userdata!")
+				continue
+			end
+			local rank = vPlayerData:GetRank()
+			for i1,k1 in pairs(pdata) do
+				if(k1.Rank == rank:GetUID()) then
+					if(vPlayerData.Playtime >= k1:GetTotalTime()) then
+						vPlayerData:SetRank(k1.ToRank)
+						MODULE:TransBroadcastNotify("autodone", { k:GetName(), Vermilion:GetRankByID(k1.ToRank), k1:GetTotalTimeString() })
+					end
 				end
 			end
 		end
 	end)
-
-	self:NetHook("VGetAutoPromoteListing", function(vplayer)
-		MODULE:NetStart("VGetAutoPromoteListing")
-		net.WriteTable(MODULE:GetData("promotion_listings", {}, true))
-		net.Send(vplayer)
-	end)
-
-	self:NetHook("VSetAutoPromoteListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
-			MODULE:SetData("promotion_listings", net.ReadTable())
-		end
-	end)
-
+	
 end
 
 function MODULE:InitClient()
-	self:NetHook("VGetAutoPromoteListing", function()
+	
+	self:NetHook("VGetAutoPromoteListings", function()
 		local paneldata = Vermilion.Menu.Pages["autopromote"]
 		if(IsValid(paneldata.Panel)) then
-			paneldata.PromotionTable:Clear()
+			paneldata.Listings:Clear()
 			local tab = net.ReadTable()
 			for i,k in pairs(tab) do
-				paneldata.PromotionTable:AddLine(k.Rank, k.ToRank, k.PlaytimeString).TotalTime = k.Playtime
+				local ln = paneldata.Listings:AddLine(Vermilion:GetRankByID(k.Rank).Name, Vermilion:GetRankByID(k.ToRank).Name, k.TValuesString)
+				ln.ListingUID = k.UniqueID
+				ln.TimerValues = k.TimerValues
+				ln.FromRankUID = k.Rank
+				ln.ToRankUID = k.ToRank
 			end
 		end
 	end)
+	
+	function buildAddAutoPromote(panel, paneldata)
+		local drawer = VToolkit:CreateRightDrawer(panel, 0, true)
+		
+		local fromRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("from"))
+		fromRankLabel:SetPos(10, 52)
+		fromRankLabel:SetDark(true)
+		fromRankLabel:SetParent(drawer)
 
-	Vermilion.Menu:AddCategory("ranks", 3)
+		local fromRankCombo = VToolkit:CreateComboBox(nil, nil, true)
+		fromRankCombo:SetPos(fromRankLabel:GetWide() + 20, 50)
+		fromRankCombo:SetSize(250, 20)
+		fromRankCombo:SetParent(drawer)
+		fromRankCombo:SetValue("From Rank")
+		fromRankCombo.OnSelect = function(panel, index, value)
+			fromRankCombo.SelectedValue = fromRankCombo:GetOptionData(index)
+		end
+		paneldata.AddFromRankCombo = fromRankCombo
+		
+		local toRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("to"))
+		toRankLabel:SetPos(10, 82)
+		toRankLabel:SetDark(true)
+		toRankLabel:SetParent(drawer)
 
-	Vermilion.Menu:AddPage({
-			ID = "autopromote",
-			Name = Vermilion:TranslateStr("menu:autopromote"),
-			Order = 6,
-			Category = "ranks",
-			Size = { 785, 540 },
-			Conditional = function(vplayer)
-				return Vermilion:HasPermission("manage_autopromote")
-			end,
-			Builder = function(panel, paneldata)
-				local listings = VToolkit:CreateList({
-					cols = {
-						MODULE:TranslateStr("list:from"),
-						MODULE:TranslateStr("list:to"),
-						MODULE:TranslateStr("list:after")
-					},
-					multiselect = false
-				})
-				listings:SetPos(10, 30)
-				listings:SetSize(765, 320)
-				listings:SetParent(panel)
+		local toRankCombo = VToolkit:CreateComboBox(nil, nil, true)
+		toRankCombo:SetPos(toRankLabel:GetWide() + 20, 80)
+		toRankCombo:SetSize(250, 20)
+		toRankCombo:SetParent(drawer)
+		toRankCombo:SetValue("To Rank")
+		toRankCombo.OnSelect = function(panel, index, value)
+			toRankCombo.SelectedValue = toRankCombo:GetOptionData(index)
+		end
+		paneldata.AddToRankCombo = toRankCombo
+		
+		local off = math.Max(fromRankLabel:GetWide(), toRankLabel:GetWide())
+		fromRankCombo:SetX(off + 20)
+		toRankCombo:SetX(off + 20)
+		
+		fromRankCombo:SetWide(drawer:GetWide() - 40 - off)
+		toRankCombo:SetWide(drawer:GetWide() - 40 - off)
+		
+		local wangs = vgui.Create("DPanel")
+		wangs:SetDrawBackground(false)
+		wangs:SetParent(drawer)
+		
+		local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("after"))
+		timeLabel:SetPos(10, 120)
+		timeLabel:SetDark(true)
+		timeLabel:SetParent(drawer)
 
-				paneldata.PromotionTable = listings
+		local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
+		daysLabel:SetPos(10 + ((64 - daysLabel:GetWide()) / 2), 0)
+		daysLabel:SetParent(wangs)
 
-				local listingsLabel = VToolkit:CreateHeaderLabel(listings, MODULE:TranslateStr("header"))
-				listingsLabel:SetParent(panel)
-
-				local removeListing = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
-					if(table.Count(listings:GetSelected()) == 0) then
-						VToolkit:CreateErrorDialog(MODULE:TranslateStr("remove:error"))
-						return
-					end
-					local tab = {}
-					for i,k in pairs(listings:GetLines()) do
-						local add = true
-						for i1,k1 in pairs(listings:GetSelected()) do
-							if(k1 == k) then add = false break end
-						end
-						if(add) then
-							table.insert(tab, { k:GetValue(1), k:GetValue(2), k:GetValue(3), k.TotalTime })
-						end
-					end
-					listings:Clear()
-					for i,k in pairs(tab) do
-						listings:AddLine(k[1], k[2], k[3]).TotalTime = k[4]
-					end
-					paneldata.UnsavedChanges = true
-				end)
-				removeListing:SetPos(670, 360)
-				removeListing:SetSize(105, 30)
-				removeListing:SetParent(panel)
-
-				local saveListings = VToolkit:CreateButton(MODULE:TranslateStr("save"), function()
-					local tab = {}
-					for i,k in pairs(listings:GetLines()) do
-						table.insert(tab, { Rank = k:GetValue(1), ToRank = k:GetValue(2), PlaytimeString = k:GetValue(3), Playtime = k.TotalTime})
-					end
-					MODULE:NetStart("VSetAutoPromoteListing")
-					net.WriteTable(tab)
-					net.SendToServer()
-					paneldata.UnsavedChanges = false
-				end)
-				saveListings:SetPos(555, 360)
-				saveListings:SetSize(105, 30)
-				saveListings:SetParent(panel)
-
-				local fromRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("from"))
-				fromRankLabel:SetPos(10, 402)
-				fromRankLabel:SetDark(true)
-				fromRankLabel:SetParent(panel)
-
-				local fromRankCombo = VToolkit:CreateComboBox()
-				fromRankCombo:SetPos(fromRankLabel:GetWide() + 20, 400)
-				fromRankCombo:SetSize(200, 20)
-				fromRankCombo:SetParent(panel)
-				fromRankCombo:SetValue("From Rank")
-				fromRankCombo.OnSelect = function(panel, index, value)
-					fromRankCombo.SelectedValue = value
-				end
-				paneldata.FromRankCombo = fromRankCombo
-
-				local toRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("to"))
-				toRankLabel:SetPos(10, 432)
-				toRankLabel:SetDark(true)
-				toRankLabel:SetParent(panel)
-
-				local toRankCombo = VToolkit:CreateComboBox()
-				toRankCombo:SetPos(toRankLabel:GetWide() + 20, 430)
-				toRankCombo:SetSize(200, 20)
-				toRankCombo:SetParent(panel)
-				toRankCombo:SetValue("To Rank")
-				toRankCombo.OnSelect = function(panel, index, value)
-					toRankCombo.SelectedValue = value
-				end
-				paneldata.ToRankCombo = toRankCombo
-
-				local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("after"))
-				timeLabel:SetPos(10, 460)
-				timeLabel:SetDark(true)
-				timeLabel:SetParent(panel)
-
-				local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
-				daysLabel:SetPos(10 + ((64 - daysLabel:GetWide()) / 2), 480)
-				daysLabel:SetParent(panel)
-
-				local daysWang = VToolkit:CreateNumberWang(0, 999)
-				daysWang:SetPos(10, 495)
-				daysWang:SetParent(panel)
+		local daysWang = VToolkit:CreateNumberWang(0, 999)
+		daysWang:SetPos(10, 15)
+		daysWang:SetParent(wangs)
 
 
 
-				local hoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
-				hoursLabel:SetPos(84 + ((64 - hoursLabel:GetWide()) / 2), 480)
-				hoursLabel:SetParent(panel)
+		local hoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
+		hoursLabel:SetPos(84 + ((64 - hoursLabel:GetWide()) / 2), 0)
+		hoursLabel:SetParent(wangs)
 
-				local hoursWang = VToolkit:CreateNumberWang(0, 24)
-				hoursWang:SetPos(84, 495)
-				hoursWang:SetParent(panel)
-				hoursWang.OnValueChanged = function(wang, val)
-					if(tonumber(val) == 24) then
-						wang:SetValue(0)
-						daysWang:SetValue(daysWang:GetValue() + 1)
-					end
-				end
-
-
-
-				local minsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
-				minsLabel:SetPos(158 + ((64 - minsLabel:GetWide()) / 2), 480)
-				minsLabel:SetParent(panel)
-
-				local minsWang = VToolkit:CreateNumberWang(0, 60)
-				minsWang:SetPos(158, 495)
-				minsWang:SetParent(panel)
-				minsWang.OnValueChanged = function(wang, val)
-					if(tonumber(val) == 60) then
-						wang:SetValue(0)
-						hoursWang:SetValue(hoursWang:GetValue() + 1)
-					end
-				end
+		local hoursWang = VToolkit:CreateNumberWang(0, 24)
+		hoursWang:SetPos(84, 15)
+		hoursWang:SetParent(wangs)
+		hoursWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 24) then
+				wang:SetValue(0)
+				daysWang:SetValue(daysWang:GetValue() + 1)
+			end
+		end
 
 
 
-				local secondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
-				secondsLabel:SetPos(232 + ((64 - secondsLabel:GetWide()) / 2), 480)
-				secondsLabel:SetParent(panel)
+		local minsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
+		minsLabel:SetPos(158 + ((64 - minsLabel:GetWide()) / 2), 0)
+		minsLabel:SetParent(wangs)
 
-				local secondsWang = VToolkit:CreateNumberWang(0, 60)
-				secondsWang:SetPos(232, 495)
-				secondsWang:SetParent(panel)
-				secondsWang.OnValueChanged = function(wang, val)
-					if(tonumber(val) == 60) then
-						wang:SetValue(0)
-						minsWang:SetValue(minsWang:GetValue() + 1)
-					end
-				end
+		local minsWang = VToolkit:CreateNumberWang(0, 60)
+		minsWang:SetPos(158, 15)
+		minsWang:SetParent(wangs)
+		minsWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 60) then
+				wang:SetValue(0)
+				hoursWang:SetValue(hoursWang:GetValue() + 1)
+			end
+		end
 
-				local addListingButton = VToolkit:CreateButton(MODULE:TranslateStr("add"), function()
-					if(fromRankCombo.SelectedValue == nil or toRankCombo.SelectedValue == nil) then
-						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:inittarrank"))
-						return
-					end
-					if(fromRankCombo.SelectedValue == toRankCombo.SelectedValue) then
-						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:diff"))
-						return
-					end
-					local time = 0
-					-- seconds per year = 31557600
-					-- average seconds per month = 2592000
-					-- seconds per week = 604800
-					-- seconds per day = 86400
-					-- seconds per hour = 3600
 
-					time = time + (secondsWang:GetValue())
-					time = time + (minsWang:GetValue() * 60)
-					time = time + (hoursWang:GetValue() * 3600)
-					time = time + (daysWang:GetValue() * 86400)
 
-					if(time == 0) then
-						VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:time:0"))
-						return
-					end
+		local secondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
+		secondsLabel:SetPos(232 + ((64 - secondsLabel:GetWide()) / 2), 0)
+		secondsLabel:SetParent(wangs)
 
-					listings:AddLine(fromRankCombo.SelectedValue, toRankCombo.SelectedValue, tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s").TotalTime = time
-					paneldata.UnsavedChanges = true
-				end)
-				addListingButton:SetPos(306, 485)
-				addListingButton:SetSize(105, 30)
-				addListingButton:SetParent(panel)
-
-				local lab = VToolkit:CreateLabel("Note to self: update the interface. Porting stuff directly from V1 is BAD.")
-				lab:SetPos(440, 485)
-				lab:SetParent(panel)
-
-				MODULE:AddHook(Vermilion.Event.MENU_CLOSING, function()
-					if(paneldata.UnsavedChanges) then
-						VToolkit:CreateConfirmDialog(MODULE:TranslateStr("unsaved"), function()
-							Vermilion.Menu:Close(true)
-							paneldata.UnsavedChanges = false
-						end, { Confirm = MODULE:TranslateStr("yes"), Deny = MODULE:TranslateStr("no"), Default = false })
-						return false
-					end
-				end)
-
-			end,
-			OnOpen = function(panel, paneldata)
-				MODULE:NetCommand("VGetAutoPromoteListing")
-				paneldata.FromRankCombo:Clear()
-				paneldata.ToRankCombo:Clear()
-				for i,k in pairs(Vermilion.Data.RankOverview) do
-					if(k.Name != "owner") then paneldata.FromRankCombo:AddChoice(k.Name) end
-					paneldata.ToRankCombo:AddChoice(k.Name)
+		local secondsWang = VToolkit:CreateNumberWang(0, 60)
+		secondsWang:SetPos(232, 15)
+		secondsWang:SetParent(wangs)
+		secondsWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 60) then
+				wang:SetValue(0)
+				minsWang:SetValue(minsWang:GetValue() + 1)
+			end
+		end
+		
+		wangs:SetSize(secondsWang:GetX() + secondsWang:GetWide() + 10, secondsWang:GetY() + secondsWang:GetTall())
+		wangs:SetPos((drawer:GetWide() - wangs:GetWide()) / 2, 140)
+		
+		timeLabel:MoveToFront()
+		
+		local addButton = VToolkit:CreateButton("Add Listing", function()
+			local from = fromRankCombo.SelectedValue
+			local to = toRankCombo.SelectedValue
+			
+			if(from == nil or to == nil) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:inittarrank"))
+				return
+			end
+			
+			if(from == to) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:diff"))
+				return
+			end
+			
+			for i,k in pairs(paneldata.Listings:GetLines()) do
+				if(k.FromRankUID == from and k.ToRankUID == to) then
+					VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:exists"))
+					return
 				end
 			end
-		})
+			
+			if(secondsWang:GetValue() == 0 and minsWang:GetValue() == 0 and hoursWang:GetValue() == 0 and daysWang:GetValue() == 0) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:time:0"))
+				return
+			end
+			
+			local tab = {}
+			tab.Rank = from
+			tab.ToRank = to
+			tab.TimerValues = {
+				S = secondsWang:GetValue(),
+				M = minsWang:GetValue(),
+				H = hoursWang:GetValue(),
+				D = daysWang:GetValue()
+			}
+			
+			MODULE:NetStart("VAddAutoPromoteListing")
+			net.WriteTable(tab)
+			net.SendToServer()
+			
+			fromRankCombo:SetValue("")
+			toRankCombo:SetValue("")
+			secondsWang:SetValue(0)
+			minsWang:SetValue(0)
+			hoursWang:SetValue(0)
+			daysWang:SetValue(0)
+			
+			drawer:Close()
+		end)
+		addButton:SetPos(10, wangs:GetY() + wangs:GetTall() + 20)
+		addButton:SetSize(drawer:GetWide() - 20, 30)
+		addButton:SetParent(drawer)
+		
+		return drawer
+	end
+	
+	function buildEditAutoPromote(panel, paneldata)
+		local drawer = VToolkit:CreateRightDrawer(panel, 0, true)
+		
+		local wangs = vgui.Create("DPanel")
+		wangs:SetDrawBackground(false)
+		wangs:SetParent(drawer)
+		
+		local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("after"))
+		timeLabel:SetPos(10, 460)
+		timeLabel:SetDark(true)
+		timeLabel:SetParent(wangs)
+
+		local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
+		daysLabel:SetPos(10 + ((64 - daysLabel:GetWide()) / 2), 0)
+		daysLabel:SetParent(wangs)
+
+		local daysWang = VToolkit:CreateNumberWang(0, 999)
+		daysWang:SetPos(10, 15)
+		daysWang:SetParent(wangs)
+
+
+
+		local hoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
+		hoursLabel:SetPos(84 + ((64 - hoursLabel:GetWide()) / 2), 0)
+		hoursLabel:SetParent(wangs)
+
+		local hoursWang = VToolkit:CreateNumberWang(0, 24)
+		hoursWang:SetPos(84, 15)
+		hoursWang:SetParent(wangs)
+		hoursWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 24) then
+				wang:SetValue(0)
+				daysWang:SetValue(daysWang:GetValue() + 1)
+			end
+		end
+
+
+
+		local minsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
+		minsLabel:SetPos(158 + ((64 - minsLabel:GetWide()) / 2), 0)
+		minsLabel:SetParent(wangs)
+
+		local minsWang = VToolkit:CreateNumberWang(0, 60)
+		minsWang:SetPos(158, 15)
+		minsWang:SetParent(wangs)
+		minsWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 60) then
+				wang:SetValue(0)
+				hoursWang:SetValue(hoursWang:GetValue() + 1)
+			end
+		end
+
+
+
+		local secondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
+		secondsLabel:SetPos(232 + ((64 - secondsLabel:GetWide()) / 2), 0)
+		secondsLabel:SetParent(wangs)
+
+		local secondsWang = VToolkit:CreateNumberWang(0, 60)
+		secondsWang:SetPos(232, 15)
+		secondsWang:SetParent(wangs)
+		secondsWang.OnValueChanged = function(wang, val)
+			if(tonumber(val) == 60) then
+				wang:SetValue(0)
+				minsWang:SetValue(minsWang:GetValue() + 1)
+			end
+		end
+		
+		wangs:SetSize(secondsWang:GetX() + secondsWang:GetWide() + 10, secondsWang:GetY() + secondsWang:GetTall())
+		wangs:SetPos((drawer:GetWide() - wangs:GetWide()) / 2, 120)
+		
+		return drawer
+	end
+	
+	Vermilion.Menu:AddCategory("ranks", 3)
+	
+	Vermilion.Menu:AddPage({
+		ID = "autopromote",
+		Name = Vermilion:TranslateStr("menu:autopromote"),
+		Order = 6,
+		Category = "ranks",
+		Size = { 700, 560 },
+		Conditional = function(vplayer)
+			return Vermilion:HasPermission("manage_autopromote")
+		end,
+		Builder = function(panel, paneldata)
+			local listings = VToolkit:CreateList({
+				cols = {
+					MODULE:TranslateStr("list:from"),
+					MODULE:TranslateStr("list:to"),
+					MODULE:TranslateStr("list:after")
+				},
+				multiselect = false
+			})
+			listings:SetPos(10, 30)
+			listings:SetSize(400, panel:GetTall() - 40)
+			listings:SetParent(panel)
+			paneldata.Listings = listings
+			
+			local listingsLabel = VToolkit:CreateHeaderLabel(listings, MODULE:TranslateStr("header"))
+			listingsLabel:SetParent(panel)
+			
+			
+			local addPanel = buildAddAutoPromote(panel, paneldata)
+			
+			local addButton = VToolkit:CreateButton("Add", function()
+				addPanel:Open()
+			end)
+			addButton:SetParent(panel)
+			addButton:SetPos(panel:GetWide() - 285, 30)
+			addButton:SetSize(panel:GetWide() - addButton:GetX() - 5, 30)
+			
+			local editPanel = buildEditAutoPromote(panel, paneldata)
+			
+			local editButton = VToolkit:CreateButton("Edit", function()
+				editPanel:Open()
+			end)
+			editButton:SetParent(panel)
+			editButton:SetPos(panel:GetWide() - 285, 70)
+			editButton:SetSize(panel:GetWide() - editButton:GetX() - 5, 30)
+			editButton:SetDisabled(true)
+			
+			local delButton = VToolkit:CreateButton("Remove", function()
+				local tab = {}
+				for i,k in pairs(listings:GetSelected()) do
+					table.insert(tab, k.ListingUID)
+				end
+				MODULE:NetStart("VDelAutoPromoteListings")
+				net.WriteTable(tab)
+				net.SendToServer()
+			end)
+			delButton:SetParent(panel)
+			delButton:SetPos(panel:GetWide() - 285, 110)
+			delButton:SetSize(panel:GetWide() - delButton:GetX() - 5, 30)
+			delButton:SetDisabled(true)
+			
+			function listings:OnRowSelected(index, line)
+				editButton:SetDisabled(table.Count(self:GetSelected()) != 1)
+				delButton:SetDisabled(self:GetSelected()[1] == nil)
+			end
+			
+			addPanel:MoveToFront()
+			editPanel:MoveToFront()
+			
+		end,
+		OnOpen = function(panel, paneldata)
+			MODULE:NetCommand("VGetAutoPromoteListings")
+			
+			paneldata.AddFromRankCombo:Clear()
+			paneldata.AddToRankCombo:Clear()
+			for i,k in pairs(Vermilion.Data.RankOverview) do
+				if(k.Name != "owner") then paneldata.AddFromRankCombo:AddChoice(k.Name, k.UniqueID) end
+				paneldata.AddToRankCombo:AddChoice(k.Name, k.UniqueID)
+			end
+		end
+	})
+	
 end

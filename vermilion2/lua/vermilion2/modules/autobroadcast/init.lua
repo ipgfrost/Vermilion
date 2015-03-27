@@ -28,6 +28,7 @@ MODULE.Permissions = {
 MODULE.NetworkStrings = {
 	"VGetAutoBroadcastListing",
 	"VAddAutoBroadcastListing",
+	"VUpdateAutoBroadcastListing",
 	"VDelAutoBroadcastListing"
 }
 MODULE.APIFuncs = {
@@ -79,11 +80,27 @@ function MODULE:InitServer()
 			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 		end
 	end)
+	
+	self:NetHook("VUpdateAutoBroadcastListing", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
+			local vtab = net.ReadTable()
+			for i,k in pairs(MODULE:GetData("listings", {}, true)) do
+				if(k.Text == vtab.OText) then
+					k.Text = vtab.Text
+					k.Interval = vtab.Interval
+					k.IntervalString = vtab.IntervalString
+					k.Values = vtab.Values
+					break
+				end
+			end
+			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
+		end
+	end)
 
 	self:NetHook("VDelAutoBroadcastListing", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
 			local target = net.ReadInt(32)
-			MODULE:GetData("listings", {}, true)[target] = nil
+			table.remove(MODULE:GetData("listings", {}, true), target)
 			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 		end
 	end)
@@ -96,8 +113,11 @@ function MODULE:InitClient()
 		if(IsValid(paneldata.Panel)) then
 			paneldata.MessageTable:Clear()
 			for i,k in pairs(net.ReadTable()) do
-				paneldata.MessageTable:AddLine(k.Text, k.IntervalString).TotalTime = k.Interval
+				local ln = paneldata.MessageTable:AddLine(k.Text, k.IntervalString)
+				ln.TotalTime = k.Interval
+				ln.Values = k.Values
 			end
+			paneldata.MessageTable:OnRowSelected()
 		end
 	end)
 
@@ -115,7 +135,7 @@ function MODULE:InitClient()
 			Builder = function(panel, paneldata)
 				local listings = VToolkit:CreateList({
 					cols = MODULE:TranslateTable({ "list:text", "list:interval" }),
-					multiselect = false
+					multiselect = true
 				})
 				listings:SetPos(10, 30)
 				listings:SetSize(765, 460)
@@ -130,55 +150,171 @@ function MODULE:InitClient()
 
 				local removeListing = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
 					if(table.Count(listings:GetSelected()) == 0) then
-						VToolkit:CreateErrorDialog(MODULE:TranslateStr("remove:g1"))
 						return
 					end
 					local tab = {}
 					local rtab = {}
 					for i,k in pairs(listings:GetLines()) do
-						local add = true
 						for i1,k1 in pairs(listings:GetSelected()) do
-							if(k1 == k) then add = false break end
+							if(k1 == k) then
+								MODULE:NetStart("VDelAutoBroadcastListing")
+								net.WriteInt(i, 32)
+								net.SendToServer()
+								break
+							end
 						end
-						if(add) then
-							table.insert(tab, { k:GetValue(1), k:GetValue(2), k.TotalTime })
-						else
-							table.insert(rtab, i)
-						end
-					end
-					for i,k in pairs(rtab) do
-						MODULE:NetStart("VDelAutoBroadcastListing")
-						net.WriteInt(k, 32)
-						net.SendToServer()
-					end
-
-					listings:Clear()
-					for i,k in pairs(tab) do
-						listings:AddLine(k[1], k[2]).TotalTime = k[3]
 					end
 				end)
 				removeListing:SetPos(670, 500)
 				removeListing:SetSize(105, 30)
 				removeListing:SetParent(panel)
+				removeListing:SetDisabled(true)
+				
+				
+				local editMessagePanel = VToolkit:CreateRightDrawer(panel, 0, true)
+				paneldata.EditMessagePanel = editMessagePanel
+
+				local emessageBox = VToolkit:CreateTextbox("")
+				emessageBox:SetPos(10, 40)
+				emessageBox:SetSize(425, 410)
+				emessageBox:SetParent(editMessagePanel)
+				emessageBox:SetMultiline(true)
 
 
 
+				local etimeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("new:interval"))
+				etimeLabel:SetPos(10, 470)
+				etimeLabel:SetDark(true)
+				etimeLabel:SetParent(editMessagePanel)
 
-				local addMessagePanel = vgui.Create("DPanel")
-				addMessagePanel:SetTall(panel:GetTall())
-				addMessagePanel:SetWide((panel:GetWide() / 2) + 55)
-				addMessagePanel:SetPos(panel:GetWide(), 0)
-				addMessagePanel:SetParent(panel)
-				paneldata.AddMessagePanel = addMessagePanel
-				local cAMPanel = VToolkit:CreateButton(MODULE:TranslateStr("close"), function()
-					addMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+
+
+				local edaysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
+				edaysLabel:SetPos(10 + ((64 - edaysLabel:GetWide()) / 2), 490)
+				edaysLabel:SetParent(editMessagePanel)
+
+				local edaysWang = VToolkit:CreateNumberWang(0, 999)
+				edaysWang:SetPos(10, 505)
+				edaysWang:SetParent(editMessagePanel)
+
+
+
+				local ehoursLabel = VToolkit:CreateLabel(MODULE:TranslateStr("hourslabel"))
+				ehoursLabel:SetPos(84 + ((64 - ehoursLabel:GetWide()) / 2), 490)
+				ehoursLabel:SetParent(editMessagePanel)
+
+				local ehoursWang = VToolkit:CreateNumberWang(0, 24)
+				ehoursWang:SetPos(84, 505)
+				ehoursWang:SetParent(editMessagePanel)
+				ehoursWang.OnValueChanged = function(wang, val)
+					if(tonumber(val) == 24) then
+						wang:SetValue(0)
+						edaysWang:SetValue(edaysWang:GetValue() + 1)
+					end
+				end
+
+
+
+				local eminsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("minuteslabel"))
+				eminsLabel:SetPos(158 + ((64 - eminsLabel:GetWide()) / 2), 490)
+				eminsLabel:SetParent(editMessagePanel)
+
+				local eminsWang = VToolkit:CreateNumberWang(0, 60)
+				eminsWang:SetPos(158, 505)
+				eminsWang:SetParent(editMessagePanel)
+				eminsWang.OnValueChanged = function(wang, val)
+					if(tonumber(val) == 60) then
+						wang:SetValue(0)
+						ehoursWang:SetValue(ehoursWang:GetValue() + 1)
+					end
+				end
+
+
+
+				local esecondsLabel = VToolkit:CreateLabel(MODULE:TranslateStr("secondslabel"))
+				esecondsLabel:SetPos(232 + ((64 - esecondsLabel:GetWide()) / 2), 490)
+				esecondsLabel:SetParent(editMessagePanel)
+
+				local esecondsWang = VToolkit:CreateNumberWang(0, 60)
+				esecondsWang:SetPos(232, 505)
+				esecondsWang:SetParent(editMessagePanel)
+				esecondsWang.OnValueChanged = function(wang, val)
+					if(tonumber(val) == 60) then
+						wang:SetValue(0)
+						eminsWang:SetValue(eminsWang:GetValue() + 1)
+					end
+				end
+
+				local editListingButton = VToolkit:CreateButton(MODULE:TranslateStr("edit:add"), function()
+					local time = 0
+					-- seconds per year = 31557600
+					-- average seconds per month = 2592000
+					-- seconds per week = 604800
+					-- seconds per day = 86400
+					-- seconds per hour = 3600
+
+					time = time + (esecondsWang:GetValue())
+					time = time + (eminsWang:GetValue() * 60)
+					time = time + (ehoursWang:GetValue() * 3600)
+					time = time + (edaysWang:GetValue() * 86400)
+
+					if(time == 0) then
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("new:gz"))
+						return
+					end
+
+					MODULE:NetStart("VUpdateAutoBroadcastListing")
+					net.WriteTable({ OText = editMessagePanel.OriginalMessage, Text = emessageBox:GetValue(), IntervalString = tostring(edaysWang:GetValue()) .. "d " .. tostring(ehoursWang:GetValue()) .. "h " .. tostring(eminsWang:GetValue()) .. "m " .. tostring(esecondsWang:GetValue()) .. "s", Interval = time, Values = { d = edaysWang:GetValue(), h = ehoursWang:GetValue(), m = eminsWang:GetValue(), s = esecondsWang:GetValue() } })
+					net.SendToServer()
+
+					emessageBox:SetValue("")
+					editMessagePanel:Close()
 				end)
-				cAMPanel:SetPos(10, 10)
-				cAMPanel:SetSize(50, 20)
-				cAMPanel:SetParent(addMessagePanel)
+				editListingButton:SetPos(326, 495)
+				editListingButton:SetSize(105, 30)
+				editListingButton:SetParent(editMessagePanel)
+				
+				
+				local editListing = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
+					if(table.Count(listings:GetSelected()) == 0) then
+						VToolkit:CreateErrorDialog(MODULE:TranslateStr("edit:g1"))
+						return
+					end
+					
+					local ln = listings:GetSelected()[1]
+					
+					emessageBox:SetValue(ln:GetValue(1))
+					
+					if(ln.Values != nil) then
+						edaysWang:SetValue(ln.Values.d)
+						ehoursWang:SetValue(ln.Values.h)
+						eminsWang:SetValue(ln.Values.m)
+						esecondsWang:SetValue(ln.Values.s)
+					end
+					
+					editMessagePanel.OriginalMessage = ln:GetValue(1)
+					
+					editMessagePanel:Open()
+				end)
+				editListing:SetPos(555, 500)
+				editListing:SetSize(105, 30)
+				editListing:SetParent(panel)
+				editListing:SetDisabled(true)
+				
+
+
+				function listings:OnRowSelected(index, line)
+					local enabled = self:GetSelected()[1] == nil
+					removeListing:SetDisabled(enabled)
+					editListing:SetDisabled(table.Count(self:GetSelected()) != 1)
+				end
+
+
+				local addMessagePanel = VToolkit:CreateRightDrawer(panel, 0, true)
+				paneldata.AddMessagePanel = addMessagePanel
 
 				local addMessageButton = VToolkit:CreateButton(MODULE:TranslateStr("new"), function()
-					addMessagePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
+					addMessagePanel:Open()
 				end)
 				addMessageButton:SetPos(10, 500)
 				addMessageButton:SetSize(105, 30)
@@ -274,19 +410,24 @@ function MODULE:InitClient()
 						return
 					end
 
-					local ln = listings:AddLine(messageBox:GetValue(), tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s")
-					ln.TotalTime = time
-
 					MODULE:NetStart("VAddAutoBroadcastListing")
-					net.WriteTable({ Text = ln:GetValue(1), IntervalString = ln:GetValue(2), Interval = ln.TotalTime})
+					net.WriteTable({ Text = messageBox:GetValue(), IntervalString = tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s", Interval = time, Values = { d = daysWang:GetValue(), h = hoursWang:GetValue(), m = minsWang:GetValue(), s = secondsWang:GetValue() } })
 					net.SendToServer()
 
 					messageBox:SetValue("")
-					addMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+					secondsWang:SetValue(0)
+					minsWang:SetValue(0)
+					hoursWang:SetValue(0)
+					daysWang:SetValue(0)
+					addMessagePanel:Close()
 				end)
 				addListingButton:SetPos(326, 495)
 				addListingButton:SetSize(105, 30)
 				addListingButton:SetParent(addMessagePanel)
+				
+				
+				editMessagePanel:MoveToFront()
+				addMessagePanel:MoveToFront()
 			end,
 			OnOpen = function(panel, paneldata)
 				MODULE:NetCommand("VGetAutoBroadcastListing")

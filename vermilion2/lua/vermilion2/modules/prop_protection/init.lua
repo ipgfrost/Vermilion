@@ -145,7 +145,9 @@ MODULE.NetworkStrings = {
 	"VAddBuddy",
 	"VDelBuddy",
 	"VGetBuddyPermissions",
-	"VUpdateBuddyPermissions"
+	"VUpdateBuddyPermissions",
+	
+	"VQueryPPSteamID"
 }
 
 MODULE.UidCache = {}
@@ -611,7 +613,7 @@ function MODULE:InitShared()
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_timelimit",
-				GuiText = "Enable Prop Protection",
+				GuiText = "Time limit",
 				Type = "Slider",
 				Category = "Anti-Spam",
 				Default = true,
@@ -622,7 +624,7 @@ function MODULE:InitShared()
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action1",
-				GuiText = "Enable Prop Protection",
+				GuiText = "First Infraction",
 				Type = "Combobox",
 				Category = "Anti-Spam",
 				Default = 1,
@@ -645,7 +647,7 @@ function MODULE:InitShared()
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action2",
-				GuiText = "Enable Prop Protection",
+				GuiText = "Second Infraction",
 				Type = "Combobox",
 				Category = "Anti-Spam",
 				Default = 1,
@@ -668,7 +670,7 @@ function MODULE:InitShared()
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action3",
-				GuiText = "Enable Prop Protection",
+				GuiText = "Third Infraction",
 				Type = "Combobox",
 				Category = "Anti-Spam",
 				Default = 1,
@@ -901,6 +903,10 @@ function MODULE:InitServer()
 
 	local function doAntiSpamReset()
 		for i,ply in pairs(VToolkit.GetValidPlayers()) do
+			if(Vermilion:GetUser(ply) == nil) then
+				Vermilion.Log("Cannot update anti-spam data; the management engine is missing userdata for '" .. ply:GetName() .. "'...")
+				continue
+			end
 			if(Vermilion:GetUser(ply).AntiSpamCooldown == nil) then Vermilion:GetUser(ply).AntiSpamCooldown = 0 end
 			if(Vermilion:GetUser(ply).AntiSpamCooldown >= MODULE:GetData("antispam_propslimit", 5, true)) then
 				Vermilion:AddNotification(ply, "Anti-Spam limit reset.", NOTIFY_HINT)
@@ -948,7 +954,9 @@ function MODULE:InitServer()
 	end)
 
 	include("vermilion2/modules/prop_protection/buddylist.lua")
+	include("vermilion2/modules/prop_protection/ownerview.lua")
 	self:BuddyListInitServer()
+	self:OwnerViewInitServer()
 
 end
 
@@ -959,5 +967,7 @@ function MODULE:InitClient()
 	end
 
 	include("vermilion2/modules/prop_protection/buddylist.lua")
+	include("vermilion2/modules/prop_protection/ownerview.lua")
 	self:BuddyListInitClient()
+	self:OwnerViewInitClient()
 end

@@ -17,18 +17,19 @@
  in any way, nor claims to be so.
 ]]
 local subcommands = {}
+
+function Vermilion:AddCommand(name, executor)
+	subcommands[name] = executor
+end
+
 if(SERVER) then
 	util.AddNetworkString("Vermilion_ConsoleUpdate")
-
-	function Vermilion:AddCommand(name, executor)
-		subcommands[name] = executor
-	end
 
 	Vermilion:AddCommand("dump_settings", function(sender, args)
 		PrintTable(Vermilion.Data)
 	end)
 
-	hook.Add("PlayerInitialSpawn", "Vermilion_ConsoleUpdate", function(vplayer)
+	hook.Add("PlayerInitialSpawn", "Vermilion_DoConsoleUpdate", function(vplayer)
 		timer.Simple(1, function()
 			net.Start("Vermilion_ConsoleUpdate")
 			net.WriteTable(table.GetKeys(subcommands))
@@ -38,7 +39,15 @@ if(SERVER) then
 
 else
 	net.Receive("Vermilion_ConsoleUpdate", function()
-		subcommands = net.ReadTable()
+		local tab = net.ReadTable()
+		for i,k in pairs(tab) do
+			if(subcommands[k] == nil) then subcommands[k] = function(sender, args)
+					net.Start("VClientCMD")
+					net.WriteString("!" .. k .. " " .. table.concat(args, " "))
+					net.SendToServer()
+				end 
+			end
+		end
 	end)
 end
 

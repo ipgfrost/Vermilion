@@ -136,7 +136,7 @@ function MODULE:RegisterChatCommands()
 						log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
 						return false
 					end
-					target:SetRank(text[2])
+					target:SetRank(Vermilion:GetRank(text[2]):GetUID())
 					log("Updated rank of offline player!", NOTIFY_GENERIC)
 					return
 				end
@@ -147,7 +147,8 @@ function MODULE:RegisterChatCommands()
 			end
 			local promotion = true
 			if(Vermilion:GetUser(target):GetRank():GetImmunity() < Vermilion:GetRank(text[2]):GetImmunity()) then promotion = false end
-			Vermilion:GetUser(target):SetRank(text[2])
+			Vermilion:GetUser(target):SetRank(Vermilion:GetRank(text[2]):GetUID())
+			Vermilion.Log(Vermilion:GetRank(text[2]):GetUID())
 			if(promotion) then
 				glog(sender:GetName() .. " has promoted " .. target:GetName() .. " to " .. text[2])
 			else
@@ -241,7 +242,7 @@ function MODULE:InitServer()
 
 	self:NetHook("VGetPermissions", function(vplayer)
 		local rank = net.ReadString()
-		local rankData = Vermilion:GetRank(rank)
+		local rankData = Vermilion:GetRankByID(rank)
 		if(rankData != nil) then
 			MODULE:NetStart("VGetPermissions")
 			net.WriteString(rank)
@@ -255,7 +256,7 @@ function MODULE:InitServer()
 			local rank = net.ReadString()
 			local permission = net.ReadString()
 
-			Vermilion:GetRank(rank):AddPermission(permission)
+			Vermilion:GetRankByID(rank):AddPermission(permission)
 		end
 	end)
 
@@ -264,7 +265,7 @@ function MODULE:InitServer()
 			local rank = net.ReadString()
 			local permission = net.ReadString()
 
-			Vermilion:GetRank(rank):RevokePermission(permission)
+			Vermilion:GetRankByID(rank):RevokePermission(permission)
 		end
 	end)
 
@@ -280,7 +281,7 @@ function MODULE:InitServer()
 			local rankName = net.ReadString()
 			local colour = net.ReadColor()
 
-			Vermilion:GetRank(rankName):SetColour(colour)
+			Vermilion:GetRankByID(rankName):SetColour(colour)
 		end
 	end)
 
@@ -290,9 +291,9 @@ function MODULE:InitServer()
 			local dir = net.ReadBoolean()
 
 			if(dir) then
-				Vermilion:GetRank(rnk):MoveUp()
+				Vermilion:GetRankByID(rnk):MoveUp()
 			else
-				Vermilion:GetRank(rnk):MoveDown()
+				Vermilion:GetRankByID(rnk):MoveDown()
 			end
 		end
 	end)
@@ -301,7 +302,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
 			local rnk = net.ReadString()
 
-			Vermilion:GetRank(rnk):Delete()
+			Vermilion:GetRankByID(rnk):Delete()
 		end
 	end)
 
@@ -310,7 +311,7 @@ function MODULE:InitServer()
 			local rnk = net.ReadString()
 			local new = net.ReadString()
 
-			Vermilion:GetRank(rnk):Rename(new)
+			Vermilion:GetRankByID(rnk):Rename(new)
 		end
 	end)
 
@@ -328,7 +329,7 @@ function MODULE:InitServer()
 			local rankName = net.ReadString()
 			local icon = net.ReadString()
 
-			Vermilion:GetRank(rankName):SetIcon(icon)
+			Vermilion:GetRankByID(rankName):SetIcon(icon)
 		end
 	end)
 
@@ -345,13 +346,13 @@ function MODULE:InitServer()
 
 	self:NetHook("VAssignParent", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local trank = Vermilion:GetRank(net.ReadString())
+			local trank = Vermilion:GetRankByID(net.ReadString())
 			local proposedrank = net.ReadString()
 			if(proposedrank == "nil") then
 				trank:SetParent(nil)
 				return
 			end
-			trank:SetParent(Vermilion:GetRank(proposedrank))
+			trank:SetParent(Vermilion:GetRankByID(proposedrank))
 		end
 	end)
 
@@ -362,8 +363,18 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
+	Vermilion:AddCommand("setrank", function(sender, args)
+		Vermilion.Log("You aren't supposed to use this command here.")
+		Vermilion.Log("Type the command into the server console (not here)")
+		if(table.Count(args) < 2) then return end
+		Vermilion.Log("If you use RCON, try:")
+		Vermilion.Log("")
+		Vermilion.Log("rcon vermilion setrank " .. table.concat(args, " ", 1, 2))
+	end)
+
 	self:AddHook("OnPlayerChat", function(sender, text, teamChat, dead)
 		if(not GetGlobalBool("VChatColourer")) then return end
+		if(not IsValid(sender)) then return end
 		local tab = {}
 		if(dead) then
 			table.insert(tab, Color(255, 30, 40))
@@ -382,7 +393,11 @@ function MODULE:InitClient()
 		table.insert(tab, "[" .. ranku .. "] ")
 
 		if(IsValid(sender)) then
-			table.insert(tab, Vermilion:GetRankColour(sender:GetNWString("Vermilion_Rank")))
+			if(Vermilion:GetRankColour(sender:GetNWString("Vermilion_Rank")) == nil) then
+				table.insert(tab, Vermilion.Colours.White)
+			else
+				table.insert(tab, Vermilion:GetRankColour(sender:GetNWString("Vermilion_Rank")))
+			end
 			table.insert(tab, sender:Nick())
 		else
 			table.insert(tab, "Console")
@@ -399,7 +414,7 @@ function MODULE:InitClient()
 	self:NetHook("VGetPermissions", function()
 		local rank = net.ReadString()
 		local paneldata = Vermilion.Menu.Pages["permission_editor"]
-		if(rank == paneldata.RankList:GetSelected()[1]:GetValue(1)) then
+		if(rank == paneldata.RankList:GetSelected()[1].UniqueRankID) then
 			local permissions = net.ReadTable()
 			local rnkPList = paneldata.RankPermissions
 			rnkPList:Clear()
@@ -413,6 +428,8 @@ function MODULE:InitClient()
 		local rank_overview_list = Vermilion.Menu.Pages["rank_editor"].RankList
 		if(IsValid(rank_overview_list)) then
 			Vermilion:PopulateRankTable(rank_overview_list, true, true)
+		else
+			return
 		end
 		rank_overview_list:OnRowSelected()
 		local permission_editor_list = Vermilion.Menu.Pages["permission_editor"].RankList
@@ -430,6 +447,7 @@ function MODULE:InitClient()
 
 	self:AddHook("Vermilion2_TargetIDDataIcon", function(vplayer)
 		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))) then
+			if(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")) == nil) then return end
 			vplayer.VIcon = string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))
 			vplayer.VIconMat = Material("icon16/" .. vplayer.VIcon .. ".png", "noclamp smooth")
 		end
@@ -495,7 +513,7 @@ function MODULE:InitClient()
 					if(not rnk.Protected) then
 						VToolkit:CreateConfirmDialog("Really delete the rank \"" .. rnk:GetValue(1) .. "\"?", function()
 							MODULE:NetStart("VRemoveRank")
-							net.WriteString(rnk:GetValue(1))
+							net.WriteString(rnk.UniqueRankID)
 							net.SendToServer()
 							VToolkit:CreateDialog("Success", "Rank deleted!")
 							delRank:SetDisabled(true)
@@ -536,7 +554,7 @@ function MODULE:InitClient()
 							end
 							if(not has) then
 								MODULE:NetStart("VRenameRank")
-								net.WriteString(rnk:GetValue(1))
+								net.WriteString(rnk.UniqueRankID)
 								net.WriteString(text)
 								net.SendToServer()
 								VToolkit:CreateDialog("Success", "Rank renamed!")
@@ -567,7 +585,7 @@ function MODULE:InitClient()
 							VToolkit:CreateErrorDialog("This rank cannot be moved up.")
 						else
 							MODULE:NetStart("VMoveRank")
-							net.WriteString(rnk:GetValue(1))
+							net.WriteString(rnk.UniqueRankID)
 							net.WriteBoolean(true) -- Up
 							net.SendToServer()
 						end
@@ -594,7 +612,7 @@ function MODULE:InitClient()
 							VToolkit:CreateErrorDialog("This rank cannot be moved down.")
 						else
 							MODULE:NetStart("VMoveRank")
-							net.WriteString(rnk:GetValue(1))
+							net.WriteString(rnk.UniqueRankID)
 							net.WriteBoolean(false) -- Down
 							net.SendToServer()
 						end
@@ -618,7 +636,7 @@ function MODULE:InitClient()
 					local rnk = rankList:GetSelected()[1]
 					local cont = function()
 						MODULE:NetStart("VSetRankDefault")
-						net.WriteString(rnk:GetValue(1))
+						net.WriteString(rnk.UniqueRankID)
 						net.SendToServer()
 						VToolkit:CreateDialog("Success", "Rank set as default!")
 					end
@@ -652,7 +670,7 @@ function MODULE:InitClient()
 					frame:MakePopup()
 					frame:SetAutoDelete(true)
 
-					local rankName = rankList:GetSelected()[1]:GetValue(1)
+					local rankName = rankList:GetSelected()[1].UniqueRankID
 
 					local mixer = VToolkit:CreateColourMixer(true, false, true, Vermilion:GetRankColour(rankName), function(colour)
 
@@ -707,7 +725,7 @@ function MODULE:InitClient()
 					frame:MakePopup()
 					frame:SetAutoDelete(true)
 
-					local rankName = rankList:GetSelected()[1]:GetValue(1)
+					local rankName = rankList:GetSelected()[1].UniqueRankID
 
 					local icnBrowser = vgui.Create("DIconBrowser")
 					icnBrowser:SetPos(10, 30)
@@ -760,7 +778,7 @@ function MODULE:InitClient()
 						if(k:GetValue(1) == selected:GetValue(1)) then continue end
 						if(tonumber(k:GetValue(3)) < tonumber(selected:GetValue(3))) then continue end
 						if(k.Protected) then continue end
-						table.insert(possibleParents, { Name = k:GetValue(1), Value = k:GetValue(1) })
+						table.insert(possibleParents, { Name = k:GetValue(1), Value = k.UniqueRankID })
 					end
 					local values = {}
 					for i,k in pairs(possibleParents) do
@@ -775,7 +793,7 @@ function MODULE:InitClient()
 							end
 						end
 						MODULE:NetStart("VAssignParent")
-						net.WriteString(selected:GetValue(1))
+						net.WriteString(selected.UniqueRankID)
 						net.WriteString(tostring(nval))
 						net.SendToServer()
 					end)
@@ -1039,6 +1057,7 @@ function MODULE:InitClient()
 				end
 
 				assignRank = VToolkit:CreateButton("Assign Rank", function()
+					if(playerList:GetSelected()[1] == nil) then return end
 					if(Vermilion.Data.Rank.Protected and Entity(playerList:GetSelected()[1].EntityID) == LocalPlayer()) then
 						VToolkit:CreateConfirmDialog("Really modify your rank?", function()
 							MODULE:NetStart("VAssignRank")
