@@ -136,6 +136,7 @@ function MODULE:InitServer()
 			MODULE:AddEvent("car", ply:GetName() .. " entered " .. veh:GetClass() .. " with model (" .. veh:GetModel() .. ") near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
 			return
 		end
+		if(not IsValid(ply) or not IsValid(veh) or veh.Vermilion_Owner == nil or Vermilion:GetUserBySteamID(veh.Vermilion_Owner) == nil) then return end
 		MODULE:AddEvent("car", ply:GetName() .. " entered " .. veh:GetClass() .. " owned by " .. Vermilion:GetUserBySteamID(veh.Vermilion_Owner).Name)
 	end)
 

@@ -541,6 +541,7 @@ function MODULE:InitClient()
 				end
 			end)
 		end
+		paneldata.BanList:OnRowSelected()
 	end)
 
 	Vermilion.Menu:AddPage({

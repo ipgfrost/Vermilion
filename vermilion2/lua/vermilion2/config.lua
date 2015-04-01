@@ -45,6 +45,7 @@ util.AddNetworkString("VBroadcastRankData")
 util.AddNetworkString("VBroadcastPermissions")
 util.AddNetworkString("VUpdatePlayerLists")
 util.AddNetworkString("VModuleConfig")
+util.AddNetworkString("VUsePreconfigured")
 
 
 
@@ -162,9 +163,17 @@ function Vermilion:AttachRankFunctions(rankObj)
 		function meta:GetUsers()
 			local users = {}
 			for i,k in pairs(Vermilion.Data.Users) do
-				if(k:GetRankName() == self.Name and k:GetEntity() != nil) then
+				if(k:GetRankUID() == self.UniqueID and k:GetEntity() != nil) then
 					table.insert(users, k:GetEntity())
 				end
+			end
+			return users
+		end
+		
+		function meta:GetUserObjects()
+			local users = {}
+			for i,k in pairs(Vermilion.Data.Users) do
+				if(k:GetRankUID() == self.UniqueID) then table.insert(users, k) end
 			end
 			return users
 		end
@@ -332,7 +341,7 @@ function Vermilion:BroadcastRankData(target)
 	net.Send(target)
 end
 
-function Vermilion:GetRank(name) -- this is now only to get ranks from player inputs, not used in the code. Use GetRankByID instead!
+function Vermilion:GetRank(name) -- this is now only to get ranks from player inputs, not used in the code (unless obtaining owner). Use GetRankByID instead!
 	for i,k in pairs(self.Data.Ranks) do
 		if(k.Name == name) then return k end
 	end
@@ -611,15 +620,36 @@ end
 function Vermilion:CreateDefaultDataStructs()
 	Vermilion.Data.Ranks = {
 		Vermilion:CreateRankObj("owner", { "*" }, true, Color(255, 0, 0), "key_add"),
-		Vermilion:CreateRankObj("co-owner", nil, false, Color(0, 63, 255), "key"),
-		Vermilion:CreateRankObj("server manager", nil, false, Color(0, 255, 255), "cog"),
-		Vermilion:CreateRankObj("super admin", nil, false, Color(255, 0, 97), "shield_add"),
 		Vermilion:CreateRankObj("admin", nil, false, Color(255, 93, 0), "shield"),
-		Vermilion:CreateRankObj("donator", nil, false, Color(191, 127, 255), "heart"),
-		Vermilion:CreateRankObj("respected", nil, false, Color(255, 191, 0), "user_red"),
 		Vermilion:CreateRankObj("player", nil, false, Color(0, 161, 255), "user"),
 		Vermilion:CreateRankObj("guest", { "chat" }, false, Color(255, 255, 255), "user_orange")
 	}
+end
+
+net.Receive("VUsePreconfigured", function(len, vplayer)
+	if(not Vermilion:HasPermission(vplayer, "*")) then return end
+	
+	local coowner = Vermilion:CreateRankObj("co-owner", nil, false, Color(0, 63, 255), "key")
+	local manager = Vermilion:CreateRankObj("server manager", nil, false, Color(0, 255, 255), "cog")
+	local sadmin = Vermilion:CreateRankObj("super admin", nil, false, Color(255, 0, 97), "shield_add")
+	local donator = Vermilion:CreateRankObj("donator", nil, false, Color(191, 127, 255), "heart")
+	local respected = Vermilion:CreateRankObj("respected", nil, false, Color(255, 191, 0), "user_red")
+	local owner = Vermilion.Data.Ranks[1]
+	local admin = Vermilion.Data.Ranks[2]
+	local pplayer = Vermilion.Data.Ranks[3]
+	local guest = Vermilion.Data.Ranks[4]
+	Vermilion.Data.Ranks = {
+		owner,
+		coowner,
+		manager,
+		sadmin,
+		admin,
+		donator,
+		respected,
+		pplayer,
+		guest
+	}
+
 	Vermilion:GetRank("player").InheritsFrom = Vermilion:GetRank("guest"):GetUID()
 	Vermilion:GetRank("respected").InheritsFrom = Vermilion:GetRank("player"):GetUID()
 	Vermilion:GetRank("donator").InheritsFrom = Vermilion:GetRank("respected"):GetUID()
@@ -628,12 +658,29 @@ function Vermilion:CreateDefaultDataStructs()
 	Vermilion:GetRank("server manager").InheritsFrom = Vermilion:GetRank("super admin"):GetUID()
 	Vermilion:GetRank("co-owner").InheritsFrom = Vermilion:GetRank("server manager"):GetUID()
 	
-	Vermilion.Data.Global = {}
-	Vermilion.Data.Module = {}
-	Vermilion.Data.Ranks = {} -- temp
-	Vermilion.Data.Users = {}
-	Vermilion.Data.Bans = {}
-end
+	local nranks = { 
+		"respected",
+		"donator",
+		"super admin",
+		"server manager",
+		"co-owner"
+	}
+	
+	for irank,nrank in pairs(nranks) do
+		local rankData = Vermilion:GetRank(nrank)
+		for imod,mod in pairs(Vermilion.Modules) do
+			for imodrank, modrank in pairs(mod.DefaultPermissions) do
+				if(modrank.Name == nrank) then
+					for i1,k1 in pairs(modrank.Permissions) do
+						rankData:AddPermission(k1)
+					end
+				end
+			end
+		end
+	end
+
+	Vermilion:BroadcastRankData()
+end)
 
 function Vermilion:RestoreBackup()
 	Vermilion.Log({Vermilion.Colours.Red, "[CRITICAL WARNING]", Vermilion.Colours.White, " I lost the configuration file... Usually a result of GMod unexpectedly stopping, most likely due to a BSoD or Kernel Panic. Sorry about that :( I'll try to restore a backup for you."})
@@ -661,6 +708,7 @@ end
 
 function Vermilion:LoadConfiguration(crashOnErr)
 	if(Vermilion.FirstRun) then
+		print("FIRST RUN!")
 		self:CreateDefaultDataStructs()
 		file.CreateDir("vermilion2/backup")
 	else
@@ -946,5 +994,43 @@ timer.Create("V-UpdatePlaytime", 5, 0, function()
 			return
 		end
 		vdata.Playtime = vdata.Playtime + 5
+	end
+end)
+
+
+--[[
+
+	//		Autoconfigure Nag 	  \\
+	
+	Yeah, sorry about this. I was told to add it. *grumble*
+]]--
+
+util.AddNetworkString("Vermilion_AutoconfigureNag")
+
+Vermilion:AddHook(Vermilion.Event.PlayerChangeRank, "core:autoconfigure", true, function(vplayerObj, old, new)
+	if(Vermilion:GetData("done_autoconfigure_nag", false, true)) then return end
+	local ownerRank = Vermilion:GetRank("owner")
+	if(old != ownerRank.UniqueID and new == ownerRank.UniqueID) then
+		if(table.Count(ownerRank:GetUserObjects()) != 1) then return end
+		local target = VToolkit.LookupPlayer(vplayerObj.Name)
+		if(IsValid(target)) then
+			net.Start("Vermilion_AutoconfigureNag")
+			net.Send(target)
+			Vermilion:SetData("done_autoconfigure_nag", true)
+		end
+	end
+end)
+
+Vermilion:AddHook("PlayerInitialSpawn", "core:autoconfigure", true, function(vplayer)
+	if(Vermilion:GetData("done_autoconfigure_nag", false, true)) then return end
+	local ownerRank = Vermilion:GetRank("owner")
+	if(Vermilion:GetUser(vplayer) == nil) then return end
+	if(ownerRank == nil) then return end
+	if(Vermilion:GetUser(vplayer):GetRankUID() == ownerRank.UniqueID) then
+		if(table.Count(ownerRank:GetUserObjects()) == 1) then
+			net.Start("Vermilion_AutoconfigureNag")
+			net.Send(vplayer)
+			Vermilion:SetData("done_autoconfigure_nag", true)
+		end
 	end
 end)

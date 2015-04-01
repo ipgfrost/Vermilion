@@ -125,6 +125,7 @@ function MODULE:InitClient()
 		for i,k in pairs(net.ReadTable()) do
 			paneldata.RankBlockList:AddLine(k)
 		end
+		paneldata.RankBlockList:OnRowSelected()
 	end)
 
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
@@ -167,9 +168,6 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockBind:SetDisabled(self:GetSelected()[1] == nil)
 					unblockBind:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VBindListLoad")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
-					net.SendToServer()
 				end
 
 				rankBlockList = VToolkit:CreateList({
@@ -191,18 +189,8 @@ function MODULE:InitClient()
 
 				VToolkit:CreateSearchBox(rankBlockList)
 
-				local addBlockPanel = vgui.Create("DPanel")
-				addBlockPanel:SetTall(panel:GetTall())
-				addBlockPanel:SetWide((panel:GetWide() / 2) + 55)
-				addBlockPanel:SetPos(panel:GetWide(), 0)
-				addBlockPanel:SetParent(panel)
+				local addBlockPanel = VToolkit:CreateRightDrawer(panel)
 				paneldata.AddBlockPanel = addBlockPanel
-				local cABPanel = VToolkit:CreateButton("Close", function()
-					addBlockPanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
-				end)
-				cABPanel:SetPos(10, 10)
-				cABPanel:SetSize(50, 20)
-				cABPanel:SetParent(addBlockPanel)
 
 				local blocktext = VToolkit:CreateTextbox("")
 				blocktext:Dock(TOP)
@@ -218,7 +206,7 @@ function MODULE:InitClient()
 					net.WriteString(blocktext:GetValue())
 					net.SendToServer()
 					blocktext:SetValue("")
-					addBlockPanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+					addBlockPanel:Close()
 				end)
 				addBlockText:Dock(TOP)
 				addBlockText:DockMargin(10, 5, 15, 5)
@@ -227,7 +215,7 @@ function MODULE:InitClient()
 
 
 				blockBind = VToolkit:CreateButton("Block Bind", function()
-					addBlockPanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
+					addBlockPanel:Open()
 				end)
 				blockBind:SetPos(rankBlockList:GetX() + rankBlockList:GetWide() + 10, 100)
 				blockBind:SetWide(panel:GetWide() - 10 - blockBind:GetX())
@@ -240,8 +228,6 @@ function MODULE:InitClient()
 						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
-
-						rankBlockList:RemoveLine(k:GetID())
 					end
 				end)
 				unblockBind:SetPos(rankBlockList:GetX() + rankBlockList:GetWide() + 10, 130)
@@ -261,6 +247,7 @@ function MODULE:InitClient()
 				paneldata.RankBlockList:Clear()
 				paneldata.BlockBind:SetDisabled(true)
 				paneldata.UnblockBind:SetDisabled(true)
+				paneldata.AddBlockPanel:Close()
 			end
 		})
 

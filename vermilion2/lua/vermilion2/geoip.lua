@@ -72,9 +72,9 @@ if(SERVER) then
 	Vermilion:GetData("geoip_enabled", true, true) -- create the variable if it doesn't exist.
 
 	Vermilion:AddDataChangeHook("geoip_enabled", "network_geoip", function(val)
-		SetGlobalBool("geoip_enabled", val)
+		VToolkit:SetGlobalValue("geoip_enabled", val)
 	end)
-	SetGlobalBool("geoip_enabled", Vermilion:GetData("geoip_enabled", true, true))
+	VToolkit:SetGlobalValue("geoip_enabled", Vermilion:GetData("geoip_enabled", true, true))
 
 	Vermilion.GeoIP.Cache = {}
 
@@ -189,46 +189,13 @@ if(SERVER) then
 
 else
 
-	--- temp code until I add the new TargetID
 	Vermilion:AddHook("Vermilion2_TargetIDDataGeoIP", "GeoIPTargetID", false, function(vplayer)
-		if(not GetGlobalBool("geoip_enabled")) then return end
+		if(not VToolkit:GetGlobalValue("geoip_enabled")) then return end
 		if(vplayer.VCountry == nil or vplayer.VCountry == "") then
 			vplayer.VCountry = string.lower(vplayer:GetNWString("CountryCode"))
 			vplayer.VCountryMat = Material("flags16/" .. vplayer.VCountry .. ".png", "noclamp smooth")
 		end
 		return vplayer.VCountryMat
-		--[[ local tr = util.GetPlayerTrace( LocalPlayer() )
-		local trace = util.TraceLine( tr )
-		if (!trace.Hit) then return end
-		if (!trace.HitNonWorld) then return end
-
-		if (not trace.Entity:IsPlayer() or trace.Entity:IsBot()) then
-			return
-		end
-
-		local MouseX, MouseY = gui.MousePos()
-
-		if ( MouseX == 0 && MouseY == 0 ) then
-
-			MouseX = ScrW() / 2
-			MouseY = ScrH() / 2
-
-		end
-
-		local x = MouseX
-		local y = MouseY
-
-		x = x - 22 / 2
-		y = y + 75
-
-		if(trace.Entity.VCountry == nil or trace.Entity.VCountry == "") then
-			trace.Entity.VCountry = string.lower(trace.Entity:GetNWString("CountryCode"))
-			trace.Entity.VCountryMat = Material("flags16/" .. trace.Entity.VCountry .. ".png", "noclamp smooth")
-		end
-
-		surface.SetMaterial(trace.Entity.VCountryMat)
-		surface.SetDrawColor(255, 255, 255, 255)
-		surface.DrawTexturedRect(x, y, 24, 16.5) ]]
 	end)
 
 end

@@ -65,3 +65,44 @@ else
 		print("VToolkit: Synced the client time with the server.")
 	end)
 end
+
+--[[
+	The following segment of code is here to replace the screwed up network variables that were introduced in the latest version of GMod. (9/3/15)
+]]--
+
+-- GLOABL NETWORKING VALUES
+VToolkit.GlobalValues = {}
+
+function VToolkit:SetGlobalValue(name, value)
+	VToolkit.GlobalValues[name] = value
+	if(SERVER) then
+		net.Start("VGVar")
+		net.WriteString(name)
+		net.WriteType(value)
+		net.Broadcast()
+	end
+end
+
+function VToolkit:GetGlobalValue(name, default)
+	if(VToolkit.GlobalValues[name] == nil) then return default end
+	return VToolkit.GlobalValues[name]
+end
+
+if(SERVER) then
+	util.AddNetworkString("VGVar")
+	
+	hook.Add("PlayerInitialSpawn", "VToolkitGVAR", function(vplayer)
+		for i,k in pairs(VToolkit.GlobalValues) do
+			net.Start("VGVar")
+			net.WriteString(i)
+			net.WriteType(k)
+			net.Send(vplayer)
+		end
+	end)
+	
+else
+	net.Receive("VGVar", function()
+		VToolkit.GlobalValues[net.ReadString()] = net.ReadType(net.ReadUInt(8))
+	end)
+
+end

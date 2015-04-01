@@ -235,7 +235,22 @@ function MODULE:InitShared()
 		end
 		return Vermilion:GetUser(self):GetRankName()
 	end
-
+	
+	
+	
+	self:AddHook(Vermilion.Event.MOD_LOADED, function()
+		local mod = Vermilion:GetModule("server_settings")
+		if(mod != nil) then
+			mod:AddOption({
+				Module = "rank_editor",
+				Name = "enabled",
+				GuiText = "Enable chat tags",
+				Type = "Checkbox",
+				Category = "Misc",
+				Default = true
+				})
+		end
+	end)
 end
 
 function MODULE:InitServer()
@@ -355,11 +370,20 @@ function MODULE:InitServer()
 			trank:SetParent(Vermilion:GetRankByID(proposedrank))
 		end
 	end)
+	
+	self:AddLPHook("PlayerInitialSpawn", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "identify_as_admin")) then
+			vplayer:SetNWString("UserGroup", "admin")
+		end
+		if(Vermilion:HasPermission(vplayer, "identify_as_superadmin")) then
+			vplayer:SetNWString("UserGroup", "superadmin")
+		end
+	end)
 
 	self:AddDataChangeHook("enabled", "EnableBroadcaster", function(value)
-		SetGlobalBool("VChatColourer", value)
+		VToolkit:SetGlobalValue("VChatColourer", value)
 	end)
-	SetGlobalBool("VChatColourer", self:GetData("enabled", true, true))
+	VToolkit:SetGlobalValue("VChatColourer", self:GetData("enabled", true, true))
 end
 
 function MODULE:InitClient()
@@ -373,7 +397,7 @@ function MODULE:InitClient()
 	end)
 
 	self:AddHook("OnPlayerChat", function(sender, text, teamChat, dead)
-		if(not GetGlobalBool("VChatColourer")) then return end
+		if(not VToolkit:GetGlobalValue("VChatColourer")) then return end
 		if(not IsValid(sender)) then return end
 		local tab = {}
 		if(dead) then
@@ -889,7 +913,7 @@ function MODULE:InitClient()
 							rankPermissions:AddLine(k:GetValue(1), k:GetValue(2))
 						end
 						MODULE:NetStart("VGivePermission")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
 					end
@@ -903,7 +927,7 @@ function MODULE:InitClient()
 				takePermission = VToolkit:CreateButton("Revoke Permission", function()
 					for i,k in pairs(rankPermissions:GetSelected()) do
 						MODULE:NetStart("VRevokePermission")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
 						rankPermissions:RemoveLine(k:GetID())
@@ -922,7 +946,8 @@ function MODULE:InitClient()
 						"Name"
 					},
 					multiselect = false,
-					sortable = false
+					sortable = false,
+					centre = true
 				})
 				rankList:SetPos(10, 30)
 				rankList:SetSize(200, panel:GetTall() - 40)
@@ -936,7 +961,7 @@ function MODULE:InitClient()
 					givePermission:SetEnabled(self:GetSelected()[1] != nil and allPermissions:GetSelected()[1] != nil)
 					takePermission:SetEnabled(self:GetSelected()[1] != nil and rankPermissions:GetSelected()[1] != nil)
 					MODULE:NetStart("VGetPermissions")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -962,8 +987,8 @@ function MODULE:InitClient()
 				VToolkit:CreateSearchBox(rankPermissions)
 
 
-
-
+				
+				
 				allPermissions = VToolkit:CreateList({
 					cols = {
 						"Name",
@@ -1062,14 +1087,14 @@ function MODULE:InitClient()
 						VToolkit:CreateConfirmDialog("Really modify your rank?", function()
 							MODULE:NetStart("VAssignRank")
 							net.WriteEntity(Entity(playerList:GetSelected()[1].EntityID))
-							net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+							net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 							net.SendToServer()
-							playerList:GetSelected()[1]:SetValue(2, rankList:GetSelected()[1]:GetValue(1))
+							playerList:GetSelected()[1]:SetValue(2, rankList:GetSelected()[1].UniqueRankID)
 						end, { Confirm = "Yes", Deny = "No", Default = false })
 					else
 						MODULE:NetStart("VAssignRank")
 						net.WriteEntity(Entity(playerList:GetSelected()[1].EntityID))
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.SendToServer()
 						playerList:GetSelected()[1]:SetValue(2, rankList:GetSelected()[1]:GetValue(1))
 					end
@@ -1086,7 +1111,7 @@ function MODULE:InitClient()
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)
 				paneldata.PlayerList:Clear()
 				for i,k in pairs(VToolkit.GetValidPlayers()) do
-					paneldata.PlayerList:AddLine(k:GetName(), k:GetNWString("Vermilion_Rank", "player")).EntityID = k:EntIndex()
+					paneldata.PlayerList:AddLine(k:GetName(), Vermilion:GetRankByID(k:GetNWString("Vermilion_Rank", "player")).Name).EntityID = k:EntIndex()
 				end
 			end
 		})

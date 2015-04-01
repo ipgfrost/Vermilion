@@ -182,6 +182,7 @@ local function destroySDHook(name)
 end
 
 local vHookCall = function(evtName, gmTable, ...)
+	//if(evtName == "GetFallDamage" or evtName == "EntityTakeDamage") then print("HOOK: ", evtName, ...) end
 	local a, b, c, d, e, f
 	if(Vermilion.SafeHooks[evtName] != nil) then
 		for id,hookFunc in pairs(Vermilion.SafeHooks[evtName]) do
@@ -192,6 +193,7 @@ local vHookCall = function(evtName, gmTable, ...)
 		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
 			a, b, c, d, e, f = hookFunc(...)
 			if(a != nil) then
+				//print("HOOK", id, " RETURNED!")
 				destroySDHook(evtName)
 				return a, b, c, d, e, f
 			end
@@ -200,6 +202,7 @@ local vHookCall = function(evtName, gmTable, ...)
 	for i,mod in pairs(Vermilion.Modules) do
 		a, b, c, d, e, f = mod:DistributeEvent(evtName, ...)
 		if(a != nil) then
+			//print("MODULE", mod.Name, "RETURNED DISTRIBUTED EVENT!")
 			destroySDHook(evtName)
 			return a, b, c, d, e, f
 		end
@@ -209,6 +212,7 @@ local vHookCall = function(evtName, gmTable, ...)
 				for i,hookFunc in pairs(hookList) do
 					a, b, c, d, e, f = hookFunc(...)
 					if(a != nil) then
+						//print("MODULE", mod.Name, "RETURNED STANDARD HOOK!")
 						destroySDHook(evtName)
 						return a, b, c, d, e, f
 					end
@@ -231,6 +235,20 @@ local vHookCall = function(evtName, gmTable, ...)
 	if(a != nil) then
 		destroySDHook(evtName)
 		return a, b, c, d, e, f
+	end
+	for i,mod in pairs(Vermilion.Modules) do
+		if(mod.LPHooks != nil) then
+			local hookList = mod.LPHooks[evtName]
+			if(hookList != nil) then
+				for i,hookFunc in pairs(hookList) do
+					a, b, c, d, e, f = hookFunc(...)
+					if(a != nil) then
+						//print("MODULE", mod.Name, "RETURNED LP HOOK!")
+						return a, b, c, d, e, f
+					end
+				end
+			end
+		end
 	end
 	if(Vermilion.LowPriorityHooks[evtName] != nil) then
 		for id,hookFunc in pairs(Vermilion.LowPriorityHooks[evtName]) do
@@ -433,7 +451,22 @@ function Vermilion:CreateBaseModule()
 
 			end
 		end
-
+		
+		function base:AddLPHook(evtName, id, func)
+			if(func == nil) then
+				func = id
+				id = evtName
+			end
+			if(self.LPHooks[evtName] == nil) then self.LPHooks[evtName] = {} end
+			self.LPHooks[evtName][id] = func
+		end
+		
+		function base:RemoveLPHook(evtName, id)
+			if(self.LPHooks[evtName] != nil) then
+				self.LPHooks[evtName][id] = nil
+			end
+		end
+		
 		function base:NetHook(nstr, func)
 			self.NetworkHooks[nstr] = func
 		end
@@ -488,6 +521,7 @@ function Vermilion:CreateBaseModule()
 
 	local base = {}
 	base.Hooks = {}
+	base.LPHooks = {}
 	base.Localisations = {}
 	base.Permissions = {}
 	base.PermissionDefinitions = {}

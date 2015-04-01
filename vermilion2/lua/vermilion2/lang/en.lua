@@ -96,6 +96,13 @@ lang:Add("config:join:first", "%s has joined the server for the first time!")
 lang:Add("config:left", "%s left the server: %s")
 lang:Add("config:joinleave_enabled", "Enable Join/Leave Messages")
 
+--[[
+
+	//		Core		\\
+
+]]--
+lang:Add("change_rank", "You have been assigned to the %s rank.")
+
 
 --[[
 
@@ -215,7 +222,10 @@ lang:Add("auto_promote:add", "Add Listing")
 lang:Add("auto_promote:add:error:inittarrank", "Please input the initial rank and target rank correctly!")
 lang:Add("auto_promote:add:error:diff", "Must select two different ranks.")
 lang:Add("auto_promote:add:error:time:0", "Must have playtime greater than zero.")
-lang:Add("auto_promote:unsaved", "There are unsaved changes in the Auto-Promote settings! Really close?")
+lang:Add("auto_promote:editapply", "Apply Edits")
+lang:Add("auto_promote:edit", "Edit")
+lang:Add("auto_promote:addmain", "Add")
+lang:Add("auto_promote:removemain", "Remove")
 
 
 --[[

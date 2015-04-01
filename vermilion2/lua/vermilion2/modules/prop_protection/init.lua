@@ -737,7 +737,7 @@ function MODULE:InitServer()
 	end)
 
 	self:AddHook("EntityTakeDamage", function(target, dmg)
-		if(not MODULE:CanBreak(dmg:GetAttacker(), target)) then dmg:ScaleDamage(0) return dmg end
+		if(not MODULE:CanBreak(dmg:GetAttacker(), target) and not target:IsPlayer()) then dmg:ScaleDamage(0) return dmg end
 	end)
 
 	local eMeta = FindMetaTable("Entity")

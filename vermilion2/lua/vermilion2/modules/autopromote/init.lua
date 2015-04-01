@@ -27,7 +27,9 @@ MODULE.Permissions = {
 }
 MODULE.NetworkStrings = {
 	"VGetAutoPromoteListings",
-	"VDelAutoPromoteListings"
+	"VAddAutoPromoteListing",
+	"VDelAutoPromoteListings",
+	"VEditAutoPromoteListing"
 }
 
 function MODULE:InitServer()
@@ -101,7 +103,7 @@ function MODULE:InitServer()
 				t1.ToRank = k.ToRank
 				
 				-- add these two values since the metatable doesn't exist on the client.
-				t1.TimerValues = t1.TimerValues
+				t1.TimerValues = k.TimerValues
 				t1.TValuesString = k:GetTotalTimeString()
 				
 				
@@ -144,6 +146,21 @@ function MODULE:InitServer()
 		end
 	end)
 	
+	self:NetHook("VEditAutoPromoteListing", function(vplayer)
+		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
+			local tab = net.ReadTable()
+			for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+				if(k.UniqueID == tab.UniqueID) then
+					k.Rank = tab.Rank
+					k.ToRank = tab.ToRank
+					k.TimerValues = tab.TimerValues
+					sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+					break
+				end
+			end
+		end
+	end)
+	
 	timer.Create("V-AutoPromote", 10, 0, function()
 		local pdata = MODULE:GetData("promotion_listings_mk2", {}, true)
 		for i,k in pairs(player.GetHumans()) do
@@ -180,6 +197,7 @@ function MODULE:InitClient()
 				ln.FromRankUID = k.Rank
 				ln.ToRankUID = k.ToRank
 			end
+			paneldata.Listings:OnRowSelected()
 		end
 	end)
 	
@@ -293,7 +311,7 @@ function MODULE:InitClient()
 		
 		timeLabel:MoveToFront()
 		
-		local addButton = VToolkit:CreateButton("Add Listing", function()
+		local addButton = VToolkit:CreateButton(MODULE:TranslateStr("add"), function()
 			local from = fromRankCombo.SelectedValue
 			local to = toRankCombo.SelectedValue
 			
@@ -352,14 +370,51 @@ function MODULE:InitClient()
 	function buildEditAutoPromote(panel, paneldata)
 		local drawer = VToolkit:CreateRightDrawer(panel, 0, true)
 		
+		local fromRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("from"))
+		fromRankLabel:SetPos(10, 52)
+		fromRankLabel:SetDark(true)
+		fromRankLabel:SetParent(drawer)
+
+		local fromRankCombo = VToolkit:CreateComboBox(nil, nil, true)
+		fromRankCombo:SetPos(fromRankLabel:GetWide() + 20, 50)
+		fromRankCombo:SetSize(250, 20)
+		fromRankCombo:SetParent(drawer)
+		fromRankCombo:SetValue("From Rank")
+		fromRankCombo.OnSelect = function(panel, index, value)
+			fromRankCombo.SelectedValue = fromRankCombo:GetOptionData(index)
+		end
+		paneldata.EditFromRankCombo = fromRankCombo
+		
+		local toRankLabel = VToolkit:CreateLabel(MODULE:TranslateStr("to"))
+		toRankLabel:SetPos(10, 82)
+		toRankLabel:SetDark(true)
+		toRankLabel:SetParent(drawer)
+
+		local toRankCombo = VToolkit:CreateComboBox(nil, nil, true)
+		toRankCombo:SetPos(toRankLabel:GetWide() + 20, 80)
+		toRankCombo:SetSize(250, 20)
+		toRankCombo:SetParent(drawer)
+		toRankCombo:SetValue("To Rank")
+		toRankCombo.OnSelect = function(panel, index, value)
+			toRankCombo.SelectedValue = toRankCombo:GetOptionData(index)
+		end
+		paneldata.EditToRankCombo = toRankCombo
+		
+		local off = math.Max(fromRankLabel:GetWide(), toRankLabel:GetWide())
+		fromRankCombo:SetX(off + 20)
+		toRankCombo:SetX(off + 20)
+		
+		fromRankCombo:SetWide(drawer:GetWide() - 40 - off)
+		toRankCombo:SetWide(drawer:GetWide() - 40 - off)
+		
 		local wangs = vgui.Create("DPanel")
 		wangs:SetDrawBackground(false)
 		wangs:SetParent(drawer)
 		
 		local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("after"))
-		timeLabel:SetPos(10, 460)
+		timeLabel:SetPos(10, 120)
 		timeLabel:SetDark(true)
-		timeLabel:SetParent(wangs)
+		timeLabel:SetParent(drawer)
 
 		local daysLabel = VToolkit:CreateLabel(MODULE:TranslateStr("dayslabel"))
 		daysLabel:SetPos(10 + ((64 - daysLabel:GetWide()) / 2), 0)
@@ -368,6 +423,7 @@ function MODULE:InitClient()
 		local daysWang = VToolkit:CreateNumberWang(0, 999)
 		daysWang:SetPos(10, 15)
 		daysWang:SetParent(wangs)
+		drawer.DaysWang = daysWang
 
 
 
@@ -384,6 +440,7 @@ function MODULE:InitClient()
 				daysWang:SetValue(daysWang:GetValue() + 1)
 			end
 		end
+		drawer.HoursWang = hoursWang
 
 
 
@@ -400,6 +457,7 @@ function MODULE:InitClient()
 				hoursWang:SetValue(hoursWang:GetValue() + 1)
 			end
 		end
+		drawer.MinsWang = minsWang
 
 
 
@@ -416,9 +474,66 @@ function MODULE:InitClient()
 				minsWang:SetValue(minsWang:GetValue() + 1)
 			end
 		end
+		drawer.SecondsWang = secondsWang
 		
 		wangs:SetSize(secondsWang:GetX() + secondsWang:GetWide() + 10, secondsWang:GetY() + secondsWang:GetTall())
-		wangs:SetPos((drawer:GetWide() - wangs:GetWide()) / 2, 120)
+		wangs:SetPos((drawer:GetWide() - wangs:GetWide()) / 2, 140)
+		
+		timeLabel:MoveToFront()
+		
+		local addButton = VToolkit:CreateButton(MODULE:TranslateStr("editapply"), function()
+			local from = fromRankCombo.SelectedValue
+			local to = toRankCombo.SelectedValue
+			
+			if(from == nil or to == nil) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:inittarrank"))
+				return
+			end
+			
+			if(from == to) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:diff"))
+				return
+			end
+			
+			for i,k in pairs(paneldata.Listings:GetLines()) do
+				if(k.FromRankUID == from and k.ToRankUID == to) then
+					VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:exists"))
+					return
+				end
+			end
+			
+			if(secondsWang:GetValue() == 0 and minsWang:GetValue() == 0 and hoursWang:GetValue() == 0 and daysWang:GetValue() == 0) then
+				VToolkit:CreateErrorDialog(MODULE:TranslateStr("add:error:time:0"))
+				return
+			end
+			
+			local tab = {}
+			tab.UniqueID = drawer.CurrentUID
+			tab.Rank = from
+			tab.ToRank = to
+			tab.TimerValues = {
+				S = secondsWang:GetValue(),
+				M = minsWang:GetValue(),
+				H = hoursWang:GetValue(),
+				D = daysWang:GetValue()
+			}
+			
+			MODULE:NetStart("VEditAutoPromoteListing")
+			net.WriteTable(tab)
+			net.SendToServer()
+			
+			fromRankCombo:SetValue("")
+			toRankCombo:SetValue("")
+			secondsWang:SetValue(0)
+			minsWang:SetValue(0)
+			hoursWang:SetValue(0)
+			daysWang:SetValue(0)
+			
+			drawer:Close()
+		end)
+		addButton:SetPos(10, wangs:GetY() + wangs:GetTall() + 20)
+		addButton:SetSize(drawer:GetWide() - 20, 30)
+		addButton:SetParent(drawer)
 		
 		return drawer
 	end
@@ -454,7 +569,7 @@ function MODULE:InitClient()
 			
 			local addPanel = buildAddAutoPromote(panel, paneldata)
 			
-			local addButton = VToolkit:CreateButton("Add", function()
+			local addButton = VToolkit:CreateButton(MODULE:TranslateStr("addmain"), function()
 				addPanel:Open()
 			end)
 			addButton:SetParent(panel)
@@ -463,7 +578,27 @@ function MODULE:InitClient()
 			
 			local editPanel = buildEditAutoPromote(panel, paneldata)
 			
-			local editButton = VToolkit:CreateButton("Edit", function()
+			local editButton = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
+				local ln = listings:GetSelected()[1]
+				for i,k in pairs(paneldata.EditFromRankCombo.Data) do
+					if(k == ln.FromRankUID) then
+						paneldata.EditFromRankCombo:ChooseOptionID(i)
+						break
+					end
+				end
+				for i,k in pairs(paneldata.EditToRankCombo.Data) do
+					if(k == ln.ToRankUID) then
+						paneldata.EditToRankCombo:ChooseOptionID(i)
+						break
+					end
+				end
+				editPanel.DaysWang:SetValue(ln.TimerValues.D)
+				editPanel.HoursWang:SetValue(ln.TimerValues.H)
+				editPanel.MinsWang:SetValue(ln.TimerValues.M)
+				editPanel.SecondsWang:SetValue(ln.TimerValues.S)
+				
+				editPanel.CurrentUID = ln.ListingUID
+				
 				editPanel:Open()
 			end)
 			editButton:SetParent(panel)
@@ -471,7 +606,7 @@ function MODULE:InitClient()
 			editButton:SetSize(panel:GetWide() - editButton:GetX() - 5, 30)
 			editButton:SetDisabled(true)
 			
-			local delButton = VToolkit:CreateButton("Remove", function()
+			local delButton = VToolkit:CreateButton(MODULE:TranslateStr("removemain"), function()
 				local tab = {}
 				for i,k in pairs(listings:GetSelected()) do
 					table.insert(tab, k.ListingUID)
@@ -499,9 +634,15 @@ function MODULE:InitClient()
 			
 			paneldata.AddFromRankCombo:Clear()
 			paneldata.AddToRankCombo:Clear()
+			paneldata.EditFromRankCombo:Clear()
+			paneldata.EditToRankCombo:Clear()
 			for i,k in pairs(Vermilion.Data.RankOverview) do
-				if(k.Name != "owner") then paneldata.AddFromRankCombo:AddChoice(k.Name, k.UniqueID) end
+				if(k.Name != "owner") then 
+					paneldata.AddFromRankCombo:AddChoice(k.Name, k.UniqueID)
+					paneldata.EditFromRankCombo:AddChoice(k.Name, k.UniqueID)
+				end
 				paneldata.AddToRankCombo:AddChoice(k.Name, k.UniqueID)
+				paneldata.EditToRankCombo:AddChoice(k.Name, k.UniqueID)
 			end
 		end
 	})

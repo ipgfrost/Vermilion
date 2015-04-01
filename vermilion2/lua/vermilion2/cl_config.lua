@@ -162,3 +162,57 @@ Vermilion:AddHook("ChatText", "StopDefaultChat", false, function(index, name, te
 		return true
 	end
 end)
+
+function showAutoconfigure()
+	local frame = VToolkit:CreateFrame(
+		{
+			['size'] = { 500, 200 },
+			['closeBtn'] = true,
+			['draggable'] = true,
+			['title'] = "Vermilion - " .. "Automatic Configuration",
+			['bgBlur'] = true
+		}
+	)
+	frame:MakePopup()
+	frame:DoModal()
+	frame:SetAutoDelete(true)
+	
+	local panel = vgui.Create("DPanel", frame)
+	panel:SetPos(10, 35)
+	panel:SetSize(480, 155)
+	
+	local text = VToolkit:CreateLabel("Welcome to Vermilion! Since this is the first time setting up Vermilion on this server, would you\nlike me to use a custom configuration to get the server going quickly or would you like to use\nthe default settings?")
+	text:SetPos(10, 15)
+	text:SetParent(panel)
+	
+	local defaultButton = VToolkit:CreateButton("Default Settings", function()
+		frame:Close()
+	end)
+	defaultButton:SetPos(10, 85)
+	defaultButton:SetSize(150, 50)
+	defaultButton:SetParent(panel)
+	
+	local preconfigureButton = VToolkit:CreateButton("Preconfigured Settings", function()
+		net.Start("VUsePreconfigured")
+		net.SendToServer()
+		frame:Close()
+	end)
+	preconfigureButton:SetPos(320, 85)
+	preconfigureButton:SetSize(150, 50)
+	preconfigureButton:SetParent(panel)
+end
+
+local showAutoNag = false
+local alreadyPosted = false
+net.Receive("Vermilion_AutoconfigureNag", function()
+	showAutoNag = true
+	if(alreadyPosted) then showAutoconfigure() end
+end)
+
+Vermilion:AddHook(Vermilion.Event.MOD_POST, "core:autoconfigure", true, function()
+	if(showAutoNag) then
+		showAutoconfigure()
+	end
+	alreadyPosted = true
+end)
+

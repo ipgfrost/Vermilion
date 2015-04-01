@@ -102,7 +102,6 @@ function MODULE:InitClient()
 		if(table.Count(missingAddons) > 0 or GetConVarNumber("vermilion_addonnag_debug") != 0) then
 			local frame = VToolkit:CreateFrame({
 				["size"] = { 600, 600 },
-				["pos"] = { (ScrW() / 2) - 300, (ScrH() / 2) - 300},
 				["closeBtn"] = true,
 				["draggable"] = false,
 				["title"] = MODULE:TranslateStr("title"),

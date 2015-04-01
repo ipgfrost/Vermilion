@@ -164,7 +164,26 @@ MENU:AddPage({
 					"Auto-Broadcast now uses VToolkit Horizontal Drawers",
 					"Configuration loading should now automatically detect errors and address them before a catastrophic failure",
 					"Hook system no longer blames Vermilion for EVERYTHING (however errors are not reported properly)",
-					"VToolkit drawers now use blankers to hide parts of the menu when they are open"
+					"VToolkit drawers now use blankers to hide parts of the menu when they are open",
+					"Repaired the SoundCloud text effects after the new update",
+					"If a SoundCloud API server error takes place, the SoundCloud menu will no longer cause errors",
+					"Added GMod version checking to notify that the server/client is out of date",
+					"VToolkit now handles Vermilion's global variables (entity variables are not affected)",
+					"Chat Censor now uses VToolkit drawers",
+					"The UserGroup NWVar is now properly set according to identify_as",
+					"Ban management buttons now properly disable themselves when they shouldn't be used",
+					"Fixed !jail not moving players to jail",
+					"Fixed script errors with the event logger",
+					"Fixed jail command not letting players be released",
+					"Bind Blocker now uses VToolkit drawers",
+					"Fixed errors when adding and removing modes from zones",
+					"Added permissions reset button to the permissions editor",
+					"Finally localised the spurious \"change_rank\" dialogs",
+					"Fixed button rendering on OS X",
+					"Reduced font size in buttons",
+					"Button font is now Tahoma",
+					"VToolkit frames now automatically centre when no position information is provided",
+					"Added a pre-configuration setting window on first startup"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -394,7 +413,7 @@ MENU:AddPage({
 			{ "How do I use the SoundCloud integration?", "Bind a key to \"vermilion_soundcloud_browser\"" },
 			{ "How do I stop a sound?", "Type !stopsound in chat, or run \"vermilion stopsound\" in the console." },
 			{ "Vermilion causes another addon to break!", "Report the issue to me ASAP. I can probably integrate a fix into the next release." },
-			{ "You keep talking about localisation, where is it?", "It isn't ready yet, but if you want to help translate Vermilion in the future, don't hesitate to contribute to the GitHub repository (I will post an announcement when it is safe to start translating!", 40 },
+			{ "You keep talking about localisation, where is it?", "It isn't ready yet, but if you want to help translate Vermilion in the future, don't hesitate to contribute to the GitHub repository.", 30 },
 			{ "I see you can select a visualiser, how do I make my own?", "I plan on adding a visualiser development kit later on, but for now, you can look at the GitHub code.", 30 },
 			{ "I'm getting a lot of errors, what the heck?", "Firstly, make sure that there are no other administration tools on the server (this includes Vermilion 1) and then restart the server. If this doesn't fix anything, try deleting the Vermilion configuration. As a last resort, check for similar reports and if one doesn't exist, file a new one!", 50 },
 			{ "I don't like the way you have spelled something (i.e. colour)! Change it!", "No. If you can't stand it, make your own localisation file." },
@@ -402,6 +421,7 @@ MENU:AddPage({
 			{ "How do I select all players in a chat command?", "Replace the player argument with \"@\"" },
 			{ "How often do you update?", "I don't have a schedule, but I will usually release a minor update after a bug report and large releases will take place every now and then.", 30 },
 			{ "How do I use MOTD Variables?", "Place \"%\" around the name of the variable, for example, %player_name%." },
+			{ "Other mods aren't recognising my rank!", "Add the \"identify_as_x\" permission to your rank, for example, admins should have \"identify_as_admin\" which is the same as placing them in the admin rank in the users.txt file.", 35 },
 			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
 		}
 

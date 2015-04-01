@@ -26,6 +26,14 @@ if(Vermilion) then
 	end
 end
 
+local gmodver = string.Explode(".", VERSIONSTR)
+for i,k in pairs(gmodver) do gmodver[i] = tonumber(k) end
+local time = (gmodver[1] * 31557600) + (gmodver[3] * 2678400) + (gmodver[2] * 86400)
+if(time < 63598759200) then
+	print("[Vermilion 2] CRITICAL WARNING: You are running an old version of GMod that is NOT supported and NETWORKING ERRORS!")
+	print("[Vermilion 2] If something goes wrong and you do not update to the latest version, I will not help you. Ever.")
+end
+
 if(SERVER) then
 	AddCSLuaFile()
 	NOTIFY_GENERIC = 0

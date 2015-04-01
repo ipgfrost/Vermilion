@@ -399,6 +399,8 @@ function VToolkit:CreateFrame(props)
 	end
 	if(props['pos'] != nil) then
 		panel:SetPos(props['pos'][1], props['pos'][2])
+	else
+		panel:SetPos((ScrW() / 2) - (props['size'][1] / 2) , (ScrH() / 2) - (props['size'][2] / 2))
 	end
 	if(props['closeBtn'] != nil) then
 		panel:ShowCloseButton(props['closeBtn'])

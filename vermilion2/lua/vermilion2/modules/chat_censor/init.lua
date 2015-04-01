@@ -135,6 +135,7 @@ function MODULE:InitClient()
 		for i,k in pairs(net.ReadTable()) do
 			paneldata.PhraseList:AddLine(k)
 		end
+		paneldata.PhraseList:OnRowSelected()
 	end)
 
 	self:NetHook("VGetCensorUpdate", function()
@@ -186,18 +187,7 @@ function MODULE:InitClient()
 			paneldata.IPCensorCB = ipCensor
 
 
-			local addPhrasePanel = vgui.Create("DPanel")
-			addPhrasePanel:SetTall(panel:GetTall())
-			addPhrasePanel:SetWide((panel:GetWide() / 2) + 55)
-			addPhrasePanel:SetPos(panel:GetWide(), 0)
-			addPhrasePanel:SetParent(panel)
-			paneldata.AddPhrasePanel = addPhrasePanel
-			local cAPPanel = VToolkit:CreateButton(MODULE:TranslateStr("close"), function()
-				addPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
-			end)
-			cAPPanel:SetPos(10, 10)
-			cAPPanel:SetSize(50, 20)
-			cAPPanel:SetParent(addPhrasePanel)
+			local addPhrasePanel = VToolkit:CreateRightDrawer(panel)
 
 			local phraseData = VToolkit:CreateTextbox()
 			phraseData:SetPos(10, 40)
@@ -210,24 +200,13 @@ function MODULE:InitClient()
 				MODULE:NetStart("VAddPhrase")
 				net.WriteString(phraseData:GetValue())
 				net.SendToServer()
-				addPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+				addPhrasePanel:Close()
 			end)
 			addPhraseButton:SetPos(10, phraseData:GetY() + phraseData:GetTall() + 10)
 			addPhraseButton:SetSize(425, 30)
 			addPhraseButton:SetParent(addPhrasePanel)
 
-			local editPhrasePanel = vgui.Create("DPanel")
-			editPhrasePanel:SetTall(panel:GetTall())
-			editPhrasePanel:SetWide((panel:GetWide() / 2) + 55)
-			editPhrasePanel:SetPos(panel:GetWide(), 0)
-			editPhrasePanel:SetParent(panel)
-			paneldata.EditPhrasePanel = editPhrasePanel
-			local cEPPanel = VToolkit:CreateButton(MODULE:TranslateStr("close"), function()
-				editPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
-			end)
-			cEPPanel:SetPos(10, 10)
-			cEPPanel:SetSize(50, 20)
-			cEPPanel:SetParent(editPhrasePanel)
+			local editPhrasePanel = VToolkit:CreateRightDrawer(panel)
 
 			local ephraseData = VToolkit:CreateTextbox()
 			ephraseData:SetPos(10, 40)
@@ -243,7 +222,7 @@ function MODULE:InitClient()
 				net.WriteString(old)
 				net.WriteString(ephraseData:GetValue())
 				net.SendToServer()
-				editPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+				editPhrasePanel:Close()
 			end)
 			editPhraseButton:SetPos(10, ephraseData:GetY() + ephraseData:GetTall() + 10)
 			editPhraseButton:SetSize(425, 30)
@@ -252,15 +231,16 @@ function MODULE:InitClient()
 
 
 			local addPhrase = VToolkit:CreateButton(MODULE:TranslateStr("add"), function()
-				addPhrasePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
+				addPhrasePanel:Open()
 			end)
 			addPhrase:SetPos(620, 90)
 			addPhrase:SetParent(panel)
 			addPhrase:SetSize(panel:GetWide() - addPhrase:GetX() - 10, 25)
+			
 
 			local editPhrase = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
 				paneldata.EPhraseData:SetValue(paneldata.PhraseList:GetSelected()[1]:GetValue(1))
-				editPhrasePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
+				editPhrasePanel:Open()
 			end)
 			editPhrase:SetPos(620, 125)
 			editPhrase:SetParent(panel)
@@ -310,8 +290,8 @@ function MODULE:InitClient()
 			paneldata.EditPhraseBtn:SetDisabled(true)
 			paneldata.RemPhraseBtn:SetDisabled(true)
 
-			paneldata.EditPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
-			paneldata.AddPhrasePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+			paneldata.EditPhrasePanel:Close()
+			paneldata.AddPhrasePanel:Close()
 		end
 	})
 end

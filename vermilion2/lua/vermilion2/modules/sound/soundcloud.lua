@@ -182,9 +182,11 @@ if(CLIENT) then
 	MODULE:AddHook("Think", function()
 		if(IsValid(tipLabel)) then
 			tipLabel:SetTextColor(Color(255, 255, 255, 255 * math.Clamp(math.sin(CurTime() * 4), 0.5, 1)))
+			tipLabel:InvalidateLayout()
 		end
 		if(IsValid(searchingLabel)) then
 			searchingLabel:SetTextColor(Color(255, 255, 255, 255 * math.Clamp(math.sin(CurTime() * 4), 0.5, 1)))
+			searchingLabel:InvalidateLayout()
 		end
 	end)
 
@@ -269,6 +271,12 @@ if(CLIENT) then
 							if(not IsValid(searchbox)) then return end
 							if(not IsValid(resultBox)) then return end
 							if(valid and val == searchbox:GetValue()) then
+								if(data.errors != nil and table.Count(data.errors) > 0) then
+									if(not IsValid(searchingLabel)) then return end
+									searchingLabel:SetText(data.errors[1])
+									searchingLabel:Center()
+									return
+								end
 								if(IsValid(searchingLabel)) then
 									searchingLabel:Remove()
 								end
@@ -301,6 +309,12 @@ if(CLIENT) then
 						if(not IsValid(searchbox)) then return end
 						if(not IsValid(resultBox)) then return end
 						if(valid and val == searchbox:GetValue()) then
+							if(data.errors != nil and table.Count(data.errors) > 0) then
+								if(not IsValid(searchingLabel)) then return end
+								searchingLabel:SetText(data.errors[1])
+								searchingLabel:Center()
+								return
+							end
 							if(IsValid(searchingLabel)) then
 								searchingLabel:Remove()
 							end

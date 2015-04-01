@@ -57,6 +57,7 @@ function MODULE:InitClient()
 		if(system.BatteryPower() == 255) then return end
 		MODULE.WBWidth = draw.WordBox( 8, (ScrW() / 2) - (MODULE.WBWidth / 2), 10, MODULE:TranslateStr("interface", { tostring(system.BatteryPower()) }), "Default", Color(0, 0, 0, 255), Color(255, 255, 255, 255))
 	end)
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(Vermilion:GetModule("client_settings") != nil) then
 			Vermilion:GetModule("client_settings"):AddOption({

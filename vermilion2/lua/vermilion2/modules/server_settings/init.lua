@@ -909,6 +909,7 @@ function MODULE:InitServer()
 
 	self:AddHook("GetFallDamage", function(ply, speed)
 		local mode = MODULE:GetData("disable_fall_damage", 4)
+		print("FALLDAMAGE:", mode)
 		if(mode > 1) then
 			if(mode == 2) then
 				return 0
@@ -922,7 +923,9 @@ function MODULE:InitServer()
 	end)
 
 	self:AddHook("EntityTakeDamage", function(victim, dmg)
+		print("DAMAGE:", mode)
 		if(dmg:IsDamageType(DMG_FALL)) then return end
+		if(MODULE:GetData("enable_no_damage", 3) <= 1) then return end
 		local attacker = dmg:GetAttacker()
 		if(IsValid(victim) and victim:IsPlayer()) then
 			local damageMode = MODULE:GetData("enable_no_damage", 3)

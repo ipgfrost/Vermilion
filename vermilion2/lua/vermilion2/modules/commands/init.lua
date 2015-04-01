@@ -2301,21 +2301,11 @@ function MODULE:InitClient()
 
 
 
-			local addMessagePanel = vgui.Create("DPanel")
-			addMessagePanel:SetTall(panel:GetTall())
-			addMessagePanel:SetWide((panel:GetWide() / 2) + 55)
-			addMessagePanel:SetPos(panel:GetWide(), 0)
-			addMessagePanel:SetParent(panel)
+			local addMessagePanel = VToolkit:CreateRightDrawer(panel)
 			paneldata.AddMessagePanel = addMessagePanel
-			local cAMPanel = VToolkit:CreateButton(MODULE:TranslateStr("close"), function()
-				addMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
-			end)
-			cAMPanel:SetPos(10, 10)
-			cAMPanel:SetSize(50, 20)
-			cAMPanel:SetParent(addMessagePanel)
 
 			local addMessageButton = VToolkit:CreateButton(MODULE:TranslateStr("gimps:new"), function()
-				addMessagePanel:MoveTo((panel:GetWide() / 2) - 50, 0, 0.25, 0, -3)
+				addMessagePanel:Open()
 			end)
 			addMessageButton:SetPos(10, 500)
 			addMessageButton:SetSize(105, 30)
@@ -2343,7 +2333,7 @@ function MODULE:InitClient()
 				net.SendToServer()
 
 				messageBox:SetValue("")
-				addMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+				addMessagePanel:Close()
 			end)
 			addListingButton:SetPos(326, 495)
 			addListingButton:SetSize(105, 30)
@@ -2351,7 +2341,7 @@ function MODULE:InitClient()
 		end,
 		OnOpen = function(panel, paneldata)
 			MODULE:NetCommand("VGetGimpList")
-			paneldata.AddMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+			paneldata.AddMessagePanel:Close()
 		end
 	})
 

@@ -71,8 +71,8 @@ function MODULE.BaseZone:AddMode(mode, parameters)
 		self.ActiveObjects[i] = nil
 	end
 	for i,k in pairs(self.ActivePlayers) do
-		hook.Call("Vermilion_Player_Left_Zone", nil, zone, VToolkit.LookupPlayerBySteamID(i))
-		zone.ActivePlayers[i] = nil
+		hook.Call("Vermilion_Player_Left_Zone", nil, self, VToolkit.LookupPlayerBySteamID(i))
+		self.ActivePlayers[i] = nil
 	end
 end
 function MODULE.BaseZone:RemoveMode(mode)
@@ -82,8 +82,8 @@ function MODULE.BaseZone:RemoveMode(mode)
 		self.ActiveObjects[i] = nil
 	end
 	for i,k in pairs(self.ActivePlayers) do
-		hook.Call("Vermilion_Player_Left_Zone", nil, zone, VToolkit.LookupPlayerBySteamID(i))
-		zone.ActivePlayers[i] = nil
+		hook.Call("Vermilion_Player_Left_Zone", nil, self, VToolkit.LookupPlayerBySteamID(i))
+		self.ActivePlayers[i] = nil
 	end
 end
 function MODULE.BaseZone:GetModeProps(mode)
@@ -1048,7 +1048,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end,
 		Function = function(sender, text, log, glog, tglog)
-			if(table.Count(text) < 2) then
+			if(table.Count(text) < 1) then
 				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
 				return false
 			end
@@ -1064,6 +1064,10 @@ function MODULE:RegisterChatCommands()
 				tglog("zones:jail:release", { sender:GetName(), tplayer:GetName() })
 				return
 			end
+			if(table.Count(text) < 2) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return false
+			end
 			if(MODULE:GetZonesWithName(text[2]) == nil or not MODULE:GetZonesWithName(text[2]):HasMode("jail")) then
 				log(MODULE:TranslateStr("jail:nojail", nil, sender), NOTIFY_ERROR)
 				return false
@@ -1071,6 +1075,11 @@ function MODULE:RegisterChatCommands()
 			Vermilion:GetUser(tplayer).Jailed = true
 			Vermilion:GetUser(tplayer).AssignedJail = text[2]
 			tglog("zones:jail:jail", { sender:GetName(), tplayer:GetName() })
+			local vervplayer = Vermilion:GetUser(tplayer)
+			local tzone = MODULE:GetZonesWithName(text[2])
+			if(vervplayer.Jailed and vervplayer.AssignedJail == tzone:GetName()) then
+				tplayer:SetPos(tzone.Bound:CentreBase())
+			end
 		end
 	})
 
