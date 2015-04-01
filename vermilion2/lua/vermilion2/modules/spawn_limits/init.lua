@@ -46,7 +46,21 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
-
+	
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+	
 	self:NetHook("VGetSpawnLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -108,7 +122,7 @@ function MODULE:InitServer()
 			if(mode == 3 and Vermilion:HasPermission(vplayer, "no_spawn_limits")) then return end
 		end
 		local rankLimit = nil
-		for i,k in pairs(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true)) do
+		for i,k in pairs(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true)) do
 			if(k.Rule == typ) then
 				rankLimit = k.Value
 				break
@@ -143,7 +157,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VGetSpawnLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_spawn"].Panel.RankList)) then return end
-		if(net.ReadString() != Vermilion.Menu.Pages["limit_spawn"].Panel.RankList:GetSelected()[1]:GetValue(1)) then return end
+		if(net.ReadString() != Vermilion.Menu.Pages["limit_spawn"].Panel.RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
 		local blocklist = Vermilion.Menu.Pages["limit_spawn"].Panel.RankRuleList
 		if(IsValid(blocklist)) then
@@ -199,7 +213,7 @@ function MODULE:InitClient()
 					delRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
 					editRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
 					MODULE:NetStart("VGetSpawnLimits")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -263,7 +277,7 @@ function MODULE:InitClient()
 							ln.CVAR = k.CVAR
 							ln.BaseName = k.BaseName
 							MODULE:NetStart("VAddRule")
-							net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+							net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 							net.WriteString(k.BaseName)
 							net.WriteInt(tonumber(value), 32)
 							net.SendToServer()
@@ -280,7 +294,7 @@ function MODULE:InitClient()
 				delRule = VToolkit:CreateButton("Remove Cap", function()
 					for i,k in pairs(rankRuleList:GetSelected()) do
 						MODULE:NetStart("VRemoveRule")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.BaseName)
 						net.SendToServer()
 
@@ -300,7 +314,7 @@ function MODULE:InitClient()
 						end
 						rankRuleList:GetSelected()[1]:SetValue(2, value)
 						MODULE:NetStart("VUpdateRule")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(rankRuleList:GetSelected()[1].BaseName)
 						net.WriteInt(tonumber(rankRuleList:GetSelected()[1]:GetValue(2)), 32)
 						net.SendToServer()

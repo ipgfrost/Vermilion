@@ -33,9 +33,22 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
 
 	self:AddHook("PlayerSpawnVehicle", function(vplayer, model, class, data)
-		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), model)) then // <-- this could backfire...
+		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), model)) then // <-- this could backfire...
 			Vermilion:AddNotification(vplayer, "You cannot spawn this vehicle!", NOTIFY_ERROR)
 			return false
 		end
@@ -43,7 +56,7 @@ function MODULE:InitServer()
 
 	self:AddHook("Vermilion_IsEntityDuplicatable", function(vplayer, class, model)
 		if(not IsValid(vplayer)) then return end
-		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), model)) then
+		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), model)) then
 			return false
 		end
 	end)
@@ -90,7 +103,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VGetVehicleLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_vehicle"].RankList)) then return end
-		if(net.ReadString() != Vermilion.Menu.Pages["limit_vehicle"].RankList:GetSelected()[1]:GetValue(1)) then return end
+		if(net.ReadString() != Vermilion.Menu.Pages["limit_vehicle"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
 		local blocklist = Vermilion.Menu.Pages["limit_vehicle"].RankBlockList
 		local vehicles = Vermilion.Menu.Pages["limit_vehicle"].Vehicles
@@ -150,7 +163,7 @@ function MODULE:InitClient()
 					blockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and allVehicles:GetSelected()[1] != nil))
 					unblockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
 					MODULE:NetStart("VGetVehicleLimits")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -204,7 +217,7 @@ function MODULE:InitClient()
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
 						MODULE:NetStart("VBlockVehicle")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 					end
@@ -217,7 +230,7 @@ function MODULE:InitClient()
 				unblockVehicle = VToolkit:CreateButton("Unblock Vehicle", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockVehicle")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 

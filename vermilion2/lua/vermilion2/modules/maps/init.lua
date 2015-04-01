@@ -83,13 +83,7 @@ function MODULE:RegisterChatCommands()
 				log("A map change is already in progress. Abort the map change to change to a new map!", NOTIFY_ERROR)
 				return
 			end
-			MODULE.MapChangeInProgress = true
-			MODULE.MapChangeTo = text[1]
-			MODULE.MapChangeIn = inTime
-			MODULE:NetStart("VBroadcastSchedule")
-			net.WriteInt(MODULE.MapChangeIn, 32)
-			net.WriteString(MODULE.MapChangeTo)
-			net.Broadcast()
+			MODULE:ScheduleMapChange(text[1], inTime)
 			glog(sender:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo .. ".")
 		end
 	})
@@ -113,13 +107,7 @@ function MODULE:RegisterChatCommands()
 				log("A map change is already in progress. Abort the map change to change to a new map!", NOTIFY_ERROR)
 				return
 			end
-			MODULE.MapChangeInProgress = true
-			MODULE.MapChangeTo = game.GetMap()
-			MODULE.MapChangeIn = inTime
-			MODULE:NetStart("VBroadcastSchedule")
-			net.WriteInt(MODULE.MapChangeIn, 32)
-			net.WriteString(MODULE.MapChangeTo)
-			net.Broadcast()
+			MODULE:ScheduleMapChange(game.GetMap(), inTime)
 			glog(sender:GetName() .. " has instigated a level reload.")
 		end
 	})
@@ -134,11 +122,7 @@ function MODULE:RegisterChatCommands()
 				log("Attempt to abort the level change has been blocked by the management engine.", NOTIFY_ERROR)
 				return
 			end
-			MODULE.MapChangeInProgress = false
-			MODULE.MapChangeIn = nil
-			MODULE.MapChangeTo = nil
-			MODULE:NetStart("VAbortMapChange")
-			net.Broadcast()
+			MODULE:AbortMapChange()
 			glog(sender:GetName() .. " has halted the level change.")
 		end
 	})
@@ -363,6 +347,7 @@ function MODULE:InitServer()
 		
 		if(time == 0) then
 			RunConsoleCommand("changelevel", map)
+			return
 		end
 		
 		MODULE.MapChangeInProgress = true

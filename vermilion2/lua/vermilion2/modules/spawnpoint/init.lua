@@ -74,6 +74,28 @@ end
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		for i,k in pairs(MODULE:GetData("allocations", {}, true)) do
+			-- ok, this is not good, but it's the only way this will work. Search through the ranks, try to find one that matches the start of the allocation.
+			-- if a rank has a similar start, then this could screw up. (admin and administrator)
+			local rankName = nil
+			for i,k in pairs(Vermilion.Data.Ranks) do
+				if(string.StartWith(i, k.Name) and string.len(k.Name) > string.len(rankName)) then
+					rankName = k.Name
+				end
+			end
+			if(rankName == nil) then
+				MODULE:GetData("allocations", {}, true)[i] = nil
+				continue
+			end
+			local obj = k
+			local nr = Vermilion:GetRank(rankName):GetUID()
+			MODULE:GetData("allocations", {}, true)[i] = nil
+			MODULE:GetData("allocations", {}, true)[nr .. ":" .. string.Replace(i, rankName, "")] = obj 
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	local function updateClient(vplayer)
 		MODULE:NetStart("VGetSpawnpoints")
 		local tab = {}
@@ -88,8 +110,9 @@ function MODULE:InitServer()
 
 	local function sendRankAllocs(vplayer)
 		local tab = {}
+		
 		for i,k in pairs(Vermilion.Data.Ranks) do
-			tab[k.Name] = MODULE:GetData("allocations", {}, true)[k.Name .. game.GetMap()] or "Default"
+			tab[k.UniqueID] = MODULE:GetData("allocations", {}, true)[k.UniqueID .. ":" .. game.GetMap()] or "Default"
 		end
 		MODULE:NetStart("VGetRankSpawnpoints")
 		net.WriteTable(tab)
@@ -148,7 +171,7 @@ function MODULE:InitServer()
 	end
 
 	function MODULE:DoSpawning(vplayer)
-		local rankpoint = MODULE:GetData("allocations", {}, true)[Vermilion:GetUser(vplayer):GetRankName() .. game.GetMap()]
+		local rankpoint = MODULE:GetData("allocations", {}, true)[Vermilion:GetUser(vplayer):GetRankUID() .. ":" .. game.GetMap()]
 		if(rankpoint != nil) then
 			rankpoint = MODULE:GetData("points", {}, true)[rankpoint]
 			spawnThink(vplayer, rankpoint)
@@ -164,7 +187,7 @@ function MODULE:InitServer()
 			local rank = net.ReadString()
 			local point = net.ReadString()
 
-			MODULE:GetData("allocations", {}, true)[rank .. game.GetMap()] = point
+			MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = point
 			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 		end
 	end)
@@ -173,7 +196,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
 			local rank = net.ReadString()
 
-			MODULE:GetData("allocations", {}, true)[rank .. game.GetMap()] = nil
+			MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = nil
 			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 		end
 	end)
@@ -196,14 +219,14 @@ function MODULE:InitClient()
 		for i,k in pairs(data) do
 			local done = false
 			for i1,k1 in pairs(paneldata.RankList:GetLines()) do
-				if(k1:GetValue(1) == i) then
+				if(k1.UniqueRankID == i) then
 					k1:SetValue(2, k)
 					done = true
 					break
 				end
 			end
 			if(not done) then
-				paneldata.RankList:AddLine(i, k)
+				paneldata.RankList:AddLine(Vermilion:GetRankByID(i).Name, k)
 			end
 		end
 	end)
@@ -276,7 +299,7 @@ function MODULE:InitClient()
 
 			local assignPointBtn = VToolkit:CreateButton("Assign Spawnpoint", function()
 				MODULE:NetStart("VAssignSpawnpoint")
-				net.WriteString(rnkList:GetSelected()[1]:GetValue(1))
+				net.WriteString(rnkList:GetSelected()[1].UniqueRankID)
 				net.WriteString(spawnpointList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end)
@@ -288,7 +311,7 @@ function MODULE:InitClient()
 
 			local resetPointBtn = VToolkit:CreateButton("Reset Spawnpoint", function()
 				MODULE:NetStart("VResetSpawnpoint")
-				net.WriteString(rnkList:GetSelected()[1]:GetValue(1))
+				net.WriteString(rnkList:GetSelected()[1].UniqueRankID)
 				net.SendToServer()
 			end)
 			resetPointBtn:SetPos(rnkList:GetX() + rnkList:GetWide() + 10, assignPointBtn:GetY() + assignPointBtn:GetTall() + 10)

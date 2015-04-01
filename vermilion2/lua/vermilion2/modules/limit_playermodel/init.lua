@@ -34,6 +34,25 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local nr = nil
+			if(string.EndsWith(i, ":isblacklist")) then
+				nr = Vermilion:GetRank(string.Explode(":", i)[1]):GetUID() .. ":isblacklist"
+			else
+				nr = Vermilion:GetRank(i):GetUID()
+			end
+			local obj = k
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	self:AddHook("PlayerSetModel", function(vplayer)
 		local clpm = vplayer:GetInfo("cl_playermodel")
 		local modelname = player_manager.TranslatePlayerModel(clpm)
@@ -44,7 +63,7 @@ function MODULE:InitServer()
 			vplayer:SetModel(player_manager.AllValidModels()["kleiner"])
 			return false
 		end
-		local rank = Vermilion:GetUser(vplayer):GetRankName()
+		local rank = Vermilion:GetUser(vplayer):GetRankUID()
 		if(MODULE:GetData(rank .. ":isblacklist", true, true)) then
 			if(table.HasValue(MODULE:GetData(rank, {}, true), modelname)) then
 				timer.Simple(1, function()
@@ -133,7 +152,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VGetModelList", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_playermodel"].RankList)) then return end
-		if(net.ReadString() != Vermilion.Menu.Pages["limit_playermodel"].RankList:GetSelected()[1]:GetValue(1)) then return end
+		if(net.ReadString() != Vermilion.Menu.Pages["limit_playermodel"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
 		local model_list = Vermilion.Menu.Pages["limit_playermodel"].RankPermissions
 		local is_blacklist = Vermilion.Menu.Pages["limit_playermodel"].IsBlacklist
@@ -195,7 +214,7 @@ function MODULE:InitClient()
 					addModel:SetDisabled(not (self:GetSelected()[1] != nil and allModels:GetSelected()[1] != nil))
 					delModel:SetDisabled(not (self:GetSelected()[1] != nil and rankPermissions:GetSelected()[1] != nil))
 					MODULE:NetStart("VGetModelList")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -249,7 +268,7 @@ function MODULE:InitClient()
 						rankPermissions:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
 						MODULE:NetStart("VAddModel")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 					end
@@ -262,7 +281,7 @@ function MODULE:InitClient()
 				delModel = VToolkit:CreateButton("Remove Model", function()
 					for i,k in pairs(rankPermissions:GetSelected()) do
 						MODULE:NetStart("VDelModel")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 
@@ -283,7 +302,7 @@ function MODULE:InitClient()
 				function isBlacklist:OnChange(val)
 					if(not self:GetDisabled()) then
 						MODULE:NetStart("VModelBlacklistState")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteBoolean(val)
 						net.SendToServer()
 					end

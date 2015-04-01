@@ -183,7 +183,8 @@ MENU:AddPage({
 					"Reduced font size in buttons",
 					"Button font is now Tahoma",
 					"VToolkit frames now automatically centre when no position information is provided",
-					"Added a pre-configuration setting window on first startup"
+					"Added a pre-configuration setting window on first startup",
+					"Added MODULE:GetAllData()"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

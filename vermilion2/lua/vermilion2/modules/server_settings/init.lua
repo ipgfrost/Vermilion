@@ -713,18 +713,8 @@ function MODULE:InitServer()
 			function Vermilion:SaveConfiguration() end
 			if(Vermilion:GetModule("map") != nil) then
 				local mod = Vermilion:GetModule("map")
-				mod.MapChangeInProgress = false
-				mod.MapChangeIn = nil
-				mod.MapChangeTo = nil
-				mod:NetStart("VAbortMapChange")
-				net.Broadcast()
-				mod.MapChangeInProgress = true
-				mod.MapChangeTo = game.GetMap()
-				mod.MapChangeIn = 30
-				mod:NetStart("VBroadcastSchedule")
-				net.WriteInt(mod.MapChangeIn, 32)
-				net.WriteString(mod.MapChangeTo)
-				net.Broadcast()
+				mod:AbortMapChange()
+				mod:ScheduleMapChange(game.GetMap(), 30)
 				mod.BlockAbort = true
 			else
 				timer.Simple(30, function()
@@ -909,7 +899,6 @@ function MODULE:InitServer()
 
 	self:AddHook("GetFallDamage", function(ply, speed)
 		local mode = MODULE:GetData("disable_fall_damage", 4)
-		print("FALLDAMAGE:", mode)
 		if(mode > 1) then
 			if(mode == 2) then
 				return 0
@@ -923,7 +912,6 @@ function MODULE:InitServer()
 	end)
 
 	self:AddHook("EntityTakeDamage", function(victim, dmg)
-		print("DAMAGE:", mode)
 		if(dmg:IsDamageType(DMG_FALL)) then return end
 		if(MODULE:GetData("enable_no_damage", 3) <= 1) then return end
 		local attacker = dmg:GetAttacker()

@@ -33,8 +33,22 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	self:AddHook("PlayerSpawnSENT", function(vplayer, class)
-		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), class)) then
+		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), class)) then
 			Vermilion:AddNotification(vplayer, "You cannot spawn this entity!", NOTIFY_ERROR)
 			return false
 		end
@@ -42,7 +56,7 @@ function MODULE:InitServer()
 
 	self:AddHook("Vermilion_IsEntityDuplicatable", function(vplayer, class)
 		if(not IsValid(vplayer)) then return end
-		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true), class)) then
+		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), class)) then
 			return false
 		end
 	end)
@@ -87,7 +101,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VGetEntityLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_entities"].RankList)) then return end
-		if(net.ReadString() != Vermilion.Menu.Pages["limit_entities"].RankList:GetSelected()[1]:GetValue(1)) then return end
+		if(net.ReadString() != Vermilion.Menu.Pages["limit_entities"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
 		local blocklist = Vermilion.Menu.Pages["limit_entities"].RankBlockList
 		local ents = Vermilion.Menu.Pages["limit_entities"].Entities
@@ -142,7 +156,7 @@ function MODULE:InitClient()
 					blockEntity:SetDisabled(not (self:GetSelected()[1] != nil and allEntites:GetSelected()[1] != nil))
 					unblockEntity:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
 					MODULE:NetStart("VGetEntityLimits")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -196,7 +210,7 @@ function MODULE:InitClient()
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
 						MODULE:NetStart("VBlockEntity")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 					end
@@ -209,7 +223,7 @@ function MODULE:InitClient()
 				unblockEntity = VToolkit:CreateButton("Unblock Entity", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VUnblockEntity")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 

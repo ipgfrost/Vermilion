@@ -134,6 +134,20 @@ end
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	self:AddHook("PlayerSpawn", function(vplayer)
 		timer.Simple(0.5, function()
 			for i,k in pairs(MODULE.DataTypes) do
@@ -143,7 +157,7 @@ function MODULE:InitServer()
 			if(userData != nil) then
 				local rankData = userData:GetRank()
 				if(rankData != nil) then
-					local rankName = rankData:GetName()
+					local rankName = rankData:GetUID()
 					for i,k in pairs(MODULE:GetData(rankName, {}, true)) do
 						local typ = MODULE.DataTypes[i]
 						typ.ApplyFunc(vplayer, k)
@@ -158,7 +172,7 @@ function MODULE:InitServer()
 		if(userData != nil) then
 			local rankData = userData:GetRank()
 			if(rankData != nil) then
-				local rankName = rankData:GetName()
+				local rankName = rankData:GetUID()
 				if(MODULE:GetData(rankName, {}, true)["FOV"] != nil) then
 					MODULE.DataTypes["FOV"].ApplyFunc(vplayer, MODULE:GetData(rankName, {}, true)["FOV"])
 				end
@@ -173,7 +187,7 @@ function MODULE:InitServer()
 				if(userData != nil) then
 					local rankData = userData:GetRank()
 					if(rankData != nil) then
-						local rankName = rankData:GetName()
+						local rankName = rankData:GetUID()
 						if(MODULE:GetData(rankName, {}, true)["FOV"] != nil) then
 							MODULE.DataTypes["FOV"].ApplyFunc(vplayer, MODULE:GetData(rankName, {}, true)["FOV"])
 						end
@@ -240,7 +254,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VRankSpawnLoad", function()
 		local paneldata = Vermilion.Menu.Pages["spawn_settings"]
-		if(paneldata.RankList:GetSelected()[1] == nil or paneldata.RankList:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
+		if(paneldata.RankList:GetSelected()[1] == nil or paneldata.RankList:GetSelected()[1].UniqueRankID != net.ReadString()) then return end
 		paneldata.RankRuleList:Clear()
 		for i,k in pairs(net.ReadTable()) do
 			paneldata.RankRuleList:AddLine(k.PrintName, k.Value)
@@ -288,7 +302,7 @@ function MODULE:InitClient()
 					delRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
 					editRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
 					MODULE:NetStart("VRankSpawnLoad")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -352,7 +366,7 @@ function MODULE:InitClient()
 							end
 							local ln = rankRuleList:AddLine(k:GetValue(1), value)
 							MODULE:NetStart("VRankSpawnAdd")
-							net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+							net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 							net.WriteString(k:GetValue(1))
 							net.WriteFloat(tonumber(value))
 							net.SendToServer()
@@ -369,7 +383,7 @@ function MODULE:InitClient()
 				delRule = VToolkit:CreateButton("Remove Property", function()
 					for i,k in pairs(rankRuleList:GetSelected()) do
 						MODULE:NetStart("VRankSpawnDel")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
 
@@ -394,7 +408,7 @@ function MODULE:InitClient()
 						end
 						rankRuleList:GetSelected()[1]:SetValue(2, value)
 						MODULE:NetStart("VUpdateRule")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(rankRuleList:GetSelected()[1]:GetValue(1))
 						net.WriteFloat(tonumber(rankRuleList:GetSelected()[1]:GetValue(2)))
 						net.SendToServer()

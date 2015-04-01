@@ -409,6 +409,10 @@ function Vermilion:CreateBaseModule()
 		function base:Destroy() end
 
 		function base:RegisterChatCommands() end
+		
+		function base:GetAllData()
+			return Vermilion.Data.Module[self.ID] or {}
+		end
 
 		function base:GetData(name, default, set)
 			if(Vermilion.Data.Module[self.ID] == nil) then Vermilion.Data.Module[self.ID] = {} end

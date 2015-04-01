@@ -38,16 +38,30 @@ MODULE.BannedBinds = {}
 function MODULE:BroadcastNewBinds()
 	for i,k in pairs(player.GetAll()) do
 		MODULE:NetStart("VBindBlockUpdate")
-		net.WriteTable(self:GetData(Vermilion:GetUser(k):GetRankName(), {}, true))
+		net.WriteTable(self:GetData(Vermilion:GetUser(k):GetRankUID(), {}, true))
 		net.Send(k)
 	end
 end
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	self:NetHook("VBindBlockUpdate", function(vplayer)
 		MODULE:NetStart("VBindBlockUpdate")
-		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), {}, true))
+		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true))
 		net.Send(vplayer)
 	end)
 
@@ -60,8 +74,8 @@ function MODULE:InitServer()
 	end)
 
 	local function sendMenuBindList(vplayer, rank)
-		if(not Vermilion:HasRank(rank)) then
-			return -- bad rank name
+		if(not Vermilion:HasRankID(rank)) then
+			return -- bad rank id
 		end
 		MODULE:NetStart("VBindListLoad")
 		net.WriteString(rank)
@@ -121,7 +135,7 @@ function MODULE:InitClient()
 		paneldata.RankBlockList:Clear()
 		local rank = net.ReadString()
 		if(paneldata.RankList:GetSelected()[1] == nil) then return end
-		if(paneldata.RankList:GetSelected()[1]:GetValue(1) != rank) then return end
+		if(paneldata.RankList:GetSelected()[1].UniqueRankID != rank) then return end
 		for i,k in pairs(net.ReadTable()) do
 			paneldata.RankBlockList:AddLine(k)
 		end
@@ -168,6 +182,11 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockBind:SetDisabled(self:GetSelected()[1] == nil)
 					unblockBind:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
+					if(self:GetSelected()[1] != nil) then
+						MODULE:NetStart("VBindListLoad")
+						net.WriteString(self:GetSelected()[1].UniqueRankID)
+						net.SendToServer()
+					end
 				end
 
 				rankBlockList = VToolkit:CreateList({
@@ -202,7 +221,7 @@ function MODULE:InitClient()
 					if(blocktext:GetValue() == "") then return end
 					rankBlockList:AddLine(blocktext:GetValue())
 					MODULE:NetStart("VAddBindBlock")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.WriteString(blocktext:GetValue())
 					net.SendToServer()
 					blocktext:SetValue("")
@@ -225,7 +244,7 @@ function MODULE:InitClient()
 				unblockBind = VToolkit:CreateButton("Unblock Bind", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
 						MODULE:NetStart("VRemoveBindBlock")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
 					end

@@ -49,12 +49,27 @@ local defaultLoadout = {
 
 function MODULE:InitServer()
 
+	if(not MODULE:GetData("uidUpdate", false)) then
+		local ndata = {}
+		for i,k in pairs(MODULE:GetAllData()) do
+			if(i == "enabled_on_non_sandbox") then continue end
+			local obj = k
+			local nr = Vermilion:GetRank(i):GetUID()
+			ndata[nr] = obj
+			MODULE:SetData(i, nil)
+		end
+		for i,k in pairs(ndata) do
+			MODULE:SetData(i, k)
+		end
+		MODULE:SetData("uidUpdate", true)
+	end
+
 	self:AddHook("PlayerLoadout", function(vplayer)
 		if(not MODULE:GetData("enabled_on_non_sandbox", false, true) and engine.ActiveGamemode() != "sandbox") then return end
 		if(Vermilion:GetModule("kits") != nil) then
 			if(Vermilion:GetModule("kits"):WouldRun(vplayer)) then return end
 		end
-		local data = MODULE:GetData(Vermilion:GetUser(vplayer):GetRankName(), defaultLoadout, true)
+		local data = MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), defaultLoadout, true)
 		if(data != nil) then
 			vplayer:RemoveAllAmmo()
 			if (cvars.Bool("sbox_weapons", true)) then
@@ -122,7 +137,7 @@ function MODULE:InitClient()
 
 	self:NetHook("VGetLoadout", function()
 		if(not IsValid(Vermilion.Menu.Pages["loadout"].RankList)) then return end
-		if(net.ReadString() != Vermilion.Menu.Pages["loadout"].RankList:GetSelected()[1]:GetValue(1)) then return end
+		if(net.ReadString() != Vermilion.Menu.Pages["loadout"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
 		local loadout_list = Vermilion.Menu.Pages["loadout"].RankPermissions
 		local weps = Vermilion.Menu.Pages["loadout"].Weapons
@@ -204,7 +219,7 @@ function MODULE:InitClient()
 					takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and rankPermissions:GetSelected()[1] != nil))
 					giveDefault:SetDisabled(self:GetSelected()[1] == nil)
 					MODULE:NetStart("VGetLoadout")
-					net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
 
@@ -252,7 +267,7 @@ function MODULE:InitClient()
 				giveDefault = VToolkit:CreateButton("Give Default Loadout", function()
 					for i,k in pairs(rankPermissions:GetLines()) do
 						MODULE:NetStart("VTakeLoadoutWeapons")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 
@@ -263,7 +278,7 @@ function MODULE:InitClient()
 						rankPermissions:AddLine(list.Get("Weapon")[k].PrintName).ClassName = k
 
 						MODULE:NetStart("VGiveLoadoutWeapons")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k)
 						net.SendToServer()
 					end
@@ -284,7 +299,7 @@ function MODULE:InitClient()
 						rankPermissions:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
 						MODULE:NetStart("VGiveLoadoutWeapons")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 					end
@@ -297,7 +312,7 @@ function MODULE:InitClient()
 				takeWeapon = VToolkit:CreateButton("Take Weapon", function()
 					for i,k in pairs(rankPermissions:GetSelected()) do
 						MODULE:NetStart("VTakeLoadoutWeapons")
-						net.WriteString(rankList:GetSelected()[1]:GetValue(1))
+						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
 
@@ -382,7 +397,7 @@ function MODULE:InitShared()
 				Type = "Checkbox",
 				Category = "Misc",
 				Default = false
-				})
+			})
 		end
 	end)
 end
