@@ -19,7 +19,30 @@
 
 Vermilion.TargetID = {}
 
+Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "AddTargetIDOption", false, function()
+	if(Vermilion:GetModule("server_settings") != nil) then
+		local mgr = Vermilion:GetModule("server_settings")
+		mgr:AddOption({
+			Module = "Vermilion",
+			Name = "use_vtargetid",
+			GuiText = "Enable Vermilion TargetID",
+			Type = "Checkbox",
+			Category = "Misc",
+			Default = true
+		})
+	end
+end)
+if(SERVER) then
+	Vermilion:AddDataChangeHook("use_vtargetid", "UpdateGlobalTargetID", function(newVal)
+		VToolkit:SetGlobalValue("use_vtargetid", newVal)
+	end)
+	VToolkit:SetGlobalValue("use_vtargetid", Vermilion:GetData("use_vtargetid", true, true))
+	return
+end
+
 Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
+	if(not VToolkit:GetGlobalValue("use_vtargetid", true)) then return end
+
 	local tr = util.GetPlayerTrace( LocalPlayer() )
 	local trace = util.TraceLine( tr )
 	if (!trace.Hit) then return end

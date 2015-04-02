@@ -149,7 +149,7 @@ function SoundCloud.Tracks:GetTrack(trackID, scallback, fcallback, r1)
 end
 
 function SoundCloud.Tracks:GenerateStream(trackID)
-	return "https://api.soundcloud.com/tracks/" .. trackID .. "/stream?client_id=" .. SoundCloud.ClientID
+	return "http://api.soundcloud.com/tracks/" .. trackID .. "/stream?client_id=" .. SoundCloud.ClientID
 
 end
 

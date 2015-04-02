@@ -156,7 +156,14 @@ if(CLIENT) then
 			if(data.favoritings_count != nil) then scmenu:AddOption("Favourites: " .. tostring(data.favoritings_count)):SetIcon("icon16/star.png") else scmenu:AddOption("Favourites: Unknown"):SetIcon("icon16/star.png") end
 			scmenu:AddSpacer()
 			if(data.original_format != nil) then scmenu:AddOption("Format: " .. data.original_format):SetIcon("icon16/application_xp_terminal.png") else scmenu:AddOption("Format: Unknown"):SetIcon("icon16/application_xp_terminal.png") end
-
+			scmenu:AddSpacer()
+			scmenu:AddOption("Add To Playlist", function()
+				MODULE:NetStart("VSoundCloudAddToPlaylistQuestion")
+				net.WriteString(data.id)
+				net.WriteString(name)
+				net.WriteString(uploader)
+				net.SendToServer()
+			end):SetIcon("icon16/table.png")
 			scmenu:Open()
 		end)
 		moreBtn:SetSize(40, 20)
@@ -193,7 +200,6 @@ if(CLIENT) then
 	function MODULE:BuildSoundCloudSearch()
 		local panel = VToolkit:CreateFrame({
 			size = { 600, 600 },
-			pos = { (ScrW() - 600) / 2, (ScrH() - 600) / 2 },
 			title = ""
 		})
 		panel.btnClose:SetVisible(false)
@@ -319,6 +325,7 @@ if(CLIENT) then
 								searchingLabel:Remove()
 							end
 							for i,k in pairs(data) do
+								if(not k.streamable) then continue end
 								local dataPanel = buildTrackResult(k.title, k.user.username, k.duration, k.genre, k.created_at, k.id, k)
 								if(not IsValid(dataPanel)) then continue end
 								dataPanel:SetWide(resultBox:GetWide())
@@ -360,7 +367,7 @@ if(CLIENT) then
 		cbtn:Dock(LEFT)
 
 		local playlistButton = VToolkit:CreateButton("Playlists...", function()
-
+			MODULE:BuildSoundCloudPlaylistsGUI()
 		end)
 		playlistButton:SetParent(btnBar)
 		playlistButton:Dock(RIGHT)

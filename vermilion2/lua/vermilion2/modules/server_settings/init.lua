@@ -1176,7 +1176,9 @@ function MODULE:InitClient()
 
 		paneldata.UserList:Clear()
 		for i,k in pairs(net.ReadTable()) do
-			paneldata.UserList:AddLine(k.Name, k.Rank).SteamID = k.SteamID
+			local ln = paneldata.UserList:AddLine(k.Name, Vermilion:GetRankByID(k.Rank).Name)
+			ln.SteamID = k.SteamID
+			ln.UniqueRankID = ln.Rank
 		end
 	end)
 
@@ -1561,7 +1563,7 @@ function MODULE:InitClient()
 
 			function userList:OnRowSelected(index, line)
 				MODULE:NetStart("VGetUserData")
-				net.WriteString(line:GetValue(1))
+				net.WriteString(line.UniqueRankID)
 				net.SendToServer()
 				paneldata.DeleteBtn:SetDisabled(false)
 			end

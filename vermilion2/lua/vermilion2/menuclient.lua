@@ -184,7 +184,12 @@ MENU:AddPage({
 					"Button font is now Tahoma",
 					"VToolkit frames now automatically centre when no position information is provided",
 					"Added a pre-configuration setting window on first startup",
-					"Added MODULE:GetAllData()"
+					"Added MODULE:GetAllData()",
+					"Stopped the property limiter always disabling itself",
+					"SoundCloud browser no longer displays unplayable tracks",
+					"Added option to disable Vermilion TargetID",
+					"SoundCloud no longer streamed over HTTPS to increase speed",
+					"Added SoundCloud playlist manager (clientside only for now)"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

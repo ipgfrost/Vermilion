@@ -483,7 +483,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_use",
@@ -492,7 +492,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_physgun",
@@ -501,7 +501,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_gravgun",
@@ -510,7 +510,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_toolgun",
@@ -519,7 +519,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_break",
@@ -528,7 +528,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_drive",
@@ -537,7 +537,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_variable",
@@ -546,7 +546,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_property",
@@ -555,7 +555,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "prop_protect_world",
@@ -564,7 +564,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 
 
 			mgr:AddOption({
@@ -575,7 +575,7 @@ function MODULE:InitShared()
 				Category = "Prop Protection",
 				Default = true,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "auto_cleanup_delay",
@@ -586,7 +586,7 @@ function MODULE:InitShared()
 				Permission = "manage_prop_protection",
 				Bounds = { Min = 1, Max = 60 * 12 },
 				Decimals = 0
-				})
+			})
 
 			mgr:AddCategory("cat:antispam", "Anti-Spam", 3)
 
@@ -598,7 +598,7 @@ function MODULE:InitShared()
 				Category = "Anti-Spam",
 				Default = false,
 				Permission = "manage_prop_protection"
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_propslimit",
@@ -609,7 +609,7 @@ function MODULE:InitShared()
 				Permission = "manage_prop_protection",
 				Bounds = { Min = 0, Max = 50 },
 				Decimals = 0
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_timelimit",
@@ -620,7 +620,7 @@ function MODULE:InitShared()
 				Permission = "manage_prop_protection",
 				Bounds = { Min = 1, Max = 20 },
 				Decimals = 0
-				})
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action1",
@@ -630,20 +630,20 @@ function MODULE:InitShared()
 				Default = 1,
 				Permission = "manage_prop_protection",
 				Options = {
-						"Warn Only",
-						"Block spawning for 30 seconds",
-						"Block spawning for 1 minute",
-						"Kick",
-						"Ban for 5 minutes",
-						"Ban for 10 minutes",
-						"Ban for 20 minutes",
-						"Ban for 30 minutes",
-						"Ban for 1 hour",
-						"Ban for 1 day",
-						"Permanently Ban",
-						"Notify Administrators"
-					}
-				})
+					"Warn Only",
+					"Block spawning for 30 seconds",
+					"Block spawning for 1 minute",
+					"Kick",
+					"Ban for 5 minutes",
+					"Ban for 10 minutes",
+					"Ban for 20 minutes",
+					"Ban for 30 minutes",
+					"Ban for 1 hour",
+					"Ban for 1 day",
+					"Permanently Ban",
+					"Notify Administrators"
+				}
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action2",
@@ -653,20 +653,20 @@ function MODULE:InitShared()
 				Default = 1,
 				Permission = "manage_prop_protection",
 				Options = {
-						"Warn Only",
-						"Block spawning for 30 seconds",
-						"Block spawning for 1 minute",
-						"Kick",
-						"Ban for 5 minutes",
-						"Ban for 10 minutes",
-						"Ban for 20 minutes",
-						"Ban for 30 minutes",
-						"Ban for 1 hour",
-						"Ban for 1 day",
-						"Permanently Ban",
-						"Notify Administrators"
-					}
-				})
+					"Warn Only",
+					"Block spawning for 30 seconds",
+					"Block spawning for 1 minute",
+					"Kick",
+					"Ban for 5 minutes",
+					"Ban for 10 minutes",
+					"Ban for 20 minutes",
+					"Ban for 30 minutes",
+					"Ban for 1 hour",
+					"Ban for 1 day",
+					"Permanently Ban",
+					"Notify Administrators"
+				}
+			})
 			mgr:AddOption({
 				Module = "prop_protect",
 				Name = "antispam_action3",
@@ -676,20 +676,20 @@ function MODULE:InitShared()
 				Default = 1,
 				Permission = "manage_prop_protection",
 				Options = {
-						"Warn Only",
-						"Block spawning for 30 seconds",
-						"Block spawning for 1 minute",
-						"Kick",
-						"Ban for 5 minutes",
-						"Ban for 10 minutes",
-						"Ban for 20 minutes",
-						"Ban for 30 minutes",
-						"Ban for 1 hour",
-						"Ban for 1 day",
-						"Permanently Ban",
-						"Notify Administrators"
-					}
-				})
+					"Warn Only",
+					"Block spawning for 30 seconds",
+					"Block spawning for 1 minute",
+					"Kick",
+					"Ban for 5 minutes",
+					"Ban for 10 minutes",
+					"Ban for 20 minutes",
+					"Ban for 30 minutes",
+					"Ban for 1 hour",
+					"Ban for 1 day",
+					"Permanently Ban",
+					"Notify Administrators"
+				}
+			})
 		end
 	end)
 end

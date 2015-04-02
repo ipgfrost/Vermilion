@@ -27,7 +27,9 @@ MODULE.Permissions = {
 	"playstream",
 	"stopsound",
 	"pausesound",
-	"unpausesound"
+	"unpausesound",
+	
+	"use_playlists"
 }
 MODULE.NetworkStrings = {
 	"VQueueSound",
@@ -36,7 +38,18 @@ MODULE.NetworkStrings = {
 	"VPlayStream",
 	"VStop",
 	"VPause",
-	"VUnpause"
+	"VUnpause",
+	
+	"VSoundCloudGetPlaylists",
+	"VSoundCloudGetPlaylistContent",
+	"VSoundCloudNewPlaylist",
+	"VSoundCloudAddToPlaylist",
+	"VSoundCloudEditPlaylist",
+	"VSoundCloudRemoveFromPlaylist",
+	"VSoundCloudRemovePlaylist",
+	"VSoundCloudPlayPlaylist",
+	"VSoundCloudBroadcastPlaylist",
+	"VSoundCloudAddToPlaylistQuestion"
 }
 
 MODULE.TYPE_FILE = -1
@@ -298,10 +311,12 @@ function MODULE:InitShared()
 		AddCSLuaFile("vermilion2/modules/sound/soundcloud_bindings.lua")
 		AddCSLuaFile("vermilion2/modules/sound/soundcloud.lua")
 		AddCSLuaFile("vermilion2/modules/sound/sound_browser.lua")
+		AddCSLuaFile("vermilion2/modules/sound/soundcloud_playlists.lua")
 	end
 	include("vermilion2/modules/sound/soundcloud_bindings.lua")
 	include("vermilion2/modules/sound/soundcloud.lua")
 	include("vermilion2/modules/sound/sound_browser.lua")
+	include("vermilion2/modules/sound/soundcloud_playlists.lua")
 end
 
 function MODULE:InitServer()
@@ -434,7 +449,7 @@ function MODULE:InitClient()
 			end
 		end
 
-		local data = { Type = MODULE.TYPE_FILE, Path = path, Ready = false, AudioChannel = nil }
+		local data = { Type = MODULE.TYPE_FILE, Path = path, Ready = false, AudioChannel = nil, Done = false, Started = false }
 		table.Merge(data, parameters)
 		setChannel(channel, data)
 
@@ -465,7 +480,7 @@ function MODULE:InitClient()
 			end
 		end
 
-		local data = { Type = MODULE.TYPE_STREAM, URL = url, Ready = false, AudioChannel = nil }
+		local data = { Type = MODULE.TYPE_STREAM, URL = url, Ready = false, AudioChannel = nil, Done = false, Started = false }
 		table.Merge(data, parameters)
 		setChannel(channel, data)
 
@@ -510,6 +525,7 @@ function MODULE:InitClient()
 	function MODULE:PlayChannel(channel)
 		if(not self:ValidateChannel(channel)) then return false end
 		self:GetChannel(channel).AudioChannel:Play()
+		self:GetChannel(channel).Started = true
 		return true
 	end
 
@@ -524,6 +540,17 @@ function MODULE:InitClient()
 		self:GetChannel(channel).AudioChannel:Stop()
 		return true
 	end
+	
+	timer.Create("VSoundFinishedEventTest", 3, 0, function()
+		for i,k in pairs(MODULE.Channels) do
+			if(k.Done) then continue end
+			if(not k.Started) then continue end
+			if(not IsValid(k.AudioChannel) or k.AudioChannel:GetState() == GMOD_CHANNEL_STOPPED) then
+				k.Done = true
+				hook.Run("VAudioChannelStopped", i)
+			end
+		end
+	end)
 
 
 	self:RegisterVisualiser("Default", function(data, percent, xpos, ypos, width, spacing)
