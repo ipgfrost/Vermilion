@@ -146,12 +146,11 @@ MODULE.NetworkStrings = {
 	"VDelBuddy",
 	"VGetBuddyPermissions",
 	"VUpdateBuddyPermissions",
-	
+
 	"VQueryPPSteamID"
 }
 
 MODULE.UidCache = {}
-CPPI = {}
 
 function MODULE:CanTool(vplayer, ent, tool)
 	if(tool == "vermilion2_owner") then return true end
@@ -399,13 +398,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_prop_protection" },
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
-				local tab = {}
-				for i,k in pairs(Vermilion.Data.Users) do
-					if(timer.Exists("VPropCleanup" .. k.SteamID)) then
-						table.insert(tab, k.Name)
-					end
-				end
-				return tab
+				return VToolkit.MatchPlayerPart(current, function(k, q) return timer.Exists("VPropCleanup" .. k:SteamID()) end)
 			end
 		end,
 		Function = function(sender, text, log, glog)
@@ -430,9 +423,40 @@ function MODULE:RegisterChatCommands()
 			glog(sender:GetName() .. " stopped the automatic prop cleanup for " .. name)
 		end
 	})
+
+	Vermilion:AddChatCommand({
+		Name = "cleanup",
+		Description = "Forces Vermilion to clean up a player's props.",
+		Syntax = "<name>",
+		CanMute = true,
+		Permissions = { "manage_prop_protection" },
+		Predictor = function(pos, current, all, vplayer)
+			if(pos == 1) then
+				return VToolkit.MatchPlayerPart(Vermilion.Data.Users, current)
+			end
+		end,
+		Function = function(sender, text, log, glog)
+			if(table.Count(text) < 1) then
+				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			local steamid = nil
+			local name = nil
+			for i,k in pairs(Vermilion.Data.Users) do
+				if(string.find(string.lower(k.Name), string.lower(text[1]))) then steamid = k.SteamID name = k.Name break end
+			end
+			if(steamid == nil) then
+				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				return false
+			end
+			MODULE:cleanupPlayerProps(steamid)
+			glog(sender:GetName() .. " forced a cleanup for " .. name .. "'s props!")
+		end
+	})
 end
 
 function MODULE:InitShared()
+	CPPI = {}
 
 	CPPI.CPPI_DEFER = -666888
 	CPPI.CPPI_NOTIMPLEMENTED = -999333
@@ -749,7 +773,14 @@ function MODULE:InitServer()
 
 
 	function eMeta:CPPISetOwner(vplayer)
+		print(vplayer)
 		if(IsValid(vplayer)) then
+			if(vplayer.SteamID == nil) then
+				Vermilion.Log("CPPI: Call was made to CPPISetOwner with invalid SteamID! Not processing.")
+				Vermilion.Log("CPPI: Stack trace follows: ")
+				debug.Trace()
+				return false
+			end
 			if(hook.Call("CPPIAssignOwnership", nil, vplayer, self) != false) then
 				Vermilion.Log("Warning (" .. tostring(self) .. "): prop owner was overwritten by CPPI!")
 				self.Vermilion_Owner = vplayer:SteamID()
@@ -763,6 +794,12 @@ function MODULE:InitServer()
 	function eMeta:CPPISetOwnerUID( uid )
 		local vplayer = VToolkit:LookupPlayerByName(CPPI.GetNameFromUID(uid))
 		if(IsValid(vplayer)) then
+			if(vplayer.SteamID == nil) then
+				Vermilion.Log("CPPI: Call was made to CPPISetOwnerUID with invalid SteamID! Not processing.")
+				Vermilion.Log("CPPI: Stack trace follows: ")
+				debug.Trace()
+				return false
+			end
 			if(hook.Call("CPPIAssignOwnership", nil, vplayer, self) != false) then
 				self.Vermilion_Owner = vplayer:SteamID()
 				self:SetNWString("Vermilion_Owner", vplayer:SteamID())
@@ -926,7 +963,7 @@ function MODULE:InitServer()
 		end)
 	end)
 
-	local function cleanupPlayerProps(steamid)
+ 	function MODULE:cleanupPlayerProps(steamid)
 		Vermilion:BroadcastNotification("Cleaning up " .. Vermilion:GetUserBySteamID(steamid).Name .. "'s props...", NOTIFY_HINT)
 		for i,k in pairs(ents.GetAll()) do
 			if(k.Vermilion_Owner == steamid) then
@@ -943,13 +980,13 @@ function MODULE:InitServer()
 		if(not MODULE:GetData("auto_cleanup_enabled", true, true)) then return end
 		if(Vermilion:HasPermission(vplayer, "immune_to_cleanup")) then return end
 		if(not Vermilion:HasPermission(vplayer, "delayed_cleanup")) then
-			cleanupPlayerProps(vplayer:SteamID())
+			MODULE:cleanupPlayerProps(vplayer:SteamID())
 			return
 		end
 		local steamid = vplayer:SteamID()
 		--Vermilion:BroadcastNotification("Cleaning up " .. vplayer:GetName() .. "'s props in " .. tostring(MODULE:GetData("auto_cleanup_delay", 2, true)) .. " minutes...", NOTIFY_HINT)
 		timer.Create("VPropCleanup" .. vplayer:SteamID(), MODULE:GetData("auto_cleanup_delay", 2, true) * 60, 1, function()
-			cleanupPlayerProps(steamid)
+			MODULE:cleanupPlayerProps(steamid)
 		end)
 	end)
 

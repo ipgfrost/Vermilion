@@ -189,7 +189,12 @@ MENU:AddPage({
 					"SoundCloud browser no longer displays unplayable tracks",
 					"Added option to disable Vermilion TargetID",
 					"SoundCloud no longer streamed over HTTPS to increase speed",
-					"Added SoundCloud playlist manager (clientside only for now)"
+					"Added SoundCloud playlist manager (clientside only for now)",
+					"Added !cleanup",
+					"Modified the prediction functions for !cleanup and !cancelautocleanup",
+					"Public CPPI functions are now less likely to error",
+					"Fixed 'ghost' CPPI namespace when disabling Prop Protection module",
+					"Fixed Prop Protection Owner View getting stuck on Querying Owner..."
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

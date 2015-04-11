@@ -79,11 +79,11 @@ function Vermilion:CreateRankID()
 	for i=1,15,1 do -- 15 chars long
 		out = out .. table.Random(vars)
 	end
-	
+
 	for i,k in pairs(Vermilion.Data.Ranks) do
 		if(k.UniqueID == out) then return self:CreateRankID() end -- make completely sure that we are not duplicating rank IDs.
 	end
-	
+
 	return out
 end
 
@@ -111,11 +111,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 
 	if(Vermilion.RankMetaTable == nil) then
 		local meta = {}
-		
+
 		function meta:GetName()
 			return self.Name
 		end
-		
+
 		function meta:GetUID()
 			return self.UniqueID
 		end
@@ -169,7 +169,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			return users
 		end
-		
+
 		function meta:GetUserObjects()
 			local users = {}
 			for i,k in pairs(Vermilion.Data.Users) do
@@ -308,13 +308,13 @@ function Vermilion:AttachRankFunctions(rankObj)
 		end
 		Vermilion.RankMetaTable = meta
 	end
-	
+
 	if(rankObj.UniqueID == nil) then -- upgrade existing configurations.
 		Vermilion.Log("Old-style rank detected (" .. rankObj.Name .. "); upgrading to UID...")
 		rankObj.UniqueID = Vermilion:CreateRankID()
 		Vermilion.Log("Rank given UID '" .. rankObj.UniqueID .. "'!")
 	end
-	
+
 	setmetatable(rankObj, { __index = Vermilion.RankMetaTable }) // <-- The metatable creates phantom functions.
 end
 
@@ -395,6 +395,10 @@ end
 function Vermilion:AttachUserFunctions(usrObject)
 	if(Vermilion.PlayerMetaTable == nil) then
 		local meta = {}
+		function meta:GetName()
+			return self.Name
+		end
+
 		function meta:GetRank()
 			return Vermilion:GetRankByID(self.Rank)
 		end
@@ -402,7 +406,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 		function meta:GetRankUID()
 			return self.Rank
 		end
-		
+
 		function meta:GetRankName()
 			return self:GetRank():GetName()
 		end
@@ -455,13 +459,13 @@ function Vermilion:AttachUserFunctions(usrObject)
 		end
 		Vermilion.PlayerMetaTable = meta
 	end
-	
+
 	if(not Vermilion:GetData("UIDUpgraded", false)) then
-		if(Vermilion:GetRank(usrObject.Rank) != nil) then 
+		if(Vermilion:GetRank(usrObject.Rank) != nil) then
 			usrObject.Rank = Vermilion:GetRank(usrObject.Rank):GetUID()
 		end
 	end
-	
+
 	setmetatable(usrObject, { __index = Vermilion.PlayerMetaTable }) // <-- The metatable creates phantom functions.
 end
 
@@ -628,7 +632,7 @@ end
 
 net.Receive("VUsePreconfigured", function(len, vplayer)
 	if(not Vermilion:HasPermission(vplayer, "*")) then return end
-	
+
 	local coowner = Vermilion:CreateRankObj("co-owner", nil, false, Color(0, 63, 255), "key")
 	local manager = Vermilion:CreateRankObj("server manager", nil, false, Color(0, 255, 255), "cog")
 	local sadmin = Vermilion:CreateRankObj("super admin", nil, false, Color(255, 0, 97), "shield_add")
@@ -657,15 +661,15 @@ net.Receive("VUsePreconfigured", function(len, vplayer)
 	Vermilion:GetRank("super admin").InheritsFrom = Vermilion:GetRank("admin"):GetUID()
 	Vermilion:GetRank("server manager").InheritsFrom = Vermilion:GetRank("super admin"):GetUID()
 	Vermilion:GetRank("co-owner").InheritsFrom = Vermilion:GetRank("server manager"):GetUID()
-	
-	local nranks = { 
+
+	local nranks = {
 		"respected",
 		"donator",
 		"super admin",
 		"server manager",
 		"co-owner"
 	}
-	
+
 	for irank,nrank in pairs(nranks) do
 		local rankData = Vermilion:GetRank(nrank)
 		for imod,mod in pairs(Vermilion.Modules) do
@@ -734,7 +738,7 @@ function Vermilion:LoadConfiguration(crashOnErr)
 
 			file.Write("vermilion2/backup/" .. code .. ".txt", content)
 		end
-		local succ,err = pcall(function() 
+		local succ,err = pcall(function()
 			Vermilion.Data = util.JSONToTable(util.Decompress(file.Read(self.GetFileName("settings"), "DATA")))
 		end)
 		if(!succ) then
@@ -1001,7 +1005,7 @@ end)
 --[[
 
 	//		Autoconfigure Nag 	  \\
-	
+
 	Yeah, sorry about this. I was told to add it. *grumble*
 ]]--
 

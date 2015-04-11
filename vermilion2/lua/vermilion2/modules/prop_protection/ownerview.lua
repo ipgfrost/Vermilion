@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -24,9 +24,16 @@ local MODULE = Vermilion:GetModule("prop_protect")
 function MODULE:OwnerViewInitServer()
 	self:NetHook("VQueryPPSteamID", function(vplayer)
 		local steamid = net.ReadString()
-		if(Vermilion:GetUserBySteamID(steamid) == nil) then return end
+		if(Vermilion:GetUserBySteamID(steamid) == nil) then
+			MODULE:NetStart("VQueryPPSteamID")
+			net.WriteString(steamid)
+			net.WriteBoolean(false)
+			net.Send(vplayer)
+			return
+		end
 		MODULE:NetStart("VQueryPPSteamID")
 		net.WriteString(steamid)
+		net.WriteBoolean(true)
 		net.WriteString(Vermilion:GetUserBySteamID(steamid).Name)
 		net.Send(vplayer)
 	end)
@@ -38,27 +45,34 @@ function MODULE:OwnerViewInitClient()
 	local owidth = 0
 	local owidth1 = 0
 	local namedata = nil
-	
+	local tentity = nil
+
 	self:NetHook("VQueryPPSteamID", function()
+		local sid = net.ReadString()
+		if(not net.ReadBoolean()) then
+			namedata = false
+			return
+		end
 		namedata = {
-			SteamID = net.ReadString(),
+			SteamID = sid,
 			Name = net.ReadString()
 		}
 		Vermilion.Log("Got owner data for " .. namedata.SteamID .. "!")
-		PrintTable(namedata)
 	end)
-	
+
 	self:AddHook("HUDPaint", function()
 		if(GetConVarNumber("vermilion_prop_hud") != 1) then return end
 		local trace = LocalPlayer():GetEyeTrace()
 		if(IsValid(trace.Entity) and trace.Entity:GetNWString("Vermilion_Owner") != nil and not trace.Entity:IsPlayer()) then
 			local steamid = trace.Entity:GetNWString("Vermilion_Owner")
-			if(namedata == true) then
+			if(namedata == false && tentity == trace.Entity:EntIndex()) then return end
+			if(namedata == true && tentity == trace.Entity:EntIndex()) then
 				owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35, "Querying owner name...", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 				return
 			end
-			if(namedata == nil or namedata.SteamID != steamid) then
+			if(namedata == nil or tentity != trace.Entity:EntIndex()) then
 				namedata = true
+				tentity = trace.Entity:EntIndex()
 				MODULE:NetStart("VQueryPPSteamID")
 				net.WriteString(steamid)
 				net.SendToServer()
@@ -74,7 +88,7 @@ function MODULE:OwnerViewInitClient()
 			owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35 - tboxoff, "Owner: " .. namedata.Name, "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 		end
 	end)
-	
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		local clopt = Vermilion:GetModule("client_settings")
 		clopt:AddOption({
