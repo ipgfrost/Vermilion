@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -338,30 +338,30 @@ function MODULE:InitServer()
 		net.WriteTable(MODULE.MapCache)
 		net.Send(vplayer)
 	end)
-	
+
 	function MODULE:ScheduleMapChange(map, time)
 		if(MODULE.MapChangeInProgress) then
 			Vermilion.Log("Map change already in progress!")
 			return false
 		end
 		
+		MODULE.MapChangeInProgress = true
+		MODULE.MapChangeTo = map
+		MODULE.MapChangeIn = time
+
 		if(time == 0) then
 			RunConsoleCommand("changelevel", map)
 			return
 		end
-		
-		MODULE.MapChangeInProgress = true
-		MODULE.MapChangeTo = map
-		MODULE.MapChangeIn = time
-		
+
 		MODULE:NetStart("VBroadcastSchedule")
 		net.WriteInt(MODULE.MapChangeIn, 32)
 		net.WriteString(MODULE.MapChangeTo)
 		net.Broadcast()
-		
+
 		return true
 	end
-	
+
 	function MODULE:AbortMapChange()
 		if(not MODULE.MapChangeInProgress) then return false end
 		MODULE.MapChangeInProgress = false
@@ -394,10 +394,10 @@ function MODULE:InitServer()
 				--Vermilion:SendMessageBox(vplayer, "A map change is already in progress. Abort the map change to change to a new map!")
 				return
 			end
-			
+
 			MODULE:ScheduleMapChange(net.ReadString(), net.ReadInt(32))
 			Vermilion:BroadcastNotify(vplayer:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo)
-			
+
 		end
 	end)
 

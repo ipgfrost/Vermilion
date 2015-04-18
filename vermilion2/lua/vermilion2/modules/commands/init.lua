@@ -2182,7 +2182,7 @@ end
 
 function MODULE:InitServer()
 
-	
+
 
 	self:AddHook("VPlayerSay", function(vplayer)
 		if(MODULE:GetData("muted_players", {}, true)[vplayer:SteamID()]) then return "" end
@@ -2223,7 +2223,7 @@ function MODULE:InitServer()
 
 	self:NetHook("VRemoveGimp", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			MODULE:GetData("gimps", MODULE.DefaultGimps, true)[net.ReadInt(32)] = nil
+			table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
 		end
 	end)
 

@@ -194,7 +194,11 @@ MENU:AddPage({
 					"Modified the prediction functions for !cleanup and !cancelautocleanup",
 					"Public CPPI functions are now less likely to error",
 					"Fixed 'ghost' CPPI namespace when disabling Prop Protection module",
-					"Fixed Prop Protection Owner View getting stuck on Querying Owner..."
+					"Fixed Prop Protection Owner View getting stuck on Querying Owner...",
+					"Fixed inability to remove custom gimps",
+					"Fixed script error when changing level with negative time",
+					"Added option to disable prop protection nags",
+					"Added anti-spawncamp to Server Settings"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

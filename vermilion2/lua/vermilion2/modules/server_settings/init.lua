@@ -112,6 +112,7 @@ MODULE.DefaultPermissions = {
 local categories = {
 	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
 	{ Name = MODULE:TranslateStr("cat:immunity"), ID = "Immunity", Order = 1 },
+	{ Name = MODULE:TranslateStr("cat:spawncampprevention"), ID = "SpawncampPrevention", Order = 30 },
 	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 }
 }
 
@@ -200,7 +201,9 @@ local options = {
 				Default = false
 			})
 		end
-	}
+	},
+	{ Name = "enable_spawncamp_protection", GuiText = MODULE:TranslateStr("spawncampprevention:enable"), Type = "Checkbox", Category = "SpawncampPrevention", Default = false },
+	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 }
 }
 
 function MODULE:AddCategory(name, id, order)
@@ -1007,7 +1010,7 @@ function MODULE:InitServer()
 			net.Send(vplayer)
 		end
 	end)
-	
+
 	self:NetHook("VDelUserData", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
 			local tSteamID = net.ReadString()
@@ -1027,6 +1030,20 @@ function MODULE:InitServer()
 					return
 				end
 			end
+		end
+	end)
+
+
+
+	//spawncamp prevention
+	self:AddHook("PlayerSpawn", "AntiSpawnCamp", function(vplayer)
+		if(MODULE:GetData("enable_spawncamp_protection", false, true)) then
+			vplayer:GodEnable()
+			timer.Simple(MODULE:GetData("spawncamp_spawn_inv_time", 20, true), function()
+				if(IsValid(vplayer)) then
+					vplayer:GodDisable()
+				end
+			end)
 		end
 	end)
 
@@ -1215,7 +1232,7 @@ function MODULE:InitClient()
 			if(IsValid(paneldata.BaseNode)) then paneldata.BaseNode:Remove() end
 			return
 		end
-		
+
 		local username = net.ReadString()
 		local data = net.ReadTable()
 
@@ -1260,7 +1277,7 @@ function MODULE:InitClient()
 
 					local nonalphabetical = k.NonAlphabetical
 					if(nonalphabetical == nil) then nonalphabetical = true end
-					
+
 					local combobox = VToolkit:CreateComboBox(nil, nil, nonalphabetical)
 					combobox:SetPos(paneldata.SettingsList:GetWide() - 230, 3)
 					combobox:Dock(RIGHT)

@@ -157,16 +157,22 @@ function MODULE:CanTool(vplayer, ent, tool)
 	if(not MODULE:GetData("prop_protect_enabled", true, true)) then return true end
 	if(not IsValid(vplayer) or not IsValid(ent)) then return true end
 	if(ent:CreatedByMap() and MODULE:GetData("prop_protect_world", true)) then
-		Vermilion:AddNotification(vplayer, MODULE:TranslateStr("world:cannotuse", nil, vplayer), NOTIFY_ERROR)
+		if(MODULE:GetData("send_nag_messages", true, true)) then
+			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("world:cannotuse", nil, vplayer), NOTIFY_ERROR)
+		end
 		return false
 	end
 	if(not Vermilion:HasPermission(vplayer, "toolgun_all") and MODULE:GetData("prop_protect_toolgun", true)) then
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "toolgun_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "toolgun"))) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("toolgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("toolgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "toolgun_own")) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("toolgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("toolgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 	end
@@ -179,7 +185,9 @@ function MODULE:CanGravGunPickup( vplayer, ent )
 	if(not Vermilion:HasPermission(vplayer, "grav_gun_pickup_all") and MODULE:GetData("prop_protect_gravgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_pickup_own")) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -189,7 +197,9 @@ function MODULE:CanGravGunPickup( vplayer, ent )
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "grav_gun_pickup_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "gravgun"))) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -207,7 +217,9 @@ function MODULE:CanGravGunPunt( vplayer, ent )
 	if(not Vermilion:HasPermission(vplayer, "grav_gun_punt_all") and MODULE:GetData("prop_protect_gravgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "grav_gun_punt_own")) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -217,7 +229,9 @@ function MODULE:CanGravGunPunt( vplayer, ent )
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "grav_gun_punt_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "gravgun"))) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("gravgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -235,7 +249,9 @@ function MODULE:CanPhysgun( vplayer, ent )
 	if(not MODULE:GetData("prop_protect_enabled", true, true)) then return true end
 	if(ent:CreatedByMap() and MODULE:GetData("prop_protect_world", true)) then
 		if(vplayer.VLastProp != ent) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("world:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("world:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			vplayer.VLastProp = ent
 			vplayer.VLastPropTime = os.time()
 		else
@@ -246,7 +262,9 @@ function MODULE:CanPhysgun( vplayer, ent )
 	if(not Vermilion:HasPermission(vplayer, "physgun_pickup_all") and ent.Vermilion_Owner != nil and MODULE:GetData("prop_protect_physgun", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "physgun_pickup_own")) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("physgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("physgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -255,7 +273,9 @@ function MODULE:CanPhysgun( vplayer, ent )
 			return false
 		elseif (ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "physgun_pickup_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "physgun"))) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("physgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("physgun:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -283,7 +303,9 @@ function MODULE:CanUse(vplayer, ent)
 	if(not Vermilion:HasPermission(vplayer, "use_all") and MODULE:GetData("prop_protect_use", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "use_own")) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -293,7 +315,9 @@ function MODULE:CanUse(vplayer, ent)
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "use_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "use"))) then
 			if(vplayer.VLastProp != ent) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("use:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -310,11 +334,15 @@ function MODULE:CanDrive(vplayer, ent)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(not Vermilion:HasPermission(vplayer, "drive_all") and MODULE:GetData("prop_protect_drive", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "drive_own")) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "drive_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "drive"))) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("drive:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 	end
@@ -328,7 +356,9 @@ function MODULE:CanBreak(vplayer, ent)
 	if(not Vermilion:HasPermission(vplayer, "break_all") and MODULE:GetData("prop_protect_break", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "break_own")) then
 			if(vplayer.VLastProp != ent and ent:Health() > 0) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("break:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("break:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -338,7 +368,9 @@ function MODULE:CanBreak(vplayer, ent)
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "break_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "break"))) then
 			if(vplayer.VLastProp != ent and ent:Health() > 0) then
-				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("break:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				if(MODULE:GetData("send_nag_messages", true, true)) then
+					Vermilion:AddNotification(vplayer, MODULE:TranslateStr("break:cannotuse", nil, vplayer), NOTIFY_ERROR)
+				end
 				vplayer.VLastProp = ent
 				vplayer.VLastPropTime = os.time()
 			else
@@ -356,17 +388,23 @@ function MODULE:CanProperty(vplayer, ent, property)
 	if(Vermilion:GetModule("limit_properties") != nil) then
 		local mod = Vermilion:GetModule("limit_properties")
 		if(mod:IsPropertyBlocked(vplayer, property)) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 	end
 	if(not Vermilion:HasPermission(vplayer, "edit_property_all") and MODULE:GetData("prop_protect_property", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_property_own")) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "edit_property_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "property"))) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("property:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 	end
@@ -378,11 +416,15 @@ function MODULE:CanEditVariable(vplayer, ent, key, val, edit)
 	if(not IsValid(vplayer) or not IsValid(ent)) then return false end
 	if(not Vermilion:HasPermission(vplayer, "edit_variable_all") and MODULE:GetData("prop_protect_variable", true)) then
 		if(ent.Vermilion_Owner == vplayer:SteamID() and not Vermilion:HasPermission(vplayer, "edit_variable_own")) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("variable:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("variable:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 		if(ent.Vermilion_Owner != vplayer:SteamID() and (not Vermilion:HasPermission(vplayer, "edit_variable_others") and not MODULE:BuddyCanRunAction(ent.Vermilion_Owner, vplayer, "variable"))) then
-			Vermilion:AddNotification(vplayer, MODULE:TranslateStr("variable:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			if(MODULE:GetData("send_nag_messages", true, true)) then
+				Vermilion:AddNotification(vplayer, MODULE:TranslateStr("variable:cannotuse", nil, vplayer), NOTIFY_ERROR)
+			end
 			return false
 		end
 	end
@@ -612,6 +654,16 @@ function MODULE:InitShared()
 				Decimals = 0
 			})
 
+			mgr:AddOption({
+				Module = "prop_protect",
+				Name = "send_nag_messages",
+				GuiText = "Nag users when prop protection blockers are triggered",
+				Type = "Checkbox",
+				Category = "Prop Protection",
+				Default = true,
+				Permission = "manage_prop_protection"
+			})
+
 			mgr:AddCategory("cat:antispam", "Anti-Spam", 3)
 
 			mgr:AddOption({
@@ -773,7 +825,6 @@ function MODULE:InitServer()
 
 
 	function eMeta:CPPISetOwner(vplayer)
-		print(vplayer)
 		if(IsValid(vplayer)) then
 			if(vplayer.SteamID == nil) then
 				Vermilion.Log("CPPI: Call was made to CPPISetOwner with invalid SteamID! Not processing.")
