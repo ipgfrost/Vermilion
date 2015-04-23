@@ -91,20 +91,20 @@ function MODULE:RegisterChatCommands()
 				end
 			end
 		end,
-		Function = function(sender, text, log, glog, tglog)
+		Function = function(sender, text, log, glog)
 			if(MODULE.VoteInProgress) then
-				log(MODULE:TranslateStr("inprogress", nil, sender), NOTIFY_ERROR)
+				log("votes:inprogress", nil, NOTIFY_ERROR)
 				return
 			end
 			local typ = text[1]
 			if(MODULE.VoteTypes[typ] == nil) then
-				log(MODULE:TranslateStr("notype", nil, sender), NOTIFY_ERROR)
+				log("votes:notype", nil, NOTIFY_ERROR)
 				local str = table.concat(table.GetKeys(MODULE.VoteTypes), ", ")
-				log(MODULE:TranslateStr("validtypes", { str }, sender), 15)
+				log("votes:validtypes", { str }, 15)
 				return
 			end
 			if(not MODULE:GetData("vote_" .. typ, true, true)) then
-				log(MODULE:TranslateStr("disabled", nil, sender), NOTIFY_ERROR)
+				log("votes:disabled", NOTIFY_ERROR)
 				return
 			end
 			local tcopy = table.Copy(text)
@@ -122,8 +122,8 @@ end
 function MODULE:InitShared()
 
 	MODULE:AddVoteType("map", function(data, sender, log)
-		if(table.Count(data) < 1) then log(MODULE:TranslateStr("maps:syntax", nil, sender), NOTIFY_ERROR) return end
-		if(not file.Exists("maps/" .. data[1] .. ".bsp", "GAME")) then log(MODULE:TranslateStr("maps:dne", nil, sender), NOTIFY_ERROR) return end
+		if(table.Count(data) < 1) then log("votes:maps:syntax", nil, NOTIFY_ERROR) return end
+		if(not file.Exists("maps/" .. data[1] .. ".bsp", "GAME")) then log("votes:maps:dne", nil, NOTIFY_ERROR) return end
 		return "votes:maps:question", { data[1] }
 	end, function(data)
 		RunConsoleCommand("vermilion", "changelevel", data[1], 60)
@@ -140,12 +140,12 @@ function MODULE:InitShared()
 	end)
 
 	MODULE:AddVoteType("ban", function(data, sender, log)
-		if(table.Count(data) < 2) then log(MODULE:TranslateStr("ban:syntax", nil, sender), NOTIFY_ERROR) return end
-		if(VToolkit.LookupPlayer(data[1]) == nil) then log(MODULE:TranslateStr("no_users", nil, sender), NOTIFY_ERROR) return end
-		if(tonumber(data[2]) == nil) then log(MODULE:TranslateStr("not_number", nil, sender), NOTIFY_ERROR) return end
+		if(table.Count(data) < 2) then log("votes:ban:syntax", nil, NOTIFY_ERROR) return end
+		if(VToolkit.LookupPlayer(data[1]) == nil) then log("no_users", nil, NOTIFY_ERROR) return end
+		if(tonumber(data[2]) == nil) then log("not_number", nil, NOTIFY_ERROR) return end
 		return "votes:ban:question", data[1]
 	end, function(data)
-		Vermilion:GetModule("bans"):BanPlayer(VToolkit.LookupPlayer(data[1]), nil, tonumber(data[2]), "Votebanned", nil, nil, Vermilion.TransBroadcastNotify)
+		Vermilion:GetModule("bans"):BanPlayer(VToolkit.LookupPlayer(data[1]), nil, tonumber(data[2]), "Votebanned", nil, nil, nil)
 	end, function(pos, current, all)
 		if(pos == 2) then
 			return VToolkit.MatchPlayerPart(current)
@@ -153,25 +153,25 @@ function MODULE:InitShared()
 	end)
 
 	MODULE:AddVoteType("unban", function(data, sender, log)
-		if(table.Count(data) < 1) then log(MODULE:TranslateStr("unban:syntax", nil, sender), NOTIFY_ERROR) return end
+		if(table.Count(data) < 1) then log("votes:unban:syntax", nil, NOTIFY_ERROR) return end
 		local has = false
 		for i,k in pairs(Vermilion:GetModuleData("bans", "bans", {})) do
 			if(Vermilion:GetUserBySteamID(k[1]).Name == data[1]) then has = true break end
 		end
-		if(not has) then log(MODULE:TranslateStr("unban:notbanned", nil, sender), NOTIFY_ERROR) return end
+		if(not has) then log("votes:unban:notbanned", nil, NOTIFY_ERROR) return end
 		return "votes:unban:question", data[1]
 	end, function(data)
 		Vermilion:GetModule("bans"):UnbanPlayer(Vermilion:GetUserByName(data[1]).Name)
 	end)
 
 	MODULE:AddVoteType("kick", function(data, sender, log)
-		if(table.Count(data) < 1) then log(MODULE:TranslateStr("kick:syntax", nil, sender), NOTIFY_ERROR) return end
-		if(VToolkit.LookupPlayer(data[1]) == nil) then log(MODULE:TranslateStr("no_users", nil, sender), NOTIFY_ERROR) return end
+		if(table.Count(data) < 1) then log("votes:kick:syntax", nil, NOTIFY_ERROR) return end
+		if(VToolkit.LookupPlayer(data[1]) == nil) then log("no_users", nil, NOTIFY_ERROR) return end
 		return "votes:kick:question", data[1]
 	end, function(data)
 		local tplayer = VToolkit.LookupPlayer(data[1])
 		if(not IsValid(tplayer)) then return end
-		Vermilion:TransBroadcastNotify("votes:kick:done", { data[1] }, NOTIFY_ERROR)
+		Vermilion:BroadcastNotify("votes:kick:done", { data[1] }, NOTIFY_ERROR)
 		tplayer:Kick("Kicked by Console: Votekicked")
 	end, function(pos, current, all)
 		if(pos == 2) then
@@ -219,18 +219,18 @@ function MODULE:InitServer()
 			local win = MODULE.VoteResults.Yes > MODULE.VoteResults.No
 			if(win) then
 				for i,k in pairs(Vermilion:GetUsersWithPermission("participate_in_vote")) do
-					Vermilion:TransNotify(k, "success", { tostring(math.Round((MODULE.VoteResults.Yes / (MODULE.VoteResults.Yes + MODULE.VoteResults.No)) * 100, 1)) }, nil, nil, MODULE)
+					Vermilion:AddNotification(k, "votes:success", { tostring(math.Round((MODULE.VoteResults.Yes / (MODULE.VoteResults.Yes + MODULE.VoteResults.No)) * 100, 1)) })
 				end
 				MODULE.VoteTypes[typ].Success(data)
 			else
 				if((MODULE.VoteResults.Yes + MODULE.VoteResults.No) == 0) then
 					for i,k in pairs(Vermilion:GetUsersWithPermission("participate_in_vote")) do
-						Vermilion:TransNotify(k, "nopartake", nil, nil, nil, MODULE)
+						Vermilion:AddNotification(k, "votes:nopartake")
 					end
 					return
 				end
 				for i,k in pairs(Vermilion:GetUsersWithPermission("participate_in_vote")) do
-					Vermilion:TransNotify(k, "failure", { tostring(math.Round((MODULE.VoteResults.No / (MODULE.VoteResults.Yes + MODULE.VoteResults.No)) * 100, 1)) }, nil, nil, MODULE)
+					Vermilion:AddNotification(k, "votes:failure", { tostring(math.Round((MODULE.VoteResults.No / (MODULE.VoteResults.Yes + MODULE.VoteResults.No)) * 100, 1)) })
 				end
 			end
 		end)

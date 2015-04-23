@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Automatic Broadcast"
 MODULE.ID = "autobroadcast"
 MODULE.Description = "Allows defined messages to be broadcast through the chat using an interval."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"autobroadcast"
+}
 MODULE.Permissions = {
 	"manage_auto_broadcast"
 }
@@ -80,7 +83,7 @@ function MODULE:InitServer()
 			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 		end
 	end)
-	
+
 	self:NetHook("VUpdateAutoBroadcastListing", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
 			local vtab = net.ReadTable()
@@ -169,8 +172,8 @@ function MODULE:InitClient()
 				removeListing:SetSize(105, 30)
 				removeListing:SetParent(panel)
 				removeListing:SetDisabled(true)
-				
-				
+
+
 				local editMessagePanel = VToolkit:CreateRightDrawer(panel, 0, true)
 				paneldata.EditMessagePanel = editMessagePanel
 
@@ -273,34 +276,34 @@ function MODULE:InitClient()
 				editListingButton:SetPos(326, 495)
 				editListingButton:SetSize(105, 30)
 				editListingButton:SetParent(editMessagePanel)
-				
-				
+
+
 				local editListing = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
 					if(table.Count(listings:GetSelected()) == 0) then
 						VToolkit:CreateErrorDialog(MODULE:TranslateStr("edit:g1"))
 						return
 					end
-					
+
 					local ln = listings:GetSelected()[1]
-					
+
 					emessageBox:SetValue(ln:GetValue(1))
-					
+
 					if(ln.Values != nil) then
 						edaysWang:SetValue(ln.Values.d)
 						ehoursWang:SetValue(ln.Values.h)
 						eminsWang:SetValue(ln.Values.m)
 						esecondsWang:SetValue(ln.Values.s)
 					end
-					
+
 					editMessagePanel.OriginalMessage = ln:GetValue(1)
-					
+
 					editMessagePanel:Open()
 				end)
 				editListing:SetPos(555, 500)
 				editListing:SetSize(105, 30)
 				editListing:SetParent(panel)
 				editListing:SetDisabled(true)
-				
+
 
 
 				function listings:OnRowSelected(index, line)
@@ -424,8 +427,8 @@ function MODULE:InitClient()
 				addListingButton:SetPos(326, 495)
 				addListingButton:SetSize(105, 30)
 				addListingButton:SetParent(addMessagePanel)
-				
-				
+
+
 				editMessagePanel:MoveToFront()
 				addMessagePanel:MoveToFront()
 			end,

@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Weapon Limits"
 MODULE.ID = "limit_weapons"
 MODULE.Description = "Prevent players from spawning/using/picking up certain weapons."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_weapons"
+}
 MODULE.Permissions = {
 	"manage_weapon_limits"
 }
@@ -30,6 +33,24 @@ MODULE.NetworkStrings = {
 	"VBlockWeapon",
 	"VUnblockWeapon"
 }
+
+function MODULE:InitShared()
+	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()
+		if(Vermilion:GetModule("server_settings") != nil) then
+			local mgr = Vermilion:GetModule("server_settings")
+
+			mgr:AddOption({
+				Module = "limit_weapons",
+				Name = "allow_blocked_weapon_pickup",
+				GuiText = "(Weapon Limiter) Allow Blocked Weapon Pickup",
+				Type = "Checkbox",
+				Category = "Misc",
+				Default = false,
+				Permission = "manage_weapon_limits"
+			})
+		end
+	end)
+end
 
 function MODULE:InitServer()
 
@@ -49,14 +70,14 @@ function MODULE:InitServer()
 
 	self:AddHook("PlayerGiveSWEP", function(vplayer, weapon, swep)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), weapon)) then
-			Vermilion:AddNotification(vplayer, "You cannot spawn this weapon!", NOTIFY_ERROR)
+			Vermilion:AddNotification(vplayer, "You cannot spawn this weapon!", nil, NOTIFY_ERROR)
 			return false
 		end
 	end)
 
 	self:AddHook("PlayerCanPickupWeapon", function(vplayer, weapon)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), weapon:GetClass())) then
-			return false
+			return MODULE:GetData("allow_blocked_weapon_pickup", false, true)
 		end
 	end)
 
@@ -74,6 +95,7 @@ function MODULE:InitServer()
 	end)
 
 	function MODULE:ScanForIllegalWeapons(vplayer)
+		if(MODULE:GetData("allow_blocked_weapon_pickup", false, true)) then return end
 		if(not IsValid(vplayer)) then return end
 		if(not Vermilion:HasUser(vplayer)) then return end
 		local rules = self:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true)

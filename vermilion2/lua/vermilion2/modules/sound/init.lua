@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -28,7 +28,7 @@ MODULE.Permissions = {
 	"stopsound",
 	"pausesound",
 	"unpausesound",
-	
+
 	"use_playlists"
 }
 MODULE.NetworkStrings = {
@@ -39,7 +39,7 @@ MODULE.NetworkStrings = {
 	"VStop",
 	"VPause",
 	"VUnpause",
-	
+
 	"VSoundCloudGetPlaylists",
 	"VSoundCloudGetPlaylistContent",
 	"VSoundCloudNewPlaylist",
@@ -85,7 +85,7 @@ function MODULE:RegisterChatCommands()
 			local volume = 100
 
 			if(table.Count(text) < 1) then
-				log("Missing path!", NOTIFY_ERROR)
+				log("Missing path!", nil, NOTIFY_ERROR)
 				return
 			end
 
@@ -95,7 +95,7 @@ function MODULE:RegisterChatCommands()
 				if(text[2] != "nil") then
 					target = VToolkit.LookupPlayer(text[2])
 					if(not IsValid(target)) then
-						log("No such player!", NOTIFY_ERROR)
+						log("No such player!", nil, NOTIFY_ERROR)
 						return
 					end
 				end
@@ -105,7 +105,7 @@ function MODULE:RegisterChatCommands()
 				if(tobool(text[3]) != nil) then
 					loop = tobool(text[3])
 				else
-					log("Invalid loop parameter!", NOTIFY_ERROR)
+					log("Invalid loop parameter!", nil, NOTIFY_ERROR)
 					return
 				end
 			end
@@ -114,11 +114,11 @@ function MODULE:RegisterChatCommands()
 				if(tonumber(text[4]) != nil) then
 					volume = tonumber(text[4])
 					if(volume < 0 or volume > 100) then
-						log("Invalid volume parameter!", NOTIFY_ERROR)
+						log("Invalid volume parameter!", nil, NOTIFY_ERROR)
 						return
 					end
 				else
-					log("Invalid volume parameter!", NOTIFY_ERROR)
+					log("Invalid volume parameter!", nil, NOTIFY_ERROR)
 					return
 				end
 			end
@@ -150,7 +150,7 @@ function MODULE:RegisterChatCommands()
 			local volume = 100
 
 			if(table.Count(text) < 1) then
-				log("Missing URL!", NOTIFY_ERROR)
+				log("Missing URL!", nil, NOTIFY_ERROR)
 				return
 			end
 
@@ -160,7 +160,7 @@ function MODULE:RegisterChatCommands()
 				if(text[2] != "nil") then
 					target = VToolkit.LookupPlayer(text[2])
 					if(not IsValid(target)) then
-						log("No such player!", NOTIFY_ERROR)
+						log("No such player!", nil, NOTIFY_ERROR)
 						return
 					end
 				end
@@ -170,7 +170,7 @@ function MODULE:RegisterChatCommands()
 				if(tobool(text[3]) != nil) then
 					loop = tobool(text[3])
 				else
-					log("Invalid loop parameter!", NOTIFY_ERROR)
+					log("Invalid loop parameter!", nil, NOTIFY_ERROR)
 					return
 				end
 			end
@@ -179,11 +179,11 @@ function MODULE:RegisterChatCommands()
 				if(tonumber(text[4]) != nil) then
 					volume = tonumber(text[4])
 					if(volume < 0 or volume > 100) then
-						log("Invalid volume parameter!", NOTIFY_ERROR)
+						log("Invalid volume parameter!", nil, NOTIFY_ERROR)
 						return
 					end
 				else
-					log("Invalid volume parameter!", NOTIFY_ERROR)
+					log("Invalid volume parameter!", nil, NOTIFY_ERROR)
 					return
 				end
 			end
@@ -212,7 +212,7 @@ function MODULE:RegisterChatCommands()
 				if(text[1] != "nil") then
 					target = VToolkit.LookupPlayer(text[1])
 					if(not IsValid(target)) then
-						log("No such player!", NOTIFY_ERROR)
+						log("No such player!", nil, NOTIFY_ERROR)
 						return
 					end
 				end
@@ -249,7 +249,7 @@ function MODULE:RegisterChatCommands()
 				if(text[1] != "nil") then
 					target = VToolkit.LookupPlayer(text[1])
 					if(not IsValid(target)) then
-						log("No such player!", NOTIFY_ERROR)
+						log("No such player!", nil, NOTIFY_ERROR)
 						return
 					end
 				end
@@ -286,7 +286,7 @@ function MODULE:RegisterChatCommands()
 				if(text[1] != "nil" and text[1] != "@") then
 					target = VToolkit.LookupPlayer(text[1])
 					if(not IsValid(target)) then
-						log("No such player!", NOTIFY_ERROR)
+						log("No such player!", nil, NOTIFY_ERROR)
 						return
 					end
 				end
@@ -540,7 +540,7 @@ function MODULE:InitClient()
 		self:GetChannel(channel).AudioChannel:Stop()
 		return true
 	end
-	
+
 	timer.Create("VSoundFinishedEventTest", 3, 0, function()
 		for i,k in pairs(MODULE.Channels) do
 			if(k.Done) then continue end

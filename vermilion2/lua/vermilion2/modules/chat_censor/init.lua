@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -20,8 +20,11 @@
 local MODULE = MODULE
 MODULE.Name = "Chat Censor"
 MODULE.ID = "chat_censor"
-MODULE.Description = "Blocks certain words in chat as well as IPv4 addresses."
+MODULE.Description = "Blocks words and IPv4 addresses in chat."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"chat_censor"
+}
 MODULE.Permissions = {
 	"manage_chat_censor"
 }
@@ -236,7 +239,7 @@ function MODULE:InitClient()
 			addPhrase:SetPos(620, 90)
 			addPhrase:SetParent(panel)
 			addPhrase:SetSize(panel:GetWide() - addPhrase:GetX() - 10, 25)
-			
+
 
 			local editPhrase = VToolkit:CreateButton(MODULE:TranslateStr("edit"), function()
 				paneldata.EPhraseData:SetValue(paneldata.PhraseList:GetSelected()[1]:GetValue(1))

@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Spawn Limits"
 MODULE.ID = "limit_spawn"
 MODULE.Description = "Emulates the sbox_max convars but adds a rank-based system."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_spawn"
+}
 MODULE.Permissions = {
 	"manage_spawn_limits",
 	"no_spawn_limits"
@@ -46,7 +49,7 @@ function MODULE:InitServer()
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
-	
+
 	if(not MODULE:GetData("uidUpdate", false)) then
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
@@ -60,7 +63,7 @@ function MODULE:InitServer()
 		end
 		MODULE:SetData("uidUpdate", true)
 	end
-	
+
 	self:NetHook("VGetSpawnLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
@@ -130,7 +133,7 @@ function MODULE:InitServer()
 		end
 		if(rankLimit != nil) then
 			if(vplayer:GetCount(typ) >= rankLimit and rankLimit >= 0) then
-				Vermilion:AddNotification(vplayer, "You have hit the " .. typ .. " limit!", NOTIFY_ERROR)
+				Vermilion:AddNotification(vplayer, "You have hit the " .. typ .. " limit!", nil, NOTIFY_ERROR)
 				return false
 			end
 		end

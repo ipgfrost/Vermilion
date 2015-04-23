@@ -145,20 +145,20 @@ function VToolkit.CBound(Point1, Point2)
 	function CBound:SurfaceArea()
 		return -1 --cba to do this now
 	end
-	
+
 	function CBound:CentreBase()
 		local x = (self.Point1.x + self.Point2.x) / 2
 		local y = (self.Point1.y + self.Point2.y) / 2
 		local z = math.min(self.Point1.z, self.Point2.z)
-		
+
 		return Vector(x, y, z)
 	end
-	
+
 	function CBound:Centre()
 		local x = (self.Point1.x + self.Point2.x) / 2
 		local y = (self.Point1.y + self.Point2.y) / 2
 		local z = (self.Point1.z + self.Point2.z) / 2
-		
+
 		return Vector(x, y, z)
 	end
 
@@ -306,6 +306,22 @@ function VToolkit.Count_Substring( s1, s2 )
   local magic =  "[%^%$%(%)%%%.%[%]%*%+%-%?]"
   local percent = function(s)return "%"..s end
   return select( 2, s1:gsub( s2:gsub(magic,percent), "" ) )
+end
+
+function VToolkit.GetGamemodeNames()
+	local tab = {}
+	for i,k in pairs(engine.GetGamemodes()) do
+		table.insert(tab, k.title)
+	end
+	return tab
+end
+
+function VToolkit.GetLowerGamemodeNames()
+	local tab = {}
+	for i,k in pairs(engine.GetGamemodes()) do
+		table.insert(tab, string.lower(k.title))
+	end
+	return tab
 end
 
 local pMeta = FindMetaTable("Player")

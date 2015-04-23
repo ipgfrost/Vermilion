@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -39,7 +39,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "bot_zombie",
 		Description = "Toggles bot zombie mode.",
@@ -57,7 +57,7 @@ function MODULE:RegisterChatCommands()
 			end
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "bucket",
 		Description = "Do you really need one?",
@@ -81,7 +81,7 @@ function MODULE:RegisterChatCommands()
 			target:SetNWBool("VBucket", target.VBucket)
 		end,
 	})
-	
+
 end
 
 function MODULE:InitShared()
@@ -101,7 +101,7 @@ function MODULE:InitClient()
 				if(not IsValid(k.VBucketModel)) then
 					k.VBucketModel = ents.CreateClientProp()
 					k.VBucketModel:SetModel("models/props_junk/MetalBucket01a.mdl")
-					
+
 					k.VBucketModel:Spawn()
 				else
 					local mi,ma = k:GetModelBounds()
@@ -121,5 +121,25 @@ function MODULE:InitClient()
 				end
 			end
 		end
+	end)
+
+	concommand.Add("vermilion_icb", function()
+		local panel = VToolkit:CreateFrame({
+			size = { 300, 300 },
+			draggable = true,
+			title = "",
+			bgBlur = false
+		})
+
+		local IconBrowser = vgui.Create("DIconBrowser", panel)
+		IconBrowser:SetPos(5, 30)
+		IconBrowser:SetSize(290, 265)
+		IconBrowser.OnChange = function(self)
+			panel:SetTitle(self:GetSelectedIcon())
+		end
+
+		panel:MakePopup()
+		panel:DoModal()
+		panel:SetAutoDelete(true)
 	end)
 end

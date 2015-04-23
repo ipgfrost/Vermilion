@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -64,12 +64,12 @@ function MODULE:InitServer()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
@@ -94,12 +94,12 @@ function MODULE:InitServer()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
@@ -124,12 +124,12 @@ function MODULE:InitServer()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
@@ -153,18 +153,18 @@ function MODULE:InitServer()
 			end
 		end,
 		Function = function(sender, text, log, glog)
-			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+			if(table.Count(text) < 2) then
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local credits = tonumber(text[2])
 			if(credits == nil) then
-				log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+				log("not_number", nil, NOTIFY_ERROR)
 				return false
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not Vermilion:GetUser(target):IsImmune(sender)) then
@@ -190,12 +190,12 @@ function MODULE:InitServer()
 		Permissions = { "haste" },
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local res = tobool(text[1])
 			if(res == nil) then
-				log(Vermilion:TranslateStr("not_bool", nil, sender), NOTIFY_ERROR)
+				log("not_bool", nil, NOTIFY_ERROR)
 				return
 			end
 			if(res) then
@@ -213,12 +213,12 @@ function MODULE:InitServer()
 		Permissions = { "roundtime" },
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local res = tonumber(text[1])
 			if(res == nil) then
-				log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+				log("not_number", nil, NOTIFY_ERROR)
 				return
 			end
 			RunConsoleCommand("ttt_roundtime_minutes", res)

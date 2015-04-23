@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -43,7 +43,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "add_voip_channel" },
 		Function = function(sender, text, log, glog)
 			if(not MODULE:AddVoIPChannel(text[1], text[2], sender)) then
-				log("VoIP Channel already exists!", NOTIFY_ERROR)
+				log("VoIP Channel already exists!", nil, NOTIFY_ERROR)
 			else
 				glog("VoIP channel '" .. text[1] .. "' was created successfully by " .. sender:GetName())
 			end
@@ -78,7 +78,7 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			if(has.Founder != sender:SteamID()) then
-				log("You are not the founder of this channel thus you cannot delete it.", NOTIFY_ERROR)
+				log("You are not the founder of this channel thus you cannot delete it.", nil, NOTIFY_ERROR)
 				return
 			end
 			table.RemoveByValue(MODULE:GetData("voip_channels", MODULE.DefaultVoIPChannels, true), has)
@@ -109,7 +109,7 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local has = false
@@ -120,20 +120,20 @@ function MODULE:RegisterChatCommands()
 				has = false
 			end
 			if(not has) then
-				log("No such VoIP channel.", NOTIFY_ERROR)
+				log("No such VoIP channel.", nil, NOTIFY_ERROR)
 				return
 			end
 			if(has.Founder != sender:SteamID()) then
-				log("You are not the founder of this channel thus you cannot modify it.", NOTIFY_ERROR)
+				log("You are not the founder of this channel thus you cannot modify it.", nil, NOTIFY_ERROR)
 				return
 			end
 			if(has.Password != nil) then
 				if(table.Count(text) < 3) then
-					log("Original channel password required!", NOTIFY_ERROR)
+					log("Original channel password required!", nil, NOTIFY_ERROR)
 					return
 				end
 				if(has.Password != util.CRC(text[2])) then
-					log("Invalid password!", NOTIFY_ERROR)
+					log("Invalid password!", nil, NOTIFY_ERROR)
 					return
 				end
 			end

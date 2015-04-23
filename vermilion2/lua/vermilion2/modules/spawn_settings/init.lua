@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Spawn Parameters"
 MODULE.ID = "spawn_settings"
 MODULE.Description = "Allows players to spawn with custom settings."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"spawn_settings"
+}
 MODULE.Permissions = {
 	"manage_spawn_settings"
 }

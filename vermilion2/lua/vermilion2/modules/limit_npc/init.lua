@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "NPC Limits"
 MODULE.ID = "limit_npc"
 MODULE.Description = "Prevent players from using certain NPCs."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_npc"
+}
 MODULE.Permissions = {
 	"manage_npc_limits"
 }
@@ -49,7 +52,7 @@ function MODULE:InitServer()
 
 	self:AddHook("PlayerSpawnNPC", function(vplayer, npc_type)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), npc_type)) then
-			Vermilion:AddNotification(vplayer, "You cannot spawn this NPC!", NOTIFY_ERROR)
+			Vermilion:AddNotification(vplayer, "You cannot spawn this NPC!", nil, NOTIFY_ERROR)
 			return false
 		end
 	end)

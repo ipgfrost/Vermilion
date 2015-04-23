@@ -153,6 +153,12 @@ lang:Add("credits:workshoprating:detail", "Workshop Rating: %s%%")
 lang:Add("menu:modules", "Modules")
 lang:Add("modules:clickon", "Click on a module...")
 lang:Add("modules:enabled", "Enabled")
+lang:Add("modules:tabs:tabletitle", "Tab Name")
+lang:Add("modules:tabs", "Tabs")
+lang:Add("modules:permissions", "Permissions")
+lang:Add("modules:permissions:tabletitle", "Permission")
+lang:Add("modules:tabs:tt", "List of tabs added by this module.")
+lang:Add("modules:permissions:tt", "List of permissions added by this module.")
 
 
 --[[

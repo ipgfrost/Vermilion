@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Donator Checker"
 MODULE.ID = "donator"
 MODULE.Description = "Checks with a web server to check if a player has donated to the server. Depending on the response, can automatically promote them to a specific rank ect."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"donator_mode"
+}
 MODULE.Permissions = {
 	"manage_donator_mode"
 }

@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Custom Spawnpoints"
 MODULE.ID = "spawnpoint"
 MODULE.Description = "Allows custom spawn positions to be set besides the map spawn point."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"spawnpoint"
+}
 MODULE.Permissions = {
 	"manage_spawnpoints"
 }
@@ -43,23 +46,23 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_spawnpoints" },
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE:GetData("points", {}, true)[text[1]] != nil) then
 				if(MODULE:GetData("points", {}, true)[text[1]].Map != game.GetMap()) then
-					log("A spawnpoint with this name already exists, although not on this map!", NOTIFY_ERROR)
+					log("A spawnpoint with this name already exists, although not on this map!", nil, NOTIFY_ERROR)
 				else
-					log("A spawnpoint with this name already exists on this map!", NOTIFY_ERROR)
+					log("A spawnpoint with this name already exists on this map!", nil, NOTIFY_ERROR)
 				end
 				return
 			end
 			if(tonumber(text[2]) == nil) then
-				log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+				log("not_number", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not util.IsInWorld(sender:GetPos())) then
-				log("Cannot make spawnpoint here.", NOTIFY_ERROR)
+				log("Cannot make spawnpoint here.", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE:GetData("points", {}, true)[text[1]] = {
@@ -91,7 +94,7 @@ function MODULE:InitServer()
 			local obj = k
 			local nr = Vermilion:GetRank(rankName):GetUID()
 			MODULE:GetData("allocations", {}, true)[i] = nil
-			MODULE:GetData("allocations", {}, true)[nr .. ":" .. string.Replace(i, rankName, "")] = obj 
+			MODULE:GetData("allocations", {}, true)[nr .. ":" .. string.Replace(i, rankName, "")] = obj
 		end
 		MODULE:SetData("uidUpdate", true)
 	end
@@ -110,7 +113,7 @@ function MODULE:InitServer()
 
 	local function sendRankAllocs(vplayer)
 		local tab = {}
-		
+
 		for i,k in pairs(Vermilion.Data.Ranks) do
 			tab[k.UniqueID] = MODULE:GetData("allocations", {}, true)[k.UniqueID .. ":" .. game.GetMap()] or "Default"
 		end

@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Playermodel Enforcer"
 MODULE.ID = "limit_playermodel"
 MODULE.Description = "Set the player models that players can/cannot use or force a specific model for a rank."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_playermodel"
+}
 MODULE.Permissions = {
 	"manage_playermodels"
 }

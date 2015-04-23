@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Entity Limits"
 MODULE.ID = "limit_entities"
 MODULE.Description = "Prevent players from spawning certain entities."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_entities"
+}
 MODULE.Permissions = {
 	"manage_entity_limits"
 }
@@ -49,7 +52,7 @@ function MODULE:InitServer()
 
 	self:AddHook("PlayerSpawnSENT", function(vplayer, class)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), class)) then
-			Vermilion:AddNotification(vplayer, "You cannot spawn this entity!", NOTIFY_ERROR)
+			Vermilion:AddNotification(vplayer, "You cannot spawn this entity!", nil, NOTIFY_ERROR)
 			return false
 		end
 	end)

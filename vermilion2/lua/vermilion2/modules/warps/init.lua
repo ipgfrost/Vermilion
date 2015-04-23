@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -45,11 +45,11 @@ function MODULE:InitServer()
 		CanRunOnDS = false,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			if(MODULE:GetData("warps", {}, true)[text[1]] != nil) then
-				log("A warp with that name already exists.", NOTIFY_ERROR)
+				log("A warp with that name already exists.", nil, NOTIFY_ERROR)
 				return false
 			end
 			glog(sender:GetName() .. " added new warp '" .. text[1] .. "' at " .. table.concat({math.Round(sender:GetPos().x), math.Round(sender:GetPos().y), math.Round(sender:GetPos().z) }, ":"))
@@ -70,11 +70,11 @@ function MODULE:InitServer()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			if(MODULE:GetData("warps", {}, true)[text[1]] == nil) then
-				log("That warp doesn't exist.", NOTIFY_ERROR)
+				log("That warp doesn't exist.", nil, NOTIFY_ERROR)
 				return false
 			end
 			log("Removed warp '" .. text[1] .. "'")
@@ -101,23 +101,23 @@ function MODULE:InitServer()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local target = sender
 			if(table.Count(text) > 1) then
 				if(not Vermilion:HasPermission(sender, "warp_others")) then
-					log("You cannot warp other players!", NOTIFY_ERROR)
+					log("You cannot warp other players!", nil, NOTIFY_ERROR)
 					return false
 				end
 				target = VToolkit.LookupPlayer(text[2])
 			end
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE:GetData("warps", {}, true)[text[1]] == nil) then
-				log("No such warp!", NOTIFY_ERROR)
+				log("No such warp!", nil, NOTIFY_ERROR)
 				return false
 			end
 			if(sender == target) then

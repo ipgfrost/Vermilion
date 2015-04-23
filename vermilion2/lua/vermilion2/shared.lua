@@ -229,9 +229,9 @@ local vHookCall = function(evtName, gmTable, ...)
 		print(err)
 		debug.Trace()
 	end)) then return end
-	
-	
-	
+
+
+
 	if(a != nil) then
 		destroySDHook(evtName)
 		return a, b, c, d, e, f
@@ -409,7 +409,7 @@ function Vermilion:CreateBaseModule()
 		function base:Destroy() end
 
 		function base:RegisterChatCommands() end
-		
+
 		function base:GetAllData()
 			return Vermilion.Data.Module[self.ID] or {}
 		end
@@ -455,7 +455,7 @@ function Vermilion:CreateBaseModule()
 
 			end
 		end
-		
+
 		function base:AddLPHook(evtName, id, func)
 			if(func == nil) then
 				func = id
@@ -464,13 +464,13 @@ function Vermilion:CreateBaseModule()
 			if(self.LPHooks[evtName] == nil) then self.LPHooks[evtName] = {} end
 			self.LPHooks[evtName][id] = func
 		end
-		
+
 		function base:RemoveLPHook(evtName, id)
 			if(self.LPHooks[evtName] != nil) then
 				self.LPHooks[evtName][id] = nil
 			end
 		end
-		
+
 		function base:NetHook(nstr, func)
 			self.NetworkHooks[nstr] = func
 		end
@@ -509,13 +509,6 @@ function Vermilion:CreateBaseModule()
 				tab[i] = self:TranslateStr(k, parameters[i], foruser)
 			end
 			return tab
-		end
-
-		function base:TransBroadcastNotify(key, parameters, typ, time)
-			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(key, parameters))
-			for i,k in pairs(VToolkit.GetValidPlayers(false)) do
-				Vermilion:AddNotification(k, self:TranslateStr(key, parameters, k), typ, time)
-			end
 		end
 
 		function base:DistributeEvent(event, parameters) end
@@ -598,6 +591,7 @@ if(SERVER) then
 	net.Receive("VModuleDataUpdate", function(len, vplayer)
 		local mod = net.ReadString()
 		net.Start("VModuleDataUpdate")
+		net.WriteString(mod)
 		net.WriteBoolean(Vermilion:GetData("addon_load_states", {}, true)[mod] != false)
 		net.Send(vplayer)
 	end)
@@ -644,7 +638,7 @@ if(SERVER) then
 			end
 		end
 
-		if(count > 0) then Vermilion:AddNotify(vplayer, "Removed " .. tostring(count) .. " banned entities from this duplication.", NOTIFY_ERROR) end
+		if(count > 0) then Vermilion:AddNotify(vplayer, NOTIFY_ERROR, "Removed " .. tostring(count) .. " banned entities from this duplication.") end
 
 		return oldDupePaste(vplayer, entlist2, constraints)
 	end
@@ -882,69 +876,34 @@ if(CLIENT) then
 	end
 
 	net.Receive("VNotify", function()
-		Vermilion:AddNotification(net.ReadString(), net.ReadInt(32), net.ReadInt(32))
+		local notifyData = net.ReadTable()
+		Vermilion:AddNotification(Vermilion:TranslateStr(notifyData.BaseString, notifyData.Replacements), net.ReadInt(32), net.ReadInt(32))
 	end)
 
 else
 	util.AddNetworkString("VNotify")
 
-	function Vermilion:AddNotification(recipient, text, typ, time)
+	function Vermilion:AddNotification(recipient, baseString, replacements, typ, time)
 		typ = typ or NOTIFY_GENERIC
 		time = time or 10
 		net.Start("VNotify")
-		net.WriteString(text)
+		net.WriteTable({ BaseString = baseString, Replacements = replacements })
 		net.WriteInt(typ, 32)
 		net.WriteInt(time, 32)
 		net.Send(recipient)
 	end
 
-	function Vermilion:AddNotify(recipient, text, typ, time)
-		self:AddNotification(recipient, text, typ, time)
+	function Vermilion:AddNotify(recipient, baseString, replacements, typ, time)
+		self:AddNotification(recipient, baseString, replacements, typ, time)
 	end
 
-	function Vermilion:BroadcastNotification(text, typ, time)
-		Vermilion.Log("[Notification:Broadcast] " .. tostring(text))
-		self:AddNotification(VToolkit.GetValidPlayers(false), text, typ, time)
+	function Vermilion:BroadcastNotification(baseString, replacements, typ, time)
+		Vermilion.Log("[Notification:Broadcast] " .. Vermilion:TranslateStr(baseString, replacements))
+		self:AddNotification(VToolkit.GetValidPlayers(false), baseString, replacements, typ, time)
 	end
 
-	function Vermilion:BroadcastNotify(text, typ, time)
-		Vermilion.Log("[Notification:Broadcast] " .. tostring(text))
-		self:AddNotification(VToolkit.GetValidPlayers(false), text, typ, time)
-	end
-
-	function Vermilion:TransBroadcastNotify(text, vars, typ, time, MODULE)
-		if(MODULE) then
-			Vermilion.Log("[Notification:TransBroadcast] " .. MODULE:TranslateStr(text, vars))
-		else
-			Vermilion.Log("[Notification:TransBroadcast] " .. self:TranslateStr(text, vars))
-		end
-		for i,k in pairs(VToolkit.GetValidPlayers(false)) do
-			if(MODULE) then
-				self:AddNotification(k, MODULE:TranslateStr(text, vars, k), typ, time)
-				continue
-			end
-			self:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
-		end
-	end
-
-	function Vermilion:TransNotify(recipient, text, vars, typ, time, MODULE)
-		if(istable(recipient)) then
-			if(MODULE) then
-				for i,k in pairs(recipient) do
-					self:AddNotification(k, MODULE:TranslateStr(text, vars, k), typ, time)
-				end
-			else
-				for i,k in pairs(recipient) do
-					self:AddNotification(k, self:TranslateStr(text, vars, k), typ, time)
-				end
-			end
-		else
-			if(MODULE) then
-				self:AddNotification(recipient, MODULE:TranslateStr(text, vars, recipient), typ, time)
-			else
-				self:AddNotification(recipient, self:TranslateStr(text, vars, recipient), typ, time)
-			end
-		end
+	function Vermilion:BroadcastNotify(baseString, replacements, typ, time)
+		self:BroadcastNotification(baseString, replacements, typ, time)
 	end
 
 end

@@ -22,6 +22,9 @@ MODULE.Name = "Maps"
 MODULE.ID = "map"
 MODULE.Description = "Change or reload the map after a specified delay."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"map"
+}
 MODULE.Permissions = {
 	"manage_map"
 }
@@ -64,23 +67,23 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local inTime = 0
 			if(table.Count(text) > 1) then
 				if(tonumber(text[2]) == nil) then
-					log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+					log("not_number", nil, NOTIFY_ERROR)
 					return false
 				end
 				inTime = tonumber(text[2])
 			end
 			if(not file.Exists("maps/" .. text[1] .. ".bsp", "GAME")) then
-				log("That map doesn't exist on the server!", NOTIFY_ERROR)
+				log("That map doesn't exist on the server!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.MapChangeInProgress) then
-				log("A map change is already in progress. Abort the map change to change to a new map!", NOTIFY_ERROR)
+				log("A map change is already in progress. Abort the map change to change to a new map!", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE:ScheduleMapChange(text[1], inTime)
@@ -98,13 +101,13 @@ function MODULE:RegisterChatCommands()
 			local inTime = 0
 			if(table.Count(text) > 0) then
 				if(tonumber(text[1]) == nil) then
-					log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+					log("not_number", nil, NOTIFY_ERROR)
 					return false
 				end
 				inTime = tonumber(text[1])
 			end
 			if(MODULE.MapChangeInProgress) then
-				log("A map change is already in progress. Abort the map change to change to a new map!", NOTIFY_ERROR)
+				log("A map change is already in progress. Abort the map change to change to a new map!", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE:ScheduleMapChange(game.GetMap(), inTime)
@@ -119,7 +122,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_map" },
 		Function = function(sender, text, log, glog)
 			if(MODULE.BlockAbort) then
-				log("Attempt to abort the level change has been blocked by the management engine.", NOTIFY_ERROR)
+				log("Attempt to abort the level change has been blocked by the management engine.", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE:AbortMapChange()
@@ -344,7 +347,7 @@ function MODULE:InitServer()
 			Vermilion.Log("Map change already in progress!")
 			return false
 		end
-		
+
 		MODULE.MapChangeInProgress = true
 		MODULE.MapChangeTo = map
 		MODULE.MapChangeIn = time

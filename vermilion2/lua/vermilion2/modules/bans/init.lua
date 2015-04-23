@@ -20,8 +20,11 @@
 local MODULE = MODULE
 MODULE.Name = "Bans"
 MODULE.ID = "bans"
-MODULE.Description = "Manages the ban system."
+MODULE.Description = "Manages the ban system and prevents banned users from reconnecting."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"bans"
+}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"ban_user",
@@ -66,7 +69,7 @@ function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "ban",
 		Description = "Bans a player",
-		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:ban:syntax", nil, vplayer) end,
+		Syntax = function(vplayer) return MODULE:TranslateStr("bans:cmd:ban:syntax", nil, vplayer) end,
 		CanMute = true,
 		Permissions = { "ban_user" },
 		AllValid = {
@@ -85,30 +88,30 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchStringPart(MODULE.BanReasons, current)
 			end
 		end,
-		Function = function(sender, text, log, glog, tglog)
+		Function = function(sender, text, log, glog)
 			if(tonumber(text[2]) == nil) then
-				log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+				log("not_number", nil, NOTIFY_ERROR)
 				return
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("bad_syntax", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("bad_syntax", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(target == sender) then
-				log(Vermilion:TranslateStr("ban_self", nil, sender), NOTIFY_ERROR)
+				log("bans:ban_self", nil, NOTIFY_ERROR)
 				return
 			end
-			MODULE:BanPlayer(target, sender, tonumber(text[2]) * 60, table.concat(text, " ", 3), log, glog, tglog)
+			MODULE:BanPlayer(target, sender, tonumber(text[2]) * 60, table.concat(text, " ", 3), log, glog)
 		end,
 		AllBroadcast = function(sender, text)
 			if(tonumber(text[2]) == nil) then return end
 			local time = tonumber(text[2]) * 60
 			local reason = table.concat(text, " ", 3)
 			if(time == 0) then
-				return MODULE:TranslateStr("ban:allplayers:perma", { sender:GetName(), reason or MODULE:TranslateStr("noreason") })
+				return "bans:ban:allplayers:perma", { sender:GetName(), reason or MODULE:TranslateStr("noreason") }
 			else
-				return MODULE:TranslateStr("ban:allplayers", { sender:GetName(), os.date("%d/%m/%y", os.time() + time), reason or MODULE:TranslateStr("noreason") })
+				return "bans:ban:allplayers", { sender:GetName(), os.date("%d/%m/%y", os.time() + time), reason or MODULE:TranslateStr("noreason") }
 			end
 		end
 	})
@@ -130,22 +133,22 @@ function MODULE:RegisterChatCommands()
 				return VToolkit.MatchStringPart(MODULE.BanReasons, current)
 			end
 		end,
-		Function = function(sender, text, log, glog, tglog)
+		Function = function(sender, text, log, glog)
 			local target = VToolkit.LookupPlayer(text[1])
 			if(target == sender) then
-				log(Vermilion:TranslateStr("kick_self", nil, sender), NOTIFY_ERROR)
+				log("bans:kick_self", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("bans:player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
-			tglog("bans:kick:kicked", { target:GetName(), sender:GetName(), table.concat(text, " ", 2) })
+			glog("bans:kick:kicked", { target:GetName(), sender:GetName(), table.concat(text, " ", 2) })
 			target:Kick(MODULE:TranslateStr("kick:kickedtext", { sender:GetName(), table.concat(text, " ", 2) }, target))
 		end,
 		AllBroadcast = function(sender, text)
 			local reason = table.concat(text, " ", 2)
-			return MODULE:TranslateStr("kick:allplayers", { sender:GetName(), reason })
+			return "bans:kick:allplayers", { sender:GetName(), reason }
 		end
 	})
 
@@ -166,9 +169,9 @@ function MODULE:RegisterChatCommands()
 				return tab
 			end
 		end,
-		Function = function(sender, text, log, glog, tglog)
+		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local candidates = {}
@@ -178,21 +181,21 @@ function MODULE:RegisterChatCommands()
 				end
 			end
 			if(table.Count(candidates) > 1) then
-				log(MODULE:TranslateStr("unban:toomany"), NOTIFY_ERROR)
+				log("bans:unban:toomany", nil, NOTIFY_ERROR)
 				return
 			end
 			if(table.Count(candidates) == 0) then
-				log(MODULE:TranslateStr("unban:none"), NOTIFY_ERROR)
+				log("bans:unban:none", nil, NOTIFY_ERROR)
 				return
 			end
 			table.RemoveByValue(MODULE:GetData("bans", {}, true), candidates[1])
-			tglog("bans:unban:text", { candidates[1].Name, sender:GetName() })
+			glog("bans:unban:text", { candidates[1].Name, sender:GetName() })
 		end
 	})
 
 end
 
-function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog, tglog)
+function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog)
 	if(IsValid(banner)) then
 		log = log or function(text, typ, time) Vermilion:AddNotification(banner, text, typ, time) end
 	else
@@ -205,8 +208,7 @@ function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog, tglog)
 			return "VERMILION"
 		end
 	end
-	glog = glog or function(text, typ, time) Vermilion:BroadcastNotification(text, typ, time) end
-	tglog = tglog or function(text, values, typ, time) MODULE:TransBroadcastNotify(text, values, typ, time) end
+	glog = glog or function(text, replacements, typ, time) Vermilion:BroadcastNotification(text, replacements, typ, time) end
 	local has = false
 	for i,k in pairs(MODULE:GetData("bans", {}, true)) do
 		if(k.SteamID == vplayer:SteamID()) then
@@ -215,19 +217,19 @@ function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog, tglog)
 		end
 	end
 	if(has) then
-		log(MODULE:TranslateStr("alreadybanned"), NOTIFY_ERROR)
+		log("bans:alreadybanned", nil, NOTIFY_ERROR)
 		return
 	end
 	if(time < 0) then
-		log(MODULE:TranslateStr("time:toosmall"), NOTIFY_ERROR)
+		log("bans:time:toosmall", nil, NOTIFY_ERROR)
 		return
 	end
 	if(time == 0) then
 		table.insert(MODULE:GetData("bans", {}, true), { Name = vplayer:GetName(), SteamID = vplayer:SteamID(), Reason = reason, BanTime = os.time(), ExpiryTime = 0, BannerSteamID = banner:SteamID(), BannerName = banner:GetName() })
-		tglog("bans:ban:perma:text", { vplayer:GetName(), banner:GetName(), reason or MODULE:TranslateStr("noreason") })
+		glog("bans:ban:perma:text", { vplayer:GetName(), banner:GetName(), reason or MODULE:TranslateStr("noreason") })
 	else
 		table.insert(MODULE:GetData("bans", {}, true), { Name = vplayer:GetName(), SteamID = vplayer:SteamID(), Reason = reason, BanTime = os.time(), ExpiryTime = os.time() + time, BannerSteamID = banner:SteamID(), BannerName = banner:GetName() })
-		tglog("bans:ban:text", { vplayer:GetName(), banner:GetName(), os.date("%d/%m/%y", os.time() + time), reason or MODULE:TranslateStr("noreason") })
+		glog("bans:ban:text", { vplayer:GetName(), banner:GetName(), os.date("%d/%m/%y", os.time() + time), reason or MODULE:TranslateStr("noreason") })
 	end
 	vplayer:Kick(reason or MODULE:TranslateStr("noreason", nil, vplayer))
 end
@@ -273,7 +275,7 @@ function MODULE:InitServer()
 	self:AddHook("CheckPassword", function(steamid, ip, svpass, clpass, name)
 		MODULE:UpdateBans()
 		if(MODULE:IsPlayerBanned(util.SteamIDFrom64(steamid))) then
-			MODULE:TransBroadcastNotify("reconnectalert", { name }, NOTIFY_ERROR)
+			MODULE:BroadcastNotify("bans:reconnectalert", { name }, NOTIFY_ERROR)
 			if(Vermilion:GetModule("event_logger") != nil) then
 				Vermilion:GetModule("event_logger"):AddEvent("exclamation", MODULE:TranslateStr("reconnect:event", { name }))
 			end
@@ -323,7 +325,7 @@ function MODULE:InitServer()
 			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
 				if(k.SteamID == steamid) then
 					table.RemoveByValue(MODULE:GetData("bans", {}, true), k)
-					Vermilion:TransBroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
+					Vermilion:BroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
 					sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
 					break
 				end

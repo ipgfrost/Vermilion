@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Event Logger"
 MODULE.ID = "event_logger"
 MODULE.Description = "Logs events that take place on the server."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"event_log"
+}
 MODULE.Permissions = {
 	"see_event_log"
 }

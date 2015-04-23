@@ -22,6 +22,9 @@ MODULE.Name = "Loadouts"
 MODULE.ID = "loadout"
 MODULE.Description = "Set the weapons that players spawn with."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"loadout"
+}
 MODULE.Permissions = {
 	"manage_loadout"
 }

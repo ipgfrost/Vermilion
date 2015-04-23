@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Toolgun Limits"
 MODULE.ID = "limit_toolgun"
 MODULE.Description = "Prevent players from using certain tools."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_toolgun"
+}
 MODULE.Permissions = {
 	"manage_toolgun_limits"
 }
@@ -49,7 +52,7 @@ function MODULE:InitServer()
 
 	self:AddHook("CanTool", function(vplayer, tr, tool)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), tool)) then
-			Vermilion:AddNotification(vplayer, "You cannot use this toolgun mode!", NOTIFY_ERROR)
+			Vermilion:AddNotification(vplayer, "You cannot use this toolgun mode!", nil, NOTIFY_ERROR)
 			return false
 		end
 	end)

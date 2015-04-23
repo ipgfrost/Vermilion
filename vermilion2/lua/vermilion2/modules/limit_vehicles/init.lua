@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Vehicle Limits"
 MODULE.ID = "limit_vehicle"
 MODULE.Description = "Prevent players from spawning certain vehicles."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"limit_vehicle"
+}
 MODULE.Permissions = {
 	"manage_vehicle_limits"
 }
@@ -49,7 +52,7 @@ function MODULE:InitServer()
 
 	self:AddHook("PlayerSpawnVehicle", function(vplayer, model, class, data)
 		if(table.HasValue(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true), model)) then // <-- this could backfire...
-			Vermilion:AddNotification(vplayer, "You cannot spawn this vehicle!", NOTIFY_ERROR)
+			Vermilion:AddNotification(vplayer, "You cannot spawn this vehicle!", nil, NOTIFY_ERROR)
 			return false
 		end
 	end)

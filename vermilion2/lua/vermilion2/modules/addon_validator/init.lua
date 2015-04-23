@@ -34,7 +34,7 @@ function MODULE:RegisterChatCommands()
 		Name = "checkaddons",
 		Description = "Brings up the addon validator again.",
 		CanRunOnDS = false,
-		Function = function(sender, text, log)
+		Function = function(sender, text, log, glog)
 			if(not MODULE:GetData("enabled", true, true)) then return end
 			MODULE:NetStart("VAddonListRequest")
 			local tab = {}

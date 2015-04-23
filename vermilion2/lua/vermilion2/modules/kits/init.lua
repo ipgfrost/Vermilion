@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ MODULE.Name = "Kits"
 MODULE.ID = "kits"
 MODULE.Description = "Create sets of weapons that players can request via commands."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"kit_creator"
+}
 MODULE.Permissions = {
 	"manage_kits",
 	"kitsubscribe",
@@ -50,7 +53,7 @@ function MODULE:RegisterChatCommands()
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
 				local tab = {}
-				local rnk = Vermilion:GetUser(vplayer):GetRankName()
+				local rnk = Vermilion:GetUser(vplayer):GetRankUID()
 				for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 					if(table.HasValue(k.RanksAllowed, rnk)) then
 						table.insert(tab, k.Name)
@@ -61,7 +64,7 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			local has = false
@@ -278,18 +281,10 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:AddHook(Vermilion.Event.RankRenamed, function(oldName, newName)
+	self:NetHook(Vermilion.Event.RankDeleted, function(uid)
 		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
 			for i1,k1 in pairs(k.RanksAllowed) do
-				if(k1 == oldName) then k.RanksAllowed[i1] = newName end
-			end
-		end
-	end)
-
-	self:NetHook(Vermilion.Event.RankDeleted, function(name)
-		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-			for i1,k1 in pairs(k.RanksAllowed) do
-				if(k1 == name) then k.RanksAllowed[i1] = nil end
+				if(k1 == uid) then k.RanksAllowed[i1] = nil end
 			end
 		end
 	end)

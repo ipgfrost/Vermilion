@@ -22,6 +22,13 @@ MODULE.Name = "Server Settings"
 MODULE.ID = "server_settings"
 MODULE.Description = "Provides a collection of basic options for administrating the server."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"server_settings",
+	"motd",
+	"userdata",
+	"voip_channels",
+	"command_muting"
+}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"manage_server",
@@ -51,7 +58,10 @@ MODULE.Permissions = {
 
 
 
-	"change_motd"
+	"change_motd",
+
+
+	"anonymous_command_exec"
 }
 MODULE.NetworkStrings = {
 	"VServerGetProperties", -- used to build the settings page
@@ -203,7 +213,8 @@ local options = {
 		end
 	},
 	{ Name = "enable_spawncamp_protection", GuiText = MODULE:TranslateStr("spawncampprevention:enable"), Type = "Checkbox", Category = "SpawncampPrevention", Default = false },
-	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 }
+	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 },
+	//{ Name = "gamemode", GuiText = MODULE:TranslateStr("active_gamemode"), Type = "Combobox", Options = VToolkit.GetGamemodeNames(), Category = "Misc", Default = table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()) }
 }
 
 function MODULE:AddCategory(name, id, order)
@@ -355,7 +366,7 @@ end
 
 function MODULE:RegisterChatCommands()
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "motd",
 		Description = "Request the MOTD again.",
 		Function = function(sender, text, log, glog)
@@ -368,9 +379,9 @@ function MODULE:RegisterChatCommands()
 			net.WriteInt(MODULE:GetData("motd_type", 1, true), 32)
 			net.Send(sender)
 		end
-	}
+	})
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "noclip",
 		Description = "Toggles noclip for the player",
 		Syntax = "[player] => [value]",
@@ -395,11 +406,11 @@ function MODULE:RegisterChatCommands()
 			end
 
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(state == nil) then
@@ -434,9 +445,9 @@ function MODULE:RegisterChatCommands()
 			end
 			return sender:GetName() .. " toggled the noclip state for all players!"
 		end
-	}
+	})
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "falldamage",
 		Description = "Toggles falldamage for the player",
 		Syntax = "[player] => [value]",
@@ -461,11 +472,11 @@ function MODULE:RegisterChatCommands()
 			end
 
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(state == nil) then
@@ -500,10 +511,10 @@ function MODULE:RegisterChatCommands()
 			end
 			return sender:GetName() .. " toggled the falldamage state for all players!"
 		end
-	}
+	})
 
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "damagemode",
 		Description = "Toggles damage for the player",
 		Syntax = "[player] => [value]",
@@ -528,11 +539,11 @@ function MODULE:RegisterChatCommands()
 			end
 
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(state == nil) then
@@ -567,9 +578,9 @@ function MODULE:RegisterChatCommands()
 			end
 			return sender:GetName() .. " toggled the damage state for all players!"
 		end
-	}
+	})
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "flashlight",
 		Description = "Toggles flashlight for the player",
 		Syntax = "[player] => [value]",
@@ -594,11 +605,11 @@ function MODULE:RegisterChatCommands()
 			end
 
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(state == nil) then
@@ -633,9 +644,9 @@ function MODULE:RegisterChatCommands()
 			end
 			return sender:GetName() .. " toggled the flashlight state for all players!"
 		end
-	}
+	})
 
-	Vermilion:AddChatCommand{
+	Vermilion:AddChatCommand({
 		Name = "uammo",
 		Description = "Toggles unlimited ammo for the player",
 		Syntax = "[player] => [value]",
@@ -660,11 +671,11 @@ function MODULE:RegisterChatCommands()
 			end
 
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
-				log(Vermilion:TranslateStr("player_immune", { target:GetName() }, sender), NOTIFY_ERROR)
+				log("player_immune", { target:GetName() }, NOTIFY_ERROR)
 				return
 			end
 			if(state == nil) then
@@ -699,13 +710,15 @@ function MODULE:RegisterChatCommands()
 			end
 			return sender:GetName() .. " toggled the unlimited ammo state for all players!"
 		end
-	}
+	})
 
 end
 
 function MODULE:InitServer()
 
 	if(self:GetData("voip_control", 3, true) > 3) then self:SetData("voip_control", 3) end
+	self:SetData("gamemode", table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()))
+
 
 	self:NetHook("VResetConfiguration", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "*")) then

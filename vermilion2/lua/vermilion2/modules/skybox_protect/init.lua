@@ -60,7 +60,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_skybox_protector" },
 		Function = function(sender, text, log, glog)
 			if(MODULE.Skyboxes[game.GetMap()] != nil) then
-				log("A skybox has already been defined for this map! By continuing, you will overwrite the old definition.", NOTIFY_ERROR)
+				log("A skybox has already been defined for this map! By continuing, you will overwrite the old definition.", nil, NOTIFY_ERROR)
 			end
 			if(MODULE.Point1[sender:SteamID()] != nil) then
 				local p1 = MODULE.Point1[sender:SteamID()]
@@ -95,7 +95,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_skybox_protector" },
 		Function = function(sender, text, log, glog)
 			if(MODULE.Point1[sender:SteamID()] == nil) then
-				log("You aren't editing the skybox region!", NOTIFY_ERROR)
+				log("You aren't editing the skybox region!", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE.Point1[sender:SteamID()] = nil
@@ -125,7 +125,7 @@ function MODULE:InitServer()
 	self:AddHook("PlayerInitialSpawn", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_skybox_protector") and MODULE.Skyboxes[game.GetMap()] == nil and MODULE:GetData("enabled", false, true)) then
 			timer.Simple(2, function()
-				Vermilion:AddNotification(vplayer, "No skybox area is defined for this map. Please define one or disable skybox protection!", NOTIFY_ERROR)
+				Vermilion:AddNotification(vplayer, "No skybox area is defined for this map. Please define one or disable skybox protection!", nil, NOTIFY_ERROR)
 			end)
 		end
 	end)

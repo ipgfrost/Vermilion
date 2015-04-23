@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -22,12 +22,15 @@ MODULE.Name = "Zones"
 MODULE.ID = "zones"
 MODULE.Description = "Add zones" // <-- add a better description
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"zones"
+}
 MODULE.Permissions = {
 	"zone_manager",
 	"create_zone",
 	"remove_zone",
 	"ignore_zones",
-	
+
 	"jail"
 }
 MODULE.PermissionDefintions = {
@@ -350,7 +353,7 @@ function MODULE:InitShared()
 				return
 			end
 			if(tonumber(text[3]) == nil) then
-				log(Vermilion:TranslateStr("not_number", nil, sender), NOTIFY_ERROR)
+				log("not_number", nil, NOTIFY_ERROR)
 				return false
 			end
 		end,
@@ -509,7 +512,7 @@ function MODULE:InitShared()
 			for i,k in pairs(text) do
 				if(i < 3) then continue end
 				if(not IsValid(VToolkit.LookupPlayer(k))) then
-					log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+					log("no_users", nil, NOTIFY_ERROR)
 					return false
 				end
 			end
@@ -523,7 +526,7 @@ function MODULE:InitShared()
 		Name = "anti_rank",
 		Handler = function(zone, ent, properties)
 			if(ent:IsPlayer()) then
-				if(table.HasValue(properties, Vermilion:GetUser(ent):GetRankName())) then Vermilion:AddNotification(ent, "You cannot enter this zone!", NOTIFY_ERROR) ent:Spawn() end
+				if(table.HasValue(properties, Vermilion:GetUser(ent):GetRankName())) then Vermilion:AddNotification(ent, "You cannot enter this zone!", nil, NOTIFY_ERROR) ent:Spawn() end
 			end
 		end,
 		Predictor = function(pos, current, all, vplayer)
@@ -539,7 +542,7 @@ function MODULE:InitShared()
 			for i,k in pairs(text) do
 				if(i < 3) then continue end
 				if(Vermilion:GetRank(k) == nil) then
-					log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
+					log("no_rank", nil, NOTIFY_ERROR)
 					return false
 				end
 			end
@@ -561,7 +564,7 @@ function MODULE:InitShared()
 				timer.Destroy(vplayer:SteamID() .. "ZoneEnter")
 				timer.Destroy(vplayer:SteamID() .. "ZoneLeave")
 				timer.Create(vplayer:SteamID() .. "ZoneEnter", 0.1, 1, function()
-					Vermilion:AddNotification(vplayer, "You have entered " .. zone:GetName(), NOTIFY_HINT)
+					Vermilion:AddNotification(vplayer, "You have entered " .. zone:GetName(), nil, NOTIFY_HINT)
 				end)
 			end
 		}
@@ -575,12 +578,12 @@ function MODULE:InitShared()
 				timer.Destroy(vplayer:SteamID() .. "ZoneLeave")
 				timer.Destroy(vplayer:SteamID() .. "ZoneEnter")
 				timer.Create(vplayer:SteamID() .. "ZoneLeave", 0.1, 1, function()
-					Vermilion:AddNotification(vplayer, "You have left " .. zone:GetName(), NOTIFY_HINT)
+					Vermilion:AddNotification(vplayer, "You have left " .. zone:GetName(), nil, NOTIFY_HINT)
 				end)
 			end
 		}
 	})
-	
+
 	self:RegisterMode({
 		Name = "jail",
 		Events = {
@@ -738,7 +741,7 @@ function MODULE:InitServer()
 			MODULE:UpdateClients(player.GetHumans())
 		end
 	end)
-	
+
 	local hooks = {
 		"PlayerSpawnEffect",
 		"PlayerSpawnNPC",
@@ -778,7 +781,7 @@ function MODULE:InitServer()
 					Vermilion:GetUser(vplayer).AssignedJail = nil
 				end
 			end
-			
+
 		end
 	end)
 
@@ -845,7 +848,7 @@ function MODULE:RegisterChatCommands()
 		CanRunOnDS = false,
 		Function = function(sender, text, log, glog)
 			if(MODULE.Point1[sender:SteamID()] == nil) then
-				log("You are not creating a zone.", NOTIFY_ERROR)
+				log("You are not creating a zone.", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE.Point1[sender:SteamID()] = nil
@@ -873,7 +876,7 @@ function MODULE:RegisterChatCommands()
 				return false
 			end
 			if(MODULE.Zones[text[1]] == nil) then
-				log("Zone does not exist!", NOTIFY_ERROR)
+				log("Zone does not exist!", nil, NOTIFY_ERROR)
 				return false
 			end
 			MODULE.Zones[text[1]] = nil
@@ -893,7 +896,7 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(MODULE.Zones[text[1]] == nil) then
-				log("This zone does not exist!", NOTIFY_ERROR)
+				log("This zone does not exist!", nil, NOTIFY_ERROR)
 				return
 			end
 			local tab = {}
@@ -930,19 +933,19 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.Zones[text[1]] == nil) then
-				log("This zone does not exist!", NOTIFY_ERROR)
+				log("This zone does not exist!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.Zones[text[1]]:HasMode(text[2])) then
-				log("This zone already has this mode enabled!", NOTIFY_ERROR)
+				log("This zone already has this mode enabled!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.ModeDefinitions[text[2]] == nil) then
-				log("This mode does not exist!", NOTIFY_ERROR)
+				log("This mode does not exist!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.ModeDefinitions[text[2]].PropValidator != nil) then
@@ -981,19 +984,19 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.Zones[text[1]] == nil) then
-				log("This zone does not exist!", NOTIFY_ERROR)
+				log("This zone does not exist!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(MODULE.ModeDefinitions[text[2]] == nil) then
-				log("This mode does not exist!", NOTIFY_ERROR)
+				log("This mode does not exist!", nil, NOTIFY_ERROR)
 				return
 			end
 			if(not MODULE.Zones[text[1]]:HasMode(text[2])) then
-				log("This zone doesn't have this mode enabled!", NOTIFY_ERROR)
+				log("This zone doesn't have this mode enabled!", nil, NOTIFY_ERROR)
 				return
 			end
 			MODULE.Zones[text[1]]:RemoveMode(text[2])
@@ -1016,7 +1019,7 @@ function MODULE:RegisterChatCommands()
 			log("Active zones: " .. table.concat(tab, ", "))
 		end
 	})
-	
+
 	Vermilion:AddChatCommand({
 		Name = "jail",
 		Description = "Send a player to jail.",
@@ -1047,34 +1050,34 @@ function MODULE:RegisterChatCommands()
 				end
 			end
 		end,
-		Function = function(sender, text, log, glog, tglog)
+		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 
 			local tplayer = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(tplayer)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return false
 			end
 			if(Vermilion:GetUser(tplayer).Jailed) then
 				Vermilion:GetUser(tplayer).Jailed = false
 				tplayer:Spawn()
-				tglog("zones:jail:release", { sender:GetName(), tplayer:GetName() })
+				glog("zones:jail:release", { sender:GetName(), tplayer:GetName() })
 				return
 			end
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return false
 			end
 			if(MODULE:GetZonesWithName(text[2]) == nil or not MODULE:GetZonesWithName(text[2]):HasMode("jail")) then
-				log(MODULE:TranslateStr("jail:nojail", nil, sender), NOTIFY_ERROR)
+				log("zones:jail:nojail", nil, NOTIFY_ERROR)
 				return false
 			end
 			Vermilion:GetUser(tplayer).Jailed = true
 			Vermilion:GetUser(tplayer).AssignedJail = text[2]
-			tglog("zones:jail:jail", { sender:GetName(), tplayer:GetName() })
+			glog("zones:jail:jail", { sender:GetName(), tplayer:GetName() })
 			local vervplayer = Vermilion:GetUser(tplayer)
 			local tzone = MODULE:GetZonesWithName(text[2])
 			if(vervplayer.Jailed and vervplayer.AssignedJail == tzone:GetName()) then

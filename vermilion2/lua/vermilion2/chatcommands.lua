@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -57,16 +57,19 @@ local commandShouldHave = {
 	{ "CommandFormat", "" }
 }
 
-local function commandGLOG(commandname, text, typ, time) -- Global Logger: use this to mute commands.
+local function commandGLOG(commandname, executor, text, replacements, typ, time) -- Global Logger: use this to mute commands.
 	if(text == nil) then return end
 	if(Vermilion:GetData("muted_commands", {}, true)[commandname] == false) then return end
-	Vermilion:BroadcastNotification(text, typ, time)
-end
-
-local function commandTGLog(commandname, text, values, typ, time)
-	if(text == nil) then return end
-	if(Vermilion:GetData("muted_commands", {}, true)[commandname] == false) then return end
-	Vermilion:TransBroadcastNotify(text, values, typ, time)
+	if(IsValid(executor)) then
+		if(Vermilion:HasPermission(executor, "anonymous_command_exec") && Vermilion:GetUser(executor):GetRank():GetName() != "owner" && replacements != nil) then
+			for i,k in pairs(replacements) do
+				if(k == executor:GetName()) then
+					replacements[i] = "Somebody"
+				end
+			end
+		end
+	end
+	Vermilion:BroadcastNotification(text, replacements, typ, time)
 end
 
 local function commandFilter(commandname)
@@ -107,7 +110,7 @@ function Vermilion:AddChatCommand(props)
 				end
 			end
 
-			local success = props.Function(sender, args, function(text) Vermilion.Log(text) end, function(text, typ, time) commandGLOG(props.Name, text, typ, time) end, function(text, values, typ, time) commandTGLog(props.Name, text, values, typ, time) end)
+			local success = props.Function(sender, args, function(text, replacements) Vermilion.Log(Vermilion:TranslateStr(text, replacements)) end, function(text, replacements, typ, time) commandGLOG(props.Name, vplayer, text, replacements, typ, time) end)
 			if(success == nil) then success = true end
 			if(not success) then
 				Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, sender))
@@ -143,9 +146,9 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 		logFunc = targetLogger
 	else
 		if(isConsole) then
-			logFunc = function(text) if(vplayer == nil and vplayer:SteamID() != "CONSOLE") then Vermilion.Log(text) else 
+			logFunc = function(text, replacements) if(vplayer == nil and vplayer:SteamID() != "CONSOLE") then Vermilion.Log(Vermilion:TranslateStr(text, replacements)) else
 				net.Start("VClientPrint")
-				net.WriteString(text)
+				net.WriteString(Vermilion:TranslateStr(text, replacements))
 				net.Send(vplayer)
 			end end
 			if(vplayer == nil) then
@@ -158,7 +161,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 				end
 			end
 		else
-			logFunc = function(text, typ, delay) Vermilion:AddNotification(targetLogger, text, typ, delay) end
+			logFunc = function(text, replacements, typ, delay) Vermilion:AddNotification(targetLogger, text, replacements, typ, delay) end
 		end
 	end
 	if(string.StartWith(text, Vermilion:GetData("command_prefix", "!", true))) then
@@ -170,7 +173,10 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 		local command = Vermilion.ChatCommands[commandName]
 		if(command != nil) then
 			for i,k in pairs(command.Permissions) do
-				if(not Vermilion:HasPermissionError(vplayer, k, logFunc)) then return "" end
+				if(not Vermilion:HasPermission(vplayer, k)) then
+					logFunc("access_denied", nil, NOTIFY_ERROR)
+					return ""
+				end
 			end
 			local atindexes = {}
 			for i,k in pairs(parts) do
@@ -188,13 +194,13 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 								end
 							end
 							if(not table.HasValue(k1.Indexes, k)) then
-								logFunc(Vermilion:TranslateStr("cmd_all_bad_pos", nil, vplayer), NOTIFY_ERROR)
+								logFunc("cmd_add_bad_pos", nil, NOTIFY_ERROR)
 								return ""
 							end
 						end
 					end
 				else
-					logFunc(Vermilion:TranslateStr("cmd_all_bad_pos", nil, vplayer), NOTIFY_ERROR)
+					logFunc("cmd_all_bad_pos", nil, NOTIFY_ERROR)
 					return ""
 				end
 				if(Vermilion:GetModule("event_logger") != nil) then
@@ -205,7 +211,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 					for i1,k1 in pairs(atindexes) do
 						edittable[k1] = k:GetName()
 					end
-					local success = command.Function(vplayer, edittable, logFunc, function() end, function() end) // <-- we ignore global output here, otherwise we get spammed.
+					local success = command.Function(vplayer, edittable, logFunc, function() end) // <-- we ignore global output here, otherwise we get spammed.
 					if(success == nil) then success = true end
 					if(not success) then
 						return "" // <-- we can assume that this error will happen again, so don't bother repeating.
@@ -213,8 +219,9 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 				end
 				if(command.AllBroadcast != nil) then
 					if(commandFilter(command.Name)) then
+						local ttext, rreplacements = command.AllBroadcast(vplayer, parts)
 						for i,k in pairs(VToolkit.GetValidPlayers()) do
-							Vermilion:AddNotification(k, command.AllBroadcast(vplayer, parts, k))
+							Vermilion:AddNotification(k, ttext, rreplacements)
 						end
 					end
 				end
@@ -222,7 +229,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 				if(Vermilion:GetModule("event_logger") != nil) then
 					Vermilion:GetModule("event_logger"):AddEvent("script", Vermilion:TranslateStr("event_logger:chatcommand", { vplayer:GetName(), commandName, table.concat(parts, ", ") }))
 				end
-				local success = command.Function(vplayer, parts, logFunc, function(text, typ, time) commandGLOG(commandName, text, typ, time) end, function(text, values, typ, time) commandTGLog(commandName, text, values, typ, time) end)
+				local success = command.Function(vplayer, parts, logFunc, function(text, replacements, typ, time) commandGLOG(commandName, vplayer, text, replacements, typ, time) end)
 				if(success == nil) then success = true end
 				if(not success) then
 					Vermilion.Log(Vermilion:TranslateStr("cmd_failure", nil, vplayer))
@@ -234,7 +241,7 @@ function Vermilion:HandleChat(vplayer, text, targetLogger, isConsole, oargs)
 			if(result == "") then
 				return result
 			end
-			logFunc(Vermilion:TranslateStr("cmd_notfound", nil, vplayer), NOTIFY_ERROR)
+			logFunc("cmd_notfound", nil, NOTIFY_ERROR)
 			return ""
 		end
 	else

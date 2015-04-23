@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -20,8 +20,14 @@
 local MODULE = MODULE
 MODULE.Name = "Rank Editor"
 MODULE.ID = "rank_editor"
-MODULE.Description = "Edits ranks"
+MODULE.Description = "Provides options for editing the rank hierachy used by Vermilion to determine who can do what, at what time, where, and who they are better than."
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"rank_editor",
+	"permission_editor",
+	"rank_assignment",
+	"rank_overview"
+}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"manage_ranks",
@@ -59,12 +65,12 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_ranks" },
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local target = Vermilion:GetUserBySteamID(text[2])
 			if(target != nil) then
-				log("Cannot add duplicate SteamID!", NOTIFY_ERROR)
+				log("Cannot add duplicate SteamID!", nil, NOTIFY_ERROR)
 				return
 			end
 			local usr = Vermilion:CreateUserObj(text[1], string.upper(text[2]), Vermilion:GetDefaultRank(), {})
@@ -80,12 +86,12 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_ranks" },
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 1) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local target = Vermilion:GetUserBySteamID(text[1])
 			if(target == nil) then
-				log("Cannot find SteamID in database!", NOTIFY_ERROR)
+				log("Cannot find SteamID in database!", nil, NOTIFY_ERROR)
 				return
 			end
 			for i,k in pairs(Vermilion.Data.Users) do
@@ -122,27 +128,27 @@ function MODULE:RegisterChatCommands()
 		end,
 		Function = function(sender, text, log, glog)
 			if(table.Count(text) < 2) then
-				log(Vermilion:TranslateStr("bad_syntax", nil, sender), NOTIFY_ERROR)
+				log("bad_syntax", nil, NOTIFY_ERROR)
 				return
 			end
 			local target = VToolkit.LookupPlayer(text[1])
 			if(not IsValid(target)) then
 				target = Vermilion:GetUserByName(text[1])
 				if(target == nil) then
-					log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+					log("no_users", nil, NOTIFY_ERROR)
 					return
 				else
 					if(Vermilion:GetRank(text[2]) == nil) then
-						log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
+						log("no_rank", nil, NOTIFY_ERROR)
 						return false
 					end
 					target:SetRank(Vermilion:GetRank(text[2]):GetUID())
-					log("Updated rank of offline player!", NOTIFY_GENERIC)
+					log("Updated rank of offline player!", nil, NOTIFY_GENERIC)
 					return
 				end
 			end
 			if(Vermilion:GetRank(text[2]) == nil) then
-				log(Vermilion:TranslateStr("no_rank", nil, sender), NOTIFY_ERROR)
+				log("no_rank", nil, NOTIFY_ERROR)
 				return false
 			end
 			local promotion = true
@@ -175,7 +181,7 @@ function MODULE:RegisterChatCommands()
 				target = VToolkit.LookupPlayer(text[1])
 			end
 			if(not IsValid(target)) then
-				log(Vermilion:TranslateStr("no_users", nil, sender), NOTIFY_ERROR)
+				log("no_users", nil, NOTIFY_ERROR)
 				return
 			end
 			if(target == sender) then
@@ -235,9 +241,9 @@ function MODULE:InitShared()
 		end
 		return Vermilion:GetUser(self):GetRankName()
 	end
-	
-	
-	
+
+
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		local mod = Vermilion:GetModule("server_settings")
 		if(mod != nil) then
@@ -370,7 +376,7 @@ function MODULE:InitServer()
 			trank:SetParent(Vermilion:GetRankByID(proposedrank))
 		end
 	end)
-	
+
 	self:AddLPHook("PlayerInitialSpawn", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "identify_as_admin")) then
 			vplayer:SetNWString("UserGroup", "admin")
@@ -411,6 +417,7 @@ function MODULE:InitClient()
 		end
 
 		local rank = sender:GetNWString("Vermilion_Rank")
+		rank = Vermilion:GetRankByID(rank).Name
 
 		local ranku = string.SetChar(rank, 1, string.upper(string.GetChar(rank, 1)))
 		table.insert(tab, Vermilion.Colours.White)
@@ -987,8 +994,8 @@ function MODULE:InitClient()
 				VToolkit:CreateSearchBox(rankPermissions)
 
 
-				
-				
+
+
 				allPermissions = VToolkit:CreateList({
 					cols = {
 						"Name",

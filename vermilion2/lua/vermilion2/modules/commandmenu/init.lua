@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -20,8 +20,11 @@
 local MODULE = MODULE
 MODULE.Name = "Player Management Menu"
 MODULE.ID = "playermanagement"
-MODULE.Description = "<insert useful and informative description here>"
+MODULE.Description = "Adds a tab to the Vermilion Menu that lets players execute *chat* commands in a slow and inefficient way (hint: maybe using the chat commands from the *chat box* would be a good idea?)"
 MODULE.Author = "Ned"
+MODULE.Tabs = {
+	"playermanagement"
+}
 MODULE.Permissions = {
 	"view_command_menu"
 }

@@ -433,7 +433,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				hook.Run(Vermilion.Event.PlayerChangeRank, self, old, rank)
 				local ply = self:GetEntity()
 				if(IsValid(ply)) then
-					Vermilion:AddNotification(ply, Vermilion:TranslateStr("change_rank", { self.Rank }, ply))
+					Vermilion:AddNotification(ply, "change_rank", {self.Rank})
 					ply:SetNWString("Vermilion_Rank", self.Rank)
 					Vermilion:SyncClientRank(ply)
 				end
@@ -515,14 +515,6 @@ function Vermilion:HasPermission(vplayer, permission)
 	if(usr != nil) then
 		return usr:HasPermission(permission)
 	end
-end
-
-function Vermilion:HasPermissionError(vplayer, permission, log)
-	if(not self:HasPermission(vplayer, permission)) then
-		log(self:TranslateStr("access_denied"), NOTIFY_ERROR)
-		return false
-	end
-	return true
 end
 
 function Vermilion:GetUsersWithPermission(permission)
@@ -831,9 +823,9 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	timer.Simple(1, function()
 		if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 		if(new) then
-			Vermilion:TransBroadcastNotify("config:join:first", { vplayer:GetName() })
+			Vermilion:BroadcastNotify("config:join:first", { vplayer:GetName() })
 		else
-			Vermilion:TransBroadcastNotify("config:join", { vplayer:GetName() })
+			Vermilion:BroadcastNotify("config:join", { vplayer:GetName() })
 		end
 	end)
 end)
@@ -843,7 +835,7 @@ gameevent.Listen("player_disconnect")
 Vermilion:AddHook("player_disconnect", "DisconnectMessage", true, function(data)
 	if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end
 	if(string.find(data.reason, "Kicked by")) then return end
-	Vermilion:TransBroadcastNotify("config:left", { data.name, data.reason })
+	Vermilion:BroadcastNotify("config:left", { data.name, data.reason })
 end)
 
 

@@ -148,7 +148,7 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
-			{ "2.5.0 - TBA", {
+			{ "2.5.0 - Sometime in June/July?", {
 					"Rebuilt module data storage mechanisms",
 					"Ranks are now addressed by unique identifiers",
 					"Updated default rank data to be more complex",
@@ -198,7 +198,12 @@ MENU:AddPage({
 					"Fixed inability to remove custom gimps",
 					"Fixed script error when changing level with negative time",
 					"Added option to disable prop protection nags",
-					"Added anti-spawncamp to Server Settings"
+					"Added anti-spawncamp to Server Settings",
+					"Notifications are now localised by default",
+					"Rewritten the notification localisation to take place on the client",
+					"Added the ability to execute commands anonymously (doesn't work for owner yet)",
+					"Updated the module viewer to actually show information",
+					"Updated some module descriptions to be more informative"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -527,18 +532,58 @@ MENU:AddPage({
 		paneldata.Description = description
 
 
+		local tabs = VToolkit:CreatePropertySheet()
+		tabs:Dock(FILL)
+		tabs:SetParent(infopanel)
+		tabs.VHideBG = true
 
-
-		local scrollp = vgui.Create("DScrollPanel")
-		scrollp:SetParent(infopanel)
-		scrollp:Dock(FILL)
-		scrollp:DockMargin(0, 10, 0, 0)
-		scrollp:SetVisible(false)
 
 		net.Receive("VModuleDataUpdate", function()
+			if(IsValid(tabs)) then
+				tabs:Remove()
+				tabs = VToolkit:CreatePropertySheet()
+				tabs:Dock(FILL)
+				tabs:SetParent(infopanel)
+				tabs.VHideBG = true
+			end
+			local mod = Vermilion:GetModule(net.ReadString())
+
 			enableCB.CanUpdate = false
 			enableCB:SetValue(net.ReadBoolean())
 			enableCB.CanUpdate = true
+
+			if(mod == nil) then return end
+
+			if(mod.Tabs != nil and table.Count(mod.Tabs) > 0) then
+				local tabsPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("modules:tabs"), "icon16/application_side_list.png", Vermilion:TranslateStr("modules:tabs:tt"), false)
+				local tabList = VToolkit:CreateList({
+					cols = {
+						Vermilion:TranslateStr("modules:tabs:tabletitle")
+					},
+					centre = true
+				})
+				tabList:SetParent(tabsPanel)
+				tabList:Dock(FILL)
+				for i,k in pairs(mod.Tabs) do
+					tabList:AddLine(MENU.Pages[k].Name)
+				end
+			end
+
+			if(mod.Permissions != nil and table.Count(mod.Permissions) > 0) then
+				local permissionsPanel = tabs:AddBlankSheet(Vermilion:TranslateStr("modules:permissions"), "icon16/link.png", Vermilion:TranslateStr("modules:permissions:tt"), false)
+				local permissionList = VToolkit:CreateList({
+					cols = {
+						Vermilion:TranslateStr("modules:permissions:tabletitle")
+					},
+					centre = true
+				})
+				permissionList:SetParent(permissionsPanel)
+				permissionList:Dock(FILL)
+				for i,k in pairs(mod.Permissions) do
+					permissionList:AddLine(k)
+				end
+			end
+
 		end)
 
 	end,
