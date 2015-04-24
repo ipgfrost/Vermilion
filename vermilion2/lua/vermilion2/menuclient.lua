@@ -203,7 +203,8 @@ MENU:AddPage({
 					"Rewritten the notification localisation to take place on the client",
 					"Added the ability to execute commands anonymously (doesn't work for owner yet)",
 					"Updated the module viewer to actually show information",
-					"Updated some module descriptions to be more informative"
+					"Updated some module descriptions to be more informative",
+					"Fixed bug with event logger and Wiremod"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

@@ -135,6 +135,7 @@ function MODULE:InitServer()
 	end)
 
 	self:AddHook("PlayerEnteredVehicle", function(ply, veh, role)
+		if(not IsValid(ply) or not IsValid(veh)) then return end
 		if(veh.Vermilion_Owner == nil) then
 			MODULE:AddEvent("car", ply:GetName() .. " entered " .. veh:GetClass() .. " with model (" .. veh:GetModel() .. ") near " .. table.concat({ply:GetPos().x, ply:GetPos().y, ply:GetPos().z}, ":"))
 			return
