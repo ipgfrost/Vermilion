@@ -446,7 +446,8 @@ function MODULE:InitClient()
 				function ln:OnCursorMoved(x,y)
 					if(IsValid(paneldata.PreviewPanel)) then
 						local x, y = input.GetCursorPos()
-						paneldata.PreviewPanel:SetPos(x - 275, y - 202)
+						//paneldata.PreviewPanel:SetPos(x - 275, y - 202)
+						paneldata.PreviewPanel:SetPos(x - 180, y - 117)
 					end
 
 					if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end

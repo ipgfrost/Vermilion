@@ -117,13 +117,23 @@ MODULE.DefaultPermissions = {
 	}
 }
 
+local keylist = {}
+if(CLIENT) then
+	for i = 0, 200, 1 do
+		if(input.GetKeyName(i) != nil) then
+			table.insert(keylist, input.GetKeyName(i))
+		end
+	end
+end
+
 
 
 local categories = {
 	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
 	{ Name = MODULE:TranslateStr("cat:immunity"), ID = "Immunity", Order = 1 },
 	{ Name = MODULE:TranslateStr("cat:spawncampprevention"), ID = "SpawncampPrevention", Order = 30 },
-	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 }
+	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 },
+	{ Name = MODULE:TranslateStr("cat:danger"), ID = "Danger", Order = 1000 }
 }
 
 local options = {
@@ -138,6 +148,11 @@ local options = {
 			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
 	{ Name = "enable_no_damage", GuiText = MODULE:TranslateStr("damage"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("all_players"),
+			MODULE:TranslateStr("permissions_based")
+		}, Category = "Limits", Default = 3 },
+	{ Name = "enable_sprinting", GuiText = MODULE:TranslateStr("sprint"), Type = "Combobox", Options = {
 			MODULE:TranslateStr("off"),
 			MODULE:TranslateStr("all_players"),
 			MODULE:TranslateStr("permissions_based")
@@ -202,7 +217,7 @@ local options = {
 			MODULE:TranslateStr("pvpmode:disable"),
 			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Misc", Permission = "*", Function = function()
+	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Danger", Permission = "*", Function = function()
 		VToolkit:CreateConfirmDialog(MODULE:TranslateStr("resetconf:question"), function()
 				MODULE:NetCommand("VResetConfiguration")
 			end, {
@@ -212,6 +227,8 @@ local options = {
 			})
 		end
 	},
+	{ Name = "forced_menu_enabled", GuiText = MODULE:TranslateStr("forced_menu_keybind:enabled"), Type = "Checkbox", Category = "Misc", Permission = "*", Default = false },
+	{ Name = "forced_menu_keybind", GuiText = MODULE:TranslateStr("forced_menu_keybind:key"), Type = "Combobox", Options = keylist, Category = "Misc", Permission = "*", Default = 1, SendText = true },
 	{ Name = "enable_spawncamp_protection", GuiText = MODULE:TranslateStr("spawncampprevention:enable"), Type = "Checkbox", Category = "SpawncampPrevention", Default = false },
 	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 },
 	//{ Name = "gamemode", GuiText = MODULE:TranslateStr("active_gamemode"), Type = "Combobox", Options = VToolkit.GetGamemodeNames(), Category = "Misc", Default = table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()) }
@@ -1059,10 +1076,28 @@ function MODULE:InitServer()
 			end)
 		end
 	end)
+	
+	
+	self:AddDataChangeHook("forced_menu_keybind", "FMKB_Key", function(value)
+		VToolkit:SetGlobalValue("FMKB_Key", value)
+	end)
+	self:AddDataChangeHook("forced_menu_enabled", "FMKB_Enabled", function(value)
+		VToolkit:SetGlobalValue("FMKB_Enabled", value)
+	end)
+	VToolkit:SetGlobalValue("FMKB_Enabled", MODULE:GetData("forced_menu_enabled", false, true))
+	VToolkit:SetGlobalValue("FMKB_Key", MODULE:GetData("forced_menu_keybind", "0", true))
 
 end
 
 function MODULE:InitClient()
+
+	self:AddHook("PlayerButtonUp", "FMKB_Check", function(ply, key)
+		if(VToolkit:GetGlobalValue("FMKB_Enabled") and input.LookupBinding("vermilion_menu") == nil) then
+			if(input.GetKeyName(key) == VToolkit:GetGlobalValue("FMKB_Key")) then
+				RunConsoleCommand("vermilion_menu")
+			end
+		end
+	end)
 
 	self:AddHook("PlayerNoClip", function(vplayer, enabled)
 		if(enabled) then
@@ -1075,7 +1110,13 @@ function MODULE:InitClient()
 		for i,k in pairs(net.ReadTable()) do
 			for i1,k1 in pairs(options) do
 				if(i == tostring(k1.Module) .. k1.Name) then
-					if(k1.Type == "Combobox") then k1.Impl:ChooseOptionID(k) end
+					if(k1.Type == "Combobox") then
+						if(k1.SendText) then
+							k1.Impl:ChooseOptionID(table.KeyFromValue(keylist, k))
+						else
+							k1.Impl:ChooseOptionID(k)
+						end
+					end
 					if(k1.Type == "Checkbox") then k1.Impl:SetValue(k) end
 					if(k1.Type == "Slider") then k1.Impl:SetValue(k) end
 				end
@@ -1313,7 +1354,11 @@ function MODULE:InitClient()
 					function combobox:OnSelect(index)
 						if(MODULE.UpdatingGUI) then return end
 						MODULE:NetStart("VServerUpdate")
-						net.WriteTable({{ Module = k.Module, Name = k.Name, Value = index}})
+						if(k.SendText) then
+							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = k.Options[index] }})
+						else
+							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = index}})
+						end
 						net.SendToServer()
 					end
 

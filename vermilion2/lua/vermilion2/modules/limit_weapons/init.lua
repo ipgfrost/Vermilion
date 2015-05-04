@@ -173,6 +173,7 @@ function MODULE:InitClient()
 					end
 				end
 			end
+			blocklist:OnRowSelected()
 		end
 	end)
 
@@ -210,6 +211,7 @@ function MODULE:InitClient()
 					["weapon_stunstick"] = "models/weapons/w_stunbaton.mdl",
 					["weapon_physgun"] = "models/weapons/w_Physics.mdl"
 				}
+
 				function paneldata.getMdl(class)
 					if(default[class] != nil) then return default[class] end
 					return weapons.Get(class).WorldModel
@@ -312,6 +314,7 @@ function MODULE:InitClient()
 						net.SendToServer()
 
 						rankBlockList:RemoveLine(k:GetID())
+						rankBlockList:OnRowSelected()
 					end
 				end)
 				unblockWeapon:SetPos(select(1, rankBlockList:GetPos()) + rankBlockList:GetWide() + 10, 130)

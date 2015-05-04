@@ -169,6 +169,7 @@ function MODULE:InitClient()
 					end
 				end
 			end
+			model_list:OnRowSelected()
 		end
 		is_blacklist:SetDisabled(true)
 		is_blacklist:SetValue(net.ReadBoolean())
@@ -194,7 +195,7 @@ function MODULE:InitClient()
 				local isBlacklist = nil
 				local rankPermissions = nil
 
-				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel)
+				paneldata.PreviewPanel = VToolkit:CreatePreviewPanel("model", panel, nil, "LEFT")
 
 
 				rankList = VToolkit:CreateList({
@@ -289,6 +290,7 @@ function MODULE:InitClient()
 						net.SendToServer()
 
 						rankPermissions:RemoveLine(k:GetID())
+						rankPermissions:OnRowSelected()
 					end
 				end)
 				delModel:SetPos(select(1, rankPermissions:GetPos()) + rankPermissions:GetWide() + 10, 130)
@@ -330,31 +332,10 @@ function MODULE:InitClient()
 
 						ln.ModelPath = k.ClassName
 
-						ln.OldCursorMoved = ln.OnCursorMoved
-						ln.OldCursorEntered = ln.OnCursorEntered
-						ln.OldCursorExited = ln.OnCursorExited
-
-						function ln:OnCursorEntered()
-							paneldata.PreviewPanel:SetVisible(true)
+						ln.PreviewPanelUpdater = function()
 							paneldata.PreviewPanel.ModelView:SetModel(ln.ModelPath)
-
-							if(self.OldCursorEntered) then self:OldCursorEntered() end
 						end
-
-						function ln:OnCursorExited()
-							paneldata.PreviewPanel:SetVisible(false)
-
-							if(self.OldCursorExited) then self:OldCursorExited() end
-						end
-
-						function ln:OnCursorMoved(x,y)
-							if(IsValid(paneldata.PreviewPanel)) then
-								local x, y = input.GetCursorPos()
-								paneldata.PreviewPanel:SetPos(x - 180, y - 117)
-							end
-
-							if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
-						end
+						paneldata.PreviewPanel:OverloadLine(ln)
 					end
 				end
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)

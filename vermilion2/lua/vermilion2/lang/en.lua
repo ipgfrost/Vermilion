@@ -692,7 +692,8 @@ lang:Add("server_settings:all_allowed", "All Players Allowed")
 lang:Add("server_settings:cat:limits", "Limits")
 lang:Add("server_settings:cat:immunity", "Immunity")
 lang:Add("server_settings:cat:misc", "Misc")
-lang:Add("server_settings:unlimited_ammo", "Unlimited ammunition")
+lang:Add("server_settings:cat:danger", "Danger Zone")
+lang:Add("server_settings:unlimited_ammo", "Unlimited ammunition:")
 lang:Add("server_settings:limitremover", "Spawn Limit Remover:")
 lang:Add("server_settings:damage", "Disable Damage:")
 lang:Add("server_settings:flashlight", "Flashlight Control:")
@@ -731,6 +732,10 @@ lang:Add("server_settings:noemergency", "NO!")
 lang:Add("server_settings:cat:spawncampprevention", "Spawncamp Prevention")
 lang:Add("server_settings:spawncampprevention:enable", "Enable Spawncamp Prevention")
 lang:Add("server_settings:spawncampprevention:timer", "Invincibility Time")
+
+lang:Add("server_settings:sprint", "Sprint Permissions:")
+lang:Add("server_settings:forced_menu_keybind:enabled", "Enable Forced Menu Keybind")
+lang:Add("server_settings:forced_menu_keybind:key", "Forced Key:")
 
 
 --[[

@@ -110,6 +110,7 @@ function MODULE:InitClient()
 					end
 				end
 			end
+			blocklist:OnRowSelected()
 		end
 	end)
 

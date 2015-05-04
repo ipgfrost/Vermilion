@@ -133,7 +133,8 @@ Vermilion.Event = {
 	["RankDeleted"] = "Vermilion2_RankDelete",
 	["RankRenamed"] = "Vermilion2_RankRename",
 	["ShuttingDown"] = "Vermilion2_Shutdown",
-	["PlayerChangeRank"] = "Vermilion2_PlayerRankChange"
+	["PlayerChangeRank"] = "Vermilion2_PlayerRankChange",
+	["AnythingSpawned"] = "Vermilion2_AnythingSpawned"
 }
 
 function Vermilion.Log( str, forceside )

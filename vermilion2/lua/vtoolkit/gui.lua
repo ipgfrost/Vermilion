@@ -164,7 +164,7 @@ function VToolkit:CreateComboBox(options, selected, nonalphabetical)
 	if(isnumber(selected)) then
 		cbox:ChooseOptionID(selected)
 	end
-	
+
 	if(nonalphabetical) then
 		-- I don't want alphabetical sorting, thanks.
 		function cbox:OpenMenu(pControlOpener)
@@ -176,7 +176,7 @@ function VToolkit:CreateComboBox(options, selected, nonalphabetical)
 
 			-- Don't do anything if there aren't any options..
 			if ( #self.Choices == 0 ) then return end
-			
+
 			-- If the menu still exists and hasn't been deleted
 			-- then just close it and don't open a new one.
 			if ( IsValid( self.Menu ) ) then
@@ -185,19 +185,19 @@ function VToolkit:CreateComboBox(options, selected, nonalphabetical)
 			end
 
 			self.Menu = DermaMenu()
-			
-			
+
+
 			for k, v in pairs( self.Choices ) do
 				self.Menu:AddOption( v, function() self:ChooseOption( v, k ) end )
 			end
-			
+
 			local x, y = self:LocalToScreen( 0, self:GetTall() )
-			
+
 			self.Menu:SetMinimumWidth( self:GetWide() )
 			self.Menu:Open( x, y, false, self )
 		end
 	end
-	
+
 	if(self:GetSkinComponent("ComboBox") != nil) then
 		if(self:GetSkinComponent("ComboBox").Config != nil) then
 			self:GetSkinComponent("ComboBox").Config(cbox)
@@ -861,8 +861,46 @@ function VToolkit:CreateSearchBox(listView, changelogic)
 	return box
 end
 
-function VToolkit:CreatePreviewPanel(typ, parent, move)
+function VToolkit:CreatePreviewPanel(typ, parent, move, side)
 	local PreviewPanel = vgui.Create("DPanel")
+
+	function PreviewPanel:OverloadLine(ln)
+		ln.OldCursorMoved = ln.OnCursorMoved
+		ln.OldCursorEntered = ln.OnCursorEntered
+		ln.OldCursorExited = ln.OnCursorExited
+
+		function ln:OnCursorEntered()
+			PreviewPanel:SetVisible(true)
+			if(isfunction(self.PreviewPanelUpdater)) then
+				self:PreviewPanelUpdater()
+			end
+			if(self.OldCursorEntered) then self:OldCursorEntered() end
+		end
+
+		function ln:OnCursorExited()
+			PreviewPanel:SetVisible(false)
+
+			if(self.OldCursorExited) then self:OldCursorExited() end
+		end
+
+		function ln:OnCursorMoved(x,y)
+			if(IsValid(PreviewPanel)) then
+				local x, y = input.GetCursorPos()
+				if(side == "TOP" or side == nil) then
+					PreviewPanel:SetPos(x - 275, y - 202)
+				end
+				if(side == "RIGHT") then
+					PreviewPanel:SetPos(x - 180, y - 117)
+				end
+				if(side == "LEFT") then
+					PreviewPanel:SetPos(x, y - 117)
+				end
+			end
+
+			if(self.OldCursorMoved) then self:OldCursorMoved(x,y) end
+		end
+	end
+
 	local x,y = input.GetCursorPos()
 	PreviewPanel:SetPos(x - 250, y - 64)
 	PreviewPanel:SetSize(148, 148)
@@ -897,23 +935,23 @@ end
 
 function VToolkit:CreateHider(parent)
 	local panel = vgui.Create("DPanel")
-	
+
 	panel:SetSize(parent:GetSize())
 	panel:Hide()
 	panel:SetParent(parent)
 	panel:SetAlpha(0)
-	
+
 	function panel:Paint(w,h)
 		surface.SetDrawColor(Color(0, 0, 0, self:GetAlpha()))
 		surface.DrawRect(0, 0, w, h)
 	end
-	
+
 	function panel:HiderShow()
 		self:SetAlpha(0)
 		self:Show()
 		self:AlphaTo(170, 0.25, 0)
 	end
-	
+
 	function panel:HiderHide()
 		self:Show()
 		self:SetAlpha(170)
@@ -921,7 +959,7 @@ function VToolkit:CreateHider(parent)
 			self:Hide()
 		end)
 	end
-	
+
 	return panel
 end
 
@@ -964,13 +1002,13 @@ function VToolkit:CreateLeftDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
-	
+
 	drawer.OMTF = drawer.MoveToFront
 	function drawer:MoveToFront()
 		hider:MoveToFront()
 		self:OMTF()
 	end
-	
+
 	hider:MoveToFront()
 	drawer:MoveToFront()
 
@@ -994,7 +1032,7 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 		cRKPanel:SetSize(50, 20)
 		cRKPanel:SetParent(drawer)
 	end
-	
+
 	local hider = VToolkit:CreateHider(parent)
 
 	function drawer:Open()
@@ -1016,7 +1054,7 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 			self:Open()
 		end
 	end
-	
+
 	drawer.OMTF = drawer.MoveToFront
 	function drawer:MoveToFront()
 		hider:MoveToFront()
@@ -1025,6 +1063,6 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 
 	hider:MoveToFront()
 	drawer:MoveToFront()
-	
+
 	return drawer
 end

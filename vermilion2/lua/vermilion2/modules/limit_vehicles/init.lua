@@ -119,6 +119,7 @@ function MODULE:InitClient()
 					end
 				end
 			end
+			blocklist:OnRowSelected()
 		end
 	end)
 
@@ -238,6 +239,7 @@ function MODULE:InitClient()
 						net.SendToServer()
 
 						rankBlockList:RemoveLine(k:GetID())
+						rankBlockList:OnRowSelected()
 					end
 				end)
 				unblockVehicle:SetPos(select(1, rankBlockList:GetPos()) + rankBlockList:GetWide() + 10, 130)

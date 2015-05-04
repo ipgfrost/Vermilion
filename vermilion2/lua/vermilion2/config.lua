@@ -952,6 +952,7 @@ timer.Simple(1, function()
 					ent:SetNWString("Vermilion_Owner", vplayer:SteamID())
 					duplicator.StoreEntityModifier(ent, "Vermilion_Owner", { Owner = vplayer:SteamID() })
 				end
+				hook.Run(Vermilion.Event.AnythingSpawned, vplayer, ent)
 			end
 			cleanup.OldAdd(vplayer, typ, ent)
 		end
