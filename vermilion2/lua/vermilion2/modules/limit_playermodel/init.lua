@@ -22,9 +22,6 @@ MODULE.Name = "Playermodel Enforcer"
 MODULE.ID = "limit_playermodel"
 MODULE.Description = "Set the player models that players can/cannot use or force a specific model for a rank."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_playermodel"
-}
 MODULE.Permissions = {
 	"manage_playermodels"
 }
@@ -178,7 +175,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_playermodel",
 			Name = "Player Model",
 			Order = 3,

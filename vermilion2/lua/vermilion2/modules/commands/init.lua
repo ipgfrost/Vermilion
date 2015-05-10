@@ -22,9 +22,6 @@ MODULE.Name = "Commands"
 MODULE.ID = "commands"
 MODULE.Description = "Provides some basic chat commands and facilitates gimps. Does not actually HANDLE chat commands."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"gimps"
-}
 MODULE.Permissions = {
 	"tplook",
 	"tppos",
@@ -2224,7 +2221,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "gimps",
 		Name = Vermilion:TranslateStr("menu:gimps"),
 		Order = 7,

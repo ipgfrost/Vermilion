@@ -22,9 +22,6 @@ MODULE.Name = "NPC Limits"
 MODULE.ID = "limit_npc"
 MODULE.Description = "Prevent players from using certain NPCs."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_npc"
-}
 MODULE.Permissions = {
 	"manage_npc_limits"
 }
@@ -125,7 +122,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_npc",
 			Name = "NPCs",
 			Order = 5,

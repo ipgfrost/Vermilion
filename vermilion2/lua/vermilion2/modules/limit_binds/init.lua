@@ -22,9 +22,6 @@ MODULE.Name = "Keybind Blocker"
 MODULE.ID = "bindcontrol"
 MODULE.Description = "Stops clients from abusing keybinds such as \"say\"."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"bindcontrol"
-}
 MODULE.Permissions = {
 	"manage_keybinds"
 }
@@ -151,7 +148,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "bindcontrol",
 			Name = "Bind Blocker",
 			Order = 5,

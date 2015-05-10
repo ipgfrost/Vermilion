@@ -22,9 +22,6 @@ MODULE.Name = "Bans"
 MODULE.ID = "bans"
 MODULE.Description = "Manages the ban system and prevents banned users from reconnecting."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"bans"
-}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"ban_user",
@@ -547,7 +544,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 	
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "bans",
 			Name = Vermilion:TranslateStr("menu:bans"),
 			Order = 1,

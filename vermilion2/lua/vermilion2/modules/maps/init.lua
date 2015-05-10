@@ -20,11 +20,8 @@
 local MODULE = MODULE
 MODULE.Name = "Maps"
 MODULE.ID = "map"
-MODULE.Description = "Change or reload the map after a specified delay."
+MODULE.Description = "Change or reload the map after a specified delay. This module has a soft dependency on the sound module, but does not require it."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"map"
-}
 MODULE.Permissions = {
 	"manage_map"
 }
@@ -561,7 +558,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "map",
 			Name = "Change Map",
 			Order = 10,

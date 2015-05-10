@@ -22,9 +22,6 @@ MODULE.Name = "Player Management Menu"
 MODULE.ID = "playermanagement"
 MODULE.Description = "Adds a tab to the Vermilion Menu that lets players execute *chat* commands in a slow and inefficient way (hint: maybe using the chat commands from the *chat box* would be a good idea?)"
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"playermanagement"
-}
 MODULE.Permissions = {
 	"view_command_menu"
 }
@@ -38,7 +35,7 @@ end
 function MODULE:InitClient()
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "playermanagement",
 		Name = Vermilion:TranslateStr("menu:playermanagement"),
 		Order = 3,

@@ -22,9 +22,6 @@ MODULE.Name = "Entity Limits"
 MODULE.ID = "limit_entities"
 MODULE.Description = "Prevent players from spawning certain entities."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_entities"
-}
 MODULE.Permissions = {
 	"manage_entity_limits"
 }
@@ -123,7 +120,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_entities",
 			Name = "Entities",
 			Order = 4,

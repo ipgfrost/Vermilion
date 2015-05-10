@@ -22,9 +22,6 @@ MODULE.Name = "Weapon Limits"
 MODULE.ID = "limit_weapons"
 MODULE.Description = "Prevent players from spawning/using/picking up certain weapons."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_weapons"
-}
 MODULE.Permissions = {
 	"manage_weapon_limits"
 }
@@ -179,7 +176,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_weapons",
 			Name = "Weapons",
 			Order = 1,

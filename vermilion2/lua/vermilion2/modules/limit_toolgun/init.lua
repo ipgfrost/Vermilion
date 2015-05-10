@@ -22,9 +22,6 @@ MODULE.Name = "Toolgun Limits"
 MODULE.ID = "limit_toolgun"
 MODULE.Description = "Prevent players from using certain tools."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_toolgun"
-}
 MODULE.Permissions = {
 	"manage_toolgun_limits"
 }
@@ -116,7 +113,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_toolgun",
 			Name = "Tools",
 			Order = 2,

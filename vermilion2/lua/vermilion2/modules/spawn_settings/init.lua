@@ -22,9 +22,6 @@ MODULE.Name = "Spawn Parameters"
 MODULE.ID = "spawn_settings"
 MODULE.Description = "Allows players to spawn with custom settings."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"spawn_settings"
-}
 MODULE.Permissions = {
 	"manage_spawn_settings"
 }
@@ -266,7 +263,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "spawn_settings",
 			Name = "Spawn Parameters",
 			Order = 4,

@@ -22,12 +22,6 @@ MODULE.Name = "Rank Editor"
 MODULE.ID = "rank_editor"
 MODULE.Description = "Provides options for editing the rank hierachy used by Vermilion to determine who can do what, at what time, where, and who they are better than."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"rank_editor",
-	"permission_editor",
-	"rank_assignment",
-	"rank_overview"
-}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"manage_ranks",
@@ -464,7 +458,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("ranks", 3)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "rank_editor",
 			Name = "Rank Editor",
 			Order = 0,
@@ -679,7 +673,7 @@ function MODULE:InitClient()
 
 					local rankName = rankList:GetSelected()[1].UniqueRankID
 
-					local mixer = VToolkit:CreateColourMixer(true, false, true, Vermilion:GetRankColour(rankName), function(colour)
+					local mixer = VToolkit:CreateColourMixer(true, false, true, Vermilion:GetRankByID(rankName):GetColour(), function(colour)
 
 					end)
 					mixer:SetPos(10, 30)
@@ -865,7 +859,7 @@ function MODULE:InitClient()
 			end
 		})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "permission_editor",
 			Name = "Permission Editor",
 			Order = 1,
@@ -1009,7 +1003,7 @@ function MODULE:InitClient()
 			end
 		})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "rank_assignment",
 			Name = "Rank Assignment",
 			Order = 2,
@@ -1099,7 +1093,7 @@ function MODULE:InitClient()
 			end
 		})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "rank_overview",
 			Name = "Rank Overview",
 			Order = 3,

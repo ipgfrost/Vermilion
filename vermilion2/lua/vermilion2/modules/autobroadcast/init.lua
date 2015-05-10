@@ -22,9 +22,6 @@ MODULE.Name = "Automatic Broadcast"
 MODULE.ID = "autobroadcast"
 MODULE.Description = "Allows defined messages to be broadcast through the chat using an interval."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"autobroadcast"
-}
 MODULE.Permissions = {
 	"manage_auto_broadcast"
 }
@@ -126,7 +123,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "autobroadcast",
 			Name = Vermilion:TranslateStr("menu:autobroadcast"),
 			Order = 6,

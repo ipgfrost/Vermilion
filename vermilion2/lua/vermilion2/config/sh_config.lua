@@ -78,7 +78,12 @@ end
 ]]--
 
 function Vermilion:GetUser(vplayer)
-	if(not isfunction(vplayer.SteamID)) then return end
+	if(not isfunction(vplayer.SteamID)) then
+		return
+	end
+	if(CLIENT and vplayer:GetNWString("SteamID") != nil) then
+		return Vermilion:GetUserBySteamID(vplayer:GetNWString("SteamID"))
+	end
 	return Vermilion:GetUserBySteamID(vplayer:SteamID())
 end
 

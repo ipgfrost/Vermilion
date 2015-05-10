@@ -22,9 +22,6 @@ MODULE.Name = "Donator Checker"
 MODULE.ID = "donator"
 MODULE.Description = "Checks with a web server to check if a player has donated to the server. Depending on the response, can automatically promote them to a specific rank ect."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"donator_mode"
-}
 MODULE.Permissions = {
 	"manage_donator_mode"
 }
@@ -89,7 +86,7 @@ end
 function MODULE:InitClient()
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "donator_mode",
 		Name = "Donator Promotion",
 		Order = 5,

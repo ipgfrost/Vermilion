@@ -22,9 +22,6 @@ MODULE.Name = "Vehicle Limits"
 MODULE.ID = "limit_vehicle"
 MODULE.Description = "Prevent players from spawning certain vehicles."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_vehicle"
-}
 MODULE.Permissions = {
 	"manage_vehicle_limits"
 }
@@ -125,7 +122,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_vehicle",
 			Name = "Vehicles",
 			Order = 6,

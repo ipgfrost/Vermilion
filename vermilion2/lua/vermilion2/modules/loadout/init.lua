@@ -22,9 +22,6 @@ MODULE.Name = "Loadouts"
 MODULE.ID = "loadout"
 MODULE.Description = "Set the weapons that players spawn with."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"loadout"
-}
 MODULE.Permissions = {
 	"manage_loadout"
 }
@@ -158,7 +155,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "loadout",
 			Name = "Loadouts",
 			Order = 6,

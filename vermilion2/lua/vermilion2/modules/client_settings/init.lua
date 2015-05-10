@@ -22,9 +22,6 @@ MODULE.Name = "Client Settings"
 MODULE.ID = "client_settings"
 MODULE.Description = "Allows the player to modify the operation of the Vermilion Client."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"client_settings"
-}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 
@@ -63,7 +60,7 @@ function MODULE:InitClient()
 		SetAs = "text"
 	})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "client_settings",
 		Name = Vermilion:TranslateStr("menu:client_settings"),
 		Order = 0.5,

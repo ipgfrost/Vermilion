@@ -22,9 +22,6 @@ MODULE.Name = "Chat Censor"
 MODULE.ID = "chat_censor"
 MODULE.Description = "Blocks words and IPv4 addresses in chat."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"chat_censor"
-}
 MODULE.Permissions = {
 	"manage_chat_censor"
 }
@@ -151,7 +148,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "chat_censor",
 		Name = Vermilion:TranslateStr("menu:chat_censor"),
 		Order = 6,

@@ -93,6 +93,8 @@ function Vermilion:CreateBaseModule()
 				self.LPHooks[evtName][id] = nil
 			end
 		end
+		
+		function base:DistributeEvent(event, parameters) end
 
 		function base:NetHook(nstr, func)
 			self.NetworkHooks[nstr] = func
@@ -134,7 +136,15 @@ function Vermilion:CreateBaseModule()
 			return tab
 		end
 
-		function base:DistributeEvent(event, parameters) end
+		
+		function base:AddMenuPage(data)
+			Vermilion.Menu:AddPage(data)
+			if(self.Tabs == nil) then
+				self.Tabs = {}
+			end
+			table.insert(self.Tabs, data.ID)
+		end
+		
 
 		Vermilion.ModuleBase = base
 	end

@@ -22,9 +22,6 @@ MODULE.Name = "Zones"
 MODULE.ID = "zones"
 MODULE.Description = "Add zones" // <-- add a better description
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"zones"
-}
 MODULE.Permissions = {
 	"zone_manager",
 	"create_zone",
@@ -519,7 +516,14 @@ function MODULE:InitShared()
 			end
 		end,
 		GuiBuilder = function(zoneName, completeFunction, drawer)
-
+		
+		
+			local complete = VToolkit:CreateButton("Add Mode", function()
+				completeFunction( { tostring(speedSlider:GetValue()) } )
+			end)
+			complete:SetPos(20, 100)
+			complete:SetSize(drawer:GetWide() - 40, 25)
+			complete:SetParent(drawer)
 		end
 	})
 
@@ -547,6 +551,16 @@ function MODULE:InitShared()
 					return false
 				end
 			end
+		end,
+		GuiBuilder = function(zoneName, completeFunction, drawer)
+			
+
+			local complete = VToolkit:CreateButton("Add Mode", function()
+				completeFunction( { tostring(speedSlider:GetValue()) } )
+			end)
+			complete:SetPos(20, 100)
+			complete:SetSize(drawer:GetWide() - 40, 25)
+			complete:SetParent(drawer)
 		end
 	})
 
@@ -1161,7 +1175,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "zones",
 		Name = "Zones",
 		Order = 10,

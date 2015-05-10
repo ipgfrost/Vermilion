@@ -22,9 +22,6 @@ MODULE.Name = "Property Limits"
 MODULE.ID = "limit_properties"
 MODULE.Description = "Prevent players from using certain right-click properties."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_properties"
-}
 MODULE.Permissions = {
 	"manage_property_limits"
 }
@@ -199,7 +196,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_properties",
 			Name = "Properties",
 			Order = 7,

@@ -22,13 +22,6 @@ MODULE.Name = "Server Settings"
 MODULE.ID = "server_settings"
 MODULE.Description = "Provides a collection of basic options for administrating the server."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"server_settings",
-	"motd",
-	"userdata",
-	"voip_channels",
-	"command_muting"
-}
 MODULE.PreventDisable = true
 MODULE.Permissions = {
 	"manage_server",
@@ -1283,7 +1276,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "server_settings",
 		Name = Vermilion:TranslateStr("menu:basicsettings"),
 		Order = 0,
@@ -1489,7 +1482,7 @@ function MODULE:InitClient()
 		end
 	})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "motd",
 		Name = Vermilion:TranslateStr("menu:motd"),
 		Order = 1,
@@ -1598,7 +1591,7 @@ function MODULE:InitClient()
 		end
 	})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "userdata",
 		Name = Vermilion:TranslateStr("menu:userdata"),
 		Order = 2,
@@ -1659,7 +1652,7 @@ function MODULE:InitClient()
 		end
 	})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "voip_channels",
 		Name = Vermilion:TranslateStr("menu:voip_channels"),
 		Order = 3,
@@ -1677,7 +1670,7 @@ function MODULE:InitClient()
 		end
 	})
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "command_muting",
 		Name = Vermilion:TranslateStr("menu:command_muting"),
 		Order = 4,

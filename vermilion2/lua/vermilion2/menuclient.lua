@@ -1010,11 +1010,17 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 end)
 
 concommand.Add("vermilion_menu", function()
+	if(MENU.Open == nil) then
+		Vermilion.Log("There was an error during startup and the menu did not get built. Please look for stack traces and report them ASAP.")
+	end
 	MENU:Open()
 end)
 
 concommand.Add("vermillion_menu", function()
 	Vermilion.Log("Warning: you have made a spelling error in the 'vermilion_menu' command. Please re-bind the command!")
+	if(MENU.Open == nil) then
+		Vermilion.Log("There was an error during startup and the menu did not get built. Please look for stack traces and report them ASAP.")
+	end
 	MENU:Open()
 end)
 

@@ -22,9 +22,6 @@ MODULE.Name = "Spawn Limits"
 MODULE.ID = "limit_spawn"
 MODULE.Description = "Emulates the sbox_max convars but adds a rank-based system."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"limit_spawn"
-}
 MODULE.Permissions = {
 	"manage_spawn_limits",
 	"no_spawn_limits"
@@ -177,7 +174,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("limits", 5)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 			ID = "limit_spawn",
 			Name = "Spawn Caps",
 			Order = 8,

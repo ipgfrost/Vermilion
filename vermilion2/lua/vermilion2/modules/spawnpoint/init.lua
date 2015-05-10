@@ -22,9 +22,6 @@ MODULE.Name = "Custom Spawnpoints"
 MODULE.ID = "spawnpoint"
 MODULE.Description = "Allows custom spawn positions to be set besides the map spawn point."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"spawnpoint"
-}
 MODULE.Permissions = {
 	"manage_spawnpoints"
 }
@@ -236,7 +233,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "spawnpoint",
 		Name = "Custom Spawnpoints",
 		Order = 11,

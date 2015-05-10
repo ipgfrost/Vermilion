@@ -22,9 +22,6 @@ MODULE.Name = "Auto-Promote"
 MODULE.ID = "auto_promote"
 MODULE.Description = "Automatically promotes users to different ranks depending on playtime."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"autopromote"
-}
 MODULE.Permissions = {
 	"manage_autopromote"
 }
@@ -543,7 +540,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("ranks", 3)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "autopromote",
 		Name = Vermilion:TranslateStr("menu:autopromote"),
 		Order = 6,

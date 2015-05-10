@@ -22,9 +22,6 @@ MODULE.Name = "Event Logger"
 MODULE.ID = "event_logger"
 MODULE.Description = "Logs events that take place on the server."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"event_log"
-}
 MODULE.Permissions = {
 	"see_event_log"
 }
@@ -205,7 +202,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("server", 2)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "event_log",
 		Name = "Event Log",
 		Order = 6,

@@ -22,9 +22,6 @@ MODULE.Name = "Kits"
 MODULE.ID = "kits"
 MODULE.Description = "Create sets of weapons that players can request via commands."
 MODULE.Author = "Ned"
-MODULE.Tabs = {
-	"kit_creator"
-}
 MODULE.Permissions = {
 	"manage_kits",
 	"kitsubscribe",
@@ -333,7 +330,7 @@ function MODULE:InitClient()
 
 	Vermilion.Menu:AddCategory("player", 4)
 
-	Vermilion.Menu:AddPage({
+	self:AddMenuPage({
 		ID = "kit_creator",
 		Name = "Kit Creator",
 		Order = 10,
