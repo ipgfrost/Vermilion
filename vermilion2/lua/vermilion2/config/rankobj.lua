@@ -285,7 +285,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 			rnk.Permissions = self.Permissions or {}
 			rnk.Protected = self.Protected or false
 			if(self.Colour == nil) then rnk.Colour = { 255, 255, 255 } else
-				rnk.Colour = { self.Colour.r, self.Colour.g, self.Colour.b }
+				if(IsColor(self.Colour)) then
+					rnk.Colour = { self.Colour.r, self.Colour.g, self.Colour.b }
+				else
+					rnk.Colour = { self.Colour[1], self.Colour[2], self.Colour[3] }
+				end
 			end
 			rnk.Icon = self.Icon
 			rnk.InheritsFrom = self.InheritsFrom
