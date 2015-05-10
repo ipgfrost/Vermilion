@@ -184,15 +184,12 @@ local vHookRemove = function(evt, name)
 end
 hook.Remove = vHookRemove
 
-
-if(hook.GetTable()["PlayerSay"] != nil) then
-	hook.GetTable()["VPlayerSay"] = hook.GetTable()["PlayerSay"]
-	hook.GetTable()["PlayerSay"] = nil
-end
-
 Vermilion.DHOStarted = false
+local doHookOverride = nil
 
-local function doHookOverride()
+hook.GetTable()["VPlayerSay"] = {}
+
+doHookOverride = function()
 	if(hook.Call != vHookCall) then
 		hook.Call = vHookCall
 	end
@@ -201,6 +198,10 @@ local function doHookOverride()
 	end
 	if(hook.Remove != vHookRemove) then
 		hook.Remove = vHookRemove
+	end
+	if(hook.GetTable()["PlayerSay"] != nil) then -- fix for commands from other addons. This was a request, so don't blame me.
+		table.Merge(hook.GetTable()["VPlayerSay"], hook.GetTable()["PlayerSay"])
+		hook.GetTable()["PlayerSay"] = nil
 	end
 	if(not isfunction(doHookOverride)) then
 		Vermilion.Log("Hook override loop failed. This isn't bad. It's just a protection measure put in place to stop startup bugs.")

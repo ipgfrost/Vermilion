@@ -218,7 +218,10 @@ MENU:AddPage({
 					"Clientside is now aware of all ranks and active players, allowing for more advanced functionality",
 					"Moved the chat predictor into the Vermilion.ChatPredict namespace",
 					"Added the ability to exclude tools from prop protection checks using CPPI.AlwaysAllowTool (unofficial function)",
-					"Added the ability to exclude tools from prop protection checks using MODULE:AlwaysAllowTool"
+					"Added the ability to exclude tools from prop protection checks using MODULE:AlwaysAllowTool",
+					"Made chat hook reassignment more aggressive",
+					"Zone creation bounds box shows regardless of render settings",
+					"Zones now properly reset after mode removal (confiscated weapons are returned)"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

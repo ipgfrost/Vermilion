@@ -24,7 +24,6 @@
 
 ]]--
 
-util.AddNetworkString("Vermilion_SendRank")
 util.AddNetworkString("VBroadcastRankData")
 util.AddNetworkString("VBroadcastUserData")
 util.AddNetworkString("VBroadcastPermissions")
@@ -60,18 +59,6 @@ function Vermilion:CreateRankID()
 	end
 
 	return out
-end
-
-function Vermilion:SyncClientRank(client)
-	local userData = self:GetUser(client)
-	if(userData != nil) then
-		local rankData = userData:GetRank():GetName()
-		if(rankData != nil) then
-			net.Start("Vermilion_SendRank")
-			net.WriteString(rankData)
-			net.Send(client)
-		end
-	end
 end
 
 function Vermilion:BroadcastRankData(target)
@@ -336,7 +323,6 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetRank("owner"):GetUID())
 	end
 	vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
-	Vermilion:SyncClientRank(vplayer)
 	Vermilion:BroadcastRankData(vplayer)
 	net.Start("VBroadcastPermissions")
 	net.WriteTable(Vermilion.AllPermissions)

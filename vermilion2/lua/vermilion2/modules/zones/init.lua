@@ -79,7 +79,6 @@ function MODULE.BaseZone:AddMode(mode, parameters)
 	end
 end
 function MODULE.BaseZone:RemoveMode(mode)
-	self.Modes[mode] = nil
 	for i,k in pairs(self.ActiveObjects) do
 		hook.Call("Vermilion_Object_Left_Zone", nil, self, ents.GetByIndex(i))
 		self.ActiveObjects[i] = nil
@@ -88,6 +87,7 @@ function MODULE.BaseZone:RemoveMode(mode)
 		hook.Call("Vermilion_Player_Left_Zone", nil, self, VToolkit.LookupPlayerBySteamID(i))
 		self.ActivePlayers[i] = nil
 	end
+	self.Modes[mode] = nil
 end
 function MODULE.BaseZone:GetModeProps(mode)
 	return self.Modes[mode]
@@ -295,6 +295,7 @@ function MODULE:InitShared()
 					return
 				end
 				construct.SetPhysProp( ent:GetOwner(), ent, ent:EntIndex(), phys, { GravityToggle = true, Material = ent:GetMaterial() } )
+				ent:PhysWake()
 			end,
 			["Vermilion_Player_Entered_Zone"] = function(zone, vplayer)
 				if(not zone:HasMode("no_gravity")) then return end
@@ -1121,13 +1122,6 @@ function MODULE:InitClient()
 	end)
 
 	self:AddHook("PostDrawOpaqueRenderables", function(bDrawingDepth, bDrawingSkybox)
-		if(bDrawingSkybox or bDrawingDepth or GetConVarNumber("vermilion_render_zones") == 0) then return end
-		for i,k in pairs(MODULE.Zones) do
-			cam.Start3D2D(k.Point1, Angle(0, 0, 0), 1)
-				render.SetMaterial(MODULE.DrawEffect)
-				render.DrawBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (k.Point2 - k.Point1) * Vector(1, -1, 1), Color(0, 0, 0, 255), false)
-			cam.End3D2D()
-		end
 		if(MODULE.DrawingFrom != nil) then
 			cam.Start3D2D(MODULE.DrawingFrom, Angle(0, 0, 0), 1)
 				local colour = Color(0, 0, 0, 255)
@@ -1136,6 +1130,14 @@ function MODULE:InitClient()
 				render.DrawWireframeBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (p2 - p1) * Vector(1, -1, 1), colour, false)
 			cam.End3D2D()
 		end
+		if(bDrawingSkybox or bDrawingDepth or GetConVarNumber("vermilion_render_zones") == 0) then return end
+		for i,k in pairs(MODULE.Zones) do
+			cam.Start3D2D(k.Point1, Angle(0, 0, 0), 1)
+				render.SetMaterial(MODULE.DrawEffect)
+				render.DrawBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (k.Point2 - k.Point1) * Vector(1, -1, 1), Color(0, 0, 0, 255), false)
+			cam.End3D2D()
+		end
+		
 	end)
 
 	self:NetHook("VGetZones", function()
@@ -1256,6 +1258,7 @@ function MODULE:InitClient()
 					delZone:SetDisabled(true)
 					renZone:SetDisabled(true)
 					zoneList:RemoveLine(zoneList:GetSelected()[1]:GetID())
+					zoneList:OnRowSelected()
 				end, { Confirm = "Yes", Deny = "No", Default = false })
 			end)
 			delZone:SetPos(210 - 98, panel:GetTall() - 35)
@@ -1363,6 +1366,7 @@ function MODULE:InitClient()
 					net.SendToServer()
 
 					zoneModes:RemoveLine(k:GetID())
+					zoneList:OnRowSelected()
 				end
 			end)
 			takeWeapon:SetPos(select(1, zoneModes:GetPos()) + zoneModes:GetWide() + 10, 130)

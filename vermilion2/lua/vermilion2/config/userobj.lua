@@ -91,7 +91,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				if(IsValid(ply)) then
 					Vermilion:AddNotification(ply, "change_rank", {self.Rank})
 					ply:SetNWString("Vermilion_Rank", self.Rank)
-					Vermilion:SyncClientRank(ply)
+					Vermilion:BroadcastActiveUserData()
 				end
 			end
 		end
