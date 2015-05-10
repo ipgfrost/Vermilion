@@ -129,9 +129,6 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
 				return false
 			end
-			for i,k in pairs(self:GetUsers()) do
-				k:SetRank(newName, true)
-			end
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
 			hook.Run(Vermilion.Event.RankRenamed, self.UniqueID, self.Name, newName)
 			self.Name = newName
@@ -195,9 +192,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					end
 				end
 			end
-			for i,k in pairs(self:GetUsers()) do
-				Vermilion:SyncClientRank(k)
-			end
+			Vermilion:BroadcastRankData()
 		end
 
 		function meta:RevokePermission(permission)
@@ -218,9 +213,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					end
 				end
 			end
-			for i,k in pairs(self:GetUsers()) do
-				Vermilion:SyncClientRank(k)
-			end
+			Vermilion:BroadcastRankData()
 		end
 
 		function meta:HasPermission(permission)
