@@ -55,6 +55,9 @@ MODULE.NetworkStrings = {
 MODULE.TYPE_FILE = -1
 MODULE.TYPE_STREAM = -2
 
+MODULE.CreditW = 0
+MODULE.CreditH = 0
+
 MODULE.Channels = {}
 MODULE.Visualisers = {}
 
@@ -656,7 +659,7 @@ function MODULE:InitClient()
 			local pos = 0
 			local maxw = 0
 			for i,k in pairs(MODULE.Credits) do
-				local w,h = draw.SimpleText(k, "Default", ScrW() - MODULE.CreditW - 20, ScrH() - MODULE.CreditH - 100 + pos, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+				local w,h = draw.SimpleText(k, "Default", ScrW() - 0 - 20, ScrH() - MODULE.CreditH - 100 + pos, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 				if(w > maxw) then maxw = w end
 				pos = pos + h + 10
 			end

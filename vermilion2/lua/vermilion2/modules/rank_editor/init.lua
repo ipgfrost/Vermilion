@@ -400,10 +400,10 @@ function MODULE:InitClient()
 		table.insert(tab, "[" .. ranku .. "] ")
 
 		if(IsValid(sender)) then
-			if(Vermilion:GetRankColour(sender:GetNWString("Vermilion_Rank")) == nil) then
+			if(Vermilion:GetRankByID(sender:GetNWString("Vermilion_Rank")):GetColour() == nil) then
 				table.insert(tab, Vermilion.Colours.White)
 			else
-				table.insert(tab, Vermilion:GetRankColour(sender:GetNWString("Vermilion_Rank")))
+				table.insert(tab, Vermilion:GetRankByID(sender:GetNWString("Vermilion_Rank")):GetColour())
 			end
 			table.insert(tab, sender:Nick())
 		else
