@@ -23,18 +23,6 @@ function PLAYER:VHasPermission(permission)
 	return Vermilion:HasPermission(self, permission)
 end
 
-function PLAYER:VGetUserData()
-	return Vermilion:GetUser(self)
-end
-
-function PLAYER:VGetRankData()
-	return self:VGetUserData():GetRank()
-end
-
-function PLAYER:VGetRankName()
-	return self:VGetUserData():GetRankName()
-end
-
 function PLAYER:Vermilion2_DoRagdoll()
 	if(not self.Vermilion2_Ragdoll and self:Alive()) then
 		local ragdoll = ents.Create("prop_ragdoll")

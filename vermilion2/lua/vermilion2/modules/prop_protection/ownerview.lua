@@ -57,7 +57,7 @@ function MODULE:OwnerViewInitClient()
 			SteamID = sid,
 			Name = net.ReadString()
 		}
-		Vermilion.Log("Got owner data for " .. namedata.SteamID .. "!")
+		//Vermilion.Log("Got owner data for " .. namedata.SteamID .. "!")
 	end)
 
 	self:AddHook("HUDPaint", function()

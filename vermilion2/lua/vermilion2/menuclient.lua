@@ -63,7 +63,7 @@ function Vermilion.Menu:AddPage(data)
 		{ "OnClose", function() end }
 	}
 	local probablyShouldntHave = {
-		{ "Updater", "Updater is deprecated; use OnOpen instead" },
+		{ "Updater", "Updater is deprecated; use OnOpen instead!" },
 	}
 	for i,k in pairs(mustHave) do
 		assert(data[k] != nil, "Page missing required component!")
@@ -120,7 +120,7 @@ MENU:AddCategory("basic", 1)
 MENU:AddPage({
 	ID = "welcome",
 	Name = Vermilion:TranslateStr("menu:welcome"),
-	Order = -9000,
+	Order = -9001,
 	Category = "basic",
 	Size = { 580, 560 },
 	Builder = function(panel)
@@ -208,7 +208,17 @@ MENU:AddPage({
 					"Fixed buttons on the limiters",
 					"Moved Reset Configuration button into the Danger Zone",
 					"Fixed typos in the interface",
-					"Added Forced Menu Keybind"
+					"Added Forced Menu Keybind",
+					"Changed delayed_cleanup to immediate_cleanup",
+					"Prevented players unfreezing props they don't own",
+					"Removed unused Lua immunity options",
+					"Rewrote the Vermilion Core (VCore) entirely",
+					"Vermilion Core (VCore) is now a collection of files instead of one 5000+ line file",
+					"Replaced the entire core API with a more compact version that re-uses code on both sides whenever possible",
+					"Clientside is now aware of all ranks and active players, allowing for more advanced functionality",
+					"Moved the chat predictor into the Vermilion.ChatPredict namespace",
+					"Added the ability to exclude tools from prop protection checks using CPPI.AlwaysAllowTool (unofficial function)",
+					"Added the ability to exclude tools from prop protection checks using MODULE:AlwaysAllowTool"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -1005,7 +1015,7 @@ concommand.Add("vermillion_menu", function()
 	MENU:Open()
 end)
 
-Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, "UpdateMenuAccess", true, function()
+Vermilion:AddHook(Vermilion.Event.CLIENT_NewPermissionData, "UpdateMenuAccess", true, function()
 	if(not MENU.Built or table.Count(MENU.Pages) == 0) then return end
 	if(MENU.Pages["welcome"].TabButton == nil) then return end
 	for i,k in pairs(MENU.Pages) do

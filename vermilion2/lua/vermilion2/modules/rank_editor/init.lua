@@ -199,39 +199,15 @@ function MODULE:InitShared()
 	local meta = FindMetaTable("Player")
 
 	function meta:IsAdmin()
-		if(CLIENT) then
-			if(self != LocalPlayer()) then
-				return false
-			end
-			return Vermilion:HasPermission("identify_as_admin") or self:IsSuperAdmin()
-		end
 		return Vermilion:HasPermission(self, "identify_as_admin") or self:IsSuperAdmin()
 	end
 
 	function meta:IsSuperAdmin()
-		if(CLIENT) then
-			if(self != LocalPlayer()) then return false end
-			return Vermilion:HasPermission("identify_as_superadmin")
-		end
 		return Vermilion:HasPermission(self, "identify_as_superadmin")
 	end
 
 	meta.oldGetUserGroup = meta.GetUserGroup
 	function meta:GetUserGroup()
-		if(CLIENT) then
-			if(self != LocalPlayer()) then
-				return self:oldGetUserGroup()
-			end
-			if(not Vermilion:HasPermission("identify_as_superadmin")) then
-				if(Vermilion:HasPermission("identify_as_admin")) then
-					return "admin"
-				end
-			else
-				return "superadmin"
-			end
-			if(Vermilion.Data.Rank == nil) then return self:oldGetUserGroup() end
-			return Vermilion.Data.Rank.Name
-		end
 		if(not Vermilion:HasPermission(self, "identify_as_superadmin")) then
 			if(Vermilion:HasPermission(self, "identify_as_admin")) then
 				return "admin"
@@ -254,7 +230,7 @@ function MODULE:InitShared()
 				Type = "Checkbox",
 				Category = "Misc",
 				Default = true
-				})
+			})
 		end
 	end)
 end
@@ -455,7 +431,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:AddHook(Vermilion.Event.CLIENT_GOT_RANK_OVERVIEWS, function()
+	self:AddHook(Vermilion.Event.CLIENT_NewPermissionData, function()
 		local rank_overview_list = Vermilion.Menu.Pages["rank_editor"].RankList
 		if(IsValid(rank_overview_list)) then
 			Vermilion:PopulateRankTable(rank_overview_list, true, true)
@@ -477,9 +453,9 @@ function MODULE:InitClient()
 	end)
 
 	self:AddHook("Vermilion2_TargetIDDataIcon", function(vplayer)
-		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))) then
-			if(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")) == nil) then return end
-			vplayer.VIcon = string.lower(Vermilion:GetRankIcon(vplayer:GetNWString("Vermilion_Rank")))
+		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon())) then
+			if(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon() == nil) then return end
+			vplayer.VIcon = string.lower(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon())
 			vplayer.VIconMat = Material("icon16/" .. vplayer.VIcon .. ".png", "noclamp smooth")
 		end
 		return vplayer.VIconMat

@@ -130,7 +130,6 @@ end
 
 local categories = {
 	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
-	{ Name = MODULE:TranslateStr("cat:immunity"), ID = "Immunity", Order = 1 },
 	{ Name = MODULE:TranslateStr("cat:spawncampprevention"), ID = "SpawncampPrevention", Order = 30 },
 	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 },
 	{ Name = MODULE:TranslateStr("cat:danger"), ID = "Danger", Order = 1000 }
@@ -185,21 +184,6 @@ local options = {
 			MODULE:TranslateStr("chat:global"),
 			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
-	{ Name = "enable_lock_immunity", GuiText = MODULE:TranslateStr("lockimm"), Type = "Combobox", Options = {
-			MODULE:TranslateStr("off"),
-			MODULE:TranslateStr("all_players"),
-			MODULE:TranslateStr("permissions_based")
-		}, Category = "Immunity", Default = 3, Incomplete = true },
-	{ Name = "enable_kill_immunity", GuiText = MODULE:TranslateStr("killimm"), Type = "Combobox", Options = {
-			MODULE:TranslateStr("off"),
-			MODULE:TranslateStr("all_players"),
-			MODULE:TranslateStr("permissions_based")
-		}, Category = "Immunity", Default = 3, Incomplete = true },
-	{ Name = "enable_kick_immunity", GuiText = MODULE:TranslateStr("kickimm"), Type = "Combobox", Options = {
-			MODULE:TranslateStr("off"),
-			MODULE:TranslateStr("all_players"),
-			MODULE:TranslateStr("permissions_based")
-		}, Category = "Immunity", Default = 3, Incomplete = true },
 	{ Name = "disable_fall_damage", GuiText = MODULE:TranslateStr("falldmg"), Type = "Combobox", Options = {
 			MODULE:TranslateStr("off"),
 			MODULE:TranslateStr("all_players"),
@@ -1178,7 +1162,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:AddHook(Vermilion.Event.CLIENT_GOT_RANKS, function()
+	self:AddHook(Vermilion.Event.CLIENT_NewPermissionData, function()
 		Vermilion.Menu.Pages["server_settings"].Panel:Clear()
 		Vermilion.Menu.Pages["server_settings"].Builder(Vermilion.Menu.Pages["server_settings"].Panel, Vermilion.Menu.Pages["server_settings"])
 	end)

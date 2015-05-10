@@ -507,7 +507,6 @@ function MODULE:InitClient()
 
 	end
 
-	Vermilion.Menu:AddCategory("player", 4)
 
 	self:NetHook("VGetBanRecords", function()
 		if(not Vermilion.Menu.IsOpen) then return end
@@ -546,6 +545,8 @@ function MODULE:InitClient()
 		paneldata.BanList:OnRowSelected()
 	end)
 
+	Vermilion.Menu:AddCategory("player", 4)
+	
 	Vermilion.Menu:AddPage({
 			ID = "bans",
 			Name = Vermilion:TranslateStr("menu:bans"),

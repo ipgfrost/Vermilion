@@ -17,68 +17,48 @@
  in any way, nor claims to be so.
 ]]
 
-Vermilion.Data = {}
-Vermilion.Data.Rank = {} -- active rank (for localplayer)
-Vermilion.Data.RankOverview = {} -- basic data for all ranks
-Vermilion.Data.Permissions = {}
-Vermilion.Data.Module = {}
+Vermilion.Data.LocalSteamID = nil
 
-net.Receive("Vermilion_SendRank", function()
-	Vermilion.Data.Rank = net.ReadTable()
-	hook.Run(Vermilion.Event.CLIENT_GOT_RANKS)
+net.Receive("VBroadcastUserData", function()
+	local sid = net.ReadString()
+	if(sid != "") then
+		Vermilion.Data.LocalSteamID = sid
+	end
+	Vermilion.Data.Users = net.ReadTable()
+	for i,k in pairs(Vermilion.Data.Users) do
+		Vermilion:AttachUserFunctions(k)
+	end
+	hook.Run(Vermilion.Event.CLIENT_GOT_USERDATA)
+	if(Vermilion.Data.Ranks == nil) then return end
+	hook.Run(Vermilion.Event.CLIENT_NewPermissionData)
 end)
 
 net.Receive("VBroadcastRankData", function()
-	Vermilion.Data.RankOverview = net.ReadTable()
-	hook.Run(Vermilion.Event.CLIENT_GOT_RANK_OVERVIEWS)
+	Vermilion.Data.Ranks = net.ReadTable()
+	for i,k in pairs(Vermilion.Data.Ranks) do
+		Vermilion:AttachRankFunctions(k)
+	end
+	hook.Run(Vermilion.Event.CLIENT_GOT_RANK_DATA)
+	if(Vermilion.Data.Users == nil) then return end
+	hook.Run(Vermilion.Event.CLIENT_NewPermissionData)
 end)
 
 net.Receive("VBroadcastPermissions", function()
-	Vermilion.Data.Permissions = net.ReadTable()
+	Vermilion.AllPermissions = net.ReadTable()
 end)
 
 function Vermilion:LookupPermissionOwner(permission)
-	for i,k in pairs(self.Data.Permissions) do
+	for i,k in pairs(self.AllPermissions) do
 		if(k.Permission == permission) then return k.Owner end
 	end
 end
 
-function Vermilion:GetRankByID(id)
-	for i,k in pairs(self.Data.RankOverview) do
-		if(k.UniqueID == id) then return k end
-	end
-end
-
-function Vermilion:GetRankColour(id)
-	for i,k in pairs(self.Data.RankOverview) do
-		if(k.UniqueID == id) then
-			if(not IsColor(k.Colour)) then
-				k.Colour = Color(k.Colour.r, k.Colour.g, k.Colour.b)
-			end
-			return k.Colour
-		end
-	end
-end
-
-function Vermilion:GetRankIcon(id)
-	for i,k in pairs(self.Data.RankOverview) do
-		if(k.UniqueID == id) then
-			return k.Icon
-		end
-	end
-end
-
-function Vermilion:HasPermission(permission)
-	return table.HasValue(Vermilion.Data.Rank.Permissions, permission) or table.HasValue(Vermilion.Data.Rank.Permissions, "*")
-end
-
 Vermilion.RankTables = {}
-Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANK_OVERVIEWS, "UpdateRankTables", true, function()
+Vermilion:AddHook(Vermilion.Event.CLIENT_GOT_RANK_DATA, "UpdateRankTables", true, function()
 	for i,k in pairs(Vermilion.RankTables) do
 		Vermilion:PopulateRankTable(k.Table, k.Detailed, k.Protected)
 	end
 end)
-
 
 function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 	if(ranklist == nil) then return end
@@ -96,7 +76,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 	end
 	ranklist:Clear()
 	if(detailed) then
-		for i,k in pairs(self.Data.RankOverview) do
+		for i,k in pairs(self.Data.Ranks) do
 			if(not protected and k.Protected) then continue end
 			local inherits = Vermilion:GetRankByID(k.InheritsFrom)
 			if(inherits != nil) then inherits = inherits.Name end
@@ -127,7 +107,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 			end
 		end
 	else
-		for i,k in pairs(self.Data.RankOverview) do
+		for i,k in pairs(self.Data.Ranks) do
 			if(not protected and k.Protected) then continue end
 			local ln = ranklist:AddLine(k.Name)
 			ln.Protected = k.Protected
@@ -145,17 +125,6 @@ end)
 net.Receive("VModuleConfig", function()
 	Vermilion.Data.Module[net.ReadString()] = net.ReadTable()
 end)
-
-function Vermilion:GetModuleData(mod, name, def)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	if(self.Data.Module[mod][name] == nil) then return def end
-	return self.Data.Module[mod][name]
-end
-
-function Vermilion:SetModuleData(mod, name, val)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	self.Data.Module[mod][name] = val
-end
 
 Vermilion:AddHook("ChatText", "StopDefaultChat", false, function(index, name, text, typ)
 	if(typ == "joinleave") then

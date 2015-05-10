@@ -17,6 +17,8 @@
  in any way, nor claims to be so.
 ]]
 
+Vermilion.ChatPredict = {}
+
 if(SERVER) then
 	util.AddNetworkString("VChatPrediction")
 
@@ -73,70 +75,70 @@ else
 
 	net.Receive("VChatPrediction", function()
 		local response = net.ReadTable()
-		Vermilion.ChatPredictions = response
+		Vermilion.ChatPredict.ChatPredictions = response
 	end)
 
-	Vermilion.ChatOpen = false
+	Vermilion.ChatPredict.ChatOpen = false
 
 	Vermilion:AddHook("StartChat", "VOpenChatbox", false, function()
-		Vermilion.ChatOpen = true
+		Vermilion.ChatPredict.ChatOpen = true
 	end)
 
 	Vermilion:AddHook("FinishChat", "VCloseChatbox", false, function()
-		Vermilion.ChatOpen = false
-		Vermilion.ChatPredictions = {}
+		Vermilion.ChatPredict.ChatOpen = false
+		Vermilion.ChatPredict.ChatPredictions = {}
 	end)
 
 	Vermilion:AddHook("HUDShouldDraw", "ChatHideHUD", false, function(name)
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(Vermilion.CurrentChatText == nil or GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(string.StartWith(Vermilion.CurrentChatText, "!") and (name == "NetGraph" or name == "CHudAmmo")) then return false end
+		if(Vermilion.ChatPredict.CurrentChatText == nil or GetConVarNumber("vermilion_chatpredict") == 0) then return end
+		if(string.StartWith(Vermilion.ChatPredict.CurrentChatText, "!") and (name == "NetGraph" or name == "CHudAmmo")) then return false end
 	end)
 
-	Vermilion.ChatPredictions = {}
-	Vermilion.ChatTabSelected = 1
-	Vermilion.ChatBGW = 0
-	Vermilion.ChatBGH = 0
-	Vermilion.MoveEnabled = true
+	Vermilion.ChatPredict.ChatPredictions = {}
+	Vermilion.ChatPredict.ChatTabSelected = 1
+	Vermilion.ChatPredict.ChatBGW = 0
+	Vermilion.ChatPredict.ChatBGH = 0
+	Vermilion.ChatPredict.MoveEnabled = true
 
 	Vermilion:AddHook("Think", "ChatMove", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(Vermilion.ChatOpen and Vermilion.MoveEnabled and table.Count(Vermilion.ChatPredictions) > 0) then
+		if(Vermilion.ChatPredict.ChatOpen and Vermilion.ChatPredict.MoveEnabled and table.Count(Vermilion.ChatPredict.ChatPredictions) > 0) then
 			if(input.IsKeyDown(KEY_DOWN)) then
-				if(string.find(Vermilion.CurrentChatText, " ")) then
-					if(Vermilion.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredictions)) then
-						Vermilion.ChatTabSelected = 2
+				if(string.find(Vermilion.ChatPredict.CurrentChatText, " ")) then
+					if(Vermilion.ChatPredict.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredict.ChatPredictions)) then
+						Vermilion.ChatPredict.ChatTabSelected = 2
 					else
-						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected + 1
+						Vermilion.ChatPredict.ChatTabSelected = Vermilion.ChatPredict.ChatTabSelected + 1
 					end
 				else
-					if(Vermilion.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredictions)) then
-						Vermilion.ChatTabSelected = 1
+					if(Vermilion.ChatPredict.ChatTabSelected + 1 > table.Count(Vermilion.ChatPredict.ChatPredictions)) then
+						Vermilion.ChatPredict.ChatTabSelected = 1
 					else
-						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected + 1
+						Vermilion.ChatPredict.ChatTabSelected = Vermilion.ChatPredict.ChatTabSelected + 1
 					end
 				end
-				Vermilion.MoveEnabled = false
+				Vermilion.ChatPredict.MoveEnabled = false
 				timer.Simple(0.1, function()
-					Vermilion.MoveEnabled = true
+					Vermilion.ChatPredict.MoveEnabled = true
 				end)
 			elseif(input.IsKeyDown(KEY_UP)) then
-				if(string.find(Vermilion.CurrentChatText, " ")) then
-					if(Vermilion.ChatTabSelected - 1 < 2) then
-						Vermilion.ChatTabSelected = table.Count(Vermilion.ChatPredictions)
+				if(string.find(Vermilion.ChatPredict.CurrentChatText, " ")) then
+					if(Vermilion.ChatPredict.ChatTabSelected - 1 < 2) then
+						Vermilion.ChatPredict.ChatTabSelected = table.Count(Vermilion.ChatPredict.ChatPredictions)
 					else
-						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected - 1
+						Vermilion.ChatPredict.ChatTabSelected = Vermilion.ChatPredict.ChatTabSelected - 1
 					end
 				else
-					if(Vermilion.ChatTabSelected - 1 < 1) then
-						Vermilion.ChatTabSelected = table.Count(Vermilion.ChatPredictions)
+					if(Vermilion.ChatPredict.ChatTabSelected - 1 < 1) then
+						Vermilion.ChatPredict.ChatTabSelected = table.Count(Vermilion.ChatPredict.ChatPredictions)
 					else
-						Vermilion.ChatTabSelected = Vermilion.ChatTabSelected - 1
+						Vermilion.ChatPredict.ChatTabSelected = Vermilion.ChatPredict.ChatTabSelected - 1
 					end
 				end
-				Vermilion.MoveEnabled = false
+				Vermilion.ChatPredict.MoveEnabled = false
 				timer.Simple(0.1, function()
-					Vermilion.MoveEnabled = true
+					Vermilion.ChatPredict.MoveEnabled = true
 				end)
 			end
 		end
@@ -144,9 +146,9 @@ else
 
 	Vermilion:AddHook("OnChatTab", "VInsertPrediction", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(table.Count(Vermilion.ChatPredictions) > 0 and string.find(Vermilion.CurrentChatText, " ") and table.Count(Vermilion.ChatPredictions) > 1) then
-			if(Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name == "") then return end
-			local commandText = Vermilion.CurrentChatText
+		if(table.Count(Vermilion.ChatPredict.ChatPredictions) > 0 and string.find(Vermilion.ChatPredict.CurrentChatText, " ") and table.Count(Vermilion.ChatPredict.ChatPredictions) > 1) then
+			if(Vermilion.ChatPredict.ChatPredictions[Vermilion.ChatPredict.ChatTabSelected].Name == "") then return end
+			local commandText = Vermilion.ChatPredict.CurrentChatText
 			local parts = string.Explode(" ", commandText, false)
 			local parts2 = {}
 			local part = ""
@@ -172,46 +174,36 @@ else
 					table.insert(parts, k)
 				--end
 			end
-			parts[table.Count(parts)] = Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name
+			parts[table.Count(parts)] = Vermilion.ChatPredict.ChatPredictions[Vermilion.ChatPredict.ChatTabSelected].Name
 
 			return table.concat(parts, " ", 1) .. " "
 		end
-		if(Vermilion.ChatPredictions != nil and table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatTabSelected == 0) then
-			return "!" .. Vermilion.ChatPredictions[1].Name .. " "
+		if(Vermilion.ChatPredict.ChatPredictions != nil and table.Count(Vermilion.ChatPredict.ChatPredictions) > 0 and Vermilion.ChatPredict.ChatTabSelected == 0) then
+			return "!" .. Vermilion.ChatPredict.ChatPredictions[1].Name .. " "
 		end
-		if(Vermilion.ChatPredictions != nil and Vermilion.ChatTabSelected > 0) then
-			if(Vermilion.ChatPredictions[Vermilion.ChatTabSelected] == nil) then return end
-			return "!" .. Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name .. " "
+		if(Vermilion.ChatPredict.ChatPredictions != nil and Vermilion.ChatPredict.ChatTabSelected > 0) then
+			if(Vermilion.ChatPredict.ChatPredictions[Vermilion.ChatPredict.ChatTabSelected] == nil) then return end
+			return "!" .. Vermilion.ChatPredict.ChatPredictions[Vermilion.ChatPredict.ChatTabSelected].Name .. " "
 		end
 	end)
 
 	Vermilion:AddHook("HUDPaint", "PredictDraw", false, function()
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(table.Count(Vermilion.ChatPredictions) > 0 and Vermilion.ChatOpen) then
+		if(table.Count(Vermilion.ChatPredict.ChatPredictions) > 0 and Vermilion.ChatPredict.ChatOpen) then
 			local pos = 0
 			local xpos = 0
 			local maxw = 0
 			local text = Vermilion:TranslateStr("cmd_chatpredict_prompt")
 			local mapbx = nil
 			local maptx = nil
-			if(chat.GetChatBoxSize == nil) then
-				mapbx = math.Remap(545, 0, 1366, 0, ScrW())
-				maptx = math.Remap(550, 0, 1366, 0, ScrW())
-
-				if(ScrW() > 1390) then
-					mapbx = mapbx + 100
-					maptx = maptx + 100
-				end
-			else
-				mapbx = select(1, chat.GetChatBoxSize()) + 20
-				maptx = select(1, chat.GetChatBoxSize()) + 25
-			end
-			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatBGW + 10, Vermilion.ChatBGH + 5, Color(0, 0, 0, 128))
+			mapbx = select(1, chat.GetChatBoxSize()) + 20
+			maptx = select(1, chat.GetChatBoxSize()) + 25
+			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatPredict.ChatBGW + 10, Vermilion.ChatPredict.ChatBGH + 5, Color(0, 0, 0, 128))
 			draw.SimpleText(text, "Default", maptx, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-			Vermilion.ChatBGH = 0
-			for i,k in pairs(Vermilion.ChatPredictions) do
+			Vermilion.ChatPredict.ChatBGH = 0
+			for i,k in pairs(Vermilion.ChatPredict.ChatPredictions) do
 				local text = k.Name
-				if(table.Count(Vermilion.ChatPredictions) <= 8 or string.find(Vermilion.CurrentChatText, " ")) then
+				if(table.Count(Vermilion.ChatPredict.ChatPredictions) <= 8 or string.find(Vermilion.ChatPredict.CurrentChatText, " ")) then
 					if(k.Name != "") then
 						text = k.Name .. " " .. k.Syntax
 					else
@@ -219,31 +211,31 @@ else
 					end
 				end
 				local colour = Color(255, 255, 255)
-				if(i == Vermilion.ChatTabSelected and Vermilion.ChatPredictions[Vermilion.ChatTabSelected].Name != "") then colour = Color(255, 0, 0) end
+				if(i == Vermilion.ChatPredict.ChatTabSelected and Vermilion.ChatPredict.ChatPredictions[Vermilion.ChatPredict.ChatTabSelected].Name != "") then colour = Color(255, 0, 0) end
 				local w,h = draw.SimpleText(text, "Default", maptx + xpos, select(2, chat.GetChatBoxPos()) + pos, colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 				if(maxw < w) then maxw = w end
 				pos = pos + h + 5
-				if(pos > Vermilion.ChatBGH) then Vermilion.ChatBGH = pos end
+				if(pos > Vermilion.ChatPredict.ChatBGH) then Vermilion.ChatPredict.ChatBGH = pos end
 				if(pos + select(2, chat.GetChatBoxPos()) + 20 >= ScrH()) then
 					xpos = xpos + maxw + 10
 					maxw = 0
 					pos = 0
 				end
 			end
-			Vermilion.ChatBGW = xpos + maxw
+			Vermilion.ChatPredict.ChatBGW = xpos + maxw
 		end
 	end)
 
 	Vermilion:AddHook("ChatTextChanged", "ChatPredict", false, function(chatText)
 		if(GetConVarNumber("vermilion_chatpredict") == 0) then return end
-		if(Vermilion.CurrentChatText != chatText) then
+		if(Vermilion.ChatPredict.CurrentChatText != chatText) then
 			if(string.find(chatText, " ")) then
-				Vermilion.ChatTabSelected = 2
+				Vermilion.ChatPredict.ChatTabSelected = 2
 			else
-				Vermilion.ChatTabSelected = 1
+				Vermilion.ChatPredict.ChatTabSelected = 1
 			end
 		end
-		Vermilion.CurrentChatText = chatText
+		Vermilion.ChatPredict.CurrentChatText = chatText
 
 		if(string.StartWith(chatText, "!")) then
 			net.Start("VChatPrediction")
@@ -255,7 +247,7 @@ else
 			net.WriteString(string.sub(chatText, 2))
 			net.SendToServer()
 		else
-			Vermilion.ChatPredictions = {}
+			Vermilion.ChatPredict.ChatPredictions = {}
 		end
 	end)
 end

@@ -2166,8 +2166,6 @@ end
 
 function MODULE:InitServer()
 
-
-
 	self:AddHook("VPlayerSay", function(vplayer)
 		if(MODULE:GetData("muted_players", {}, true)[vplayer:SteamID()]) then return "" end
 		if(MODULE:GetData("gimped_players", {}, true)[vplayer:SteamID()]) then
@@ -2281,8 +2279,6 @@ function MODULE:InitClient()
 			removeListing:SetPos(670, 500)
 			removeListing:SetSize(105, 30)
 			removeListing:SetParent(panel)
-
-
 
 
 			local addMessagePanel = VToolkit:CreateRightDrawer(panel)

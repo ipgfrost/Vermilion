@@ -64,7 +64,7 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 	local x = MouseX
 	local y = MouseY
 	
-	local rawName = Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")).Name
+	local rawName = Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")):GetName()
 
 	local caseRank = string.SetChar(rawName, 1, string.upper(string.GetChar(rawName, 1)))
 
@@ -80,8 +80,8 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 	local geoIPData = hook.Run("Vermilion2_TargetIDDataGeoIP", trace.Entity)
 	local iconData = hook.Run("Vermilion2_TargetIDDataIcon", trace.Entity)
 
-	if(Vermilion:GetRankColour(trace.Entity:GetNWString("Vermilion_Rank")) != nil) then
-		surface.SetTextColor(Vermilion:GetRankColour(trace.Entity:GetNWString("Vermilion_Rank")))
+	if(Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")) != nil) then
+		surface.SetTextColor(Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")):GetColour())
 	else
 		surface.SetTextColor(Vermilion.Colours.White) -- what?
 	end

@@ -18,22 +18,6 @@
 ]]
 
 
-Vermilion.AllPermissions = {}
-
-Vermilion.DataChangeHooks = {}
-
-Vermilion.Data = {}
-
-Vermilion.Data.Global = {}
-Vermilion.Data.Module = {}
-Vermilion.Data.Ranks = {} -- temp
-Vermilion.Data.Users = {}
-Vermilion.Data.Bans = {}
-
-
-
-
-
 --[[
 
 	//		Networking		\\
@@ -42,12 +26,11 @@ Vermilion.Data.Bans = {}
 
 util.AddNetworkString("Vermilion_SendRank")
 util.AddNetworkString("VBroadcastRankData")
+util.AddNetworkString("VBroadcastUserData")
 util.AddNetworkString("VBroadcastPermissions")
 util.AddNetworkString("VUpdatePlayerLists")
 util.AddNetworkString("VModuleConfig")
 util.AddNetworkString("VUsePreconfigured")
-
-
 
 
 
@@ -56,14 +39,6 @@ util.AddNetworkString("VUsePreconfigured")
 	//		Ranks		\\
 
 ]]--
-
-function Vermilion:GetDefaultRank()
-	local duid = ""
-	if(Vermilion:HasRank("player")) then
-		duid = Vermilion:GetRank("player"):GetUID()
-	end
-	return self:GetData("default_rank", duid)
-end
 
 function Vermilion:AddRank(name, permissions, protected, colour, icon)
 	if(self:GetRank(name) != nil) then return end
@@ -87,244 +62,13 @@ function Vermilion:CreateRankID()
 	return out
 end
 
-function Vermilion:CreateRankObj(name, permissions, protected, colour, icon, inherits)
-	local rnk = {}
-
-	rnk.Name = name
-	rnk.UniqueID = Vermilion:CreateRankID()
-	rnk.Permissions = permissions or {}
-	rnk.Protected = protected or false
-	if(colour == nil) then rnk.Colour = { 255, 255, 255 } else
-		rnk.Colour = { colour.r, colour.g, colour.b }
-	end
-	rnk.Icon = icon
-	rnk.InheritsFrom = inherits
-
-	rnk.Metadata = {}
-
-	self:AttachRankFunctions(rnk)
-
-	return rnk
-end
-
-function Vermilion:AttachRankFunctions(rankObj)
-
-	if(Vermilion.RankMetaTable == nil) then
-		local meta = {}
-
-		function meta:GetName()
-			return self.Name
-		end
-
-		function meta:GetUID()
-			return self.UniqueID
-		end
-
-		function meta:IsImmuneToRank(rank)
-			return self:GetImmunity() < rank:GetImmunity()
-		end
-
-		function meta:GetImmunity()
-			return table.KeyFromValue(Vermilion.Data.Ranks, self)
-		end
-
-		function meta:MoveUp()
-			if(self:GetImmunity() <= 2) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmoveup"))
-				return false
-			end
-			if(self.Protected) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
-				return false
-			end
-			local immunity = self:GetImmunity()
-			table.insert(Vermilion.Data.Ranks, immunity - 1, self)
-			table.remove(Vermilion.Data.Ranks, immunity + 1)
-			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
-			return true
-		end
-
-		function meta:MoveDown()
-			if(self:GetImmunity() == table.Count(Vermilion.Data.Ranks)) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmovedown"))
-				return false
-			end
-			if(self.Protected) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
-				return false
-			end
-			local immunity = self:GetImmunity()
-			table.insert(Vermilion.Data.Ranks, immunity + 2, self)
-			table.remove(Vermilion.Data.Ranks, immunity)
-			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
-			return true
-		end
-
-		function meta:GetUsers()
-			local users = {}
-			for i,k in pairs(Vermilion.Data.Users) do
-				if(k:GetRankUID() == self.UniqueID and k:GetEntity() != nil) then
-					table.insert(users, k:GetEntity())
-				end
-			end
-			return users
-		end
-
-		function meta:GetUserObjects()
-			local users = {}
-			for i,k in pairs(Vermilion.Data.Users) do
-				if(k:GetRankUID() == self.UniqueID) then table.insert(users, k) end
-			end
-			return users
-		end
-
-		function meta:Rename(newName)
-			if(self.Protected) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
-				return false
-			end
-			for i,k in pairs(self:GetUsers()) do
-				k:SetRank(newName, true)
-			end
-			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
-			hook.Run(Vermilion.Event.RankRenamed, self.UniqueID, self.Name, newName)
-			self.Name = newName
-			Vermilion:BroadcastRankData()
-			return true
-		end
-
-		function meta:Delete()
-			if(self.Protected) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:deleteprotected"))
-				return false
-			end
-			for i,k in pairs(self:GetUsers()) do
-				k:SetRank(Vermilion:GetDefaultRank())
-			end
-			for i,k in pairs(Vermilion.Data.Ranks) do
-				if(k.InheritsFrom == self.UniqueID) then
-					k.InheritsFrom = nil
-				end
-			end
-			table.RemoveByValue(Vermilion.Data.Ranks, self)
-			Vermilion:BroadcastRankData()
-			Vermilion.Log(Vermilion:TranslateStr("config:rank:deleted", { self.Name }))
-			hook.Run(Vermilion.Event.RankDeleted, self.UniqueID)
-			return true
-		end
-
-		function meta:SetParent(parent)
-			if(parent == nil) then
-				self.InheritsFrom = nil
-				Vermilion:BroadcastRankData()
-				return
-			end
-			self.InheritsFrom = parent:GetUID()
-			Vermilion:BroadcastRankData()
-		end
-
-		function meta:AddPermission(permission)
-			if(self.Protected) then return end
-			if(not istable(permission)) then permission = { permission } end
-			for i,perm in pairs(permission) do
-				if(not self:HasPermission(perm)) then
-					local has = false
-					for i,k in pairs(Vermilion.AllPermissions) do
-						if(k.Permission == perm) then has = true break end
-					end
-					if(has) then
-						table.insert(self.Permissions, perm)
-					end
-				end
-			end
-			for i,k in pairs(self:GetUsers()) do
-				Vermilion:SyncClientRank(k)
-			end
-		end
-
-		function meta:RevokePermission(permission)
-			if(self.Protected) then return end
-			if(not istable(permission)) then permission = { permission } end
-			for i,perm in pairs(permission) do
-				if(self:HasPermission(perm)) then
-					local has = false
-					for i,k in pairs(Vermilion.AllPermissions) do
-						if(k.Permission == perm) then has = true break end
-					end
-					if(has) then
-						table.RemoveByValue(self.Permissions, perm)
-					end
-				end
-			end
-			for i,k in pairs(self:GetUsers()) do
-				Vermilion:SyncClientRank(k)
-			end
-		end
-
-		function meta:HasPermission(permission)
-			if(permission != "*") then
-				local has = false
-				for i,k in pairs(Vermilion.AllPermissions) do
-					if(k.Permission == permission) then has = true break end
-				end
-				if(not has) then
-					Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
-				end
-			end
-			if(self.InheritsFrom != nil) then
-				if(Vermilion:GetRank(self.InheritsFrom) == nil) then
-					Vermilion.Log("Bad rank inheritance for '" .. self.Name .. "'; Cannot find parent rank. Removing link.")
-					self.InheritsFrom = nil
-				else
-					if(Vermilion:GetRank(self.InheritsFrom):HasPermission(permission)) then return true end
-				end
-			end
-			return table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")
-		end
-
-		function meta:SetColour(colour)
-			if(IsColor(colour)) then
-				self.Colour = { colour.r, colour.g, colour.b }
-				Vermilion:BroadcastRankData()
-			elseif(istable(colour)) then
-				self.Colour = colour
-				Vermilion:BroadcastRankData()
-			else
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:badcolour", { type(colour) }))
-			end
-		end
-
-		function meta:GetColour()
-			return Color(self.Colour[1], self.Colour[2], self.Colour[3])
-		end
-
-		function meta:GetIcon()
-			return self.Icon
-		end
-
-		function meta:SetIcon(icon)
-			self.Icon = icon
-			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
-		end
-		Vermilion.RankMetaTable = meta
-	end
-
-	if(rankObj.UniqueID == nil) then -- upgrade existing configurations.
-		Vermilion.Log("Old-style rank detected (" .. rankObj.Name .. "); upgrading to UID...")
-		rankObj.UniqueID = Vermilion:CreateRankID()
-		Vermilion.Log("Rank given UID '" .. rankObj.UniqueID .. "'!")
-	end
-
-	setmetatable(rankObj, { __index = Vermilion.RankMetaTable }) // <-- The metatable creates phantom functions.
-end
-
 function Vermilion:SyncClientRank(client)
 	local userData = self:GetUser(client)
 	if(userData != nil) then
-		local rankData = userData:GetRank()
+		local rankData = userData:GetRank():GetName()
 		if(rankData != nil) then
 			net.Start("Vermilion_SendRank")
-			net.WriteTable(VToolkit.NetSanitiseTable(rankData))
+			net.WriteString(rankData)
 			net.Send(client)
 		end
 	end
@@ -334,31 +78,11 @@ function Vermilion:BroadcastRankData(target)
 	target = target or VToolkit:GetValidPlayers()
 	local normalData = {}
 	for i,k in pairs(self.Data.Ranks) do
-		table.insert(normalData, { Name = k.Name, UniqueID = k.UniqueID, Colour = k:GetColour(), IsDefault = k.UniqueID == Vermilion:GetDefaultRank(), Protected = k.Protected, Icon = k.Icon, InheritsFrom = k.InheritsFrom })
+		table.insert(normalData, k:GetNetPacket())
 	end
 	net.Start("VBroadcastRankData")
 	net.WriteTable(normalData)
 	net.Send(target)
-end
-
-function Vermilion:GetRank(name) -- this is now only to get ranks from player inputs, not used in the code (unless obtaining owner). Use GetRankByID instead!
-	for i,k in pairs(self.Data.Ranks) do
-		if(k.Name == name) then return k end
-	end
-end
-
-function Vermilion:GetRankByID(id)
-	for i,k in pairs(self.Data.Ranks) do
-		if(k.UniqueID == id) then return k end
-	end
-end
-
-function Vermilion:HasRank(name)
-	return self:GetRank(name) != nil
-end
-
-function Vermilion:HasRankID(id)
-	return self:GetRankByID(id) != nil
 end
 
 
@@ -371,104 +95,6 @@ end
 
 ]]--
 
-function Vermilion:CreateUserObj(name, steamid, rank, permissions)
-	local usr = {}
-
-	usr.Name = name
-	usr.SteamID = steamid
-	usr.Rank = rank
-	usr.Permissions = permissions
-	usr.Playtime = 0
-	usr.Kills = 0
-	usr.Deaths = 0
-	usr.Achievements = {}
-	usr.Karma = { Positive = {}, Negative = {} }
-
-
-	usr.Metadata = {}
-
-	self:AttachUserFunctions(usr)
-
-	return usr
-end
-
-function Vermilion:AttachUserFunctions(usrObject)
-	if(Vermilion.PlayerMetaTable == nil) then
-		local meta = {}
-		function meta:GetName()
-			return self.Name
-		end
-
-		function meta:GetRank()
-			return Vermilion:GetRankByID(self.Rank)
-		end
-
-		function meta:GetRankUID()
-			return self.Rank
-		end
-
-		function meta:GetRankName()
-			return self:GetRank():GetName()
-		end
-
-		function meta:GetEntity()
-			for i,k in pairs(VToolkit.GetValidPlayers()) do
-				if(k:SteamID() == self.SteamID) then return k end
-			end
-		end
-
-		function meta:IsImmune(other)
-			if(istable(other)) then
-				return self:GetRank():IsImmuneToRank(other)
-			end
-			if(IsValid(other)) then
-				return self:GetRank():IsImmuneToRank(Vermilion:GetUser(other):GetRank())
-			end
-		end
-
-		function meta:SetRank(rank, override)
-			if(Vermilion:HasRankID(rank) or override) then
-				local old = self.Rank
-				self.Rank = rank
-				hook.Run(Vermilion.Event.PlayerChangeRank, self, old, rank)
-				local ply = self:GetEntity()
-				if(IsValid(ply)) then
-					Vermilion:AddNotification(ply, "change_rank", {self.Rank})
-					ply:SetNWString("Vermilion_Rank", self.Rank)
-					Vermilion:SyncClientRank(ply)
-				end
-			end
-		end
-
-		function meta:HasPermission(permission)
-			if(permission != "*") then
-				local has = false
-				for i,k in pairs(Vermilion.AllPermissions) do
-					if(k.Permission == permission) then has = true break end
-				end
-				if(not has) then
-					Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
-				end
-			end
-			if(table.HasValue(self.Permissions, permission) or table.HasValue(self.Permissions, "*")) then return true end
-			return self:GetRank():HasPermission(permission)
-		end
-
-		function meta:GetColour()
-			return self:GetRank():GetColour()
-		end
-		Vermilion.PlayerMetaTable = meta
-	end
-
-	if(not Vermilion:GetData("UIDUpgraded", false)) then
-		if(Vermilion:GetRank(usrObject.Rank) != nil) then
-			usrObject.Rank = Vermilion:GetRank(usrObject.Rank):GetUID()
-		end
-	end
-
-	setmetatable(usrObject, { __index = Vermilion.PlayerMetaTable }) // <-- The metatable creates phantom functions.
-end
-
 function Vermilion:StoreNewUserdata(vplayer)
 	if(IsValid(vplayer)) then
 		local usr = self:CreateUserObj(vplayer:GetName(), vplayer:SteamID(), self:GetDefaultRank(), {})
@@ -476,56 +102,20 @@ function Vermilion:StoreNewUserdata(vplayer)
 	end
 end
 
-function Vermilion:GetUser(vplayer)
-	if(not isfunction(vplayer.SteamID)) then return end
-	return Vermilion:GetUserBySteamID(vplayer:SteamID())
-end
-
-function Vermilion:GetUserByName(name)
-	for index,userData in pairs(self.Data.Users) do
-		if(userData.Name == name) then return userData end
+function Vermilion:BroadcastActiveUserData(target)
+	target = target or VToolkit:GetValidPlayers()
+	local steamid = nil
+	if(not istable(target)) then steamid = target:SteamID() end
+	local normalData = {}
+	for i,k in pairs(self.Data.Users) do
+		if(not k:IsOnline() and k.SteamID != steamid) then continue end
+		table.insert(normalData, k:GetNetPacket())
 	end
+	net.Start("VBroadcastUserData")
+	net.WriteString(steamid or "")
+	net.WriteTable(normalData)
+	net.Send(target)
 end
-
-function Vermilion:GetUserBySteamID(steamid)
-	for index,userData in pairs(self.Data.Users) do
-		if(userData.SteamID == steamid) then return userData end
-	end
-end
-
-function Vermilion:HasUser(vplayer)
-	return Vermilion:GetUser(vplayer) != nil
-end
-
-function Vermilion:HasPermission(vplayer, permission)
-	if(permission != "*") then
-		local has = false
-		for i,k in pairs(self.AllPermissions) do
-			if(k.Permission == permission) then has = true break end
-		end
-		if(not has) then
-			Vermilion.Log(Vermilion:TranslateStr("config:unknownpermission", { permission }))
-		end
-	end
-	if(not IsValid(vplayer)) then
-		Vermilion.Log(Vermilion:TranslateStr("config:invaliduser"))
-		return true
-	end
-	local usr = self:GetUser(vplayer)
-	if(usr != nil) then
-		return usr:HasPermission(permission)
-	end
-end
-
-function Vermilion:GetUsersWithPermission(permission)
-	local tab = {}
-	for i,k in pairs(VToolkit.GetValidPlayers()) do
-		if(self:HasPermission(k, permission)) then table.insert(tab, k) end
-	end
-	return tab
-end
-
-
 
 
 
@@ -534,65 +124,6 @@ end
 	//		Data Storage		\\
 
 ]]--
-
-function Vermilion:GetData(name, default, set)
-	if(self.Data.Global[name] == nil) then
-		if(set) then
-			self.Data.Global[name] = default
-			self:TriggerInternalDataChangeHooks(name)
-		end
-		return default
-	end
-	return self.Data.Global[name]
-end
-
-function Vermilion:SetData(name, value)
-	self.Data.Global[name] = value
-	self:TriggerInternalDataChangeHooks(name)
-end
-
-function Vermilion:AddDataChangeHook(name, id, func)
-	if(self.DataChangeHooks[name] == nil) then self.DataChangeHooks[name] = {} end
-	self.DataChangeHooks[name][id] = func
-end
-
-function Vermilion:RemoveDataChangeHook(name, id)
-	if(self.DataChangeHooks[name] == nil) then return end
-	self.DataChangeHooks[name][id] = nil
-end
-
-function Vermilion:TriggerInternalDataChangeHooks(name)
-	if(self.DataChangeHooks[name] != nil) then
-		for i,k in pairs(self.DataChangeHooks[name]) do
-			k(self.Data.Global[name])
-		end
-	end
-end
-
-function Vermilion:GetModuleData(mod, name, def)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	if(self.Data.Module[mod][name] == nil) then return def end
-	return self.Data.Module[mod][name]
-end
-
-function Vermilion:SetModuleData(mod, name, val)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	self.Data.Module[mod][name] = val
-	self:TriggerDataChangeHooks(mod, name)
-end
-
-function Vermilion:TriggerDataChangeHooks(mod, name)
-	local modStruct = Vermilion:GetModule(mod)
-	if(modStruct != nil) then
-		if(modStruct.DataChangeHooks != nil) then
-			if(modStruct.DataChangeHooks[name] != nil) then
-				for index,DCHook in pairs(modStruct.DataChangeHooks[name]) do
-					DCHook(self.Data.Module[mod][name])
-				end
-			end
-		end
-	end
-end
 
 function Vermilion:NetworkModuleConfig(vplayer, mod)
 	if(self.Data.Module[mod] != nil) then
@@ -810,6 +341,7 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	net.Start("VBroadcastPermissions")
 	net.WriteTable(Vermilion.AllPermissions)
 	net.Send(vplayer)
+	Vermilion:BroadcastActiveUserData(vplayer)
 
 	net.Start("VUpdatePlayerLists")
 	local tab = {}

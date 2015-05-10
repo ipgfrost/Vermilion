@@ -194,7 +194,7 @@ function MODULE:InitClient()
 			paneldata.Listings:Clear()
 			local tab = net.ReadTable()
 			for i,k in pairs(tab) do
-				local ln = paneldata.Listings:AddLine(Vermilion:GetRankByID(k.Rank).Name, Vermilion:GetRankByID(k.ToRank).Name, k.TValuesString)
+				local ln = paneldata.Listings:AddLine(Vermilion:GetRankByID(k.Rank):GetName(), Vermilion:GetRankByID(k.ToRank):GetName(), k.TValuesString)
 				ln.ListingUID = k.UniqueID
 				ln.TimerValues = k.TimerValues
 				ln.FromRankUID = k.Rank
