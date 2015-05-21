@@ -131,6 +131,7 @@ if(CLIENT) then
 			net.WriteString("BaseSound")
 			net.WriteTable({})
 			net.SendToServer()
+			
 		end)
 		broadcastButton:SetSize(100, 20)
 		broadcastButton:SetImage("icon16/transmit.png")

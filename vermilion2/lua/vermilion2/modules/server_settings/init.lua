@@ -194,6 +194,7 @@ local options = {
 			MODULE:TranslateStr("pvpmode:disable"),
 			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
+	{ Name = "driver", GuiText = MODULE:TranslateStr("driver"), Type = "Combobox", Options = table.GetKeys(Vermilion.Drivers), Category = "Danger", Permission = "*", Default = 1 },
 	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Danger", Permission = "*", Function = function()
 		VToolkit:CreateConfirmDialog(MODULE:TranslateStr("resetconf:question"), function()
 				MODULE:NetCommand("VResetConfiguration")

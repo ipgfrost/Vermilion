@@ -29,6 +29,33 @@ Vermilion.Data.Ranks = {} -- temp
 Vermilion.Data.Users = {}
 Vermilion.Data.Bans = {}
 
+Vermilion.Drivers = {}
+
+if(SERVER) then
+	CreateConVar("vermilion2_driver", "Data")
+end
+
+function Vermilion:RegisterDriver(name, driver)
+	self.Drivers[name] = driver
+	self.Log("Registered driver \"" .. name .. "\"!")
+end
+
+function loadDrivers()
+	local f,d = file.Find("vermilion2/config/drivers/*", "LUA")
+	for i,k in pairs(d) do
+		include("vermilion2/config/drivers/" .. k .. "/driver_sh.lua")
+	end
+end
+
+function Vermilion:GetDriver()
+	if(CLIENT) then return self.Drivers["Data"] end
+	return self.Drivers[GetConVarString("vermilion2_driver")]
+end
+
+loadDrivers()
+
+
+
 --[[
 
 	//		Ranks		\\
@@ -153,19 +180,11 @@ end
 ]]--
 
 function Vermilion:GetData(name, default, set)
-	if(self.Data.Global[name] == nil) then
-		if(set) then
-			self.Data.Global[name] = default
-			self:TriggerInternalDataChangeHooks(name)
-		end
-		return default
-	end
-	return self.Data.Global[name]
+	return self:GetDriver():GetData(name, default, set)
 end
 
 function Vermilion:SetData(name, value)
-	self.Data.Global[name] = value
-	self:TriggerInternalDataChangeHooks(name)
+	self:GetDriver():SetData(name, value)
 end
 
 function Vermilion:AddDataChangeHook(name, id, func)
@@ -187,15 +206,11 @@ function Vermilion:TriggerInternalDataChangeHooks(name)
 end
 
 function Vermilion:GetModuleData(mod, name, def)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	if(self.Data.Module[mod][name] == nil) then return def end
-	return self.Data.Module[mod][name]
+	return self:GetDriver():GetModuleData(mod, name, def)
 end
 
 function Vermilion:SetModuleData(mod, name, val)
-	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	self.Data.Module[mod][name] = val
-	self:TriggerDataChangeHooks(mod, name)
+	self:GetDriver():SetModuleData(mod, name, val)
 end
 
 function Vermilion:TriggerDataChangeHooks(mod, name)

@@ -990,7 +990,7 @@ function MODULE:InitClient()
 			OnOpen = function(panel, paneldata)
 				Vermilion:PopulateRankTable(paneldata.RankList)
 				paneldata.AllPermissions:Clear()
-				for i,k in pairs(Vermilion.Data.Permissions) do
+				for i,k in pairs(Vermilion.AllPermissions) do
 					if(Vermilion:GetModule(k.Owner) == nil) then continue end
 					paneldata.AllPermissions:AddLine(k.Permission, Vermilion:GetModule(k.Owner).Name)
 				end

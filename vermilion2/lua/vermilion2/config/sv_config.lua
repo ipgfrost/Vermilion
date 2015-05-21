@@ -30,6 +30,7 @@ util.AddNetworkString("VBroadcastPermissions")
 util.AddNetworkString("VUpdatePlayerLists")
 util.AddNetworkString("VModuleConfig")
 util.AddNetworkString("VUsePreconfigured")
+util.AddNetworkString("VSendDriverList")
 
 
 
@@ -131,15 +132,6 @@ end
 
 ]]--
 
-function Vermilion:CreateDefaultDataStructs()
-	Vermilion.Data.Ranks = {
-		Vermilion:CreateRankObj("owner", { "*" }, true, Color(255, 0, 0), "key_add"),
-		Vermilion:CreateRankObj("admin", nil, false, Color(255, 93, 0), "shield"),
-		Vermilion:CreateRankObj("player", nil, false, Color(0, 161, 255), "user"),
-		Vermilion:CreateRankObj("guest", { "chat" }, false, Color(255, 255, 255), "user_orange")
-	}
-end
-
 net.Receive("VUsePreconfigured", function(len, vplayer)
 	if(not Vermilion:HasPermission(vplayer, "*")) then return end
 
@@ -196,97 +188,14 @@ net.Receive("VUsePreconfigured", function(len, vplayer)
 	Vermilion:BroadcastRankData()
 end)
 
-function Vermilion:RestoreBackup()
-	Vermilion.Log({Vermilion.Colours.Red, "[CRITICAL WARNING]", Vermilion.Colours.White, " I lost the configuration file... Usually a result of GMod unexpectedly stopping, most likely due to a BSoD or Kernel Panic. Sorry about that :( I'll try to restore a backup for you."})
-
-	local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
-
-	if(table.Count(fls) == 0) then
-		Vermilion.Log({ Vermilion.Colours.Red, "NO BACKUPS FOUND! Did you delete them? Restoring configuration file to defaults." })
-		self:CreateDefaultDataStructs()
-		return
-	end
-
-	local max = 0
-	for i,k in pairs(fls) do
-		if(tonumber(string.Replace(k, ".txt", "")) > max) then
-			max = tonumber(string.Replace(k, ".txt", ""))
-		end
-	end
-
-	local content = file.Read("vermilion2/backup/" .. tostring(max) .. ".txt")
-	file.Write(self.GetFileName("settings"), content)
-
-	Vermilion.Log("Restored configuration with timestamp " .. tostring(max) .. "!")
-end
-
 function Vermilion:LoadConfiguration(crashOnErr)
-	if(Vermilion.FirstRun) then
-		print("FIRST RUN!")
-		self:CreateDefaultDataStructs()
-		file.CreateDir("vermilion2/backup")
-	else
-		if(file.Size(self.GetFileName("settings"), "DATA") == 0) then
-			self:RestoreBackup()
-		else
-			local fls = file.Find("vermilion2/backup/*.txt", "DATA", "nameasc")
-			--if(table.Count(fls) > 100) then
-				local oneWeekAgo = os.time() - (60 * 60 * 24 * 7)
-				for i,k in pairs(fls) do
-					if(tonumber(string.Replace(k, ".txt", "")) < oneWeekAgo) then
-						Vermilion.Log("Deleting week-old configuration file; " .. k .. "!")
-						file.Delete("vermilion2/backup/" .. k)
-						table.RemoveByValue(fls, k)
-						if(table.Count(fls) <= 100) then break end
-					end
-				end
-			--end
-
-			Vermilion.Log(Vermilion:TranslateStr("config:backup"))
-			local code = tostring(os.time())
-			local content = file.Read(self.GetFileName("settings"), "DATA")
-
-			file.Write("vermilion2/backup/" .. code .. ".txt", content)
-		end
-		local succ,err = pcall(function()
-			Vermilion.Data = util.JSONToTable(util.Decompress(file.Read(self.GetFileName("settings"), "DATA")))
-		end)
-		if(!succ) then
-			if(crashOnErr) then
-				Vermilion.Log("There was a fatal error loading the configuration file... oops...")
-				self:CreateDefaultDataStructs()
-				file.Delete(self.GetFileName("settings"))
-				Vermilion:SetData("UIDUpgraded", true)
-				return
-			end
-			self:RestoreBackup()
-			Vermilion:LoadConfiguration(true)
-		end
-		for i,rank in pairs(Vermilion.Data.Ranks) do
-			self:AttachRankFunctions(rank)
-		end
-		if(not Vermilion:GetData("UIDUpgraded", false)) then
-			for i,k in pairs(Vermilion.Data.Ranks) do
-				if(k.InheritsFrom != nil) then
-					k.InheritsFrom = Vermilion:GetRank(k.InheritsFrom):GetUID()
-				end
-			end
-		end
-		for i,usr in pairs(Vermilion.Data.Users) do
-			self:AttachUserFunctions(usr)
-		end
-		self.Log(Vermilion:TranslateStr("config:loaded"))
-	end
-	Vermilion:SetData("UIDUpgraded", true)
+	self:GetDriver():Load(crashOnErr)
 end
 
 Vermilion:LoadConfiguration()
 
 function Vermilion:SaveConfiguration(verbose)
-	if(verbose == nil) then verbose = true end
-	if(verbose) then Vermilion.Log(Vermilion:TranslateStr("config:saving")) end
-	local safeTable = VToolkit.NetSanitiseTable(Vermilion.Data)
-	file.Write(self.GetFileName("settings"), util.Compress(util.TableToJSON(safeTable)))
+	self:GetDriver():Save(verbose)
 end
 
 Vermilion:AddHook("ShutDown", "SaveConfiguration", true, function()
@@ -328,6 +237,10 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	net.WriteTable(Vermilion.AllPermissions)
 	net.Send(vplayer)
 	Vermilion:BroadcastActiveUserData(vplayer)
+	
+	net.Start("VSendDriverList")
+	net.WriteTable(table.GetKeys(Vermilion.Drivers))
+	net.Send(vplayer)
 
 	net.Start("VUpdatePlayerLists")
 	local tab = {}

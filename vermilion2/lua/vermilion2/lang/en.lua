@@ -729,6 +729,8 @@ lang:Add("server_settings:pvpmode:disable", "Disable All PvP")
 lang:Add("server_settings:resetconf:question", "Are you sure you want to reset the configuration? The map will also be reset.")
 lang:Add("server_settings:noemergency", "NO!")
 
+lang:Add("server_settings:driver", "Data Driver:")
+
 lang:Add("server_settings:cat:spawncampprevention", "Spawncamp Prevention")
 lang:Add("server_settings:spawncampprevention:enable", "Enable Spawncamp Prevention")
 lang:Add("server_settings:spawncampprevention:timer", "Invincibility Time")
