@@ -88,7 +88,7 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 			if(not protected and k.Protected) then continue end
 			local inherits = Vermilion:GetRankByID(k.InheritsFrom)
 			if(inherits != nil) then inherits = inherits.Name end
-			if(k.IsDefault) then
+			if(k:IsDefault()) then
 				local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("yes"))
 				ln.Protected = k.Protected
 				ln.UniqueRankID = k.UniqueID

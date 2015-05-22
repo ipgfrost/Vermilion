@@ -30,8 +30,8 @@ local gmodver = string.Explode(".", VERSIONSTR)
 for i,k in pairs(gmodver) do gmodver[i] = tonumber(k) end
 local time = (gmodver[1] * 31557600) + (gmodver[3] * 2678400) + (gmodver[2] * 86400)
 if(time < 63598759200) then
-	print("[Vermilion 2] CRITICAL WARNING: You are running an old version of GMod that is NOT supported and NETWORKING ERRORS!")
-	print("[Vermilion 2] If something goes wrong and you do not update to the latest version, I will not help you. Ever.")
+	print("[Vermilion2] CRITICAL WARNING: You are running an old version of GMod that is NOT supported and has NETWORKING ERRORS!")
+	print("[Vermilion2] If something goes wrong and you do not update to the latest version, I will not help you. Ever.")
 end
 
 if(SERVER) then
@@ -71,6 +71,7 @@ end
 
 Vermilion = {}
 
+--[[
 Vermilion.NetStrings = {}
 
 local addns = util.AddNetworkString
@@ -78,6 +79,7 @@ function util.AddNetworkString(str)
 	if(string.StartWith(str, "V")) then table.insert(Vermilion.NetStrings, str) end
 	return addns(str)
 end
+]]--
 
 function Vermilion.GetFileName(name)
 	if(CLIENT) then

@@ -311,6 +311,7 @@ function MODULE:InitServer()
 			local new = net.ReadString()
 
 			Vermilion:SetData("default_rank", new)
+			Vermilion:GetDefaultRank() -- force update the GVar
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 		end
 	end)

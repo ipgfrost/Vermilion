@@ -63,14 +63,12 @@ loadDrivers()
 ]]--
 
 function Vermilion:GetDefaultRank()
-	local duid = ""
-	if(Vermilion:HasRank("player")) then
-		if(SERVER) then
+	if(SERVER) then
+		local duid = ""
+		if(Vermilion:HasRank("player")) then
 			duid = Vermilion:GetRank("player"):GetUID()
 		end
-	end
-	if(SERVER) then
-		duid = self:GetData("default_rank", duid)
+		duid = self:GetData("default_rank", duid, true)
 		if(VToolkit:GetGlobalValue("default_rank") != duid) then VToolkit:SetGlobalValue("default_rank", duid) end
 		return duid
 	end
@@ -96,6 +94,7 @@ end
 function Vermilion:HasRankID(id)
 	return self:GetRankByID(id) != nil
 end
+
 
 
 --[[
@@ -234,3 +233,7 @@ function Vermilion:NetworkModuleConfig(vplayer, mod)
 		net.Send(vplayer)
 	end
 end
+
+Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "SendDRGVAR", true, function()
+	if(SERVER) then Vermilion:GetDefaultRank() end
+end)
