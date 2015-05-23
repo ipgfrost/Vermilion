@@ -1061,7 +1061,7 @@ function MODULE:InitClient()
 
 				assignRank = VToolkit:CreateButton("Assign Rank", function()
 					if(playerList:GetSelected()[1] == nil) then return end
-					if(Vermilion.Data.Rank.Protected and Entity(playerList:GetSelected()[1].EntityID) == LocalPlayer()) then
+					if(Vermilion:GetUser(LocalPlayer()):GetRank():IsProtected() and Entity(playerList:GetSelected()[1].EntityID) == LocalPlayer()) then
 						VToolkit:CreateConfirmDialog("Really modify your rank?", function()
 							MODULE:NetStart("VAssignRank")
 							net.WriteEntity(Entity(playerList:GetSelected()[1].EntityID))

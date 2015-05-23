@@ -53,6 +53,10 @@ function Vermilion:AttachRankFunctions(rankObj)
 		function meta:IsDefault()
 			return self.UniqueID == Vermilion:GetDefaultRank()
 		end
+		
+		function meta:IsProtected()
+			return self.Protected
+		end
 
 		function meta:IsImmuneToRank(rank)
 			return self:GetImmunity() < rank:GetImmunity()
@@ -71,7 +75,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmoveup"))
 				return false
 			end
-			if(self.Protected) then
+			if(self:IsProtected()) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
@@ -89,7 +93,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmovedown"))
 				return false
 			end
-			if(self.Protected) then
+			if(self:IsProtected()) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
@@ -121,7 +125,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:Rename() on client!")
 				return
 			end
-			if(self.Protected) then
+			if(self:IsProtected()) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
 				return false
 			end
@@ -138,7 +142,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:Delete() on client!")
 				return
 			end
-			if(self.Protected) then
+			if(self:IsProtected()) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:deleteprotected"))
 				return false
 			end
@@ -178,7 +182,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:AddPermission() on client!")
 				return
 			end
-			if(self.Protected) then return end
+			if(self:IsProtected()) then return end
 			if(not istable(permission)) then permission = { permission } end
 			for i,perm in pairs(permission) do
 				if(not self:HasPermission(perm)) then
@@ -200,7 +204,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:RevokePermission() on client!")
 				return
 			end
-			if(self.Protected) then return end
+			if(self:IsProtected()) then return end
 			if(not istable(permission)) then permission = { permission } end
 			for i,perm in pairs(permission) do
 				if(self:HasPermission(perm)) then
