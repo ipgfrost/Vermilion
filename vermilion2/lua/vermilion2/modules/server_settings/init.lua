@@ -995,7 +995,7 @@ function MODULE:InitServer()
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
 			MODULE:NetStart("VUserDataList")
 			local tab = {}
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
 			end
 			net.WriteTable(tab)
@@ -1009,7 +1009,7 @@ function MODULE:InitServer()
 			local username = net.ReadString()
 			net.WriteBoolean(true)
 			net.WriteString(username)
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(k.Name == username) then
 					net.WriteTable(k)
 					break

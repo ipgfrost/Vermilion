@@ -86,6 +86,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 			if(Vermilion:HasRankID(rank) or override) then
 				local old = self.Rank
 				self.Rank = rank
+				Vermilion:GetDriver():SetUserRank(self)
 				hook.Run(Vermilion.Event.PlayerChangeRank, self, old, rank)
 				local ply = self:GetEntity()
 				if(IsValid(ply)) then

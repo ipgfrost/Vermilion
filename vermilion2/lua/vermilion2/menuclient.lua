@@ -223,9 +223,12 @@ MENU:AddPage({
 					"Zone creation bounds box shows regardless of render settings",
 					"Zones now properly reset after mode removal (confiscated weapons are returned)",
 					"VCore now uses driver model instead of straight up tables",
-					"Added tmysql4 (incomplete) driver (no, I won't add a mysqloo driver)",
 					"Added option to change the driver in the menu. DO NOT USE UNLESS YOU KNOW WHAT YOU ARE DOING!",
-					"Client will now ALWAYS use default 'Data' driver"
+					"Client will now ALWAYS use default 'Data' driver",
+					"Re-added Kick Tool from Vermilion 1",
+					"Re-added Teleport Tool from Vermilion 1",
+					"Re-added Disposition Tool from Vermilion 1",
+					"Re-added PSR Tool from Vermilion 1"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

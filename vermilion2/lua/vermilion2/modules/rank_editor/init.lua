@@ -68,7 +68,7 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			local usr = Vermilion:CreateUserObj(text[1], string.upper(text[2]), Vermilion:GetDefaultRank(), {})
-			table.insert(Vermilion.Data.Users, usr)
+			Vermilion:GetDriver():AddUserObject(usr)
 			log("Added user! Name will be updated at next login. You can now use !setrank to change their rank.")
 		end
 	})
@@ -88,7 +88,7 @@ function MODULE:RegisterChatCommands()
 				log("Cannot find SteamID in database!", nil, NOTIFY_ERROR)
 				return
 			end
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(k.SteamID == text[1]) then
 					table.RemoveByValue(Vermilion.Data.Users, k)
 					log("Removed user!")

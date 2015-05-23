@@ -59,7 +59,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 		end
 
 		function meta:GetImmunity()
-			return table.KeyFromValue(Vermilion.Data.Ranks, self)
+			return Vermilion:GetDriver():GetRankImmunity(self)
 		end
 
 		function meta:MoveUp()
@@ -75,9 +75,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
-			local immunity = self:GetImmunity()
-			table.insert(Vermilion.Data.Ranks, immunity - 1, self)
-			table.remove(Vermilion.Data.Ranks, immunity + 1)
+			Vermilion:GetDriver():IncreaseRankImmunity(self)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 			return true
 		end
@@ -95,16 +93,14 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:moveprotected"))
 				return false
 			end
-			local immunity = self:GetImmunity()
-			table.insert(Vermilion.Data.Ranks, immunity + 2, self)
-			table.remove(Vermilion.Data.Ranks, immunity)
+			Vermilion:GetDriver():DecreaseRankImmunity(self)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 			return true
 		end
 
 		function meta:GetUsers()
 			local users = {}
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(k:GetRankUID() == self.UniqueID and k:GetEntity() != nil) then
 					table.insert(users, k:GetEntity())
 				end
@@ -114,7 +110,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 
 		function meta:GetUserObjects()
 			local users = {}
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(k:GetRankUID() == self.UniqueID) then table.insert(users, k) end
 			end
 			return users
@@ -132,6 +128,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
 			hook.Run(Vermilion.Event.RankRenamed, self.UniqueID, self.Name, newName)
 			self.Name = newName
+			Vermilion:GetDriver():RenameRank(self)
 			Vermilion:BroadcastRankData()
 			return true
 		end
@@ -148,12 +145,12 @@ function Vermilion:AttachRankFunctions(rankObj)
 			for i,k in pairs(self:GetUsers()) do
 				k:SetRank(Vermilion:GetDefaultRank())
 			end
-			for i,k in pairs(Vermilion.Data.Ranks) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllRanks()) do
 				if(k.InheritsFrom == self.UniqueID) then
-					k.InheritsFrom = nil
+					k:SetParent(nil)
 				end
 			end
-			table.RemoveByValue(Vermilion.Data.Ranks, self)
+			Vermilion:GetDriver():RemoveRank(self)
 			Vermilion:BroadcastRankData()
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:deleted", { self.Name }))
 			hook.Run(Vermilion.Event.RankDeleted, self.UniqueID)
@@ -167,10 +164,12 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			if(parent == nil) then
 				self.InheritsFrom = nil
+				Vermilion:GetDriver():SetRankParent(self, nil)
 				Vermilion:BroadcastRankData()
 				return
 			end
 			self.InheritsFrom = parent:GetUID()
+			Vermilion:GetDriver():SetRankParent(self, parent:GetUID())
 			Vermilion:BroadcastRankData()
 		end
 
@@ -192,6 +191,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					end
 				end
 			end
+			Vermilion:GetDriver():UpdateRankPermissions(self)
 			Vermilion:BroadcastRankData()
 		end
 
@@ -213,6 +213,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					end
 				end
 			end
+			Vermilion:GetDriver():UpdateRankPermissions(self)
 			Vermilion:BroadcastRankData()
 		end
 
@@ -244,9 +245,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 			end
 			if(IsColor(colour)) then
 				self.Colour = { colour.r, colour.g, colour.b }
+				Vermilion:GetDriver():SetRankColour(self)
 				Vermilion:BroadcastRankData()
 			elseif(istable(colour)) then
 				self.Colour = colour
+				Vermilion:GetDriver():SetRankColour(self)
 				Vermilion:BroadcastRankData()
 			else
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:badcolour", { type(colour) }))
@@ -267,6 +270,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				return
 			end
 			self.Icon = icon
+			Vermilion:GetDriver():SetRankIcon(self)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 		end
 		

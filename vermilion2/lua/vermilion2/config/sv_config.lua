@@ -43,7 +43,7 @@ util.AddNetworkString("VSendDriverList")
 function Vermilion:AddRank(name, permissions, protected, colour, icon)
 	if(self:GetRank(name) != nil) then return end
 	local obj = self:CreateRankObj(name, permissions, protected, colour, icon)
-	table.insert(self.Data.Ranks, obj)
+	self:GetDriver():AddRank(obj)
 	hook.Run(Vermilion.Event.RankCreated, name)
 	Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 end
@@ -55,7 +55,7 @@ function Vermilion:CreateRankID()
 		out = out .. table.Random(vars)
 	end
 
-	for i,k in pairs(Vermilion.Data.Ranks) do
+	for i,k in pairs(self:GetDriver():GetAllRanks()) do
 		if(k.UniqueID == out) then return self:CreateRankID() end -- make completely sure that we are not duplicating rank IDs.
 	end
 
@@ -65,7 +65,7 @@ end
 function Vermilion:BroadcastRankData(target)
 	target = target or VToolkit:GetValidPlayers()
 	local normalData = {}
-	for i,k in pairs(self.Data.Ranks) do
+	for i,k in pairs(self:GetDriver():GetAllRanks()) do
 		table.insert(normalData, k:GetNetPacket())
 	end
 	net.Start("VBroadcastRankData")
@@ -84,10 +84,7 @@ end
 ]]--
 
 function Vermilion:StoreNewUserdata(vplayer)
-	if(IsValid(vplayer)) then
-		local usr = self:CreateUserObj(vplayer:GetName(), vplayer:SteamID(), self:GetDefaultRank(), {})
-		table.insert(self.Data.Users, usr)
-	end
+	self:GetDriver():AddUser(vplayer)
 end
 
 function Vermilion:BroadcastActiveUserData(target)
@@ -95,7 +92,7 @@ function Vermilion:BroadcastActiveUserData(target)
 	local steamid = nil
 	if(not istable(target)) then steamid = target:SteamID() end
 	local normalData = {}
-	for i,k in pairs(self.Data.Users) do
+	for i,k in pairs(self:GetDriver():GetAllUsers()) do
 		if(not k:IsOnline() and k.SteamID != steamid) then continue end
 		table.insert(normalData, k:GetNetPacket())
 	end
@@ -106,26 +103,6 @@ function Vermilion:BroadcastActiveUserData(target)
 end
 
 
-
---[[
-
-	//		Data Storage		\\
-
-]]--
-
-function Vermilion:NetworkModuleConfig(vplayer, mod)
-	if(self.Data.Module[mod] != nil) then
-		net.Start("VModuleConfig")
-		net.WriteString(mod)
-		net.WriteTable(self.Data.Module[mod])
-		net.Send(vplayer)
-	end
-end
-
-
-
-
-
 --[[
 
 	//		Loading/saving		\\
@@ -133,6 +110,7 @@ end
 ]]--
 
 net.Receive("VUsePreconfigured", function(len, vplayer)
+	if(GetConVarString("vermilion2_driver") != "Data") then return end
 	if(not Vermilion:HasPermission(vplayer, "*")) then return end
 
 	local coowner = Vermilion:CreateRankObj("co-owner", nil, false, Color(0, 63, 255), "key")

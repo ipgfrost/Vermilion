@@ -536,7 +536,7 @@ function MODULE:InitShared()
 		end,
 		Predictor = function(pos, current, all, vplayer)
 			local tab = { { Name = "", Syntax = "Ranks that cannot enter the zone..." } }
-			for i,k in pairs(Vermilion.Data.Ranks) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllRanks()) do
 				if(string.find(string.lower(k.Name), string.lower(current))) then
 					table.insert(tab, { Name = k.Name, Syntax = "" })
 				end

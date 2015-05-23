@@ -20,16 +20,8 @@
 Vermilion.AllPermissions = {}
 
 Vermilion.DataChangeHooks = {}
-
-Vermilion.Data = {}
-
-Vermilion.Data.Global = {}
-Vermilion.Data.Module = {}
-Vermilion.Data.Ranks = {} -- temp
-Vermilion.Data.Users = {}
-Vermilion.Data.Bans = {}
-
 Vermilion.Drivers = {}
+Vermilion.Data = {}
 
 if(SERVER) then
 	CreateConVar("vermilion2_driver", "Data")
@@ -76,23 +68,19 @@ function Vermilion:GetDefaultRank()
 end
 
 function Vermilion:GetRank(name) -- this is now only to get ranks from player inputs, not used in the code (unless obtaining owner). Use GetRankByID instead!
-	for i,k in pairs(self.Data.Ranks) do
-		if(k.Name == name) then return k end
-	end
+	return self:GetDriver():GetRank(name)
 end
 
 function Vermilion:GetRankByID(id)
-	for i,k in pairs(self.Data.Ranks) do
-		if(k.UniqueID == id) then return k end
-	end
+	return self:GetDriver():GetRankByID(id)
 end
 
 function Vermilion:HasRank(name)
-	return self:GetRank(name) != nil
+	return self:GetDriver():HasRank(name)
 end
 
 function Vermilion:HasRankID(id)
-	return self:GetRankByID(id) != nil
+	return self:GetDriver():HasRankID(id)
 end
 
 
@@ -104,29 +92,22 @@ end
 ]]--
 
 function Vermilion:GetUser(vplayer)
-	if(not isfunction(vplayer.SteamID)) then
-		return
-	end
 	if(CLIENT and vplayer:GetNWString("SteamID") != nil) then
-		return Vermilion:GetUserBySteamID(vplayer:GetNWString("SteamID"))
+		return self:GetUserBySteamID(vplayer:GetNWString("SteamID"))
 	end
-	return Vermilion:GetUserBySteamID(vplayer:SteamID())
+	return self:GetDriver():GetUser(vplayer)
 end
 
 function Vermilion:GetUserByName(name)
-	for index,userData in pairs(self.Data.Users) do
-		if(userData.Name == name) then return userData end
-	end
+	return self:GetDriver():GetUserByName(name)
 end
 
 function Vermilion:GetUserBySteamID(steamid)
-	for index,userData in pairs(self.Data.Users) do
-		if(userData.SteamID == steamid) then return userData end
-	end
+	return self:GetDriver():GetUserBySteamID(steamid)
 end
 
 function Vermilion:HasUser(vplayer)
-	return Vermilion:GetUser(vplayer) != nil
+	return self:GetDriver():HasUser(vplayer)
 end
 
 function Vermilion:HasPermission(vplayer, permission)
@@ -204,8 +185,8 @@ function Vermilion:TriggerInternalDataChangeHooks(name)
 	end
 end
 
-function Vermilion:GetModuleData(mod, name, def)
-	return self:GetDriver():GetModuleData(mod, name, def)
+function Vermilion:GetModuleData(mod, name, def, set)
+	return self:GetDriver():GetModuleData(mod, name, def, set)
 end
 
 function Vermilion:SetModuleData(mod, name, val)
@@ -217,20 +198,12 @@ function Vermilion:TriggerDataChangeHooks(mod, name)
 	if(modStruct != nil) then
 		if(modStruct.DataChangeHooks != nil) then
 			if(modStruct.DataChangeHooks[name] != nil) then
+				local data = self:GetModuleData(mod, name)
 				for index,DCHook in pairs(modStruct.DataChangeHooks[name]) do
-					DCHook(self.Data.Module[mod][name])
+					DCHook(data)
 				end
 			end
 		end
-	end
-end
-
-function Vermilion:NetworkModuleConfig(vplayer, mod)
-	if(self.Data.Module[mod] != nil) then
-		net.Start("VModuleConfig")
-		net.WriteString(mod)
-		net.WriteTable(self.Data.Module[mod])
-		net.Send(vplayer)
 	end
 end
 

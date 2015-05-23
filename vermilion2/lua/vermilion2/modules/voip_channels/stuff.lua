@@ -96,7 +96,7 @@ Vermilion:AddChatCommand({
 					return
 				end
 				table.RemoveByValue(MODULE:GetData("voip_channels", MODULE.DefaultVoIPChannels, true), has)
-				for i,k in pairs(Vermilion.Data.Users) do
+				for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 					if(k.VoIPChannel == text[1]) then
 						k.VoIPChannel = "Default"
 					end

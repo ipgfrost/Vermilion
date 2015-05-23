@@ -34,16 +34,11 @@ function Vermilion:CreateBaseModule()
 		function base:RegisterChatCommands() end
 
 		function base:GetAllData()
-			return Vermilion.Data.Module[self.ID] or {}
+			return Vermilion:GetDriver():GetAllModuleData(self.ID) or {}
 		end
 
 		function base:GetData(name, default, set)
-			if(Vermilion.Data.Module[self.ID] == nil) then Vermilion.Data.Module[self.ID] = {} end
-			if(Vermilion.Data.Module[self.ID][name] == nil) then
-				if(set) then self:SetData(name, default) end
-				return default
-			end
-			return Vermilion:GetModuleData(self.ID, name, default)
+			return Vermilion:GetModuleData(self.ID, name, default, set)
 		end
 
 		function base:SetData(name, value)

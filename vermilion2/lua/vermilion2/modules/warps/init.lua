@@ -21,7 +21,7 @@ local MODULE = MODULE
 MODULE.Name = "Warps"
 MODULE.ID = "warps"
 MODULE.Description = "Create destinations that can be travelled to using commands."
-MODULE.Author = "Ned (based on code written by Foxworrior)"
+MODULE.Author = "Ned"
 MODULE.Permissions = {
 	"create_warp",
 	"remove_warp",

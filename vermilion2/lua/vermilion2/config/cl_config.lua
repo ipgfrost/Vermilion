@@ -32,22 +32,22 @@ net.Receive("VBroadcastUserData", function()
 	if(sid != "") then
 		Vermilion.Data.LocalSteamID = sid
 	end
-	Vermilion.Data.Users = net.ReadTable()
-	for i,k in pairs(Vermilion.Data.Users) do
+	Vermilion:GetDriver().Data.Users = net.ReadTable()
+	for i,k in pairs(Vermilion:GetDriver().Data.Users) do
 		Vermilion:AttachUserFunctions(k)
 	end
 	hook.Run(Vermilion.Event.CLIENT_GOT_USERDATA)
-	if(Vermilion.Data.Ranks == nil) then return end
+	if(Vermilion:GetDriver().Data.Ranks == nil) then return end
 	hook.Run(Vermilion.Event.CLIENT_NewPermissionData)
 end)
 
 net.Receive("VBroadcastRankData", function()
-	Vermilion.Data.Ranks = net.ReadTable()
-	for i,k in pairs(Vermilion.Data.Ranks) do
+	Vermilion:GetDriver().Data.Ranks = net.ReadTable()
+	for i,k in pairs(Vermilion:GetDriver().Data.Ranks) do
 		Vermilion:AttachRankFunctions(k)
 	end
 	hook.Run(Vermilion.Event.CLIENT_GOT_RANK_DATA)
-	if(Vermilion.Data.Users == nil) then return end
+	if(Vermilion:GetDriver().Data.Users == nil) then return end
 	hook.Run(Vermilion.Event.CLIENT_NewPermissionData)
 end)
 
@@ -82,45 +82,45 @@ function Vermilion:PopulateRankTable(ranklist, detailed, protected, customiser)
 	if(not has) then
 		table.insert(self.RankTables, { Table = ranklist, Detailed = detailed, Protected = protected })
 	end
+	local restoreID = nil
+	if(ranklist:GetSelectedLine() != nil) then
+		restoreID = ranklist:GetSelected()[1].UniqueRankID
+	end
 	ranklist:Clear()
 	if(detailed) then
-		for i,k in pairs(self.Data.Ranks) do
+		for i,k in pairs(Vermilion:GetDriver().Data.Ranks) do
 			if(not protected and k.Protected) then continue end
 			local inherits = Vermilion:GetRankByID(k.InheritsFrom)
 			if(inherits != nil) then inherits = inherits.Name end
-			if(k:IsDefault()) then
-				local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("yes"))
-				ln.Protected = k.Protected
-				ln.UniqueRankID = k.UniqueID
-				for i1,k1 in pairs(ln.Columns) do
-					k1:SetContentAlignment(5)
-				end
-				local img = vgui.Create("DImage")
-				img:SetImage("icon16/" .. k.Icon .. ".png")
-				img:SetSize(16, 16)
-				ln:Add(img)
-				if(isfunction(customiser)) then customiser(ln, k) end
-			else
-				local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, Vermilion:TranslateStr("no"))
-				ln.Protected = k.Protected
-				ln.UniqueRankID = k.UniqueID
-				for i1,k1 in pairs(ln.Columns) do
-					k1:SetContentAlignment(5)
-				end
-				local img = vgui.Create("DImage")
-				img:SetImage("icon16/" .. k.Icon .. ".png")
-				img:SetSize(16, 16)
-				ln:Add(img)
-				if(isfunction(customiser)) then customiser(ln, k) end
+			local defaultText = Vermilion:TranslateStr("no")
+			if(k:IsDefault()) then 
+				defaultText = Vermilion:TranslateStr("yes")
 			end
+			local ln = ranklist:AddLine(k.Name, inherits or Vermilion:TranslateStr("none"), i, defaultText)
+			ln.Protected = k.Protected
+			ln.UniqueRankID = k.UniqueID
+			for i1,k1 in pairs(ln.Columns) do
+				k1:SetContentAlignment(5)
+			end
+			local img = vgui.Create("DImage")
+			img:SetImage("icon16/" .. k.Icon .. ".png")
+			img:SetSize(16, 16)
+			ln:Add(img)
+			if(isfunction(customiser)) then customiser(ln, k) end
 		end
 	else
-		for i,k in pairs(self.Data.Ranks) do
+		for i,k in pairs(Vermilion:GetDriver().Data.Ranks) do
 			if(not protected and k.Protected) then continue end
 			local ln = ranklist:AddLine(k.Name)
 			ln.Protected = k.Protected
 			ln.UniqueRankID = k.UniqueID
 			if(isfunction(customiser)) then customiser(ln, k) end
+		end
+	end
+	for i,k in pairs(ranklist:GetLines()) do
+		if(k.UniqueRankID == restoreID) then
+			ranklist:SelectItem(k)
+			break
 		end
 	end
 end
@@ -131,7 +131,7 @@ net.Receive("VUpdatePlayerLists", function()
 end)
 
 net.Receive("VModuleConfig", function()
-	Vermilion.Data.Module[net.ReadString()] = net.ReadTable()
+	Vermilion:GetDriver().Data.Module[net.ReadString()] = net.ReadTable()
 end)
 
 Vermilion:AddHook("ChatText", "StopDefaultChat", false, function(index, name, text, typ)

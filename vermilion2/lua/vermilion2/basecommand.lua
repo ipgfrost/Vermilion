@@ -25,10 +25,6 @@ end
 if(SERVER) then
 	util.AddNetworkString("Vermilion_ConsoleUpdate")
 
-	Vermilion:AddCommand("dump_settings", function(sender, args)
-		PrintTable(Vermilion.Data)
-	end)
-
 	hook.Add("PlayerInitialSpawn", "Vermilion_DoConsoleUpdate", function(vplayer)
 		timer.Simple(1, function()
 			net.Start("Vermilion_ConsoleUpdate")

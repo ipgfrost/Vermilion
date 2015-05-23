@@ -462,7 +462,7 @@ function MODULE:RegisterChatCommands()
 			end
 			local steamid = nil
 			local name = nil
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(string.find(string.lower(k.Name), string.lower(text[1]))) then steamid = k.SteamID name = k.Name break end
 			end
 			if(steamid == nil) then
@@ -486,7 +486,7 @@ function MODULE:RegisterChatCommands()
 		Permissions = { "manage_prop_protection" },
 		Predictor = function(pos, current, all, vplayer)
 			if(pos == 1) then
-				return VToolkit.MatchPlayerPart(Vermilion.Data.Users, current)
+				return VToolkit.MatchPlayerPart(Vermilion:GetDriver():GetAllUsers(), current)
 			end
 		end,
 		Function = function(sender, text, log, glog)

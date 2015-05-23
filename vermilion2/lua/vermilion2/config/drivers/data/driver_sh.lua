@@ -19,40 +19,55 @@
 
 DRIVER = {}
 
+DRIVER.Data = {}
+
+DRIVER.Data.Global = {}
+DRIVER.Data.Module = {}
+DRIVER.Data.Ranks = {} -- temp
+DRIVER.Data.Users = {}
+
 if(SERVER) then
 	AddCSLuaFile()
 end
 
 function DRIVER:GetData(name, default, set)
-	if(Vermilion.Data.Global[name] == nil) then
+	if(self.Data.Global[name] == nil) then
 		if(set) then
-			Vermilion.Data.Global[name] = default
+			self.Data.Global[name] = default
 			Vermilion:TriggerInternalDataChangeHooks(name)
 		end
 		return default
 	end
-	return Vermilion.Data.Global[name]
+	return self.Data.Global[name]
 end
 
 function DRIVER:SetData(name, value)
-	Vermilion.Data.Global[name] = value
+	self.Data.Global[name] = value
 	Vermilion:TriggerInternalDataChangeHooks(name)
 end
 
-function DRIVER:GetModuleData(mod, name, def)
-	if(Vermilion.Data.Module[mod] == nil) then Vermilion.Data.Module[mod] = {} end
-	if(Vermilion.Data.Module[mod][name] == nil) then return def end
-	return Vermilion.Data.Module[mod][name]
+function DRIVER:GetAllModuleData(mod)
+	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
+	return self.Data.Module[mod]
+end
+
+function DRIVER:GetModuleData(mod, name, def, set)
+	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
+	if(self.Data.Module[mod][name] == nil) then 
+		if(set) then self:SetModuleData(mod, name, def) end
+		return def
+	end
+	return self.Data.Module[mod][name]
 end
 
 function DRIVER:SetModuleData(mod, name, val)
-	if(Vermilion.Data.Module[mod] == nil) then Vermilion.Data.Module[mod] = {} end
-	Vermilion.Data.Module[mod][name] = val
+	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
+	self.Data.Module[mod][name] = val
 	Vermilion:TriggerDataChangeHooks(mod, name)
 end
 
 function DRIVER:CreateDefaultDataStructs()
-	Vermilion.Data.Ranks = {
+	self.Data.Ranks = {
 		Vermilion:CreateRankObj("owner", { "*" }, true, Color(255, 0, 0), "key_add"),
 		Vermilion:CreateRankObj("admin", nil, false, Color(255, 93, 0), "shield"),
 		Vermilion:CreateRankObj("player", nil, false, Color(0, 161, 255), "user"),
@@ -113,7 +128,7 @@ function DRIVER:Load(crashOnErr)
 			file.Write("vermilion2/backup/" .. code .. ".txt", content)
 		end
 		local succ,err = pcall(function()
-			Vermilion.Data = util.JSONToTable(util.Decompress(file.Read(Vermilion.GetFileName("settings"), "DATA")))
+			self.Data = util.JSONToTable(util.Decompress(file.Read(Vermilion.GetFileName("settings"), "DATA")))
 		end)
 		if(!succ) then
 			if(crashOnErr) then
@@ -126,17 +141,17 @@ function DRIVER:Load(crashOnErr)
 			self:RestoreBackup()
 			Vermilion:LoadConfiguration(true)
 		end
-		for i,rank in pairs(Vermilion.Data.Ranks) do
+		for i,rank in pairs(self.Data.Ranks) do
 			Vermilion:AttachRankFunctions(rank)
 		end
 		if(not Vermilion:GetData("UIDUpgraded", false)) then
-			for i,k in pairs(Vermilion.Data.Ranks) do
+			for i,k in pairs(self.Data.Ranks) do
 				if(k.InheritsFrom != nil) then
 					k.InheritsFrom = Vermilion:GetRank(k.InheritsFrom):GetUID()
 				end
 			end
 		end
-		for i,usr in pairs(Vermilion.Data.Users) do
+		for i,usr in pairs(self.Data.Users) do
 			Vermilion:AttachUserFunctions(usr)
 		end
 		Vermilion.Log(Vermilion:TranslateStr("config:loaded"))
@@ -147,10 +162,124 @@ end
 function DRIVER:Save(verbose)
 	if(verbose == nil) then verbose = true end
 	if(verbose) then Vermilion.Log(Vermilion:TranslateStr("config:saving")) end
-	local safeTable = VToolkit.NetSanitiseTable(Vermilion.Data)
+	local safeTable = VToolkit.NetSanitiseTable(self.Data)
 	file.Write(Vermilion.GetFileName("settings"), util.Compress(util.TableToJSON(safeTable)))
 end
 
+
+
+
+function DRIVER:AddRank(obj)
+	table.insert(self.Data.Ranks, obj)
+end
+
+function DRIVER:GetAllRanks()
+	return self.Data.Ranks
+end
+
+function DRIVER:GetRank(name)
+	for i,k in pairs(self.Data.Ranks) do
+		if(k.Name == name) then return k end
+	end
+end
+
+function DRIVER:GetRankByID(id)
+	for i,k in pairs(self.Data.Ranks) do
+		if(k.UniqueID == id) then return k end
+	end
+end
+
+function DRIVER:HasRank(name)
+	return self:GetRank(name) != nil
+end
+
+function DRIVER:HasRankID(id)
+	return self:GetRankByID(id) != nil
+end
+
+function DRIVER:GetRankImmunity(rank)
+	return table.KeyFromValue(self.Data.Ranks, rank)
+end
+
+function DRIVER:IncreaseRankImmunity(rank)
+	local immunity = rank:GetImmunity()
+	table.insert(self.Data.Ranks, immunity - 1, rank)
+	table.remove(self.Data.Ranks, immunity + 1)
+end
+
+function DRIVER:DecreaseRankImmunity(rank)
+	local immunity = rank:GetImmunity()
+	table.insert(self.Data.Ranks, immunity + 2, rank)
+	table.remove(self.Data.Ranks, immunity)
+end
+
+function DRIVER:RenameRank(rank)
+	-- noop on Data driver
+end
+
+function DRIVER:DeleteRank(rank)
+	table.RemoveByValue(self.Data.Ranks, rank)
+end
+
+function DRIVER:SetRankParent(rank)
+	-- noop on Data driver
+end
+
+function DRIVER:UpdateRankPermissions(rank)
+	-- noop on Data driver
+end
+
+function DRIVER:SetRankColour(rank)
+	-- noop on Data driver
+end
+
+function DRIVER:SetRankIcon(rank)
+	-- noop on Data driver
+end
+
+
+
+function DRIVER:AddUser(vplayer)
+	if(IsValid(vplayer)) then
+		local usr = Vermilion:CreateUserObj(vplayer:GetName(), vplayer:SteamID(), self:GetDefaultRank(), {})
+		table.insert(self.Data.Users, usr)
+	end
+end
+
+function DRIVER:AddUserObject(obj)
+	table.insert(self.Data.Users, obj)
+end
+
+function DRIVER:GetUser(vplayer)
+	if(not isfunction(vplayer.SteamID)) then
+		return
+	end
+	return self:GetUserBySteamID(vplayer:SteamID())
+end
+
+function DRIVER:GetUserByName(name)
+	for index,userData in pairs(self.Data.Users) do
+		if(userData.Name == name) then return userData end
+	end
+end
+
+function DRIVER:GetUserBySteamID(steamid)
+	for index,userData in pairs(self.Data.Users) do
+		if(userData.SteamID == steamid) then return userData end
+	end
+end
+
+function DRIVER:GetAllUsers()
+	return self.Data.Users
+end
+
+function DRIVER:HasUser(vplayer)
+	return self:GetUser(vplayer) != nil
+end
+
+function DRIVER:SetUserRank(user)
+	-- noop on Data driver
+end
 
 
 

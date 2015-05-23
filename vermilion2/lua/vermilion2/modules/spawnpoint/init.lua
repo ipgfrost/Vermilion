@@ -79,7 +79,7 @@ function MODULE:InitServer()
 			-- ok, this is not good, but it's the only way this will work. Search through the ranks, try to find one that matches the start of the allocation.
 			-- if a rank has a similar start, then this could screw up. (admin and administrator)
 			local rankName = nil
-			for i,k in pairs(Vermilion.Data.Ranks) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllRanks()) do
 				if(string.StartWith(i, k.Name) and string.len(k.Name) > string.len(rankName)) then
 					rankName = k.Name
 				end
@@ -111,7 +111,7 @@ function MODULE:InitServer()
 	local function sendRankAllocs(vplayer)
 		local tab = {}
 
-		for i,k in pairs(Vermilion.Data.Ranks) do
+		for i,k in pairs(Vermilion:GetDriver():GetAllRanks()) do
 			tab[k.UniqueID] = MODULE:GetData("allocations", {}, true)[k.UniqueID .. ":" .. game.GetMap()] or "Default"
 		end
 		MODULE:NetStart("VGetRankSpawnpoints")

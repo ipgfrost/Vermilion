@@ -63,7 +63,7 @@ Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "GeoIPOptions", true, function()
 			GuiText = Vermilion:TranslateStr("geoip:enablesetting"),
 			Type = "Checkbox",
 			Category = "Misc"
-			})
+		})
 	end
 end)
 

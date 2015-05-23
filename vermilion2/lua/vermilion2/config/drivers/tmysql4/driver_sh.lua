@@ -18,7 +18,7 @@
 ]]
 
 if(not file.Exists("bin/gmsv_tmysql4_linux.dll", "LUA") and not file.Exists("bin/gmsv_tmysql4_win32.dll", "LUA")) then
-	Vermilion.Log("Not loading tmysql4 data driver; tmysql4 DLLs are not installed!")
+	--Vermilion.Log("Not loading tmysql4 data driver; tmysql4 DLLs are not installed!")
 	return
 end
 
@@ -29,7 +29,7 @@ end
 
 if(xpcall(loadTMYSQL, function(msg)
 	Vermilion.Log("Failed to load tmysql4! Did you install libmysqlclient properly?")
-end)) then Vermilion.Log("Successfully loaded tmysql4!") end
+end)) then Vermilion.Log("Successfully loaded tmysql4!") else return end
 
 if(SERVER) then
 	AddCSLuaFile()

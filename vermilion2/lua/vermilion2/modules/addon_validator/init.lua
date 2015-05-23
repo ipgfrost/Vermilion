@@ -51,13 +51,13 @@ function MODULE:InitShared()
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddOption", function()
 		if(Vermilion:GetModule("server_settings") != nil) then
 			Vermilion:GetModule("server_settings"):AddOption({
-					Module = "addon_validator",
-					Name = "enabled",
-					GuiText = MODULE:TranslateStr("settingstext"),
-					Type = "Checkbox",
-					Category = "Misc",
-					Default = true
-				})
+				Module = "addon_validator",
+				Name = "enabled",
+				GuiText = MODULE:TranslateStr("settingstext"),
+				Type = "Checkbox",
+				Category = "Misc",
+				Default = true
+			})
 		end
 	end)
 end
