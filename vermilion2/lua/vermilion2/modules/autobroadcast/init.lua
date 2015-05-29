@@ -29,7 +29,8 @@ MODULE.NetworkStrings = {
 	"VGetAutoBroadcastListing",
 	"VAddAutoBroadcastListing",
 	"VUpdateAutoBroadcastListing",
-	"VDelAutoBroadcastListing"
+	"VDelAutoBroadcastListing",
+	"VPublishAutoBroadcast"
 }
 MODULE.APIFuncs = {
 	{
@@ -44,9 +45,13 @@ MODULE.APIFuncs = {
 }
 
 function MODULE:InitServer()
-	function MODULE:CreateNewAutoBroadcast(text, interval, displayinterval)
+	for i,k in pairs(MODULE:GetData("listings", {}, true)) do
+		if(k.Colour == nil) then k.Colour = { 255, 255, 255 } end
+	end
+
+	function MODULE:CreateNewAutoBroadcast(text, interval, displayinterval, colour)
 		assert(text != nil and interval != nil and displayinterval != nil)
-		MODULE:GetData("listings", { Text = text, Interval = interval, IntervalString = displayinterval })
+		MODULE:GetData("listings", { Text = text, Interval = interval, IntervalString = displayinterval, Colour = colour or { 255, 255, 255 } })
 	end
 
 	timer.Create("Vermilion_AutoBroadcast", 1, 0, function()
@@ -58,7 +63,11 @@ function MODULE:InitServer()
 			end
 			k.Timeout = k.Timeout - 1
 			if(k.Timeout <= 0) then
-				PrintMessage(HUD_PRINTTALK, "[Vermilion] " .. k.Text)
+				MODULE:NetStart("VPublishAutoBroadcast")
+				net.WriteString(k.Text)
+				net.WriteBoolean(k.Colour != nil)
+				net.WriteTable(k.Colour)
+				net.Broadcast()
 				k.Timeout = k.Interval
 			end
 		end
@@ -108,12 +117,26 @@ end
 
 function MODULE:InitClient()
 
+	self:NetHook("VPublishAutoBroadcast", function()
+		local text = net.ReadString()
+		local colour = Color(255, 255, 255)
+		if(net.ReadBoolean()) then
+			local cTable = net.ReadTable()
+			colour = Color(cTable[1], cTable[2], cTable[3])
+		end
+		chat.AddText(Vermilion.Colours.Red, "[Vermilion] ", colour, text)
+	end)
+
 	self:NetHook("VGetAutoBroadcastListing", function()
 		local paneldata = Vermilion.Menu.Pages["autobroadcast"]
 		if(IsValid(paneldata.Panel)) then
 			paneldata.MessageTable:Clear()
 			for i,k in pairs(net.ReadTable()) do
-				local ln = paneldata.MessageTable:AddLine(k.Text, k.IntervalString)
+				local ln = paneldata.MessageTable:AddLine(k.Text, "", k.IntervalString)
+				local colour = vgui.Create("DColorButton")
+				colour:SetParent(ln)
+				ln.Columns[2] = colour
+				colour:SetColor(Color(k.Colour[1], k.Colour[2], k.Colour[3]))
 				ln.TotalTime = k.Interval
 				ln.Values = k.Values
 			end
@@ -134,14 +157,15 @@ function MODULE:InitClient()
 			end,
 			Builder = function(panel, paneldata)
 				local listings = VToolkit:CreateList({
-					cols = MODULE:TranslateTable({ "list:text", "list:interval" }),
+					cols = MODULE:TranslateTable({ "list:text", "list:colour", "list:interval" }),
 					multiselect = true
 				})
 				listings:SetPos(10, 30)
 				listings:SetSize(765, 460)
 				listings:SetParent(panel)
-
+				
 				listings.Columns[2]:SetFixedWidth(100)
+				listings.Columns[3]:SetFixedWidth(100)
 
 				paneldata.MessageTable = listings
 
@@ -179,6 +203,14 @@ function MODULE:InitClient()
 				emessageBox:SetSize(425, 410)
 				emessageBox:SetParent(editMessagePanel)
 				emessageBox:SetMultiline(true)
+				
+				local eColourMixer = VToolkit:CreateColourMixer(false, false, true, Color(255, 255, 255), function(val)
+				
+				end)
+				eColourMixer:SetParent(editMessagePanel)
+				eColourMixer:SetPos(0, 290)
+				eColourMixer:SetX((editMessagePanel:GetWide() - eColourMixer:GetWide()) / 2)
+				eColourMixer:SetTall(eColourMixer:GetTall() - (eColourMixer:GetTall() / 4))
 
 
 
@@ -264,7 +296,7 @@ function MODULE:InitClient()
 					end
 
 					MODULE:NetStart("VUpdateAutoBroadcastListing")
-					net.WriteTable({ OText = editMessagePanel.OriginalMessage, Text = emessageBox:GetValue(), IntervalString = tostring(edaysWang:GetValue()) .. "d " .. tostring(ehoursWang:GetValue()) .. "h " .. tostring(eminsWang:GetValue()) .. "m " .. tostring(esecondsWang:GetValue()) .. "s", Interval = time, Values = { d = edaysWang:GetValue(), h = ehoursWang:GetValue(), m = eminsWang:GetValue(), s = esecondsWang:GetValue() } })
+					net.WriteTable({ OText = editMessagePanel.OriginalMessage, Text = emessageBox:GetValue(), IntervalString = tostring(edaysWang:GetValue()) .. "d " .. tostring(ehoursWang:GetValue()) .. "h " .. tostring(eminsWang:GetValue()) .. "m " .. tostring(esecondsWang:GetValue()) .. "s", Interval = time, Values = { d = edaysWang:GetValue(), h = ehoursWang:GetValue(), m = eminsWang:GetValue(), s = esecondsWang:GetValue() }, Colour = { eColourMixer:GetColor().r, eColourMixer:GetColor().g, eColourMixer:GetColor().b } })
 					net.SendToServer()
 
 					emessageBox:SetValue("")
@@ -323,10 +355,17 @@ function MODULE:InitClient()
 
 				local messageBox = VToolkit:CreateTextbox("")
 				messageBox:SetPos(10, 40)
-				messageBox:SetSize(425, 410)
+				messageBox:SetSize(425, 240)
 				messageBox:SetParent(addMessagePanel)
 				messageBox:SetMultiline(true)
-
+				
+				local addColourMixer = VToolkit:CreateColourMixer(false, false, true, Color(255, 255, 255), function(val)
+				
+				end)
+				addColourMixer:SetParent(addMessagePanel)
+				addColourMixer:SetPos(0, 290)
+				addColourMixer:SetX((addMessagePanel:GetWide() - addColourMixer:GetWide()) / 2)
+				addColourMixer:SetTall(addColourMixer:GetTall() - (addColourMixer:GetTall() / 4))
 
 
 				local timeLabel = VToolkit:CreateLabel(MODULE:TranslateStr("new:interval"))
@@ -411,8 +450,7 @@ function MODULE:InitClient()
 					end
 
 					MODULE:NetStart("VAddAutoBroadcastListing")
-					net.WriteTable({ Text = messageBox:GetValue(), IntervalString = tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s", Interval = time, Values = { d = daysWang:GetValue(), h = hoursWang:GetValue(), m = minsWang:GetValue(), s = secondsWang:GetValue() } })
-					net.SendToServer()
+					net.WriteTable({ Text = messageBox:GetValue(), IntervalString = tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s", Interval = time, Values = { d = daysWang:GetValue(), h = hoursWang:GetValue(), m = minsWang:GetValue(), s = secondsWang:GetValue() }, Colour = { addColourMixer:GetColor().r, addColourMixer:GetColor().g, addColourMixer:GetColor().b } })					net.SendToServer()
 
 					messageBox:SetValue("")
 					secondsWang:SetValue(0)
@@ -431,7 +469,7 @@ function MODULE:InitClient()
 			end,
 			OnOpen = function(panel, paneldata)
 				MODULE:NetCommand("VGetAutoBroadcastListing")
-				paneldata.AddMessagePanel:MoveTo(panel:GetWide(), 0, 0.25, 0, -3)
+				paneldata.AddMessagePanel:Close()
 			end
 		})
 end

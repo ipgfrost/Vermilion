@@ -228,7 +228,8 @@ MENU:AddPage({
 					"Re-added Kick Tool from Vermilion 1",
 					"Re-added Teleport Tool from Vermilion 1",
 					"Re-added Disposition Tool from Vermilion 1",
-					"Re-added PSR Tool from Vermilion 1"
+					"Re-added PST Tool from Vermilion 1",
+					"Added ability to colour messages from Auto-Broadcast module"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

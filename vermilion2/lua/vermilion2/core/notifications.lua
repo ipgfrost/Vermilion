@@ -139,7 +139,8 @@ if(CLIENT) then
 
 		return lines
 	end
-
+	
+	
 	local function buildNotify(text, typ)
 		local notify = vgui.Create("DPanel")
 		notify:DockMargin(0, 0, 0, 5)
@@ -185,6 +186,7 @@ if(CLIENT) then
 
 		return notify
 	end
+	
 
 	function Vermilion:AddNotification(text, typ, time)
 		if(notifybg == nil) then

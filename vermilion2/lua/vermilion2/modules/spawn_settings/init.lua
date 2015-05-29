@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "Spawn Parameters"
 MODULE.ID = "spawn_settings"
-MODULE.Description = "Allows players to spawn with custom settings."
+MODULE.Description = "Allows players to spawn with custom settings. NB: disable this module if your player capabilities, such as run speed, are being reset to default after being modified by another addon."
 MODULE.Author = "Ned"
 MODULE.Permissions = {
 	"manage_spawn_settings"

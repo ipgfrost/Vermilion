@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "Server Settings"
 MODULE.ID = "server_settings"
-MODULE.Description = "Provides a collection of basic options for administrating the server."
+MODULE.Description = "Provides a collection of basic options for administrating the server and an API for modules to network settings without creating an entirely new tab."
 MODULE.Author = "Ned"
 MODULE.PreventDisable = true
 MODULE.Permissions = {

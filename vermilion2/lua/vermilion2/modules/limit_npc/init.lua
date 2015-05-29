@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "NPC Limits"
 MODULE.ID = "limit_npc"
-MODULE.Description = "Prevent players from using certain NPCs."
+MODULE.Description = "Prevent players from spawning certain NPCs."
 MODULE.Author = "Ned"
 MODULE.Permissions = {
 	"manage_npc_limits"

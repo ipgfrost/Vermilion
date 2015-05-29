@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "Zones"
 MODULE.ID = "zones"
-MODULE.Description = "Add zones" // <-- add a better description
+MODULE.Description = "Add the ability to cordon off sections of the map and apply specific settings to them, including anti-gravity, sudden death, no PvP ect."
 MODULE.Author = "Ned"
 MODULE.Permissions = {
 	"zone_manager",

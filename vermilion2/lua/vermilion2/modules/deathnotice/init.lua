@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "Death Notice"
 MODULE.ID = "deathnotice"
-MODULE.Description = "Broadcasts a notification when someone dies."
+MODULE.Description = "Broadcasts mostly sarcastic and passive-aggressive notifications when someone dies."
 MODULE.Author = "Ned"
 MODULE.Permissions = {
 

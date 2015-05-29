@@ -20,7 +20,7 @@
 local MODULE = MODULE
 MODULE.Name = "Trouble in Terrorist Town"
 MODULE.ID = "ttt"
-MODULE.Description = "Integrates with TTT"
+MODULE.Description = "Integrates with TTT. NB: this module will only properly activate when TTT is the active gamemode. Functionality will be disabled in any other gamemode."
 MODULE.Author = "Ned"
 if(engine.ActiveGamemode() == "terrortown") then
 	MODULE.Permissions = {
