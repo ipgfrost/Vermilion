@@ -61,6 +61,10 @@ function Vermilion:GetDefaultRank()
 			duid = Vermilion:GetRank("player"):GetUID()
 		end
 		duid = self:GetData("default_rank", duid, true)
+		if(!Vermilion:HasRankID(duid)) then
+			duid = Vermilion:GetRank(duid):GetUID()
+			self:SetData("default_rank", duid)
+		end
 		if(VToolkit:GetGlobalValue("default_rank") != duid) then VToolkit:SetGlobalValue("default_rank", duid) end
 		return duid
 	end
@@ -180,7 +184,7 @@ end
 function Vermilion:TriggerInternalDataChangeHooks(name)
 	if(self.DataChangeHooks[name] != nil) then
 		for i,k in pairs(self.DataChangeHooks[name]) do
-			k(self.Data.Global[name])
+			k(self:GetDriver():GetData(name))
 		end
 	end
 end

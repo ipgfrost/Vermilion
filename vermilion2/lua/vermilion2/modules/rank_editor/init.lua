@@ -41,7 +41,14 @@ MODULE.NetworkStrings = {
 	"VChangeRankColour",
 	"VChangeRankIcon",
 	"VAssignRank",
-	"VAssignParent"
+	"VAssignParent",
+
+
+	"VPlayerKilledPlayer",
+	"VPlayerSuicide",
+	"VPlayerKilled",
+	"VPlayerKillNPC",
+	"VNPCKilledNPC"
 }
 MODULE.DefaultPermissions = {
 	{ Name = "admin", Permissions = {
@@ -357,6 +364,68 @@ function MODULE:InitServer()
 		end
 	end)
 
+	self:AddHook("PlayerDeath", function(vplayer, inflictor, attacker)
+		if(IsValid(attacker) and attacker:GetClass() == "trigger_hurt") then attacker = vplayer end
+		if(IsValid(attacker) and attacker:IsVehicle() and IsValid(attacker:GetDriver())) then attacker = attacker:GetDriver() end
+		if(not IsValid(inflictor) and IsValid(attacker)) then inflictor = attacker end
+		if(IsValid(inflictor) and inflictor == attacker and (inflictor:IsPlayer() or inflictor:IsNPC())) then
+			inflictor = inflictor:GetActiveWeapon()
+			if(not IsValid(inflictor)) then inflictor = attacker end
+		end
+		if(attacker == vplayer) then
+			MODULE:NetStart("VPlayerSuicide")
+			net.WriteEntity(vplayer)
+			net.Broadcast()
+			return
+		end
+		if(attacker:IsPlayer()) then
+			MODULE:NetStart("VPlayerKilledPlayer")
+			net.WriteEntity(vplayer)
+			net.WriteString(inflictor:GetClass())
+			net.WriteEntity(attacker)
+			net.Broadcast()
+			return
+		end
+		MODULE:NetStart("VPlayerKilled")
+		net.WriteEntity(vplayer)
+		net.WriteString(inflictor:GetClass())
+		net.WriteEntity(attacker)
+		net.Broadcast()
+	end)
+
+	self:AddHook("OnNPCKilled", function(ent, attacker, inflictor)
+		if(ent:GetClass() == "npc_bullseye" or ent:GetClass() == "npc_launcher") then return end
+		if(IsValid(attacker) and attacker:GetClass() == "trigger_hurt") then attacker = ent end
+		if(IsValid(attacker) and attacker:IsVehicle() and IsValid(attacker:GetDriver())) then attacker = attacker:GetDriver() end
+		if(not IsValid(inflictor) and IsValid(attacker)) then inflictor = attacker end
+		if(IsValid(inflictor) and attacker == inflictor and (inflictor:IsPlayer() or inflictor:IsNPC())) then
+			inflictor = inflictor:GetActiveWeapon()
+			if(not IsValid(attacker)) then inflictor = attacker end
+		end
+		local InflictorClass = "worldspawn"
+		local AttackerClass = "worldspawn"
+		if(IsValid(inflictor)) then InflictorClass = inflictor:GetClass() end
+		if(IsValid(attacker)) then
+			AttackerClass = attacker:GetClass()
+			if(attacker:IsPlayer()) then
+				MODULE:NetStart("VPlayerKillNPC")
+				net.WriteString(ent:GetClass())
+				net.WriteString(InflictorClass)
+				net.WriteEntity(attacker)
+				net.Broadcast()
+				return
+			end
+		end
+		if(ent:GetClass() == "npc_turret_floor") then AttackerClass = ent:GetClass() end
+		MODULE:NetStart("VNPCKilledNPC")
+		net.WriteString(ent:GetClass())
+		net.WriteString(InflictorClass)
+		net.WriteString(AttackerClass)
+		net.Broadcast()
+	end)
+
+	AddCSLuaFile("vermilion2/modules/rank_editor/killfeed.lua")
+
 	self:AddDataChangeHook("enabled", "EnableBroadcaster", function(value)
 		VToolkit:SetGlobalValue("VChatColourer", value)
 	end)
@@ -364,6 +433,8 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
+	include("vermilion2/modules/rank_editor/killfeed.lua")
+
 	Vermilion:AddCommand("setrank", function(sender, args)
 		Vermilion.Log("You aren't supposed to use this command here.")
 		Vermilion.Log("Type the command into the server console (not here)")

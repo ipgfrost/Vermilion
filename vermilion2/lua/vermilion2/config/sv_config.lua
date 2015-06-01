@@ -99,7 +99,7 @@ function Vermilion:BroadcastActiveUserData(target)
 	net.Start("VBroadcastUserData")
 	net.WriteString(steamid or "")
 	net.WriteTable(normalData)
-	net.Send(target)
+	net.Broadcast()
 end
 
 
@@ -215,7 +215,7 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	net.WriteTable(Vermilion.AllPermissions)
 	net.Send(vplayer)
 	Vermilion:BroadcastActiveUserData(vplayer)
-	
+
 	net.Start("VSendDriverList")
 	net.WriteTable(table.GetKeys(Vermilion.Drivers))
 	net.Send(vplayer)

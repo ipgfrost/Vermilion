@@ -229,7 +229,10 @@ MENU:AddPage({
 					"Re-added Teleport Tool from Vermilion 1",
 					"Re-added Disposition Tool from Vermilion 1",
 					"Re-added PST Tool from Vermilion 1",
-					"Added ability to colour messages from Auto-Broadcast module"
+					"Added ability to colour messages from Auto-Broadcast module",
+					"Added rank colours for the killfeed",
+					"Added !rebuildmapcache",
+					"Fixed bug with distributing user data"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

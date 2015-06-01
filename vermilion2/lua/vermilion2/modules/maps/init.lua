@@ -127,211 +127,226 @@ function MODULE:RegisterChatCommands()
 		end
 	})
 
+	Vermilion:AddChatCommand({
+		Name = "rebuildmapcache",
+		Description = "Rebuilds the map cache.",
+		Permissions = { "manage_map" },
+		Function = function(sender, text, log, glog)
+			MODULE:BuildMapCache()
+			log("Finished rebuilding map cache!")
+		end
+	})
+
 end
 
 function MODULE:InitServer()
 
-	-- The map codes are borrowed from getmaps.lua (garrysmod/lua/menu/getmaps.lua)
-	local MapPatterns = {
-		[ "^aoc_" ] = "Age of Chivalry",
-		[ "^asi-" ] = "Alien Swarm",
+	function MODULE:BuildMapCache()
+		-- The map codes are borrowed from getmaps.lua (garrysmod/lua/menu/getmaps.lua)
+		local MapPatterns = {
+			MODULE.MapCache = {}
+			[ "^aoc_" ] = "Age of Chivalry",
+			[ "^asi-" ] = "Alien Swarm",
 
-		[ "lobby" ] = "Alien Swarm",
+			[ "lobby" ] = "Alien Swarm",
 
-		[ "^ar_" ] = "Counter-Strike",
-		[ "^cs_" ] = "Counter-Strike",
-		[ "^de_" ] = "Counter-Strike",
-		[ "^es_" ] = "Counter-Strike",
-		[ "^fy_" ] = "Counter-Strike",
-		[ "training1" ] = "Counter-Strike",
+			[ "^ar_" ] = "Counter-Strike",
+			[ "^cs_" ] = "Counter-Strike",
+			[ "^de_" ] = "Counter-Strike",
+			[ "^es_" ] = "Counter-Strike",
+			[ "^fy_" ] = "Counter-Strike",
+			[ "training1" ] = "Counter-Strike",
 
-		[ "^dod_" ] = "Day Of Defeat",
+			[ "^dod_" ] = "Day Of Defeat",
 
-		[ "cp_pacentro" ] = "Dino D-Day",
-		[ "cp_snowypark" ] = "Dino D-Day",
-		[ "cp_troina" ] = "Dino D-Day",
-		[ "dm_canyon" ] = "Dino D-Day",
-		[ "dm_depot" ] = "Dino D-Day",
-		[ "dm_fortress_trex" ] = "Dino D-Day",
-		[ "dm_gela_trex" ] = "Dino D-Day",
-		[ "dm_hilltop" ] = "Dino D-Day",
-		[ "dm_market" ] = "Dino D-Day",
-		[ "dm_pacentro" ] = "Dino D-Day",
-		[ "dm_snowypark" ] = "Dino D-Day",
-		[ "dm_troina" ] = "Dino D-Day",
-		[ "koth_hilltop" ] = "Dino D-Day",
-		[ "koth_market" ] = "Dino D-Day",
-		[ "koth_pacentro" ] = "Dino D-Day",
-		[ "koth_snowypark" ] = "Dino D-Day",
-		[ "obj_canyon" ] = "Dino D-Day",
-		[ "obj_depot" ] = "Dino D-Day",
-		[ "obj_fortress" ] = "Dino D-Day",
+			[ "cp_pacentro" ] = "Dino D-Day",
+			[ "cp_snowypark" ] = "Dino D-Day",
+			[ "cp_troina" ] = "Dino D-Day",
+			[ "dm_canyon" ] = "Dino D-Day",
+			[ "dm_depot" ] = "Dino D-Day",
+			[ "dm_fortress_trex" ] = "Dino D-Day",
+			[ "dm_gela_trex" ] = "Dino D-Day",
+			[ "dm_hilltop" ] = "Dino D-Day",
+			[ "dm_market" ] = "Dino D-Day",
+			[ "dm_pacentro" ] = "Dino D-Day",
+			[ "dm_snowypark" ] = "Dino D-Day",
+			[ "dm_troina" ] = "Dino D-Day",
+			[ "koth_hilltop" ] = "Dino D-Day",
+			[ "koth_market" ] = "Dino D-Day",
+			[ "koth_pacentro" ] = "Dino D-Day",
+			[ "koth_snowypark" ] = "Dino D-Day",
+			[ "obj_canyon" ] = "Dino D-Day",
+			[ "obj_depot" ] = "Dino D-Day",
+			[ "obj_fortress" ] = "Dino D-Day",
 
-		[ "de_dam" ] = "DIPRIP",
-		[ "dm_city" ] = "DIPRIP",
-		[ "dm_refinery" ] = "DIPRIP",
-		[ "dm_supermarket" ] = "DIPRIP",
-		[ "dm_village" ] = "DIPRIP",
-		[ "^ur_" ] = "DIPRIP",
+			[ "de_dam" ] = "DIPRIP",
+			[ "dm_city" ] = "DIPRIP",
+			[ "dm_refinery" ] = "DIPRIP",
+			[ "dm_supermarket" ] = "DIPRIP",
+			[ "dm_village" ] = "DIPRIP",
+			[ "^ur_" ] = "DIPRIP",
 
-		[ "^dys_" ] = "Dystopia",
-		[ "^pb_" ] = "Dystopia",
+			[ "^dys_" ] = "Dystopia",
+			[ "^pb_" ] = "Dystopia",
 
-		[ "credits" ] = "Half-Life 2",
-		[ "^d1_" ] = "Half-Life 2",
-		[ "^d2_" ] = "Half-Life 2",
-		[ "^d3_" ] = "Half-Life 2",
-		[ "intro" ] = "Half-Life 2",
+			[ "credits" ] = "Half-Life 2",
+			[ "^d1_" ] = "Half-Life 2",
+			[ "^d2_" ] = "Half-Life 2",
+			[ "^d3_" ] = "Half-Life 2",
+			[ "intro" ] = "Half-Life 2",
 
-		[ "^dm_" ] = "Half-Life 2: Deathmatch",
-		[ "halls3" ] = "Half-Life 2: Deathmatch",
+			[ "^dm_" ] = "Half-Life 2: Deathmatch",
+			[ "halls3" ] = "Half-Life 2: Deathmatch",
 
-		[ "^ep1_" ] = "Half-Life 2: Episode 1",
-		[ "^ep2_" ] = "Half-Life 2: Episode 2",
-		[ "^ep3_" ] = "Half-Life 2: Episode 3", -- very funny Garry. *clap clap*
+			[ "^ep1_" ] = "Half-Life 2: Episode 1",
+			[ "^ep2_" ] = "Half-Life 2: Episode 2",
+			[ "^ep3_" ] = "Half-Life 2: Episode 3", -- very funny Garry. *clap clap*
 
-		[ "d2_lostcoast" ] = "Half-Life 2: Lost Coast",
+			[ "d2_lostcoast" ] = "Half-Life 2: Lost Coast",
 
-		[ "^c0a" ] = "Half-Life: Source",
-		[ "^c1a" ] = "Half-Life: Source",
-		[ "^c2a" ] = "Half-Life: Source",
-		[ "^c3a" ] = "Half-Life: Source",
-		[ "^c4a" ] = "Half-Life: Source",
-		[ "^c5a" ] = "Half-Life: Source",
-		[ "^t0a" ] = "Half-Life: Source",
+			[ "^c0a" ] = "Half-Life: Source",
+			[ "^c1a" ] = "Half-Life: Source",
+			[ "^c2a" ] = "Half-Life: Source",
+			[ "^c3a" ] = "Half-Life: Source",
+			[ "^c4a" ] = "Half-Life: Source",
+			[ "^c5a" ] = "Half-Life: Source",
+			[ "^t0a" ] = "Half-Life: Source",
 
-		[ "boot_camp" ] = "Half-Life Deathmatch: Source",
-		[ "bounce" ] = "Half-Life Deathmatch: Source",
-		[ "crossfire" ] = "Half-Life Deathmatch: Source",
-		[ "datacore" ] = "Half-Life Deathmatch: Source",
-		[ "frenzy" ] = "Half-Life Deathmatch: Source",
-		[ "lambda_bunker" ] = "Half-Life Deathmatch: Source",
-		[ "rapidcore" ] = "Half-Life Deathmatch: Source",
-		[ "snarkpit" ] = "Half-Life Deathmatch: Source",
-		[ "stalkyard" ] = "Half-Life Deathmatch: Source",
-		[ "subtransit" ] = "Half-Life Deathmatch: Source",
-		[ "undertow" ] = "Half-Life Deathmatch: Source",
+			[ "boot_camp" ] = "Half-Life Deathmatch: Source",
+			[ "bounce" ] = "Half-Life Deathmatch: Source",
+			[ "crossfire" ] = "Half-Life Deathmatch: Source",
+			[ "datacore" ] = "Half-Life Deathmatch: Source",
+			[ "frenzy" ] = "Half-Life Deathmatch: Source",
+			[ "lambda_bunker" ] = "Half-Life Deathmatch: Source",
+			[ "rapidcore" ] = "Half-Life Deathmatch: Source",
+			[ "snarkpit" ] = "Half-Life Deathmatch: Source",
+			[ "stalkyard" ] = "Half-Life Deathmatch: Source",
+			[ "subtransit" ] = "Half-Life Deathmatch: Source",
+			[ "undertow" ] = "Half-Life Deathmatch: Source",
 
-		[ "^ins_" ] = "Insurgency",
+			[ "^ins_" ] = "Insurgency",
 
-		[ "^l4d" ] = "Left 4 Dead",
+			[ "^l4d" ] = "Left 4 Dead",
 
-		[ "^c1m" ] = "Left 4 Dead 2",
-		[ "^c2m" ] = "Left 4 Dead 2",
-		[ "^c3m" ] = "Left 4 Dead 2",
-		[ "^c4m" ] = "Left 4 Dead 2",
-		[ "^c5m" ] = "Left 4 Dead 2",
-		[ "^c6m" ] = "Left 4 Dead 2",
-		[ "^c7m" ] = "Left 4 Dead 2",
-		[ "^c8m" ] = "Left 4 Dead 2",
-		[ "^c9m" ] = "Left 4 Dead 2",
-		[ "^c10m" ] = "Left 4 Dead 2",
-		[ "^c11m" ] = "Left 4 Dead 2",
-		[ "^c12m" ] = "Left 4 Dead 2",
-		[ "^c13m" ] = "Left 4 Dead 2",
-		[ "curling_stadium" ] = "Left 4 Dead 2",
-		[ "tutorial_standards" ] = "Left 4 Dead 2",
-		[ "tutorial_standards_vs" ] = "Left 4 Dead 2",
+			[ "^c1m" ] = "Left 4 Dead 2",
+			[ "^c2m" ] = "Left 4 Dead 2",
+			[ "^c3m" ] = "Left 4 Dead 2",
+			[ "^c4m" ] = "Left 4 Dead 2",
+			[ "^c5m" ] = "Left 4 Dead 2",
+			[ "^c6m" ] = "Left 4 Dead 2",
+			[ "^c7m" ] = "Left 4 Dead 2",
+			[ "^c8m" ] = "Left 4 Dead 2",
+			[ "^c9m" ] = "Left 4 Dead 2",
+			[ "^c10m" ] = "Left 4 Dead 2",
+			[ "^c11m" ] = "Left 4 Dead 2",
+			[ "^c12m" ] = "Left 4 Dead 2",
+			[ "^c13m" ] = "Left 4 Dead 2",
+			[ "curling_stadium" ] = "Left 4 Dead 2",
+			[ "tutorial_standards" ] = "Left 4 Dead 2",
+			[ "tutorial_standards_vs" ] = "Left 4 Dead 2",
 
-		[ "clocktower" ] = "Nuclear Dawn",
-		[ "coast" ] = "Nuclear Dawn",
-		[ "downtown" ] = "Nuclear Dawn",
-		[ "gate" ] = "Nuclear Dawn",
-		[ "hydro" ] = "Nuclear Dawn",
-		[ "metro" ] = "Nuclear Dawn",
-		[ "metro_training" ] = "Nuclear Dawn",
-		[ "oasis" ] = "Nuclear Dawn",
-		[ "oilfield" ] = "Nuclear Dawn",
-		[ "silo" ] = "Nuclear Dawn",
-		[ "sk_metro" ] = "Nuclear Dawn",
-		[ "training" ] = "Nuclear Dawn",
+			[ "clocktower" ] = "Nuclear Dawn",
+			[ "coast" ] = "Nuclear Dawn",
+			[ "downtown" ] = "Nuclear Dawn",
+			[ "gate" ] = "Nuclear Dawn",
+			[ "hydro" ] = "Nuclear Dawn",
+			[ "metro" ] = "Nuclear Dawn",
+			[ "metro_training" ] = "Nuclear Dawn",
+			[ "oasis" ] = "Nuclear Dawn",
+			[ "oilfield" ] = "Nuclear Dawn",
+			[ "silo" ] = "Nuclear Dawn",
+			[ "sk_metro" ] = "Nuclear Dawn",
+			[ "training" ] = "Nuclear Dawn",
 
-		[ "^bt_" ] = "Pirates, Vikings, & Knights II",
-		[ "^lts_" ] = "Pirates, Vikings, & Knights II",
-		[ "^te_" ] = "Pirates, Vikings, & Knights II",
-		[ "^tw_" ] = "Pirates, Vikings, & Knights II",
+			[ "^bt_" ] = "Pirates, Vikings, & Knights II",
+			[ "^lts_" ] = "Pirates, Vikings, & Knights II",
+			[ "^te_" ] = "Pirates, Vikings, & Knights II",
+			[ "^tw_" ] = "Pirates, Vikings, & Knights II",
 
-		[ "^escape_" ] = "Portal",
-		[ "^testchmb_" ] = "Portal",
+			[ "^escape_" ] = "Portal",
+			[ "^testchmb_" ] = "Portal",
 
-		[ "e1912" ] = "Portal 2",
-		[ "^mp_coop_" ] = "Portal 2",
-		[ "^sp_a" ] = "Portal 2",
+			[ "e1912" ] = "Portal 2",
+			[ "^mp_coop_" ] = "Portal 2",
+			[ "^sp_a" ] = "Portal 2",
 
-		[ "^arena_" ] = "Team Fortress 2",
-		[ "^cp_" ] = "Team Fortress 2",
-		[ "^ctf_" ] = "Team Fortress 2",
-		[ "itemtest" ] = "Team Fortress 2",
-		[ "^koth_" ] = "Team Fortress 2",
-		[ "^mvm_" ] = "Team Fortress 2",
-		[ "^pl_" ] = "Team Fortress 2",
-		[ "^plr_" ] = "Team Fortress 2",
-		[ "^sd_" ] = "Team Fortress 2",
-		[ "^tc_" ] = "Team Fortress 2",
-		[ "^tr_" ] = "Team Fortress 2",
-		[ "^rd_" ] = "Team Fortress 2",
+			[ "^arena_" ] = "Team Fortress 2",
+			[ "^cp_" ] = "Team Fortress 2",
+			[ "^ctf_" ] = "Team Fortress 2",
+			[ "itemtest" ] = "Team Fortress 2",
+			[ "^koth_" ] = "Team Fortress 2",
+			[ "^mvm_" ] = "Team Fortress 2",
+			[ "^pl_" ] = "Team Fortress 2",
+			[ "^plr_" ] = "Team Fortress 2",
+			[ "^sd_" ] = "Team Fortress 2",
+			[ "^tc_" ] = "Team Fortress 2",
+			[ "^tr_" ] = "Team Fortress 2",
+			[ "^rd_" ] = "Team Fortress 2",
 
-		[ "^zpa_" ] = "Zombie Panic! Source",
-		[ "^zpl_" ] = "Zombie Panic! Source",
-		[ "^zpo_" ] = "Zombie Panic! Source",
-		[ "^zps_" ] = "Zombie Panic! Source",
+			[ "^zpa_" ] = "Zombie Panic! Source",
+			[ "^zpl_" ] = "Zombie Panic! Source",
+			[ "^zpo_" ] = "Zombie Panic! Source",
+			[ "^zps_" ] = "Zombie Panic! Source",
 
-		[ "^achievement_" ] = "Achievement",
-		[ "^cinema_" ] = "Cinema",
-		[ "^theater_" ] = "Cinema",
-		[ "^xc_" ] = "Climb",
-		[ "^deathrun_" ] = "Deathrun",
-		[ "^dr_" ] = "Deathrun",
-		[ "^gmt_" ] = "GMod Tower",
-		[ "^jb_" ] = "Jailbreak",
-		[ "^ba_jail_" ] = "Jailbreak",
-		[ "^mg_" ] = "Minigames",
-		[ "^phys_" ] = "Physics Maps",
-		[ "^pw_" ] = "Pirate Ship Wars",
-		[ "^ph_" ] = "Prop Hunt",
-		[ "^rp_" ] = "Roleplay",
-		[ "^sb_" ] = "Spacebuild",
-		[ "^slender_" ] = "Stop it Slender",
-		[ "^gms_" ] = "Stranded",
-		[ "^surf_" ] = "Surf",
-		[ "^ts_" ] = "The Stalker",
-		[ "^zm_" ] = "Zombie Survival",
-		[ "^zombiesurvival_" ] = "Zombie Survival",
-		[ "^zs_" ] = "Zombie Survival",
-	}
+			[ "^achievement_" ] = "Achievement",
+			[ "^cinema_" ] = "Cinema",
+			[ "^theater_" ] = "Cinema",
+			[ "^xc_" ] = "Climb",
+			[ "^deathrun_" ] = "Deathrun",
+			[ "^dr_" ] = "Deathrun",
+			[ "^gmt_" ] = "GMod Tower",
+			[ "^jb_" ] = "Jailbreak",
+			[ "^ba_jail_" ] = "Jailbreak",
+			[ "^mg_" ] = "Minigames",
+			[ "^phys_" ] = "Physics Maps",
+			[ "^pw_" ] = "Pirate Ship Wars",
+			[ "^ph_" ] = "Prop Hunt",
+			[ "^rp_" ] = "Roleplay",
+			[ "^sb_" ] = "Spacebuild",
+			[ "^slender_" ] = "Stop it Slender",
+			[ "^gms_" ] = "Stranded",
+			[ "^surf_" ] = "Surf",
+			[ "^ts_" ] = "The Stalker",
+			[ "^zm_" ] = "Zombie Survival",
+			[ "^zombiesurvival_" ] = "Zombie Survival",
+			[ "^zs_" ] = "Zombie Survival",
+		}
 
-	-- load in the gamemode ones
-	for i,gm in pairs(engine.GetGamemodes()) do
-		local Name = gm.title or "Unnamed Gamemode"
-		local Maps = string.Split(gm.maps, "|")
-		if(Maps && gm.maps != "") then
-			for k,pattern in pairs(Maps) do
-				MapPatterns[pattern] = Name
-			end
-		end
-	end
-
-	local IgnoredMaps = { "background", "^test_", "^styleguide", "^devtest", "sdk_shader_samples", "^vst_", "d2_coast_02", "c4a1y", "d3_c17_02_camera", "ep1_citadel_00_demo", "credits", "intro" }
-
-	local cache = file.Find("maps/*.bsp", "GAME")
-	for i,k in pairs(cache) do
-		local ignore = false
-		for dd,ignoredMap in pairs(IgnoredMaps) do
-			if(string.find(k, ignoredMap)) then ignore = true break end
-		end
-		if(not ignore) then
-			local Cat = "Other"
-			local lowername = string.lower(k)
-			for pattern,category in pairs(MapPatterns) do
-				if((string.StartWith(pattern, "^") or string.EndsWith(pattern, "_") or string.EndsWith(pattern, "-")) and string.find(lowername, pattern)) then
-					Cat = category
-					break
+		-- load in the gamemode ones
+		for i,gm in pairs(engine.GetGamemodes()) do
+			local Name = gm.title or "Unnamed Gamemode"
+			local Maps = string.Split(gm.maps, "|")
+			if(Maps && gm.maps != "") then
+				for k,pattern in pairs(Maps) do
+					MapPatterns[pattern] = Name
 				end
 			end
-			if(MapPatterns[k]) then Cat = MapPatterns[k] end
-			table.insert(MODULE.MapCache, { string.StripExtension(k), Cat })
+		end
+
+		local IgnoredMaps = { "background", "^test_", "^styleguide", "^devtest", "sdk_shader_samples", "^vst_", "d2_coast_02", "c4a1y", "d3_c17_02_camera", "ep1_citadel_00_demo", "credits", "intro" }
+
+		local cache = file.Find("maps/*.bsp", "GAME")
+		for i,k in pairs(cache) do
+			local ignore = false
+			for dd,ignoredMap in pairs(IgnoredMaps) do
+				if(string.find(k, ignoredMap)) then ignore = true break end
+			end
+			if(not ignore) then
+				local Cat = "Other"
+				local lowername = string.lower(k)
+				for pattern,category in pairs(MapPatterns) do
+					if((string.StartWith(pattern, "^") or string.EndsWith(pattern, "_") or string.EndsWith(pattern, "-")) and string.find(lowername, pattern)) then
+						Cat = category
+						break
+					end
+				end
+				if(MapPatterns[k]) then Cat = MapPatterns[k] end
+				table.insert(MODULE.MapCache, { string.StripExtension(k), Cat })
+			end
 		end
 	end
+
+	self:BuildMapCache()
 
 	self:NetHook("VGetMapList", function(vplayer)
 		MODULE:NetStart("VGetMapList")

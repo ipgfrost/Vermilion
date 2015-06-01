@@ -53,7 +53,7 @@ end
 
 function DRIVER:GetModuleData(mod, name, def, set)
 	if(self.Data.Module[mod] == nil) then self.Data.Module[mod] = {} end
-	if(self.Data.Module[mod][name] == nil) then 
+	if(self.Data.Module[mod][name] == nil) then
 		if(set) then self:SetModuleData(mod, name, def) end
 		return def
 	end
@@ -241,7 +241,7 @@ end
 
 function DRIVER:AddUser(vplayer)
 	if(IsValid(vplayer)) then
-		local usr = Vermilion:CreateUserObj(vplayer:GetName(), vplayer:SteamID(), self:GetDefaultRank(), {})
+		local usr = Vermilion:CreateUserObj(vplayer:GetName(), vplayer:SteamID(), Vermilion:GetDefaultRank(), {})
 		table.insert(self.Data.Users, usr)
 	end
 end
