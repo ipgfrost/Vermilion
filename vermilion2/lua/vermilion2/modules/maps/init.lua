@@ -143,8 +143,8 @@ function MODULE:InitServer()
 
 	function MODULE:BuildMapCache()
 		-- The map codes are borrowed from getmaps.lua (garrysmod/lua/menu/getmaps.lua)
+		MODULE.MapCache = {}
 		local MapPatterns = {
-			MODULE.MapCache = {}
 			[ "^aoc_" ] = "Age of Chivalry",
 			[ "^asi-" ] = "Alien Swarm",
 
