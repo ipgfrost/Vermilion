@@ -96,8 +96,15 @@ function Vermilion:BroadcastActiveUserData(target)
 		if(not k:IsOnline() and k.SteamID != steamid) then continue end
 		table.insert(normalData, k:GetNetPacket())
 	end
+	if(not istable(target)) then
+		net.Start("VBroadcastUserData")
+		net.WriteBoolean(true)
+		net.WriteString(steamid or "")
+		net.WriteTable(normalData)
+		net.Send(target)
+	end
 	net.Start("VBroadcastUserData")
-	net.WriteString(steamid or "")
+	net.WriteBoolean(false)
 	net.WriteTable(normalData)
 	net.Broadcast()
 end
@@ -118,11 +125,11 @@ net.Receive("VUsePreconfigured", function(len, vplayer)
 	local sadmin = Vermilion:CreateRankObj("super admin", nil, false, Color(255, 0, 97), "shield_add")
 	local donator = Vermilion:CreateRankObj("donator", nil, false, Color(191, 127, 255), "heart")
 	local respected = Vermilion:CreateRankObj("respected", nil, false, Color(255, 191, 0), "user_red")
-	local owner = Vermilion.Data.Ranks[1]
-	local admin = Vermilion.Data.Ranks[2]
-	local pplayer = Vermilion.Data.Ranks[3]
-	local guest = Vermilion.Data.Ranks[4]
-	Vermilion.Data.Ranks = {
+	local owner = Vermilion.Drivers.Data.Data.Ranks[1]
+	local admin = Vermilion.Drivers.Data.Data.Ranks[2]
+	local pplayer = Vermilion.Drivers.Data.Data.Ranks[3]
+	local guest = Vermilion.Drivers.Data.Data.Ranks[4]
+	Vermilion.Drivers.Data.Data.Ranks = {
 		owner,
 		coowner,
 		manager,
@@ -153,6 +160,7 @@ net.Receive("VUsePreconfigured", function(len, vplayer)
 	for irank,nrank in pairs(nranks) do
 		local rankData = Vermilion:GetRank(nrank)
 		for imod,mod in pairs(Vermilion.Modules) do
+			if(mod.DefaultPermissions == nil) then continue end
 			for imodrank, modrank in pairs(mod.DefaultPermissions) do
 				if(modrank.Name == nrank) then
 					for i1,k1 in pairs(modrank.Permissions) do

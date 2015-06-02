@@ -389,7 +389,7 @@ function MODULE:InitServer()
 		MODULE:NetStart("VPlayerKilled")
 		net.WriteEntity(vplayer)
 		net.WriteString(inflictor:GetClass())
-		net.WriteEntity(attacker)
+		net.WriteString(attacker:GetClass())
 		net.Broadcast()
 	end)
 

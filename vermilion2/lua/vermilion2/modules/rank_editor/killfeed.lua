@@ -136,8 +136,8 @@ MODULE:NetHook("VNPCKilledNPC", function()
 	Death.attacker	= a
 	Death.time		= CurTime()
 
-	Death.left		= v
-	Death.right		= a
+	Death.left		= a
+	Death.right		= v
 	Death.icon		= i
 
   Death.colourv = table.Copy(NPC_Color)

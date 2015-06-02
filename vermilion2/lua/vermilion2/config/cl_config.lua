@@ -28,9 +28,12 @@ net.Receive("VSendDriverList", function()
 end)
 
 net.Receive("VBroadcastUserData", function()
-	local sid = net.ReadString()
-	if(sid != "") then
-		Vermilion.Data.LocalSteamID = sid
+	local doSid = net.ReadBoolean()
+	if(doSid) then
+		local sid = net.ReadString()
+		if(sid != "" and Vermilion.Data.LocalSteamID == nil) then
+			Vermilion.Data.LocalSteamID = sid
+		end
 	end
 	Vermilion:GetDriver().Data.Users = net.ReadTable()
 	for i,k in pairs(Vermilion:GetDriver().Data.Users) do
