@@ -272,7 +272,7 @@ function MODULE:InitServer()
 	self:AddHook("CheckPassword", function(steamid, ip, svpass, clpass, name)
 		MODULE:UpdateBans()
 		if(MODULE:IsPlayerBanned(util.SteamIDFrom64(steamid))) then
-			MODULE:BroadcastNotify("bans:reconnectalert", { name }, NOTIFY_ERROR)
+			Vermilion:BroadcastNotification("bans:reconnectalert", { name }, NOTIFY_ERROR)
 			if(Vermilion:GetModule("event_logger") != nil) then
 				Vermilion:GetModule("event_logger"):AddEvent("exclamation", MODULE:TranslateStr("reconnect:event", { name }))
 			end

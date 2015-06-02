@@ -65,8 +65,18 @@ MODULE:NetHook("VPlayerKilledPlayer", function()
 	Death.left		= a:Name()
 	Death.right		= v:Name()
 	Death.icon		= i
-  Death.coloura = Vermilion:GetUser(a):GetRank():GetColour()
-  Death.colourv = Vermilion:GetUser(v):GetRank():GetColour()
+	if(Vermilion:GetUser(a) != nil and Vermilion:GetUser(a):GetRank() != nil) then
+		Death.coloura = Vermilion:GetUser(a):GetRank():GetColour()
+	else
+		Death.coloura = NPC_Color
+		print("Killfeed error: cannot obtain Vermilion rank colour for the attacker in this event!")
+  end
+	if(Vermilion:GetUser(v) != nil and Vermilion:GetUser(v):GetRank() != nil) then
+  	Death.colourv = Vermilion:GetUser(v):GetRank():GetColour()
+	else
+		Death.colourv = NPC_Color
+		print("Killfeed error: cannot obtain Vermilion rank colour for the victim in this event!")
+	end
   if(Death.left == Death.right) then
     Death.left = nil
     Death.icon = "suicide"
