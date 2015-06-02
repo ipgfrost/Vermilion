@@ -72,6 +72,32 @@ end
 
 -- GLOABL NETWORKING VALUES
 VToolkit.GlobalValues = {}
+VToolkit.EntityValues = { { } }
+
+local eMeta = FindMetaTable("Entity")
+function eMeta:SetGlobalValue(name, value)
+	if(VToolkit.EntityValues[self:EntIndex()] == nil) then
+		VToolkit.EntityValues[self:EntIndex()] = {}
+	end
+	VToolkit.EntityValues[self:EntIndex()][name] = value
+	if(SERVER) then
+		net.Start("VEGVar")
+		net.WriteEntity(self)
+		net.WriteString(name)
+		net.WriteType(value)
+		net.Broadcast()
+	end
+end
+
+function eMeta:GetGlobalValue(name, default)
+	if(VToolkit.EntityValues[self:EntIndex()] == nil) then return default end
+	return VToolkit.EntityValues[self:EntIndex()][name] or default
+end
+
+hook.Add("EntityRemoved", "VToolkitEGVAR_Remove", function(entity)
+	VToolkit.EntityValues[entity:EntIndex()] = nil
+end)
+
 
 function VToolkit:SetGlobalValue(name, value)
 	VToolkit.GlobalValues[name] = value
@@ -90,19 +116,36 @@ end
 
 if(SERVER) then
 	util.AddNetworkString("VGVar")
-	
+	util.AddNetworkString("VEGVar")
+
 	hook.Add("PlayerInitialSpawn", "VToolkitGVAR", function(vplayer)
-		for i,k in pairs(VToolkit.GlobalValues) do
-			net.Start("VGVar")
-			net.WriteString(i)
-			net.WriteType(k)
-			net.Send(vplayer)
-		end
+		timer.Simple(1, function()
+			for i,k in pairs(VToolkit.GlobalValues) do
+				net.Start("VGVar")
+				net.WriteString(i)
+				net.WriteType(k)
+				net.Send(vplayer)
+			end
+			for i,k in pairs(VToolkit.EntityValues) do
+				for i1,k1 in pairs(k) do
+					net.Start("VEGVar")
+					net.WriteUInt(i, 16)
+					net.WriteString(i1)
+					net.WriteType(k1)
+					net.Send(vplayer)
+				end
+			end
+		end)
 	end)
-	
+
 else
 	net.Receive("VGVar", function()
 		VToolkit.GlobalValues[net.ReadString()] = net.ReadType(net.ReadUInt(8))
+	end)
+	net.Receive("VEGVar", function()
+		local ent = net.ReadUInt(16)
+		if(VToolkit.EntityValues[ent] == nil) then VToolkit.EntityValues[ent] = {} end
+		VToolkit.EntityValues[ent][net.ReadString()] = net.ReadType(net.ReadUInt(8))
 	end)
 
 end

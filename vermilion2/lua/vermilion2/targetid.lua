@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -63,8 +63,8 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 
 	local x = MouseX
 	local y = MouseY
-	
-	local rawName = Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")):GetName()
+
+	local rawName = Vermilion:GetRankByID(trace.Entity:GetGlobalValue("Vermilion_Rank")):GetName()
 
 	local caseRank = string.SetChar(rawName, 1, string.upper(string.GetChar(rawName, 1)))
 
@@ -80,8 +80,8 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 	local geoIPData = hook.Run("Vermilion2_TargetIDDataGeoIP", trace.Entity)
 	local iconData = hook.Run("Vermilion2_TargetIDDataIcon", trace.Entity)
 
-	if(Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")) != nil) then
-		surface.SetTextColor(Vermilion:GetRankByID(trace.Entity:GetNWString("Vermilion_Rank")):GetColour())
+	if(Vermilion:GetRankByID(trace.Entity:GetGlobalValue("Vermilion_Rank")) != nil) then
+		surface.SetTextColor(Vermilion:GetRankByID(trace.Entity:GetGlobalValue("Vermilion_Rank")):GetColour())
 	else
 		surface.SetTextColor(Vermilion.Colours.White) -- what?
 	end

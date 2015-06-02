@@ -96,8 +96,8 @@ end
 ]]--
 
 function Vermilion:GetUser(vplayer)
-	if(CLIENT and vplayer:GetNWString("SteamID") != nil) then
-		return self:GetUserBySteamID(vplayer:GetNWString("SteamID"))
+	if(CLIENT and vplayer:GetGlobalValue("SteamID") != nil) then
+		return self:GetUserBySteamID(vplayer:GetGlobalValue("SteamID"))
 	end
 	return self:GetDriver():GetUser(vplayer)
 end

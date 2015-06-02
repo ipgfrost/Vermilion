@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -57,9 +57,9 @@ MODULE.ConVars = {
 function MODULE:InitServer()
 	self:NetHook("VUpdateClientColour", function(vplayer)
 		local colour = net.ReadColor()
-		vplayer:SetNWInt("VVoIPR", colour.r)
-		vplayer:SetNWInt("VVoIPG", colour.g)
-		vplayer:SetNWInt("VVoIPB", colour.b)
+		vplayer:SetGlobalValue("VVoIPR", colour.r)
+		vplayer:SetGlobalValue("VVoIPG", colour.g)
+		vplayer:SetGlobalValue("VVoIPB", colour.b)
 	end)
 end
 
@@ -119,7 +119,7 @@ function MODULE:InitClient()
 			end
 		end
 		for i,k in pairs(player.GetAll()) do
-			surface.SetDrawColor(k:GetNWInt("VVoIPR", 0), k:GetNWInt("VVoIPG", 0), k:GetNWInt("VVoIPB", 255), 255)
+			surface.SetDrawColor(k:GetGlobalValue("VVoIPR", 0), k:GetGlobalValue("VVoIPG", 0), k:GetGlobalValue("VVoIPB", 255), 255)
 			if(k.Vermilion_VoIPHistory != nil and k:Alive()) then
 				local sang = k:EyeAngles()
 				sang:RotateAroundAxis(Vector(0, 0, 1), -90)

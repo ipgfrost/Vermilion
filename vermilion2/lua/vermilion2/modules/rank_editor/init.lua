@@ -357,10 +357,10 @@ function MODULE:InitServer()
 
 	self:AddLPHook("PlayerInitialSpawn", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "identify_as_admin")) then
-			vplayer:SetNWString("UserGroup", "admin")
+			vplayer:SetGlobalValue("UserGroup", "admin")
 		end
 		if(Vermilion:HasPermission(vplayer, "identify_as_superadmin")) then
-			vplayer:SetNWString("UserGroup", "superadmin")
+			vplayer:SetGlobalValue("UserGroup", "superadmin")
 		end
 	end)
 
@@ -458,7 +458,7 @@ function MODULE:InitClient()
 			table.insert(tab, "(TEAM) ")
 		end
 
-		local rank = sender:GetNWString("Vermilion_Rank")
+		local rank = sender:GetGlobalValue("Vermilion_Rank")
 		rank = Vermilion:GetRankByID(rank).Name
 
 		local ranku = string.SetChar(rank, 1, string.upper(string.GetChar(rank, 1)))
@@ -466,10 +466,10 @@ function MODULE:InitClient()
 		table.insert(tab, "[" .. ranku .. "] ")
 
 		if(IsValid(sender)) then
-			if(Vermilion:GetRankByID(sender:GetNWString("Vermilion_Rank")):GetColour() == nil) then
+			if(Vermilion:GetRankByID(sender:GetGlobalValue("Vermilion_Rank")):GetColour() == nil) then
 				table.insert(tab, Vermilion.Colours.White)
 			else
-				table.insert(tab, Vermilion:GetRankByID(sender:GetNWString("Vermilion_Rank")):GetColour())
+				table.insert(tab, Vermilion:GetRankByID(sender:GetGlobalValue("Vermilion_Rank")):GetColour())
 			end
 			table.insert(tab, sender:Nick())
 		else
@@ -519,9 +519,9 @@ function MODULE:InitClient()
 	end)
 
 	self:AddHook("Vermilion2_TargetIDDataIcon", function(vplayer)
-		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon())) then
-			if(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon() == nil) then return end
-			vplayer.VIcon = string.lower(Vermilion:GetRankByID(vplayer:GetNWString("Vermilion_Rank")):GetIcon())
+		if(vplayer.VIcon == nil or vplayer.VIcon == "" or vplayer.VIcon != string.lower(Vermilion:GetRankByID(vplayer:GetGlobalValue("Vermilion_Rank")):GetIcon())) then
+			if(Vermilion:GetRankByID(vplayer:GetGlobalValue("Vermilion_Rank")):GetIcon() == nil) then return end
+			vplayer.VIcon = string.lower(Vermilion:GetRankByID(vplayer:GetGlobalValue("Vermilion_Rank")):GetIcon())
 			vplayer.VIconMat = Material("icon16/" .. vplayer.VIcon .. ".png", "noclamp smooth")
 		end
 		return vplayer.VIconMat
@@ -1160,7 +1160,7 @@ function MODULE:InitClient()
 				Vermilion:PopulateRankTable(paneldata.RankList, false, true)
 				paneldata.PlayerList:Clear()
 				for i,k in pairs(VToolkit.GetValidPlayers()) do
-					paneldata.PlayerList:AddLine(k:GetName(), Vermilion:GetRankByID(k:GetNWString("Vermilion_Rank", "player")).Name).EntityID = k:EntIndex()
+					paneldata.PlayerList:AddLine(k:GetName(), Vermilion:GetRankByID(k:GetGlobalValue("Vermilion_Rank", "player")).Name).EntityID = k:EntIndex()
 				end
 			end
 		})

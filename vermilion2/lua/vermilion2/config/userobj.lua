@@ -41,8 +41,8 @@ end
 function Vermilion:AttachUserFunctions(usrObject)
 	if(Vermilion.PlayerMetaTable == nil) then
 		local meta = {}
-		
-		
+
+
 		function meta:GetName()
 			return self.Name
 		end
@@ -64,7 +64,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				if(k:SteamID() == self.SteamID) then return k end
 			end
 		end
-		
+
 		function meta:IsOnline()
 			return IsValid(self:GetEntity())
 		end
@@ -91,7 +91,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 				local ply = self:GetEntity()
 				if(IsValid(ply)) then
 					Vermilion:AddNotification(ply, "change_rank", {self.Rank})
-					ply:SetNWString("Vermilion_Rank", self.Rank)
+					ply:SetGlobalValue("Vermilion_Rank", self.Rank)
 					Vermilion:BroadcastActiveUserData()
 				end
 			end
@@ -114,7 +114,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 		function meta:GetColour()
 			return self:GetRank():GetColour()
 		end
-		
+
 		function meta:GetNetPacket()
 			local usr = {}
 
@@ -130,7 +130,7 @@ function Vermilion:AttachUserFunctions(usrObject)
 
 			return usr
 		end
-		
+
 		Vermilion.PlayerMetaTable = meta
 	end
 

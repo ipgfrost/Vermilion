@@ -205,7 +205,7 @@ end)
 ]]--
 
 Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer)
-	vplayer:SetNWString("SteamID", vplayer:SteamID())
+	vplayer:SetGlobalValue("SteamID", vplayer:SteamID())
 	local new = false
 	if(not Vermilion:HasUser(vplayer)) then
 		Vermilion:StoreNewUserdata(vplayer)
@@ -217,7 +217,7 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	if(table.Count(Vermilion:GetRank("owner"):GetUsers()) == 0 and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
 		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetRank("owner"):GetUID())
 	end
-	vplayer:SetNWString("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
+	vplayer:SetGlobalValue("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
 	Vermilion:BroadcastRankData(vplayer)
 	net.Start("VBroadcastPermissions")
 	net.WriteTable(Vermilion.AllPermissions)
@@ -267,7 +267,7 @@ end)
 
 duplicator.RegisterEntityModifier("Vermilion_Owner", function(vplayer, entity, data)
 	entity.Vermilion_Owner = data.Owner
-	entity:SetNWString("Vermilion_Owner", data.Owner)
+	entity:SetGlobalValue("Vermilion_Owner", data.Owner)
 end)
 
 duplicator.RegisterEntityModifier("Vermilion_Type", function(vplayer, entity, data)
@@ -289,7 +289,7 @@ local setOwnerFunc = function(vplayer, model, entity, hkType)
 		tEnt.Vermilion_Type = str
 
 		tEnt.Vermilion_Owner = vplayer:SteamID()
-		tEnt:SetNWString("Vermilion_Owner", vplayer:SteamID())
+		tEnt:SetGlobalValue("Vermilion_Owner", vplayer:SteamID())
 		duplicator.StoreEntityModifier(tEnt, "Vermilion_Owner", { Owner = vplayer:SteamID() })
 		duplicator.StoreEntityModifier(tEnt, "Vermilion_Type", { Type = str })
 	end
@@ -355,7 +355,7 @@ timer.Simple(1, function()
 		meta.Vermilion_AddCount = meta.AddCount
 		function meta:AddCount(str, ent)
 			ent.Vermilion_Owner = self:SteamID()
-			ent:SetNWString("Vermilion_Owner", self:SteamID())
+			ent:SetGlobalValue("Vermilion_Owner", self:SteamID())
 			self:Vermilion_AddCount(str, ent)
 		end
 	end
@@ -366,7 +366,7 @@ timer.Simple(1, function()
 			if(IsValid(vplayer) and IsValid(ent)) then
 				if(ent.Vermilion_Owner == nil) then
 					ent.Vermilion_Owner = vplayer:SteamID()
-					ent:SetNWString("Vermilion_Owner", vplayer:SteamID())
+					ent:SetGlobalValue("Vermilion_Owner", vplayer:SteamID())
 					duplicator.StoreEntityModifier(ent, "Vermilion_Owner", { Owner = vplayer:SteamID() })
 				end
 				hook.Run(Vermilion.Event.AnythingSpawned, vplayer, ent)

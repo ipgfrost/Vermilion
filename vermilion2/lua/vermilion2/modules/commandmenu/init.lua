@@ -101,7 +101,7 @@ function MODULE:InitClient()
 							playerlistrt = playerlist
 
 							for i,k in pairs(VToolkit.GetValidPlayers()) do
-								playerlist:AddLine(k:GetName(), Vermilion:GetRankByID(k:GetNWString("Vermilion_Rank")).Name).EntityID = k:EntIndex()
+								playerlist:AddLine(k:GetName(), Vermilion:GetRankByID(k:GetGlobalValue("Vermilion_Rank")).Name).EntityID = k:EntIndex()
 							end
 
 							function playerlist:OnRowSelected(index, ln)

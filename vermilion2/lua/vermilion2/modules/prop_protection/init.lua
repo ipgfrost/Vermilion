@@ -539,7 +539,7 @@ function MODULE:InitShared()
 		if(MODULE.UidCache[uid] != nil) then return MODULE.UidCache[uid] end
 		return nil
 	end
-	
+
 	--[[
 		This isn't standard and I will remove it if I need to. However, you can tell the
 		prop protection module to skip checks on certain tools here.
@@ -811,7 +811,7 @@ function MODULE:InitServer()
 	self:AddHook("PhysgunPickup", function(vplayer, ent)
 		return MODULE:CanPhysgun(vplayer, ent)
 	end)
-	
+
 	self:AddHook("CanPlayerUnfreeze", function(vplayer, ent, phys)
 		return MODULE:CanPhysgun(vplayer, ent)
 	end)
@@ -859,7 +859,7 @@ function MODULE:InitServer()
 			if(hook.Call("CPPIAssignOwnership", nil, vplayer, self) != false) then
 				Vermilion.Log("Warning (" .. tostring(self) .. "): prop owner was overwritten by CPPI!")
 				self.Vermilion_Owner = vplayer:SteamID()
-				self:SetNWString("Vermilion_Owner", vplayer:SteamID())
+				self:SetGlobalValue("Vermilion_Owner", vplayer:SteamID())
 				return true
 			end
 		end
@@ -877,7 +877,7 @@ function MODULE:InitServer()
 			end
 			if(hook.Call("CPPIAssignOwnership", nil, vplayer, self) != false) then
 				self.Vermilion_Owner = vplayer:SteamID()
-				self:SetNWString("Vermilion_Owner", vplayer:SteamID())
+				self:SetGlobalValue("Vermilion_Owner", vplayer:SteamID())
 				return true
 			end
 		end
@@ -1077,7 +1077,7 @@ function MODULE:InitClient()
 	function eMeta:CPPIGetOwner()
 		return CPPI.CPPI_NOTIMPLEMENTED
 	end
-	
+
 
 	include("vermilion2/modules/prop_protection/buddylist.lua")
 	include("vermilion2/modules/prop_protection/ownerview.lua")

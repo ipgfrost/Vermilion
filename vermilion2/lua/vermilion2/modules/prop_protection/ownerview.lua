@@ -63,8 +63,8 @@ function MODULE:OwnerViewInitClient()
 	self:AddHook("HUDPaint", function()
 		if(GetConVarNumber("vermilion_prop_hud") != 1) then return end
 		local trace = LocalPlayer():GetEyeTrace()
-		if(IsValid(trace.Entity) and trace.Entity:GetNWString("Vermilion_Owner") != nil and not trace.Entity:IsPlayer()) then
-			local steamid = trace.Entity:GetNWString("Vermilion_Owner")
+		if(IsValid(trace.Entity) and trace.Entity:GetGlobalValue("Vermilion_Owner") != nil and not trace.Entity:IsPlayer()) then
+			local steamid = trace.Entity:GetGlobalValue("Vermilion_Owner")
 			if(namedata == false && tentity == trace.Entity:EntIndex()) then return end
 			if(namedata == true && tentity == trace.Entity:EntIndex()) then
 				owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35, "Querying owner name...", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)

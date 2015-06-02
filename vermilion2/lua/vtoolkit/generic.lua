@@ -327,7 +327,7 @@ end
 local pMeta = FindMetaTable("Player")
 if(CLIENT) then
 	function pMeta:SteamID()
-		return self:GetNWString("SteamID")
+		return self:GetGlobalValue("SteamID")
 	end
 else
 	pMeta.OldSteamID = pMeta.SteamID -- fixes singleplayer on Linux
