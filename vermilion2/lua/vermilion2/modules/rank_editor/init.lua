@@ -357,10 +357,10 @@ function MODULE:InitServer()
 
 	self:AddLPHook("PlayerInitialSpawn", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "identify_as_admin")) then
-			vplayer:SetGlobalValue("UserGroup", "admin")
+			vplayer:SetNWString("UserGroup", "admin")
 		end
 		if(Vermilion:HasPermission(vplayer, "identify_as_superadmin")) then
-			vplayer:SetGlobalValue("UserGroup", "superadmin")
+			vplayer:SetNWString("UserGroup", "superadmin")
 		end
 	end)
 
@@ -447,6 +447,7 @@ function MODULE:InitClient()
 	self:AddHook("OnPlayerChat", function(sender, text, teamChat, dead)
 		if(not VToolkit:GetGlobalValue("VChatColourer")) then return end
 		if(not IsValid(sender)) then return end
+		if(sender:GetGlobalValue("Vermilion_Rank") == nil) then return end -- we haven't got the GVars yet for this player. Skip it.
 		local tab = {}
 		if(dead) then
 			table.insert(tab, Color(255, 30, 40))
@@ -458,8 +459,10 @@ function MODULE:InitClient()
 			table.insert(tab, "(TEAM) ")
 		end
 
-		local rank = sender:GetGlobalValue("Vermilion_Rank")
-		rank = Vermilion:GetRankByID(rank).Name
+		local rank = sender:GetGlobalValue("Vermilion_Rank") or "Unknown"
+		if(Vermilion:HasRankID(rank)) then
+			rank = Vermilion:GetRankByID(rank).Name
+		end
 
 		local ranku = string.SetChar(rank, 1, string.upper(string.GetChar(rank, 1)))
 		table.insert(tab, Vermilion.Colours.White)
