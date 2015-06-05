@@ -232,7 +232,8 @@ MENU:AddPage({
 					"Added ability to colour messages from Auto-Broadcast module",
 					"Added rank colours for the killfeed",
 					"Added !rebuildmapcache",
-					"Fixed bug with distributing user data"
+					"Fixed bug with distributing user data",
+					"Updated HUD graphics"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

@@ -47,10 +47,7 @@ if(CLIENT) then
 		notifybg:SetDrawBackground(false)
 		notifybg:SetPos(ScrW() - 298, 100)
 		notifybg:SetSize(300, ScrH() + 100)
-
-
 	end)
-
 
 	timer.Create("VOrganiseNotify", 0.1, 0, function()
 		local currentY = 0
@@ -139,8 +136,8 @@ if(CLIENT) then
 
 		return lines
 	end
-	
-	
+
+
 	local function buildNotify(text, typ)
 		local notify = vgui.Create("DPanel")
 		notify:DockMargin(0, 0, 0, 5)
@@ -186,7 +183,7 @@ if(CLIENT) then
 
 		return notify
 	end
-	
+
 
 	function Vermilion:AddNotification(text, typ, time)
 		if(notifybg == nil) then

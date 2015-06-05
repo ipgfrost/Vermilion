@@ -67,7 +67,13 @@ function MODULE:OwnerViewInitClient()
 			local steamid = trace.Entity:GetGlobalValue("Vermilion_Owner")
 			if(namedata == false && tentity == trace.Entity:EntIndex()) then return end
 			if(namedata == true && tentity == trace.Entity:EntIndex()) then
-				owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35, "Querying owner name...", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
+				surface.SetFont('DermaDefaultBold')
+				local ttext = "Querying owner name..."
+				local tw,th = surface.GetTextSize(ttext)
+				VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35, tw + 25, 25)
+				surface.SetTextPos(ScrW() - (tw + 25), 15)
+				surface.DrawText(ttext)
+				//owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35, , "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 				return
 			end
 			if(namedata == nil or tentity != trace.Entity:EntIndex()) then
@@ -80,12 +86,24 @@ function MODULE:OwnerViewInitClient()
 			end
 			local tboxoff = 0
 			if(LocalPlayer():SteamID() == steamid) then
-				owidth1 = draw.WordBox(8, ScrW() - 10 - owidth1, ScrH() - 35, "You can interact with this prop!", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
+				surface.SetFont('DermaDefaultBold')
+				local ttext = "You can interact with this prop!"
+				local tw,th = surface.GetTextSize(ttext)
+				VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35, tw + 25, 25)
+				surface.SetTextPos(ScrW() - (tw + 25), ScrH() - 30)
+				surface.DrawText(ttext)
+				//owidth1 = draw.WordBox(8, ScrW() - 10 - owidth1, ScrH() - 35, "You can interact with this prop!", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 				tboxoff = 35
 			else
 				tboxoff = 0
 			end
-			owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35 - tboxoff, "Owner: " .. namedata.Name, "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
+			surface.SetFont('DermaDefaultBold')
+			local ttext = "Owner: " .. namedata.Name
+			local tw,th = surface.GetTextSize(ttext)
+			VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35 - tboxoff, tw + 25, 25)
+			surface.SetTextPos(ScrW() - (tw + 25), ScrH() - 30 - tboxoff)
+			surface.DrawText(ttext)
+			//owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35 - tboxoff, "Owner: " .. namedata.Name, "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 		end
 	end)
 

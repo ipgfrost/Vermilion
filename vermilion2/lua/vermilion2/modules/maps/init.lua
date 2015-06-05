@@ -551,22 +551,33 @@ function MODULE:InitClient()
 			end
 			time = strh .. ":" .. strm .. ":" .. strs
 			local col = nil
-			if(MODULE.MapChangeIn > 10) then
-				col = Color(0, 0, 0, 255)
-			elseif((MODULE.MapChangeIn) % 2 == 0 or (MODULE.MapChangeIn) % 60 == 0 or ((MODULE.MapChangeIn) % 5 == 0 and (MODULE.MapChangeIn) > 10 and (MODULE.MapChangeIn) < 30)) then
-				col = Color(255, 0, 0, 255)
+			if(MODULE.MapChangeIn > 30) then
+				col = "BLUE"
+			elseif((MODULE.MapChangeIn % 2 == 0)) then
+				col = "RED"
 			else
-				col = Color(0, 0, 0, 255)
+				col = "BLUE"
 			end
 			if(time == nil) then
 				return
 			end
-			local w,h = draw.WordBox( 8, ScrW() - MODULE.DisplayXPos1 - 10, 10, "Server is changing level to " .. tostring(MODULE.MapChangeTo) .. " in ".. time, "Default", col, Color(255, 255, 255, 255))
-			MODULE.DisplayXPos1 = w
 
-			if(not MODULE.HasMap and os.time() % 2 == 0) then
-				local w1,h1 = draw.WordBox( 8, ScrW() - MODULE.DisplayXPos2 - 10, h + 20, "Warning: you do not have this map!", "Default", Color(255, 0, 0, 255), Color(255, 255, 255, 255))
-				MODULE.DisplayXPos2 = w1
+			surface.SetFont('DermaDefaultBold')
+			local ttext = "Server is changing level to " .. tostring(MODULE.MapChangeTo) .. " in ".. time
+			local tw,th = surface.GetTextSize(ttext)
+			VToolkit:DrawGenericBackground(col, ScrW() - (tw + 25) - 10, 10, tw + 25, 25)
+			surface.SetFont('DermaDefaultBold')
+			surface.SetTextPos(ScrW() - (tw + 25), 15)
+			surface.DrawText(ttext)
+
+			if(not MODULE.HasMap) then
+				surface.SetFont('DermaDefaultBold')
+				local ttext = "Warning: you do not have this map!"
+				local tw,th = surface.GetTextSize(ttext)
+				VToolkit:DrawGenericBackground("RED", ScrW() - (tw + 25) - 10, 10, tw + 25, 25)
+				surface.SetFont('DermaDefaultBold')
+				surface.SetTextPos(ScrW() - (tw + 25), 15)
+				surface.DrawText(ttext)
 			end
 		end
 	end)

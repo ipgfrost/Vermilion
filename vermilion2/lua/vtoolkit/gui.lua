@@ -1066,3 +1066,13 @@ function VToolkit:CreateRightDrawer(parent, sizeOffset, closeBtn)
 
 	return drawer
 end
+
+function VToolkit:DrawGenericBackground(type, x, y, w, h)
+	surface.SetDrawColor( 5, 5, 5, 220 )
+	surface.DrawRect( x, y, w, h )
+	assert(type == "RED" or type == "BLUE" or type == "GREEN")
+	if(type == "RED") then surface.SetDrawColor( Vermilion.Colours.Red ) surface.SetTextColor( Vermilion.Colours.Red ) end
+	if(type == "BLUE") then surface.SetDrawColor( 100, 150, 255, 255 ) surface.SetTextColor( 100, 150, 255, 255 ) end
+	if(type == "GREEN") then surface.SetDrawColor( 50, 255, 50, 255) surface.SetTextColor( 50, 255, 50, 255) end
+	surface.DrawOutlinedRect( x, y, w, h )
+end

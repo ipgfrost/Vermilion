@@ -117,9 +117,10 @@ end
 if(SERVER) then
 	util.AddNetworkString("VGVar")
 	util.AddNetworkString("VEGVar")
+	util.AddNetworkString("VEGVars")
 
 	hook.Add("PlayerInitialSpawn", "VToolkitGVAR", function(vplayer)
-		timer.Simple(1, function()
+		timer.Simple(3, function()
 			for i,k in pairs(VToolkit.GlobalValues) do
 				net.Start("VGVar")
 				net.WriteString(i)
@@ -127,13 +128,10 @@ if(SERVER) then
 				net.Send(vplayer)
 			end
 			for i,k in pairs(VToolkit.EntityValues) do
-				for i1,k1 in pairs(k) do
-					net.Start("VEGVar")
-					net.WriteUInt(i, 16)
-					net.WriteString(i1)
-					net.WriteType(k1)
-					net.Send(vplayer)
-				end
+				net.Start("VEGVars")
+				net.WriteUInt(i, 16)
+				net.WriteTable(k)
+				net.Send(vplayer)
 			end
 		end)
 	end)
@@ -146,6 +144,9 @@ else
 		local ent = net.ReadUInt(16)
 		if(VToolkit.EntityValues[ent] == nil) then VToolkit.EntityValues[ent] = {} end
 		VToolkit.EntityValues[ent][net.ReadString()] = net.ReadType(net.ReadUInt(8))
+	end)
+	net.Receive("VEGVars", function()
+		VToolkit.EntityValues[net.ReadUInt(16)] = net.ReadTable()
 	end)
 
 end
