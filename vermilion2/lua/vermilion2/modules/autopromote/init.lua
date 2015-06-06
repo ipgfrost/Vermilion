@@ -637,7 +637,7 @@ function MODULE:InitClient()
 			paneldata.EditFromRankCombo:Clear()
 			paneldata.EditToRankCombo:Clear()
 			for i,k in pairs(Vermilion.Data.RankOverview) do
-				if(k.Name != "owner") then
+				if(k.UniqueID != Vermilion:GetOwnerRank().UniqueID) then
 					paneldata.AddFromRankCombo:AddChoice(k.Name, k.UniqueID)
 					paneldata.EditFromRankCombo:AddChoice(k.Name, k.UniqueID)
 				end

@@ -233,7 +233,9 @@ MENU:AddPage({
 					"Added rank colours for the killfeed",
 					"Added !rebuildmapcache",
 					"Fixed bug with distributing user data",
-					"Updated HUD graphics"
+					"Updated HUD graphics",
+					"Fixed bug with GeoIP failing to delete the cache file",
+					"Owner rank can now be renamed"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -472,6 +474,7 @@ MENU:AddPage({
 			{ "How often do you update?", "I don't have a schedule, but I will usually release a minor update after a bug report and large releases will take place every now and then.", 30 },
 			{ "How do I use MOTD Variables?", "Place \"%\" around the name of the variable, for example, %player_name%." },
 			{ "Other mods aren't recognising my rank!", "Add the \"identify_as_x\" permission to your rank, for example, admins should have \"identify_as_admin\" which is the same as placing them in the admin rank in the users.txt file.", 35 },
+			{ "How do I create a jail?", "You need to create a jail zone. Make sure that the Zones module is enabled. Start by placing yourself at one corner and type \"!addzone\". Then noclip to the other corner and type \"!addzone <zone name>\". After this, type \"!setmode <zone name> jail\". You can then use the jail command by specifying your zone name as the jail name", 55 },
 			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
 		}
 

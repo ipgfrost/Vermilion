@@ -61,7 +61,7 @@ local function commandGLOG(commandname, executor, text, replacements, typ, time)
 	if(text == nil) then return end
 	if(Vermilion:GetData("muted_commands", {}, true)[commandname] == false) then return end
 	if(IsValid(executor)) then
-		if(Vermilion:HasPermission(executor, "anonymous_command_exec") && Vermilion:GetUser(executor):GetRank():GetName() != "owner" && replacements != nil) then
+		if(Vermilion:HasPermission(executor, "anonymous_command_exec") && Vermilion:GetUser(executor):GetRank():GetUID() != Vermilion:GetOwnerRank():GetUID() && replacements != nil) then
 			for i,k in pairs(replacements) do
 				if(k == executor:GetName()) then
 					replacements[i] = "Somebody"

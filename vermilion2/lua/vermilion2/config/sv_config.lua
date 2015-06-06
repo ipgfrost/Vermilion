@@ -214,8 +214,8 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	if(Vermilion:GetUser(vplayer).Name != vplayer:GetName()) then
 		Vermilion:GetUser(vplayer).Name = vplayer:GetName()
 	end
-	if(table.Count(Vermilion:GetRank("owner"):GetUsers()) == 0 and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
-		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetRank("owner"):GetUID())
+	if(table.Count(Vermilion:GetOwnerRank():GetUsers()) == 0 and (game.SinglePlayer() or vplayer:IsListenServerHost())) then
+		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetOwnerRank():GetUID())
 	end
 	vplayer:SetGlobalValue("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
 	Vermilion:BroadcastRankData(vplayer)
@@ -437,7 +437,7 @@ end)
 
 Vermilion:AddHook("PlayerInitialSpawn", "core:autoconfigure", true, function(vplayer)
 	if(Vermilion:GetData("done_autoconfigure_nag", false, true)) then return end
-	local ownerRank = Vermilion:GetRank("owner")
+	local ownerRank = Vermilion:GetOwnerRank()
 	if(Vermilion:GetUser(vplayer) == nil) then return end
 	if(ownerRank == nil) then return end
 	if(Vermilion:GetUser(vplayer):GetRankUID() == ownerRank.UniqueID) then

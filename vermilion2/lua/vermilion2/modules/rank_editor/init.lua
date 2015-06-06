@@ -619,7 +619,7 @@ function MODULE:InitClient()
 
 				renameRank = VToolkit:CreateButton("Rename", function()
 					local rnk = rankList:GetSelected()[1]
-					if(not rnk.Protected) then
+					--if(not rnk.Protected) then
 						VToolkit:CreateTextInput("Enter the new name for the \"" .. rnk:GetValue(1) .. "\" rank:", function(text)
 							local has = false
 							for i,k in pairs(rankList:GetLines()) do
@@ -638,9 +638,9 @@ function MODULE:InitClient()
 								VToolkit:CreateErrorDialog("This rank already exists!")
 							end
 						end)
-					else
-						VToolkit:CreateErrorDialog("This is a protected rank!")
-					end
+					--else
+					--	VToolkit:CreateErrorDialog("This is a protected rank!")
+					--end
 				end)
 				renameRank:SetPos(panel:GetWide() - 285, 110)
 				renameRank:SetSize(panel:GetWide() - renameRank:GetX() - 5, 30)

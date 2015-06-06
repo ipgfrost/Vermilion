@@ -49,11 +49,11 @@ function Vermilion:AttachRankFunctions(rankObj)
 		function meta:GetUID()
 			return self.UniqueID
 		end
-		
+
 		function meta:IsDefault()
 			return self.UniqueID == Vermilion:GetDefaultRank()
 		end
-		
+
 		function meta:IsProtected()
 			return self.Protected
 		end
@@ -125,10 +125,10 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:Rename() on client!")
 				return
 			end
-			if(self:IsProtected()) then
-				Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
-				return false
-			end
+			-- if(self:IsProtected()) then
+			-- 	Vermilion.Log(Vermilion:TranslateStr("config:rank:renameprotected"))
+			-- 	return false
+			-- end
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:renamed", { self.Name, newName }))
 			hook.Run(Vermilion.Event.RankRenamed, self.UniqueID, self.Name, newName)
 			self.Name = newName
@@ -277,7 +277,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 			Vermilion:GetDriver():SetRankIcon(self)
 			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
 		end
-		
+
 		function meta:GetNetPacket()
 			local rnk = {}
 
@@ -297,7 +297,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 
 			return rnk
 		end
-		
+
 		Vermilion.RankMetaTable = meta
 	end
 

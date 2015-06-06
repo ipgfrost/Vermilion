@@ -102,10 +102,10 @@ if(SERVER) then
 	timer.Create("VGeoIPFlush", 60, 0, function()
 		if(Vermilion.GeoIP.Cache.ExpiryTime > os.time()) then return end
 		Vermilion.Log(Vermilion:TranslateStr("geoip:cache:expired"))
-		table.Empty(self.Cache)
-		self.Cache.ExpiryTime = os.time() + self.FSCacheTime
-		self.Cache.Addresses = {}
-		file.Write(self.FSCacheFile, "")
+		table.Empty(Vermilion.GeoIP.Cache)
+		Vermilion.GeoIP.Cache.ExpiryTime = os.time() + Vermilion.GeoIP.FSCacheTime
+		Vermilion.GeoIP.Cache.Addresses = {}
+		file.Write(Vermilion.GeoIP.FSCacheFile, "")
 	end)
 
 	Vermilion.GeoIP:LoadConfiguration()

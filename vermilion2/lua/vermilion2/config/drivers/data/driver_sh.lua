@@ -177,6 +177,10 @@ function DRIVER:GetAllRanks()
 	return self.Data.Ranks
 end
 
+function DRIVER:GetOwnerRank()
+	return self.Data.Ranks[1] -- owner will always be at top
+end
+
 function DRIVER:GetRank(name)
 	for i,k in pairs(self.Data.Ranks) do
 		if(k.Name == name) then return k end

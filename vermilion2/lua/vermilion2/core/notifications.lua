@@ -33,7 +33,7 @@ Vermilion:AddHook(Vermilion.Event.MOD_LOADED, "AddJoinLeaveOption", true, functi
 			Type = "Checkbox",
 			Category = "Misc",
 			Default = true
-			})
+		})
 	end
 end)
 

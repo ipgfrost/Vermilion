@@ -75,6 +75,10 @@ function Vermilion:GetRank(name) -- this is now only to get ranks from player in
 	return self:GetDriver():GetRank(name)
 end
 
+function Vermilion:GetOwnerRank()
+	return self:GetDriver():GetOwnerRank()
+end
+
 function Vermilion:GetRankByID(id)
 	return self:GetDriver():GetRankByID(id)
 end
