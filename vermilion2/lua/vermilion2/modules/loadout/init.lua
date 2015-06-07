@@ -53,6 +53,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			if(i == "enabled_on_non_sandbox") then continue end
+			if(not Vermilion:HasRank(i)) then continue end
 			local obj = k
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj

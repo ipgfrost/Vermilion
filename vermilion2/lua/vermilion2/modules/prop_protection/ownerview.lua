@@ -57,7 +57,6 @@ function MODULE:OwnerViewInitClient()
 			SteamID = sid,
 			Name = net.ReadString()
 		}
-		//Vermilion.Log("Got owner data for " .. namedata.SteamID .. "!")
 	end)
 
 	self:AddHook("HUDPaint", function()
@@ -73,7 +72,6 @@ function MODULE:OwnerViewInitClient()
 				VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35, tw + 25, 25)
 				surface.SetTextPos(ScrW() - (tw + 25), 15)
 				surface.DrawText(ttext)
-				//owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35, , "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 				return
 			end
 			if(namedata == nil or tentity != trace.Entity:EntIndex()) then
@@ -92,7 +90,6 @@ function MODULE:OwnerViewInitClient()
 				VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35, tw + 25, 25)
 				surface.SetTextPos(ScrW() - (tw + 25), ScrH() - 30)
 				surface.DrawText(ttext)
-				//owidth1 = draw.WordBox(8, ScrW() - 10 - owidth1, ScrH() - 35, "You can interact with this prop!", "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 				tboxoff = 35
 			else
 				tboxoff = 0
@@ -103,7 +100,6 @@ function MODULE:OwnerViewInitClient()
 			VToolkit:DrawGenericBackground("BLUE", ScrW() - (tw + 25) - 10, ScrH() - 35 - tboxoff, tw + 25, 25)
 			surface.SetTextPos(ScrW() - (tw + 25), ScrH() - 30 - tboxoff)
 			surface.DrawText(ttext)
-			//owidth = draw.WordBox(8, ScrW() - 10 - owidth, ScrH() - 35 - tboxoff, "Owner: " .. namedata.Name, "Default", Vermilion.Colours.Black, Vermilion.Colours.White)
 		end
 	end)
 

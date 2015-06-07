@@ -235,7 +235,7 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 	end
 	net.WriteTable(tab)
 	net.Broadcast()
-
+	hook.Run("VToolkit_SendGVARS", vplayer)
 
 	timer.Simple(1, function()
 		if(not Vermilion:GetData("joinleave_enabled", true, true)) then return end

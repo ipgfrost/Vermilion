@@ -95,7 +95,21 @@ function eMeta:GetGlobalValue(name, default)
 end
 
 hook.Add("EntityRemoved", "VToolkitEGVAR_Remove", function(entity)
+	if(entity:IsPlayer()) then return end
 	VToolkit.EntityValues[entity:EntIndex()] = nil
+end)
+
+if(SERVER) then util.AddNetworkString("VEGVarPlayerRemove") else
+	net.Receive("VEGVarPlayerRemove", function()
+		VToolkit.EntityValues[net.ReadUInt(16)] = nil
+	end)
+end
+
+hook.Add("PlayerDisconnected", "VToolkitEGVAR_Remove", function(vplayer)
+	VToolkit.EntityValues[vplayer:EntIndex()] = nil
+	net.Start("VEGVarPlayerRemove")
+	net.WriteUInt(vplayer:EntIndex(), 16)
+	net.Broadcast()
 end)
 
 
@@ -119,7 +133,7 @@ if(SERVER) then
 	util.AddNetworkString("VEGVar")
 	util.AddNetworkString("VEGVars")
 
-	hook.Add("PlayerInitialSpawn", "VToolkitGVAR", function(vplayer)
+	hook.Add("VToolkit_SendGVARS", "VToolkitGVAR", function(vplayer)
 		timer.Simple(3, function()
 			for i,k in pairs(VToolkit.GlobalValues) do
 				net.Start("VGVar")

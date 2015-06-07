@@ -566,7 +566,6 @@ function MODULE:InitClient()
 			local ttext = "Server is changing level to " .. tostring(MODULE.MapChangeTo) .. " in ".. time
 			local tw,th = surface.GetTextSize(ttext)
 			VToolkit:DrawGenericBackground(col, ScrW() - (tw + 25) - 10, 10, tw + 25, 25)
-			surface.SetFont('DermaDefaultBold')
 			surface.SetTextPos(ScrW() - (tw + 25), 15)
 			surface.DrawText(ttext)
 
@@ -575,7 +574,6 @@ function MODULE:InitClient()
 				local ttext = "Warning: you do not have this map!"
 				local tw,th = surface.GetTextSize(ttext)
 				VToolkit:DrawGenericBackground("RED", ScrW() - (tw + 25) - 10, 10, tw + 25, 25)
-				surface.SetFont('DermaDefaultBold')
 				surface.SetTextPos(ScrW() - (tw + 25), 15)
 				surface.DrawText(ttext)
 			end
