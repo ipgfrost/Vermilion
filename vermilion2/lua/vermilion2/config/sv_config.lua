@@ -218,6 +218,11 @@ Vermilion:AddHook("PlayerInitialSpawn", "RegisterPlayer", true, function(vplayer
 		Vermilion:GetUser(vplayer):SetRank(Vermilion:GetOwnerRank():GetUID())
 	end
 	vplayer:SetGlobalValue("Vermilion_Rank", Vermilion:GetUser(vplayer):GetRank():GetUID())
+	if(Vermilion:HasPermission(vplayer, "identify_as_superadmin")) then
+		vplayer:SetNWString("UserGroup", "superadmin")
+	else
+		vplayer:SetNWString("UserGroup", "admin")
+	end
 	Vermilion:BroadcastRankData(vplayer)
 	net.Start("VBroadcastPermissions")
 	net.WriteTable(Vermilion.AllPermissions)

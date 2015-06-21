@@ -136,7 +136,7 @@ function Vermilion:HasPermission(vplayer, permission)
 		if(SERVER and not IsValid(vplayer)) then
 			Vermilion.Log(Vermilion:TranslateStr("config:invaliduser"))
 			return true
-		elseif(CLIENT) then
+		elseif(CLIENT and not IsValid(vplayer)) then
 			return false
 		end
 	end
