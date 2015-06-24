@@ -152,31 +152,39 @@ function MODULE:InitServer()
 				if(not has) then table.insert(tab, { Title = k.title, ID = k.depot, Type = "MountedContent" }) end
 			end
 		end
-
+		
+		local atab = {}
+		local mtab = {}
+		
 		if(MODULE:GetData("kick_missing_addon", false, true)) then
-			local atab = {}
 			for i,k in pairs(tab) do
 				if(k.Type == "Addon") then
 					table.insert(atab, k.Title)
 				end
 			end
-			if(table.Count(atab) > 0) then
-				vplayer:Kick("Missing addons: \n" .. table.concat(atab, "\n"))
-				return
-			end
 		end
 
 		if(MODULE:GetData("kick_missing_mounts", false, true)) then
-			local mtab = {}
 			for i,k in pairs(tab) do
 				if(k.Type == "Addon") then
 					table.insert(mtab, k.Title)
 				end
 			end
-			if(table.Count(mtab) > 0) then
-				vplayer:Kick("Missing mounted content: \n" .. table.concat(mtab, "\n"))
-				return
+		end
+		
+		if(table.Count(atab) + table.Count(mtab) > 0) then
+			local text = ""
+			if(table.Count(atab) > 0) then
+				text = text .. MODULE:TranslateStr("disconnect:missing_addons", nil, vplayer) .. "\n" .. table.concat(atab, "\n") .. "\n"
 			end
+			if(table.Count(mtab) > 0) then
+				text = text .. MODULE:TranslateStr("disconnect:missing_mounts", nil, vplayer) .. "\n" .. table.concat(mtab, "\n") .. "\n"
+			end
+			if(provideCollectionID) then
+				text = text .. MODULE:TranslateStr("disconnect:collection", { collectionID }, vplayer)
+			end
+			vplayer:Kick("\n" .. string.Trim(text))
+			return
 		end
 
 		MODULE:NetStart("VAddonListRequest")

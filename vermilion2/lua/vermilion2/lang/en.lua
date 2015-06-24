@@ -195,6 +195,9 @@ lang:Add("addon_validator:opt:kick_missing_mounts", "Kick users missing mounted 
 lang:Add("addon_validator:opt:provide_collection_id", "Provide collection URL to players missing addons")
 lang:Add("addon_validator:opt:collection_id", "Collection ID:")
 
+lang:Add("addon_validator:disconnect:missing_addons", "Missing addons:")
+lang:Add("addon_validator:disconnect:missing_mounts", "Missing mounted content:")
+
 --[[
 
 	//		Automatic Broadcast		\\
