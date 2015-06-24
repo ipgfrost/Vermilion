@@ -19,10 +19,20 @@
 
 
 
-function Vermilion.ParseChatLineForCommand(line, forplayer)
+function Vermilion.ParseChatLineForCommand(line, forplayer, fordisplay)
 	local command = string.Trim(string.sub(line, 1, string.find(line, " ") or nil))
 	local response = {}
 	for i,k in pairs(Vermilion.ChatCommands) do
+		if(fordisplay and k.OnlyConsole) then continue end
+		if(fordisplay) then
+			local canAdd = true
+			for i,k in pairs(k.Permissions) do
+				if(not Vermilion:HasPermission(forplayer, k)) then
+					canAdd = false
+				end
+			end
+			if(not canAdd) then continue end
+		end
 		local syntax = k.Syntax
 		if(isfunction(syntax)) then
 			syntax = syntax(forplayer)

@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -25,19 +25,17 @@ if(SERVER) then
 	net.Receive("VChatPrediction", function(len, vplayer)
 		local current = net.ReadString()
 
-		local command, response = Vermilion.ParseChatLineForCommand(current, vplayer)
+		local command, response = Vermilion.ParseChatLineForCommand(current, vplayer, true)
 
 		local predictor = nil
+		local cmdObj = nil
 		if(Vermilion.ChatAliases[command] != nil) then
-			local cmdObj = Vermilion.ChatCommands[Vermilion.ChatAliases[command]]
-			if(cmdObj != nil) then
-				predictor = cmdObj.Predictor
-			end
+			cmdObj = Vermilion.ChatCommands[Vermilion.ChatAliases[command]]
 		else
-			local cmdObj = Vermilion.ChatCommands[command]
-			if(cmdObj != nil) then
-				predictor = cmdObj.Predictor
-			end
+			cmdObj = Vermilion.ChatCommands[command]
+		end
+		if(cmdObj != nil and not cmdObj.OnlyConsole) then
+			predictor = cmdObj.Predictor
 		end
 
 		if(string.find(current, " ") and predictor != nil) then

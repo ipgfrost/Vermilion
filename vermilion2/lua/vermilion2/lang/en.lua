@@ -189,6 +189,11 @@ lang:Add("addon_validator:dna", "Close and do not ask again")
 lang:Add("addon_validator:dna:confirm", "Are you sure?\nThis will take effect on every server you join.\nTo reset it, type \"vermilion_addonnag_do_not_ask 0\" into the console!")
 
 lang:Add("addon_validator:settingstext", "Enable Addon Validator")
+lang:Add("addon_validator:opt:kick_missing_addon", "Kick users missing addons")
+lang:Add("addon_validator:opt:check_missing_mounts", "Check for missing mounted content (doesn't work on DS/LS)")
+lang:Add("addon_validator:opt:kick_missing_mounts", "Kick users missing mounted content (doesn't work on DS/LS)")
+lang:Add("addon_validator:opt:provide_collection_id", "Provide collection URL to players missing addons")
+lang:Add("addon_validator:opt:collection_id", "Collection ID:")
 
 --[[
 
@@ -694,6 +699,7 @@ lang:Add("server_settings:cat:limits", "Limits")
 lang:Add("server_settings:cat:immunity", "Immunity")
 lang:Add("server_settings:cat:misc", "Misc")
 lang:Add("server_settings:cat:danger", "Danger Zone")
+lang:Add("server_settings:cat:addon_validator", "Addon Validator")
 lang:Add("server_settings:unlimited_ammo", "Unlimited ammunition:")
 lang:Add("server_settings:limitremover", "Spawn Limit Remover:")
 lang:Add("server_settings:damage", "Disable Damage:")

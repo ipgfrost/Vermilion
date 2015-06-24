@@ -1054,8 +1054,8 @@ function MODULE:InitServer()
 			end)
 		end
 	end)
-	
-	
+
+
 	self:AddDataChangeHook("forced_menu_keybind", "FMKB_Key", function(value)
 		VToolkit:SetGlobalValue("FMKB_Key", value)
 	end)
@@ -1444,7 +1444,47 @@ function MODULE:InitClient()
 				elseif(k.Type == "Colour") then
 					-- Implement Me!
 				elseif(k.Type == "NumberWang") then
-					-- Implement Me!
+					local panel = vgui.Create("DPanel")
+
+					local label = VToolkit:CreateLabel(k.GuiText)
+					label:SetDark(true)
+					label:SetPos(10, 3 + 3)
+					label:SetParent(panel)
+
+					local wang = VToolkit:CreateNumberWang(k.Bounds.Min, k.Bounds.Max)
+					wang:SetPos(paneldata.SettingsList:GetWide() - 230, 3)
+					wang:Dock(RIGHT)
+					wang:DockMargin(0, 2, 5, 2)
+					wang:SetParent(panel)
+					wang:SetWide(200)
+
+					wang:SetValue(k.Default)
+
+					function wang:OnValueChanged(value)
+						if(MODULE.UpdatingGUI) then return end
+						MODULE:NetStart("VServerUpdate")
+						net.WriteTable({{ Module = k.Module, Name = k.Name, Value = value }})
+						net.SendToServer()
+					end
+
+					panel:SetSize(select(1, wang:GetPos()) + wang:GetWide() + 10, wang:GetTall() + 5)
+					panel:SetPaintBackground(false)
+
+					local cat = nil
+					for ir,cat1 in pairs(categories) do
+						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+					end
+
+					panel:SetContentAlignment( 4 )
+					panel:DockMargin( 1, 0, 1, 0 )
+
+					panel:Dock(TOP)
+					panel:SetParent(cat)
+
+					if(k.Permission != nil) then
+						wang:SetEnabled(Vermilion:HasPermission(k.Permission))
+					end
+					k.Impl = wang
 				elseif(k.Type == "Text") then
 					-- Implement Me!
 				elseif(k.Type == "Button") then

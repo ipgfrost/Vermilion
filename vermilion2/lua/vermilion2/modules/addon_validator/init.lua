@@ -45,30 +45,149 @@ function MODULE:RegisterChatCommands()
 			net.Send(sender)
 		end
 	})
+
+	Vermilion:AddChatCommand({
+		Name = "reset_addon_validator",
+		Permissions = {
+			"*"
+		},
+		OnlyConsole = true,
+		Function = function(sender, text, log, glog)
+			MODULE:SetData("enabled", true)
+			MODULE:SetData("check_missing_mounts", false)
+			MODULE:SetData("kick_missing_mounts", false)
+			MODULE:SetData("kick_missing_addon", false)
+			MODULE:SetData("provide_collection_id", false)
+			MODULE:SetData("collection_id", 0)
+		end
+	})
 end
 
 function MODULE:InitShared()
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddOption", function()
 		if(Vermilion:GetModule("server_settings") != nil) then
-			Vermilion:GetModule("server_settings"):AddOption({
+			local mod = Vermilion:GetModule("server_settings")
+			mod:AddCategory("cat:addon_validator", "addon_validator", 35)
+			mod:AddOption({
 				Module = "addon_validator",
 				Name = "enabled",
 				GuiText = MODULE:TranslateStr("settingstext"),
 				Type = "Checkbox",
-				Category = "Misc",
+				Category = "addon_validator",
 				Default = true
+			})
+			mod:AddOption({
+				Module = "addon_validator",
+				Name = "check_missing_mounts",
+				GuiText = MODULE:TranslateStr("opt:check_missing_mounts"),
+				Type = "Checkbox",
+				Category = "addon_validator",
+				Default = false
+			})
+			mod:AddOption({
+				Module = "addon_validator",
+				Name = "kick_missing_mounts",
+				GuiText = MODULE:TranslateStr("opt:kick_missing_mounts"),
+				Type = "Checkbox",
+				Category = "addon_validator",
+				Default = false
+			})
+			mod:AddOption({
+				Module = "addon_validator",
+				Name = "kick_missing_addon",
+				GuiText = MODULE:TranslateStr("opt:kick_missing_addon"),
+				Type = "Checkbox",
+				Category = "addon_validator",
+				Default = false
+			})
+			mod:AddOption({
+				Module = "addon_validator",
+				Name = "provide_collection_id",
+				GuiText = MODULE:TranslateStr("opt:provide_collection_id"),
+				Type = "Checkbox",
+				Category = "addon_validator",
+				Default = false
+			})
+			mod:AddOption({
+				Module = "addon_validator",
+				Name = "collection_id",
+				GuiText = MODULE:TranslateStr("opt:collection_id"),
+				Type = "NumberWang",
+				Bounds = {
+					Min = 0,
+					Max = nil
+				},
+				Category = "addon_validator",
+				Default = 0
 			})
 		end
 	end)
 end
 
 function MODULE:InitServer()
+
+
 	self:NetHook("VAddonListRequest", function(vplayer)
 		if(not MODULE:GetData("enabled", true, true)) then return end
-		MODULE:NetStart("VAddonListRequest")
 		local tab = {}
+		local serverAddons = engine.GetAddons()
+		local clientAddons = net.ReadTable()
+		local clientMountedContent = net.ReadTable()
 		for i,k in pairs(engine.GetAddons()) do
-			if(k.mounted) then table.insert(tab, k) end
+			local has = false
+			for i1,k1 in pairs(clientAddons) do
+				if(k1 == k.wsid) then
+					has = true
+					break
+				end
+			end
+			if(k.mounted and not has) then table.insert(tab, { Title = k.title, ID = k, Type = "Addon" }) end
+		end
+		if(MODULE:GetData("check_missing_mounts", false, true)) then
+			for i,k in pairs(engine.GetGames()) do
+				if(not k.mounted or not k.installed) then continue end
+				local has = false
+				for i1,k1 in pairs(clientMountedContent) do
+					if(k1 == k.depot) then
+						has = true
+						break
+					end
+				end
+				if(not has) then table.insert(tab, { Title = k.title, ID = k.depot, Type = "MountedContent" }) end
+			end
+		end
+
+		if(MODULE:GetData("kick_missing_addon", false, true)) then
+			local atab = {}
+			for i,k in pairs(tab) do
+				if(k.Type == "Addon") then
+					table.insert(atab, k.Title)
+				end
+			end
+			if(table.Count(atab) > 0) then
+				vplayer:Kick("Missing addons: \n" .. table.concat(atab, "\n"))
+				return
+			end
+		end
+
+		if(MODULE:GetData("kick_missing_mounts", false, true)) then
+			local mtab = {}
+			for i,k in pairs(tab) do
+				if(k.Type == "Addon") then
+					table.insert(mtab, k.Title)
+				end
+			end
+			if(table.Count(mtab) > 0) then
+				vplayer:Kick("Missing mounted content: \n" .. table.concat(mtab, "\n"))
+				return
+			end
+		end
+
+		MODULE:NetStart("VAddonListRequest")
+		net.WriteBoolean(MODULE:GetData("check_missing_mounts", false))
+		net.WriteBoolean(MODULE:GetData("provide_collection_id", false))
+		if(MODULE:GetData("provide_collection_id")) then
+			net.WriteInt(MODULE:GetData("collection_id", 0), 32)
 		end
 		net.WriteTable(tab)
 		net.Send(vplayer)
@@ -78,28 +197,13 @@ end
 function MODULE:InitClient()
 
 	CreateClientConVar("vermilion_addonnag_do_not_ask", 0, true, false)
-	CreateClientConVar("vermilion_addonnag_debug", 0, true, false)
 
 	self:NetHook("VAddonListRequest", function()
-		local serverAddons = net.ReadTable()
-		local clientAddons = engine.GetAddons()
-
-		local missingAddons = {}
-
-		for i,k in pairs(serverAddons) do
-			local has = false
-			for i1,k1 in pairs(clientAddons) do
-				if(k.wsid == k1.wsid) then
-					has = true
-					break
-				end
-			end
-			if(not has) then table.insert(missingAddons, k) end
-		end
+		local missingAddons = net.ReadTable()
 
 		Vermilion.Log("Missing " .. tostring(table.Count(missingAddons)) .. " addons!")
 
-		if(table.Count(missingAddons) > 0 or GetConVarNumber("vermilion_addonnag_debug") != 0) then
+		if(table.Count(missingAddons) > 0) then
 			local frame = VToolkit:CreateFrame({
 				["size"] = { 600, 600 },
 				["closeBtn"] = true,
@@ -129,8 +233,9 @@ function MODULE:InitClient()
 			missingAddonsList:SetParent(panel)
 
 			for i,k in pairs(missingAddons) do
-				local ln = missingAddonsList:AddLine(k.title)
-				ln.wsid = k.wsid
+				local ln = missingAddonsList:AddLine(k.Title)
+				ln.ID = k.ID
+				ln.Type = k.Type
 			end
 
 			local alertText = vgui.Create("DTextEntry")
@@ -145,16 +250,27 @@ function MODULE:InitClient()
 
 
 			local openInWSButton = VToolkit:CreateButton(MODULE:TranslateStr("open_workshop_page"), function(self)
-				if(table.Count(missingAddonsList:GetSelected()) == 0) then
-					VToolkit:CreateErrorDialog(MODULE:TranslateStr("open_workshop_page:g1"))
-					return
-				end
-				steamworks.ViewFile(missingAddonsList:GetSelected()[1].wsid)
+				steamworks.ViewFile(missingAddonsList:GetSelected()[1].ID)
 			end)
 			openInWSButton:SetPos(330, 180)
 			openInWSButton:SetSize(180, 35)
 			openInWSButton:SetParent(panel)
 
+			local openInSteamButton = VToolkit:CreateButton(MODULE:TranslateStr("open_steam_store"), function(self)
+				gui.OpenURL("http://store.steampowered.com/app/" .. missingAddonsList:GetSelected()[1].ID)
+			end)
+			openInSteamButton:SetPos(330, 230)
+			openInSteamButton:SetSize()
+
+			function missingAddonsList:OnRowSelected(index, line)
+				openInWSButton:SetDisabled(true)
+				openInSteamButton:SetDisabled(true)
+				if(line.Type == "Addon") then
+					openInWSButton:SetDisabled(false)
+				elseif (line.Type == "MountedContent") then
+					openInSteamButton:SetDisabled(false)
+				end
+			end
 
 			local donotaskButton = VToolkit:CreateButton(MODULE:TranslateStr("dna"), function(self)
 				VToolkit:CreateConfirmDialog(MODULE:TranslateStr("dna:confirm"), function()
@@ -171,6 +287,11 @@ function MODULE:InitClient()
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		if(GetConVarNumber("vermilion_addonnag_do_not_ask") == 0) then
 			MODULE:NetStart("VAddonListRequest")
+			local tab = {}
+			for i,k in pairs(engine.GetAddons()) do
+				if(k.mounted) then table.insert(tab, k.wsid) end
+			end
+			net.WriteTable(tab)
 			net.SendToServer()
 		end
 	end)

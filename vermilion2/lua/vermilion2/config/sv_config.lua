@@ -64,6 +64,7 @@ end
 
 function Vermilion:BroadcastRankData(target)
 	target = target or VToolkit:GetValidPlayers()
+	if(not IsValid(target)) then return end
 	local normalData = {}
 	for i,k in pairs(self:GetDriver():GetAllRanks()) do
 		table.insert(normalData, k:GetNetPacket())
