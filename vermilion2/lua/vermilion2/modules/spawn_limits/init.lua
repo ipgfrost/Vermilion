@@ -120,7 +120,7 @@ function MODULE:InitServer()
 		local mode = self:GetData("enable_limit_remover", 3, true)
 		if(mode > 1) then
 			if(mode == 2) then return true end
-			if(mode == 3 and Vermilion:HasPermission(vplayer, "no_spawn_limits")) then return end
+			if(mode == 3 and Vermilion:HasPermission(vplayer, "no_spawn_limits")) then return true end
 		end
 		local rankLimit = nil
 		for i,k in pairs(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true)) do
@@ -133,6 +133,8 @@ function MODULE:InitServer()
 			if(vplayer:GetCount(typ) >= rankLimit and rankLimit >= 0) then
 				Vermilion:AddNotification(vplayer, "You have hit the " .. typ .. " limit!", nil, NOTIFY_ERROR)
 				return false
+			else
+				return true
 			end
 		end
 	end)
