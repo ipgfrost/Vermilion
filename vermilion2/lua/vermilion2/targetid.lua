@@ -41,24 +41,26 @@ if(SERVER) then
 end
 
 Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
-	if(not VToolkit:GetGlobalValue("use_vtargetid", true)) then return end
 
-	local tr = util.GetPlayerTrace( LocalPlayer() )
-	local trace = util.TraceLine( tr )
-	if (!trace.Hit) then return end
-	if (!trace.HitNonWorld) then return end
 
-	if (not trace.Entity:IsPlayer()) then
+	local tr = util.GetPlayerTrace(LocalPlayer())
+	local trace = util.TraceLine(tr)
+	if(!trace.Hit) then return end
+	if(!trace.HitNonWorld) then return end
+
+	if(not trace.Entity:IsPlayer()) then
 		return
 	end
 
+	if(trace.Entity:GetRenderMode() == RENDERMODE_NONE) then return false end
+
+	if(not VToolkit:GetGlobalValue("use_vtargetid", true)) then return end
+
 	local MouseX, MouseY = gui.MousePos()
 
-	if ( MouseX == 0 && MouseY == 0 ) then
-
+	if (MouseX == 0 && MouseY == 0) then
 		MouseX = ScrW() / 2
 		MouseY = ScrH() / 2
-
 	end
 
 	local x = MouseX
@@ -68,14 +70,14 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 
 	local caseRank = string.SetChar(rawName, 1, string.upper(string.GetChar(rawName, 1)))
 
-	surface.SetFont( 'DermaDefaultBold' )
+	surface.SetFont('DermaDefaultBold')
 	local maxW = math.max(surface.GetTextSize(trace.Entity:GetName()), surface.GetTextSize(tostring(trace.Entity:Health()) .. "%"), surface.GetTextSize(caseRank))
 	x = x - ((90 + maxW) / 2)
 	y = y + 75
 
-	surface.SetDrawColor( 5, 5, 5, 220 )
-	surface.DrawRect( x, y, 90 + maxW, 50 )
-	surface.DrawOutlinedRect( x, y, 90 + maxW, 50 )
+	surface.SetDrawColor(5, 5, 5, 220)
+	surface.DrawRect(x, y, 90 + maxW, 50)
+	surface.DrawOutlinedRect(x, y, 90 + maxW, 50)
 
 	local geoIPData = hook.Run("Vermilion2_TargetIDDataGeoIP", trace.Entity)
 	local iconData = hook.Run("Vermilion2_TargetIDDataIcon", trace.Entity)

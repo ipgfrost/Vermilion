@@ -866,6 +866,24 @@ function MODULE:RegisterChatCommands()
 		end
 	})
 
+	if(SERVER) then
+		MODULE:AddHook("PlayerSwitchWeapon", "VanishSwitch", function(vplayer, old, new)
+			if(vplayer.Vanished) then
+				if(new:GetRenderMode() == RENDERMODE_NONE) then return end
+				new:SetRenderMode(RENDERMODE_NONE)
+				for i,k in pairs(player.GetAll()) do
+					new:SetPreventTransmit(k, true)
+				end
+			else
+				if(new:GetRenderMode() == RENDERMODE_NORMAL) then return end
+				new:SetRenderMode(RENDERMODE_NORMAL)
+				for i,k in pairs(player.GetAll()) do
+					new:SetPreventTransmit(k, false)
+				end
+			end
+		end)
+	end
+
 	Vermilion:AddChatCommand({
 		Name = "vanish",
 		Description = "Makes you invisible to other players.",
@@ -876,12 +894,26 @@ function MODULE:RegisterChatCommands()
 				sender:SetRenderMode(RENDERMODE_NONE)
 				for i,k in pairs(player.GetAll()) do
 					sender:SetPreventTransmit(k, true)
+					for i1,k1 in pairs(sender:GetWeapons()) do
+						k1:SetPreventTransmit(k, true)
+					end
 				end
+				for i,k in pairs(sender:GetWeapons()) do
+					k:SetRenderMode(RENDERMODE_NONE)
+				end
+				sender.Vanished = true
 			else
 				sender:SetRenderMode(RENDERMODE_NORMAL)
 				for i,k in pairs(player.GetAll()) do
 					sender:SetPreventTransmit(k, false)
+					for i1,k1 in pairs(sender:GetWeapons()) do
+						k1:SetPreventTransmit(k, false)
+					end
 				end
+				for i,k in pairs(sender:GetWeapons()) do
+					k:SetRenderMode(RENDERMODE_NORMAL)
+				end
+				sender.Vanished = false
 			end
 		end
 	})
