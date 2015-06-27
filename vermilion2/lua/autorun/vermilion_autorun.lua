@@ -189,6 +189,7 @@ local files = {
 	{ "vermilion2/chatpredict.lua", true, true, true },
 	{ "vermilion2/geoip.lua", true, true, true },
 	{ "vermilion2/memoryviewer.lua", true, true, true },
+	{ "vermilion2/core/ent_extension.lua", true, true, true },
 	{ "vermilion2/ply_extension.lua", false, false, true },
 	{ "vermilion2/targetid.lua", true, true, true }
 }

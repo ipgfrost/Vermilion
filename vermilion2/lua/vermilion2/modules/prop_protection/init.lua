@@ -556,6 +556,23 @@ function MODULE:InitShared()
 		return CPPI.CPPI_NOTIMPLEMENTED
 	end
 
+	local eMeta = FindMetaTable("Entity")
+	function eMeta:VDoesOwn(vplayer)
+		if(SERVER) then
+			return self.Vermilion_Owner == vplayer:SteamID()
+		else
+			return self:GetGlobalValue("Vermilion_Owner") == vplayer:SteamID()
+		end
+	end
+
+	function eMeta:VGetOwner()
+		if(SERVER) then
+			return self.Vermilion_Owner
+		else
+			return self:GetGlobalValue("Vermilion_Owner")
+		end
+	end
+
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()
 		if(Vermilion:GetModule("server_settings") != nil) then
 			local mgr = Vermilion:GetModule("server_settings")

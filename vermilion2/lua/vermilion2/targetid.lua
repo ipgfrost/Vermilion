@@ -52,7 +52,7 @@ Vermilion:AddHook("HUDDrawTargetID", "VTargetID", false, function()
 		return
 	end
 
-	if(trace.Entity:GetRenderMode() == RENDERMODE_NONE) then return false end
+	if(trace.Entity:ShouldBeInvisible()) then return false end
 
 	if(not VToolkit:GetGlobalValue("use_vtargetid", true)) then return end
 
