@@ -249,110 +249,88 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VGivePermission", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rank = net.ReadString()
-			local permission = net.ReadString()
+	self:NetHook("VGivePermission", { "manage_ranks" }, function(vplayer)
+		local rank = net.ReadString()
+		local permission = net.ReadString()
 
-			Vermilion:GetRankByID(rank):AddPermission(permission)
+		Vermilion:GetRankByID(rank):AddPermission(permission)
+	end)
+
+	self:NetHook("VRevokePermission", { "manage_ranks" }, function(vplayer)
+		local rank = net.ReadString()
+		local permission = net.ReadString()
+
+		Vermilion:GetRankByID(rank):RevokePermission(permission)
+	end)
+
+	self:NetHook("VAddRank", { "manage_ranks" }, function(vplayer)
+		local newRank = net.ReadString()
+		Vermilion:AddRank(newRank, nil, false, Color(0, 0, 0), "user_suit")
+	end)
+
+	self:NetHook("VChangeRankColour", { "manage_ranks" }, function(vplayer)
+		local rankName = net.ReadString()
+		local colour = net.ReadColor()
+
+		Vermilion:GetRankByID(rankName):SetColour(colour)
+	end)
+
+	self:NetHook("VMoveRank", { "manage_ranks" }, function(vplayer)
+		local rnk = net.ReadString()
+		local dir = net.ReadBoolean()
+
+		if(dir) then
+			Vermilion:GetRankByID(rnk):MoveUp()
+		else
+			Vermilion:GetRankByID(rnk):MoveDown()
 		end
 	end)
 
-	self:NetHook("VRevokePermission", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rank = net.ReadString()
-			local permission = net.ReadString()
+	self:NetHook("VRemoveRank", { "manage_ranks" }, function(vplayer)
+		local rnk = net.ReadString()
 
-			Vermilion:GetRankByID(rank):RevokePermission(permission)
+		Vermilion:GetRankByID(rnk):Delete()
+	end)
+
+	self:NetHook("VRenameRank", { "manage_ranks" }, function(vplayer)
+		local rnk = net.ReadString()
+		local new = net.ReadString()
+
+		Vermilion:GetRankByID(rnk):Rename(new)
+	end)
+
+	self:NetHook("VSetRankDefault", { "manage_ranks" }, function(vplayer)
+		local new = net.ReadString()
+
+		Vermilion:SetData("default_rank", new)
+		Vermilion:GetDefaultRank() -- force update the GVar
+		Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
+	end)
+
+	self:NetHook("VChangeRankIcon", { "manage_ranks" }, function(vplayer)
+		local rankName = net.ReadString()
+		local icon = net.ReadString()
+
+		Vermilion:GetRankByID(rankName):SetIcon(icon)
+	end)
+
+	self:NetHook("VAssignRank", { "manage_ranks" }, function(vplayer)
+		local ply = net.ReadEntity()
+		local newRank = net.ReadString()
+
+		if(IsValid(ply)) then
+			Vermilion:GetUser(ply):SetRank(newRank)
 		end
 	end)
 
-	self:NetHook("VAddRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local newRank = net.ReadString()
-			Vermilion:AddRank(newRank, nil, false, Color(0, 0, 0), "user_suit")
+	self:NetHook("VAssignParent", { "manage_ranks" }, function(vplayer)
+		local trank = Vermilion:GetRankByID(net.ReadString())
+		local proposedrank = net.ReadString()
+		if(proposedrank == "nil") then
+			trank:SetParent(nil)
+			return
 		end
-	end)
-
-	self:NetHook("VChangeRankColour", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rankName = net.ReadString()
-			local colour = net.ReadColor()
-
-			Vermilion:GetRankByID(rankName):SetColour(colour)
-		end
-	end)
-
-	self:NetHook("VMoveRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rnk = net.ReadString()
-			local dir = net.ReadBoolean()
-
-			if(dir) then
-				Vermilion:GetRankByID(rnk):MoveUp()
-			else
-				Vermilion:GetRankByID(rnk):MoveDown()
-			end
-		end
-	end)
-
-	self:NetHook("VRemoveRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rnk = net.ReadString()
-
-			Vermilion:GetRankByID(rnk):Delete()
-		end
-	end)
-
-	self:NetHook("VRenameRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rnk = net.ReadString()
-			local new = net.ReadString()
-
-			Vermilion:GetRankByID(rnk):Rename(new)
-		end
-	end)
-
-	self:NetHook("VSetRankDefault", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local new = net.ReadString()
-
-			Vermilion:SetData("default_rank", new)
-			Vermilion:GetDefaultRank() -- force update the GVar
-			Vermilion:BroadcastRankData(VToolkit.GetValidPlayers())
-		end
-	end)
-
-	self:NetHook("VChangeRankIcon", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local rankName = net.ReadString()
-			local icon = net.ReadString()
-
-			Vermilion:GetRankByID(rankName):SetIcon(icon)
-		end
-	end)
-
-	self:NetHook("VAssignRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local ply = net.ReadEntity()
-			local newRank = net.ReadString()
-
-			if(IsValid(ply)) then
-				Vermilion:GetUser(ply):SetRank(newRank)
-			end
-		end
-	end)
-
-	self:NetHook("VAssignParent", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_ranks")) then
-			local trank = Vermilion:GetRankByID(net.ReadString())
-			local proposedrank = net.ReadString()
-			if(proposedrank == "nil") then
-				trank:SetParent(nil)
-				return
-			end
-			trank:SetParent(Vermilion:GetRankByID(proposedrank))
-		end
+		trank:SetParent(Vermilion:GetRankByID(proposedrank))
 	end)
 
 	self:AddLPHook("PlayerInitialSpawn", function(vplayer)

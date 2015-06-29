@@ -246,7 +246,11 @@ MENU:AddPage({
 					"Attempted to improve the user experience of Vermilion on a listen server",
 					"Added Public Domain tool",
 					"Fixed spawn limits not being applied correctly",
-					"Fixed the !vanish command"
+					"Fixed the !vanish command",
+					"Errors in the OnOpen menu hook no longer prevent the menu from opening",
+					"Fixed patterns in chat commands causing script errors",
+					"Added a secure network hook to create standard API for secure network endpoints",
+					"Updated GMod DCategoryList rendering to make it (hopefully) easier on the eyes"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -956,7 +960,10 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 			end
 		end
 
-		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
+		xpcall(self:GetActivePage().OnOpen, function(err)
+			Vermilion.Log("Failed to run OnOpen for panel (" .. self:GetActivePage().ID .. "): " .. err)
+			debug.Trace()
+		end, self:GetActivePage().Panel, self:GetActivePage())
 
 		MENU.IsOpen = true
 		MENU.TabPanel:SetVisible(true)

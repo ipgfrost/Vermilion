@@ -83,35 +83,29 @@ function MODULE:InitServer()
 		sendListings(vplayer)
 	end)
 
-	self:NetHook("VAddAutoBroadcastListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
-			table.insert(MODULE:GetData("listings", {}, true), net.ReadTable())
-			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
-		end
+	self:NetHook("VAddAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+		table.insert(MODULE:GetData("listings", {}, true), net.ReadTable())
+		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 	end)
 
-	self:NetHook("VUpdateAutoBroadcastListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
-			local vtab = net.ReadTable()
-			for i,k in pairs(MODULE:GetData("listings", {}, true)) do
-				if(k.Text == vtab.OText) then
-					k.Text = vtab.Text
-					k.Interval = vtab.Interval
-					k.IntervalString = vtab.IntervalString
-					k.Values = vtab.Values
-					break
-				end
+	self:NetHook("VUpdateAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+		local vtab = net.ReadTable()
+		for i,k in pairs(MODULE:GetData("listings", {}, true)) do
+			if(k.Text == vtab.OText) then
+				k.Text = vtab.Text
+				k.Interval = vtab.Interval
+				k.IntervalString = vtab.IntervalString
+				k.Values = vtab.Values
+				break
 			end
-			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 		end
+		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 	end)
 
-	self:NetHook("VDelAutoBroadcastListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_auto_broadcast")) then
-			local target = net.ReadInt(32)
-			table.remove(MODULE:GetData("listings", {}, true), target)
-			sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
-		end
+	self:NetHook("VDelAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+		local target = net.ReadInt(32)
+		table.remove(MODULE:GetData("listings", {}, true), target)
+		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 	end)
 end
 
@@ -163,7 +157,7 @@ function MODULE:InitClient()
 				listings:SetPos(10, 30)
 				listings:SetSize(765, 460)
 				listings:SetParent(panel)
-				
+
 				listings.Columns[2]:SetFixedWidth(100)
 				listings.Columns[3]:SetFixedWidth(100)
 
@@ -203,9 +197,9 @@ function MODULE:InitClient()
 				emessageBox:SetSize(425, 410)
 				emessageBox:SetParent(editMessagePanel)
 				emessageBox:SetMultiline(true)
-				
+
 				local eColourMixer = VToolkit:CreateColourMixer(false, false, true, Color(255, 255, 255), function(val)
-				
+
 				end)
 				eColourMixer:SetParent(editMessagePanel)
 				eColourMixer:SetPos(0, 290)
@@ -358,9 +352,9 @@ function MODULE:InitClient()
 				messageBox:SetSize(425, 240)
 				messageBox:SetParent(addMessagePanel)
 				messageBox:SetMultiline(true)
-				
+
 				local addColourMixer = VToolkit:CreateColourMixer(false, false, true, Color(255, 255, 255), function(val)
-				
+
 				end)
 				addColourMixer:SetParent(addMessagePanel)
 				addColourMixer:SetPos(0, 290)

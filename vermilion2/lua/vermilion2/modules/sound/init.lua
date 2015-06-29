@@ -348,24 +348,20 @@ function MODULE:InitServer()
 		self:SendStream(VToolkit.GetValidPlayers(false), url, channel, parameters)
 	end
 
-	self:NetHook("VPlaySound", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "playsound")) then
-			local path = net.ReadString()
-			local channel = net.ReadString()
-			local parameters = net.ReadTable()
+	self:NetHook("VPlaySound", { "playsound" }, function(vplayer)
+		local path = net.ReadString()
+		local channel = net.ReadString()
+		local parameters = net.ReadTable()
 
-			MODULE:BroadcastSound(path, channel, parameters)
-		end
+		MODULE:BroadcastSound(path, channel, parameters)
 	end)
 
-	self:NetHook("VPlayStream", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "playstream")) then
-			local url = net.ReadString()
-			local channel = net.ReadString()
-			local parameters = net.ReadTable()
+	self:NetHook("VPlayStream", { "playstream" }, function(vplayer)
+		local url = net.ReadString()
+		local channel = net.ReadString()
+		local parameters = net.ReadTable()
 
-			MODULE:BroadcastStream(url, channel, parameters)
-		end
+		MODULE:BroadcastStream(url, channel, parameters)
 	end)
 
 end

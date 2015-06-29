@@ -88,30 +88,26 @@ function MODULE:InitServer()
 		sendMenuBindList(vplayer, rank)
 	end)
 
-	self:NetHook("VAddBindBlock", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_keybinds")) then
-			local rank = net.ReadString()
-			local bind = net.ReadString()
+	self:NetHook("VAddBindBlock", { "manage_keybinds" }, function(vplayer)
+		local rank = net.ReadString()
+		local bind = net.ReadString()
 
-			table.insert(MODULE:GetData(rank, {}, true), bind)
+		table.insert(MODULE:GetData(rank, {}, true), bind)
 
-			sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
+		sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
 
-			MODULE:BroadcastNewBinds()
-		end
+		MODULE:BroadcastNewBinds()
 	end)
 
-	self:NetHook("VRemoveBindBlock", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_keybinds")) then
-			local rank = net.ReadString()
-			local bind = net.ReadString()
+	self:NetHook("VRemoveBindBlock", { "manage_keybinds" }, function(vplayer)
+		local rank = net.ReadString()
+		local bind = net.ReadString()
 
-			table.RemoveByValue(MODULE:GetData(rank, {}, true), bind)
+		table.RemoveByValue(MODULE:GetData(rank, {}, true), bind)
 
-			sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
+		sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
 
-			MODULE:BroadcastNewBinds()
-		end
+		MODULE:BroadcastNewBinds()
 	end)
 
 

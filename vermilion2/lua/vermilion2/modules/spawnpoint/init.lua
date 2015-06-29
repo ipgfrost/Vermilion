@@ -122,14 +122,12 @@ function MODULE:InitServer()
 	self:NetHook("VGetSpawnpoints", updateClient)
 	self:NetHook("VGetRankSpawnpoints", sendRankAllocs)
 
-	self:NetHook("VDelSpawnpoint", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
-			local point = net.ReadString()
-			MODULE:GetData("points", {}, true)[point] = nil
-			for i,k in pairs(MODULE:GetData("allocations", {}, true)) do
-				if(k == point) then
-					MODULE:GetData("allocations", {}, true)[i] = nil
-				end
+	self:NetHook("VDelSpawnpoint", { "manage_spawnpoints" }, function(vplayer)
+		local point = net.ReadString()
+		MODULE:GetData("points", {}, true)[point] = nil
+		for i,k in pairs(MODULE:GetData("allocations", {}, true)) do
+			if(k == point) then
+				MODULE:GetData("allocations", {}, true)[i] = nil
 			end
 		end
 
@@ -137,12 +135,10 @@ function MODULE:InitServer()
 		sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 	end)
 
-	self:NetHook("VGoto", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
-			local point = net.ReadString()
-			if(MODULE:GetData("points", {}, true)[point] != nil) then
-				vplayer:SetPos(MODULE:GetData("points", {}, true)[point].Pos)
-			end
+	self:NetHook("VGoto", { "manage_spawnpoints" }, function(vplayer)
+		local point = net.ReadString()
+		if(MODULE:GetData("points", {}, true)[point] != nil) then
+			vplayer:SetPos(MODULE:GetData("points", {}, true)[point].Pos)
 		end
 	end)
 
@@ -182,23 +178,19 @@ function MODULE:InitServer()
 		MODULE:DoSpawning(vplayer)
 	end)
 
-	self:NetHook("VAssignSpawnpoint", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
-			local rank = net.ReadString()
-			local point = net.ReadString()
+	self:NetHook("VAssignSpawnpoint", { "manage_spawnpoints" }, function(vplayer)
+		local rank = net.ReadString()
+		local point = net.ReadString()
 
-			MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = point
-			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
-		end
+		MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = point
+		sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 	end)
 
-	self:NetHook("VResetSpawnpoint", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawnpoints")) then
-			local rank = net.ReadString()
+	self:NetHook("VResetSpawnpoint", { "manage_spawnpoints" }, function(vplayer)
+		local rank = net.ReadString()
 
-			MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = nil
-			sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
-		end
+		MODULE:GetData("allocations", {}, true)[rank .. ":" .. game.GetMap()] = nil
+		sendRankAllocs(Vermilion:GetUsersWithPermission("manage_spawnpoints"))
 	end)
 
 end

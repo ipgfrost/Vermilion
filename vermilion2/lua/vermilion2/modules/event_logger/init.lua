@@ -65,12 +65,10 @@ function MODULE:InitServer()
 		net.Send(Vermilion:GetUsersWithPermission("see_event_log"))
 	end
 
-	self:NetHook("VGetEvents", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "see_event_log")) then
-			MODULE:NetStart("VGetEvents")
-			net.WriteTable(MODULE.SessionLog)
-			net.Send(vplayer)
-		end
+	self:NetHook("VGetEvents", { "see_event_log" }, function(vplayer)
+		MODULE:NetStart("VGetEvents")
+		net.WriteTable(MODULE.SessionLog)
+		net.Send(vplayer)
 	end)
 
 	self:AddHook("PlayerConnect", function(name, ip)

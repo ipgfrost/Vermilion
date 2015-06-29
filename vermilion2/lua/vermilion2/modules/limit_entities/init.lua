@@ -64,20 +64,17 @@ function MODULE:InitServer()
 	self:NetHook("VGetEntityLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("VGetEntityLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetEntityLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetEntityLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
 		end
+		net.Send(vplayer)
 	end)
 
-	self:NetHook("VBlockEntity", function(vplayer)
+	self:NetHook("VBlockEntity", { "manage_entity_limits" }, function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_entity_limits")) then
 			local rnk = net.ReadString()
 			local weapon = net.ReadString()
@@ -87,12 +84,10 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VUnblockEntity", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_entity_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
-		end
+	self:NetHook("VUnblockEntity", { "manage_entity_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
 end

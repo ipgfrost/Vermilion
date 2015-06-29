@@ -66,20 +66,16 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VUpdateDonatorMode", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
-			MODULE:SetData("enabled", net.ReadBoolean())
-			MODULE:SetData("donator_url", net.ReadString())
-		end
+	self:NetHook("VUpdateDonatorMode", { "manage_donator_mode" }, function(vplayer)
+		MODULE:SetData("enabled", net.ReadBoolean())
+		MODULE:SetData("donator_url", net.ReadString())
 	end)
 
-	self:NetHook("VGetDonatorMode", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_donator_mode")) then
-			MODULE:NetStart("VGetDonatorMode")
-			net.WriteBoolean(MODULE:GetData("enabled", false))
-			net.WriteString(MODULE:GetData("donator_url", ""))
-			net.Send(vplayer)
-		end
+	self:NetHook("VGetDonatorMode", { "manage_donator_mode" }, function(vplayer)
+		MODULE:NetStart("VGetDonatorMode")
+		net.WriteBoolean(MODULE:GetData("enabled", false))
+		net.WriteString(MODULE:GetData("donator_url", ""))
+		net.Send(vplayer)
 	end)
 end
 

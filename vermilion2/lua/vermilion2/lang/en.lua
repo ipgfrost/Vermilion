@@ -788,5 +788,19 @@ lang:Add("votes:kick:question", "Kick player %s?")
 lang:Add("votes:kick:syntax", "Syntax: <player>")
 lang:Add("votes:kick:done", "%s was kicked from the server!")
 
+--[[
+
+	//		Reserved Slots		\\
+
+]]--
+lang:Add("menu:reserved_slots", "Reserved Slots")
+lang:Add("reserved_slots:new", "Add Slot")
+lang:Add("reserved_slots:new:add", "Add Player")
+lang:Add("reserved_slots:remove", "Remove Slot")
+lang:Add("reserved_slots:list:title", "Slots")
+lang:Add("reserved_slots:list:name", "Name")
+lang:Add("reserved_slots:list:steamid", "Steam ID")
+
+lang:Add("reserved_slots:noslots", "No remaining unreserved slots!")
 
 Vermilion:RegisterLanguage(lang)

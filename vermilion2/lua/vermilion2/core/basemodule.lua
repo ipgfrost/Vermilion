@@ -88,11 +88,23 @@ function Vermilion:CreateBaseModule()
 				self.LPHooks[evtName][id] = nil
 			end
 		end
-		
+
 		function base:DistributeEvent(event, parameters) end
 
-		function base:NetHook(nstr, func)
-			self.NetworkHooks[nstr] = func
+		function base:NetHook(nstr, permissions, func)
+			if(func == nil) then
+				self.NetworkHooks[nstr] = permissions -- insecure mode
+			else
+				self.NetworkHooks[nstr] = function(vplayer)
+					for i,k in pairs(permissions) do
+						if(not Vermilion:HasPermission(vplayer, k)) then
+							Vermilion.Log("Warning! Player " .. vplayer:GetName() .. " is accessing a secure network hook without permission! (" .. nstr .. ")!")
+							return
+						end
+					end
+					func(vplayer)
+				end
+			end
 		end
 
 		function base:NetStart(msg)
@@ -131,7 +143,7 @@ function Vermilion:CreateBaseModule()
 			return tab
 		end
 
-		
+
 		function base:AddMenuPage(data)
 			Vermilion.Menu:AddPage(data)
 			if(self.Tabs == nil) then
@@ -139,7 +151,7 @@ function Vermilion:CreateBaseModule()
 			end
 			table.insert(self.Tabs, data.ID)
 		end
-		
+
 
 		Vermilion.ModuleBase = base
 	end

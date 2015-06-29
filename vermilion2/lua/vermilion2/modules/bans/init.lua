@@ -293,54 +293,46 @@ function MODULE:InitServer()
 		sendBanRecords(vplayer)
 	end)
 
-	self:NetHook("VBanPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local ent = net.ReadEntity()
-			if(IsValid(ent)) then
-				MODULE:BanPlayer(ent, vplayer, net.ReadInt(32), net.ReadString())
+	self:NetHook("VBanPlayer", { "manage_bans" }, function(vplayer)
+		local ent = net.ReadEntity()
+		if(IsValid(ent)) then
+			MODULE:BanPlayer(ent, vplayer, net.ReadInt(32), net.ReadString())
 
+			sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+		end
+	end)
+
+	self:NetHook("VKickPlayer", { "manage_bans" }, function(vplayer)
+		local ent = net.ReadEntity()
+		if(IsValid(ent)) then
+			ent:Kick(net.ReadString())
+			MODULE:NetStart("VGetBanRecords")
+			net.WriteTable(MODULE:GetData("bans", {}, true))
+			net.Broadcast()
+		end
+	end)
+
+	self:NetHook("VUnbanPlayer", { "manage_bans" }, function(vplayer)
+		local steamid = net.ReadString()
+		for i,k in pairs(MODULE:GetData("bans", {}, true)) do
+			if(k.SteamID == steamid) then
+				table.RemoveByValue(MODULE:GetData("bans", {}, true), k)
+				Vermilion:BroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
 				sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+				break
 			end
 		end
 	end)
 
-	self:NetHook("VKickPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local ent = net.ReadEntity()
-			if(IsValid(ent)) then
-				ent:Kick(net.ReadString())
-				MODULE:NetStart("VGetBanRecords")
-				net.WriteTable(MODULE:GetData("bans", {}, true))
-				net.Broadcast()
-			end
-		end
-	end)
+	self:NetHook("VUpdateBanReason", { "manage_bans" }, function(vplayer)
+		local steamid = net.ReadString()
+		local newreason = net.ReadString()
 
-	self:NetHook("VUnbanPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local steamid = net.ReadString()
-			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
-				if(k.SteamID == steamid) then
-					table.RemoveByValue(MODULE:GetData("bans", {}, true), k)
-					Vermilion:BroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
-					sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
-					break
-				end
-			end
-		end
-	end)
-
-	self:NetHook("VUpdateBanReason", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local steamid = net.ReadString()
-			local newreason = net.ReadString()
-
-			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
-				if(k.SteamID == steamid) then
-					k.Reason = newreason
-					sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
-					return
-				end
+		for i,k in pairs(MODULE:GetData("bans", {}, true)) do
+			if(k.SteamID == steamid) then
+				k.Reason = newreason
+				sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+				return
 			end
 		end
 	end)
@@ -543,7 +535,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("player", 4)
-	
+
 	self:AddMenuPage({
 			ID = "bans",
 			Name = Vermilion:TranslateStr("menu:bans"),

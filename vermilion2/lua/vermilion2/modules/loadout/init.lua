@@ -94,42 +94,34 @@ function MODULE:InitServer()
 
 	local function sendLoadout(vplayer, rnk)
 		local data = MODULE:GetData(rnk, defaultLoadout, true)
+		MODULE:NetStart("VGetLoadout")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetLoadout")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetLoadout")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
 		end
+		net.Send(vplayer)
 	end
 
 	self:NetHook("VGetLoadout", function(vplayer)
+		sendLoadout(vplayer, net.ReadString())
+	end)
+
+	self:NetHook("VGiveLoadoutWeapons", { "manage_loadout" }, function(vplayer)
 		local rnk = net.ReadString()
-		sendLoadout(vplayer, rnk)
+		local weapon = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, defaultLoadout, true), weapon)) then
+			table.insert(MODULE:GetData(rnk, defaultLoadout, true), weapon)
+		end
+		sendLoadout(Vermilion:GetUsersWithPermission("manage_loadout"), rnk)
 	end)
 
-	self:NetHook("VGiveLoadoutWeapons", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_loadout")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, defaultLoadout, true), weapon)) then
-				table.insert(MODULE:GetData(rnk, defaultLoadout, true), weapon)
-			end
-			sendLoadout(Vermilion:GetUsersWithPermission("manage_loadout"), rnk)
-		end
-	end)
-
-	self:NetHook("VTakeLoadoutWeapons", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_loadout")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, defaultLoadout, true), weapon)
-			sendLoadout(Vermilion:GetUsersWithPermission("manage_loadout"), rnk)
-		end
+	self:NetHook("VTakeLoadoutWeapons", { "manage_loadout" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, defaultLoadout, true), weapon)
+		sendLoadout(Vermilion:GetUsersWithPermission("manage_loadout"), rnk)
 	end)
 
 end

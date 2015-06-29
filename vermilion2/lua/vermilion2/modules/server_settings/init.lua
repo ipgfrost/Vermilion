@@ -715,23 +715,21 @@ function MODULE:InitServer()
 	self:SetData("gamemode", table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()))
 
 
-	self:NetHook("VResetConfiguration", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "*")) then
-			Vermilion:BroadcastNotification(vplayer:GetName() .. " has reset the configuration! Level reload in 30 seconds!", NOTIFY_ERROR)
-			file.Delete(Vermilion.GetFileName("settings"))
-			Vermilion:DelHook("ShutDown", "SaveConfiguration")
-			timer.Destroy("Vermilion:SaveConfiguration")
-			function Vermilion:SaveConfiguration() end
-			if(Vermilion:GetModule("map") != nil) then
-				local mod = Vermilion:GetModule("map")
-				mod:AbortMapChange()
-				mod:ScheduleMapChange(game.GetMap(), 30)
-				mod.BlockAbort = true
-			else
-				timer.Simple(30, function()
-					RunConsoleCommand("changelevel", game.GetMap())
-				end)
-			end
+	self:NetHook("VResetConfiguration", { "*" }, function(vplayer)
+		Vermilion:BroadcastNotification(vplayer:GetName() .. " has reset the configuration! Level reload in 30 seconds!", NOTIFY_ERROR)
+		file.Delete(Vermilion.GetFileName("settings"))
+		Vermilion:DelHook("ShutDown", "SaveConfiguration")
+		timer.Destroy("Vermilion:SaveConfiguration")
+		function Vermilion:SaveConfiguration() end
+		if(Vermilion:GetModule("map") != nil) then
+			local mod = Vermilion:GetModule("map")
+			mod:AbortMapChange()
+			mod:ScheduleMapChange(game.GetMap(), 30)
+			mod.BlockAbort = true
+		else
+			timer.Simple(30, function()
+				RunConsoleCommand("changelevel", game.GetMap())
+			end)
 		end
 	end)
 
@@ -774,35 +772,29 @@ function MODULE:InitServer()
 		net.Send(Vermilion:GetUsersWithPermission("manage_server"))
 	end
 
-	self:NetHook("VServerUpdate", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_server")) then
-			local data = net.ReadTable()
-			for i,k in pairs(data) do
-				if(k.DoNotUpdate) then continue end
-				if(k.Module != nil) then
-					if(k.Module == "Vermilion") then
-						Vermilion:SetData(k.Name, k.Value)
-					else
-						Vermilion:SetModuleData(k.Module, k.Name, k.Value)
-					end
+	self:NetHook("VServerUpdate", { "manage_server" }, function(vplayer)
+		local data = net.ReadTable()
+		for i,k in pairs(data) do
+			if(k.DoNotUpdate) then continue end
+			if(k.Module != nil) then
+				if(k.Module == "Vermilion") then
+					Vermilion:SetData(k.Name, k.Value)
 				else
-					self:SetData(k.Name, k.Value)
+					Vermilion:SetModuleData(k.Module, k.Name, k.Value)
 				end
-				sendUpdatedMenuValue(k.Module, k.Name)
+			else
+				self:SetData(k.Name, k.Value)
 			end
+			sendUpdatedMenuValue(k.Module, k.Name)
 		end
 	end)
 
-	self:NetHook("VUpdateMOTD", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "change_motd")) then
-			MODULE:SetData("motd", net.ReadString())
-		end
+	self:NetHook("VUpdateMOTD", { "change_motd" }, function(vplayer)
+		MODULE:SetData("motd", net.ReadString())
 	end)
 
-	self:NetHook("VUpdateMOTDSettings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "change_motd")) then
-			MODULE:SetData("motd_type", net.ReadInt(32))
-		end
+	self:NetHook("VUpdateMOTDSettings", { "change_motd" }, function(vplayer)
+		MODULE:SetData("motd_type", net.ReadInt(32))
 	end)
 
 	self:NetHook("VGetMOTDProperties", function(vplayer)
@@ -836,13 +828,10 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VSetCommandMuting", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_server")) then
-			local typ = net.ReadString()
-			local enabled = net.ReadBoolean()
-			print("Setting " .. typ .. " to " .. tostring(enabled))
-			Vermilion:GetData("muted_commands", {}, true)[typ] = enabled
-		end
+	self:NetHook("VSetCommandMuting", { "manage_server" }, function(vplayer)
+		local typ = net.ReadString()
+		local enabled = net.ReadBoolean()
+		Vermilion:GetData("muted_commands", {}, true)[typ] = enabled
 	end)
 
 	self:AddHook("PlayerSay", function(ply)

@@ -74,49 +74,41 @@ function MODULE:InitServer()
 		sendPhraseList(vplayer)
 	end)
 
-	self:NetHook("VAddPhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local newPhrase = net.ReadString()
-			if(not table.HasValue(MODULE:GetData("banned", {}, true), newPhrase)) then
-				table.insert(MODULE:GetData("banned", {}, true), newPhrase)
+	self:NetHook("VAddPhrase", { "manage_chat_censor" }, function(vplayer)
+		local newPhrase = net.ReadString()
+		if(not table.HasValue(MODULE:GetData("banned", {}, true), newPhrase)) then
+			table.insert(MODULE:GetData("banned", {}, true), newPhrase)
+		end
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
+	end)
+
+	self:NetHook("VRemovePhrase", { "manage_chat_censor" }, function(vplayer)
+		local phrase = net.ReadString()
+		table.RemoveByValue(MODULE:GetData("banned", {}, true), phrase)
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
+	end)
+
+	self:NetHook("VEditPhrase", { "manage_chat_censor" }, function(vplayer)
+		local oldPhrase = net.ReadString()
+		local newPhrase = net.ReadString()
+
+		for i,k in pairs(MODULE:GetData("banned", {}, true)) do
+			if(k == oldPhrase) then
+				MODULE:GetData("banned", {}, true)[i] = newPhrase
+				break
 			end
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 		end
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 	end)
 
-	self:NetHook("VRemovePhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local phrase = net.ReadString()
-			table.RemoveByValue(MODULE:GetData("banned", {}, true), phrase)
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
-	end)
+	self:NetHook("VCensorUpdate", { "manage_chat_censor" }, function(vplayer)
+		MODULE:SetData("enabled", net.ReadBoolean())
+		MODULE:SetData("filter_ips", net.ReadBoolean())
 
-	self:NetHook("VEditPhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local oldPhrase = net.ReadString()
-			local newPhrase = net.ReadString()
-
-			for i,k in pairs(MODULE:GetData("banned", {}, true)) do
-				if(k == oldPhrase) then
-					MODULE:GetData("banned", {}, true)[i] = newPhrase
-					break
-				end
-			end
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
-	end)
-
-	self:NetHook("VCensorUpdate", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			MODULE:SetData("enabled", net.ReadBoolean())
-			MODULE:SetData("filter_ips", net.ReadBoolean())
-
-			MODULE:NetStart("VGetCensorUpdate")
-			net.WriteBoolean(MODULE:GetData("enabled", false, true))
-			net.WriteBoolean(MODULE:GetData("filter_ips", false, true))
-			net.Send(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
+		MODULE:NetStart("VGetCensorUpdate")
+		net.WriteBoolean(MODULE:GetData("enabled", false, true))
+		net.WriteBoolean(MODULE:GetData("filter_ips", false, true))
+		net.Send(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 	end)
 
 	self:NetHook("VGetCensorUpdate", function(vplayer)

@@ -403,24 +403,19 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VScheduleMapChange", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_map")) then
-			if(MODULE.MapChangeInProgress) then
-				--Vermilion:SendMessageBox(vplayer, "A map change is already in progress. Abort the map change to change to a new map!")
-				return
-			end
-
-			MODULE:ScheduleMapChange(net.ReadString(), net.ReadInt(32))
-			Vermilion:BroadcastNotify(vplayer:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo)
-
+	self:NetHook("VScheduleMapChange", { "manage_map" }, function(vplayer)
+		if(MODULE.MapChangeInProgress) then
+			--Vermilion:SendMessageBox(vplayer, "A map change is already in progress. Abort the map change to change to a new map!")
+			return
 		end
+
+		MODULE:ScheduleMapChange(net.ReadString(), net.ReadInt(32))
+		Vermilion:BroadcastNotify(vplayer:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo)
 	end)
 
-	self:NetHook("VAbortMapChange", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_map")) then
-			MODULE:AbortMapChange()
-			Vermilion:BroadcastNotify(vplayer:GetName() .. " has halted the level change.")
-		end
+	self:NetHook("VAbortMapChange", { "manage_map" }, function(vplayer)
+		MODULE:AbortMapChange()
+		Vermilion:BroadcastNotify(vplayer:GetName() .. " has halted the level change.")
 	end)
 
 end

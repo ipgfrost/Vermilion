@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -252,7 +252,7 @@ function MODULE:BuddyListInitClient()
 
 			VToolkit:CreateSearchBox(addBuddyList)
 
-			local addBuddyHeader = VToolkit:CreateHeaderLabel(addBuddyList, "Active Players")
+			local addBuddyHeader = VToolkit:CreateHeaderLabel(addBuddyList, MODULE:TranslateStr("activeplayers"))
 			addBuddyHeader:SetParent(addBuddyDrawer)
 
 			local addBuddyFinalBtn = VToolkit:CreateButton("Add Player(s)", function()

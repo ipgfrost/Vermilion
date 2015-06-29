@@ -120,35 +120,28 @@ function MODULE:InitServer()
 	self:NetHook("VGetWeaponLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("VGetWeaponLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetWeaponLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetWeaponLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
+		end
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("VBlockWeapon", { "manage_weapon_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
+			table.insert(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
 
-	self:NetHook("VBlockWeapon", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
-				table.insert(MODULE:GetData(rnk, {}, true), weapon)
-			end
-		end
-	end)
-
-	self:NetHook("VUnblockWeapon", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
-		end
+	self:NetHook("VUnblockWeapon", { "manage_weapon_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
 end

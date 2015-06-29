@@ -36,17 +36,6 @@ MODULE.NetworkStrings = {
 
 function MODULE:InitServer()
 
-	self:NetHook("VGetRules", function(vplayer)
-		MODULE:NetStart("VGetRules")
-		local tab = {}
-		for i,k in pairs(cleanup.GetTable()) do
-			if(not GetConVar("sbox_max" .. k)) then continue end
-			table.insert(tab, { BaseName = k, CVAR = "sbox_max" .. k, Default = GetConVarNumber("sbox_max" .. k) })
-		end
-		net.WriteTable(tab)
-		net.Send(vplayer)
-	end)
-
 	if(not MODULE:GetData("uidUpdate", false)) then
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
@@ -62,56 +51,58 @@ function MODULE:InitServer()
 		MODULE:SetData("uidUpdate", true)
 	end
 
+	self:NetHook("VGetRules", function(vplayer)
+		MODULE:NetStart("VGetRules")
+		local tab = {}
+		for i,k in pairs(cleanup.GetTable()) do
+			if(not GetConVar("sbox_max" .. k)) then continue end
+			table.insert(tab, { BaseName = k, CVAR = "sbox_max" .. k, Default = GetConVarNumber("sbox_max" .. k) })
+		end
+		net.WriteTable(tab)
+		net.Send(vplayer)
+	end)
+
 	self:NetHook("VGetSpawnLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("VGetSpawnLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetSpawnLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetSpawnLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
+		end
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("VAddRule", { "manage_spawn_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local rule = net.ReadString()
+		local value = net.ReadInt(32)
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), { Rule = rule, Value = value } )) then
+			table.insert(MODULE:GetData(rnk, {}, true), { Rule = rule, Value = value })
 		end
 	end)
 
-	self:NetHook("VAddRule", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_limits")) then
-			local rnk = net.ReadString()
-			local rule = net.ReadString()
-			local value = net.ReadInt(32)
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), { Rule = rule, Value = value } )) then
-				table.insert(MODULE:GetData(rnk, {}, true), { Rule = rule, Value = value })
+	self:NetHook("VUpdateRule", { "manage_spawn_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local rule = net.ReadString()
+		local val = net.ReadInt(32)
+		for i,k in pairs(MODULE:GetData(rnk, {}, true)) do
+			if(k.Rule == rule) then
+				k.Value = val
+				break
 			end
 		end
 	end)
 
-	self:NetHook("VUpdateRule", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_limits")) then
-			local rnk = net.ReadString()
-			local rule = net.ReadString()
-			local val = net.ReadInt(32)
-			for i,k in pairs(MODULE:GetData(rnk, {}, true)) do
-				if(k.Rule == rule) then
-					k.Value = val
-					break
-				end
-			end
-		end
-	end)
-
-	self:NetHook("VRemoveRule", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_limits")) then
-			local rnk = net.ReadString()
-			local rule = net.ReadString()
-			for i,k in pairs(MODULE:GetData(rnk, {}, true)) do
-				if(k.Rule == rule) then
-					table.RemoveByValue(MODULE:GetData(rnk, {}, true), k)
-					break
-				end
+	self:NetHook("VRemoveRule", { "manage_spawn_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local rule = net.ReadString()
+		for i,k in pairs(MODULE:GetData(rnk, {}, true)) do
+			if(k.Rule == rule) then
+				table.RemoveByValue(MODULE:GetData(rnk, {}, true), k)
+				break
 			end
 		end
 	end)

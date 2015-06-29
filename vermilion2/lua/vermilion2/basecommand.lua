@@ -41,7 +41,7 @@ else
 					net.Start("VClientCMD")
 					net.WriteString("!" .. k .. " " .. table.concat(args, " "))
 					net.SendToServer()
-				end 
+				end
 			end
 		end
 	end)
@@ -69,7 +69,7 @@ end, function(cmd, args)
 	local nargs = string.Trim(args)
 	nargs = string.lower(nargs)
 	for i,k in pairs(subcommands) do
-		if(string.find(string.lower(i), nargs)) then
+		if(string.find(string.lower(i), nargs, 0, true)) then
 			table.insert(tab, "vermilion " .. i)
 		end
 	end

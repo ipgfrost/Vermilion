@@ -206,47 +206,39 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VRankSpawnLoad", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
-			local rank = net.ReadString()
-			local tab = {}
-			for i,k in pairs(MODULE:GetData(rank, {}, true)) do
-				table.insert(tab, { PrintName = i, Value = k })
-			end
-			MODULE:NetStart("VRankSpawnLoad")
-			net.WriteString(rank)
-			net.WriteTable(tab)
-			net.Send(vplayer)
+	self:NetHook("VRankSpawnLoad", { "manage_spawn_settings" }, function(vplayer)
+		local rank = net.ReadString()
+		local tab = {}
+		for i,k in pairs(MODULE:GetData(rank, {}, true)) do
+			table.insert(tab, { PrintName = i, Value = k })
 		end
+		MODULE:NetStart("VRankSpawnLoad")
+		net.WriteString(rank)
+		net.WriteTable(tab)
+		net.Send(vplayer)
 	end)
 
-	self:NetHook("VRankSpawnAdd", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
-			local rank = net.ReadString()
-			local prop = net.ReadString()
-			local val = net.ReadFloat()
+	self:NetHook("VRankSpawnAdd", { "manage_spawn_settings" }, function(vplayer)
+		local rank = net.ReadString()
+		local prop = net.ReadString()
+		local val = net.ReadFloat()
 
-			MODULE:GetData(rank, {}, true)[prop] = val
-		end
+		MODULE:GetData(rank, {}, true)[prop] = val
 	end)
 
-	self:NetHook("VRankSpawnDel", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
-			local rank = net.ReadString()
-			local prop = net.ReadString()
+	self:NetHook("VRankSpawnDel", { "manage_spawn_settings" }, function(vplayer)
+		local rank = net.ReadString()
+		local prop = net.ReadString()
 
-			MODULE:GetData(rank, {}, true)[prop] = nil
-		end
+		MODULE:GetData(rank, {}, true)[prop] = nil
 	end)
 
-	self:NetHook("VUpdateRule", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_spawn_settings")) then
-			local rank = net.ReadString()
-			local prop = net.ReadString()
-			local val = net.ReadFloat()
+	self:NetHook("VUpdateRule", { "manage_spawn_settings" }, function(vplayer)
+		local rank = net.ReadString()
+		local prop = net.ReadString()
+		local val = net.ReadFloat()
 
-			MODULE:GetData(rank, {}, true)[prop] = val
-		end
+		MODULE:GetData(rank, {}, true)[prop] = val
 	end)
 end
 

@@ -516,8 +516,8 @@ function MODULE:InitShared()
 			end
 		end,
 		GuiBuilder = function(zoneName, completeFunction, drawer)
-		
-		
+
+
 			local complete = VToolkit:CreateButton("Add Mode", function()
 				completeFunction( { tostring(speedSlider:GetValue()) } )
 			end)
@@ -553,7 +553,7 @@ function MODULE:InitShared()
 			end
 		end,
 		GuiBuilder = function(zoneName, completeFunction, drawer)
-			
+
 
 			local complete = VToolkit:CreateButton("Add Mode", function()
 				completeFunction( { tostring(speedSlider:GetValue()) } )
@@ -690,71 +690,61 @@ function MODULE:InitServer()
 		sendZoneModes(vplayer, name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VAddZoneMode", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
-			local name = net.ReadString()
-			local mode = net.ReadString()
+	self:NetHook("VAddZoneMode", { "zone_manager" }, function(vplayer)
+		local name = net.ReadString()
+		local mode = net.ReadString()
 
-			if(MODULE.Zones[name] != nil) then
-				MODULE.Zones[name]:AddMode(mode)
-			end
-
-			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
+		if(MODULE.Zones[name] != nil) then
+			MODULE.Zones[name]:AddMode(mode)
 		end
+
+		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VAddZoneModeAdv", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
-			local name = net.ReadString()
-			local mode = net.ReadString()
+	self:NetHook("VAddZoneModeAdv", { "zone_manager" }, function(vplayer)
+		local name = net.ReadString()
+		local mode = net.ReadString()
 
-			if(MODULE.Zones[name] != nil) then
-				MODULE.Zones[name]:AddMode(mode, net.ReadTable())
-			end
-
-			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
+		if(MODULE.Zones[name] != nil) then
+			MODULE.Zones[name]:AddMode(mode, net.ReadTable())
 		end
+
+		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VDelZoneMode", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
-			local name = net.ReadString()
-			local mode = net.ReadString()
+	self:NetHook("VDelZoneMode", { "zone_manager" }, function(vplayer)
+		local name = net.ReadString()
+		local mode = net.ReadString()
 
-			if(MODULE.Zones[name] != nil) then
-				MODULE.Zones[name]:RemoveMode(mode)
-			end
-
-			sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
+		if(MODULE.Zones[name] != nil) then
+			MODULE.Zones[name]:RemoveMode(mode)
 		end
+
+		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VRenameZone", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
-			local name = net.ReadString()
-			local nname = net.ReadString()
+	self:NetHook("VRenameZone", { "zone_manager" }, function(vplayer)
+		local name = net.ReadString()
+		local nname = net.ReadString()
 
-			if(MODULE.Zones[name] != nil) then
-				MODULE.Zones[nname] = MODULE.Zones[name]
-				MODULE.Zones[name] = nil
-			end
-
-			sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
-			MODULE:UpdateClients(player.GetHumans())
+		if(MODULE.Zones[name] != nil) then
+			MODULE.Zones[nname] = MODULE.Zones[name]
+			MODULE.Zones[name] = nil
 		end
+
+		sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
+		MODULE:UpdateClients(player.GetHumans())
 	end)
 
-	self:NetHook("VDelZone", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "zone_manager")) then
-			local name = net.ReadString()
+	self:NetHook("VDelZone", { "zone_manager" }, function(vplayer)
+		local name = net.ReadString()
 
-			if(MODULE.Zones[name] != nil) then
-				MODULE.Zones[name] = nil
-			end
-
-			sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
-			MODULE:UpdateClients(player.GetHumans())
+		if(MODULE.Zones[name] != nil) then
+			MODULE.Zones[name] = nil
 		end
+
+		sendZones(Vermilion:GetUsersWithPermission("zone_manager"))
+		MODULE:UpdateClients(player.GetHumans())
 	end)
 
 	local hooks = {
@@ -1151,7 +1141,7 @@ function MODULE:InitClient()
 				render.DrawBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (k.Point2 - k.Point1) * Vector(1, -1, 1), Color(0, 0, 0, 255), false)
 			cam.End3D2D()
 		end
-		
+
 	end)
 
 	self:NetHook("VGetZones", function()

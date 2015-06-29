@@ -138,96 +138,84 @@ function MODULE:InitServer()
 		sendKitList(vplayer)
 	end)
 
-	self:NetHook("VAddKit", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then return end
-			end
-			table.insert(MODULE:GetData("kits", {}, true), {
-				Name = name,
-				Contents = {},
-				RanksAllowed = {}
-			})
-			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
+	self:NetHook("VAddKit", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then return end
 		end
+		table.insert(MODULE:GetData("kits", {}, true), {
+			Name = name,
+			Contents = {},
+			RanksAllowed = {}
+		})
+		sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 	end)
 
-	self:NetHook("VDelKit", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					table.RemoveByValue(MODULE:GetData("kits", {}, true), k)
-					break
-				end
+	self:NetHook("VDelKit", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				table.RemoveByValue(MODULE:GetData("kits", {}, true), k)
+				break
 			end
-			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 		end
+		sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 	end)
 
-	self:NetHook("VGetKitContents", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			sendKitContent(vplayer, name)
-		end
+	self:NetHook("VGetKitContents", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		sendKitContent(vplayer, name)
 	end)
 
-	self:NetHook("VAddKitContents", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			local weapon = net.ReadString()
+	self:NetHook("VAddKitContents", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		local weapon = net.ReadString()
 
-			local kit = nil
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					kit = k
-					break
-				end
+		local kit = nil
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				kit = k
+				break
 			end
-			if(kit == nil) then return end
-			if(not table.HasValue(kit.Contents, weapon)) then
-				table.insert(kit.Contents, weapon)
-			end
-			sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 		end
+		if(kit == nil) then return end
+		if(not table.HasValue(kit.Contents, weapon)) then
+			table.insert(kit.Contents, weapon)
+		end
+		sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 	end)
 
-	self:NetHook("VDelKitContents", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			local weapon = net.ReadString()
+	self:NetHook("VDelKitContents", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		local weapon = net.ReadString()
 
-			local kit = nil
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					kit = k
-					break
-				end
+		local kit = nil
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				kit = k
+				break
 			end
-			if(kit == nil) then return end
-			table.RemoveByValue(kit.Contents, weapon)
-			sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 		end
+		if(kit == nil) then return end
+		table.RemoveByValue(kit.Contents, weapon)
+		sendKitContent(Vermilion:GetUsersWithPermission("manage_kits"), name)
 	end)
 
-	self:NetHook("VRenameKit", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			local newName = net.ReadString()
+	self:NetHook("VRenameKit", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		local newName = net.ReadString()
 
-			for i,k in pairs(MODULE:GetData("subscriptions", {}, true)) do
-				if(k == name) then k = newName end
-			end
-
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					k.Name = newName
-					break
-				end
-			end
-			sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
+		for i,k in pairs(MODULE:GetData("subscriptions", {}, true)) do
+			if(k == name) then k = newName end
 		end
+
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				k.Name = newName
+				break
+			end
+		end
+		sendKitList(Vermilion:GetUsersWithPermission("manage_kits"))
 	end)
 
 	self:NetHook("VGetAllowedRanks", function(vplayer)
@@ -246,36 +234,32 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VAddAllowedRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			local kit = nil
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					kit = k
-					break
-				end
+	self:NetHook("VAddAllowedRank", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		local kit = nil
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				kit = k
+				break
 			end
-			if(kit == nil) then return end
-			local rankname = net.ReadString()
-			if(not table.HasValue(kit.RanksAllowed, rankname)) then table.insert(kit.RanksAllowed, rankname) end
 		end
+		if(kit == nil) then return end
+		local rankname = net.ReadString()
+		if(not table.HasValue(kit.RanksAllowed, rankname)) then table.insert(kit.RanksAllowed, rankname) end
 	end)
 
-	self:NetHook("VDelAllowedRank", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_kits")) then
-			local name = net.ReadString()
-			local kit = nil
-			for i,k in pairs(MODULE:GetData("kits", {}, true)) do
-				if(k.Name == name) then
-					kit = k
-					break
-				end
+	self:NetHook("VDelAllowedRank", { "manage_kits" }, function(vplayer)
+		local name = net.ReadString()
+		local kit = nil
+		for i,k in pairs(MODULE:GetData("kits", {}, true)) do
+			if(k.Name == name) then
+				kit = k
+				break
 			end
-			if(kit == nil) then return end
-			local rankname = net.ReadString()
-			table.RemoveByValue(kit.RanksAllowed, rankname)
 		end
+		if(kit == nil) then return end
+		local rankname = net.ReadString()
+		table.RemoveByValue(kit.RanksAllowed, rankname)
 	end)
 
 	self:NetHook(Vermilion.Event.RankDeleted, function(uid)

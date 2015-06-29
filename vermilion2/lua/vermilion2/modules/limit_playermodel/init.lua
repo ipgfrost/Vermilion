@@ -106,44 +106,34 @@ function MODULE:InitServer()
 	self:NetHook("VGetModelList", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("VGetModelList")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetModelList")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.WriteBoolean(MODULE:GetData(rnk .. ":isblacklist", true, true))
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetModelList")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.WriteBoolean(MODULE:GetData(rnk .. ":isblacklist", true, true))
-			net.Send(vplayer)
+		end
+		net.WriteBoolean(MODULE:GetData(rnk .. ":isblacklist", true, true))
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("VModelBlacklistState", { "manage_playermodels" }, function(vplayer)
+		local rnk = net.ReadString()
+		MODULE:SetData(rnk .. ":isblacklist", net.ReadBoolean())
+	end)
+
+	self:NetHook("VAddModel", { "manage_playermodels" }, function(vplayer)
+		local rnk = net.ReadString()
+		local model = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), model)) then
+			table.insert(MODULE:GetData(rnk, {}, true), model)
 		end
 	end)
 
-	self:NetHook("VModelBlacklistState", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
-			local rnk = net.ReadString()
-			MODULE:SetData(rnk .. ":isblacklist", net.ReadBoolean())
-		end
-	end)
-
-	self:NetHook("VAddModel", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
-			local rnk = net.ReadString()
-			local model = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), model)) then
-				table.insert(MODULE:GetData(rnk, {}, true), model)
-			end
-		end
-	end)
-
-	self:NetHook("VDelModel", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_playermodels")) then
-			local rnk = net.ReadString()
-			local model = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), model)
-		end
+	self:NetHook("VDelModel", { "manage_playermodels" }, function(vplayer)
+		local rnk = net.ReadString()
+		local model = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), model)
 	end)
 
 end

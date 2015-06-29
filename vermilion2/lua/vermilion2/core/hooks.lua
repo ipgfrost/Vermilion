@@ -119,10 +119,17 @@ local vHookCall = function(evtName, gmTable, ...)
 		end
 	end
 	local vars = { ... }
+
+	-- I don't like doing this, but I don't appear to have a choice. GMod keeps blaming Vermilion for
+	-- bugs in other addons because of these lines of code. Alternative fixes would be appreciated.
+	-- TODO: make ALL Vermilion hooks use the Vermilion-standard hook system and keep them out of
+	-- the vanilla hook system so I can change the message to make it more scathing.
+	-- I'm bored of this. Really, I am.
+
 	if(not xpcall(function()
 		a,b,c,d,e,f = hook.oldHook(evtName, gmTable, unpack(vars))
 	end, function(err)
-		hook.Run("OnLuaError") -- bring up the standard "script errors" notification.
+		hook.Run("OnLuaError") -- bring up the standard "script errors" notification. (doesn't seem to work; make own?)
 		Vermilion.Log("An error has been detected in the base GMod hook system. This most likely has nothing to do with Vermilion.")
 		print(err)
 		debug.Trace()

@@ -116,47 +116,39 @@ function MODULE:InitServer()
 
 
 	self:NetHook("VGetAutoPromoteListings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
-			sendAutoPromoteListings(vplayer)
-		end
+		sendAutoPromoteListings(vplayer)
 	end)
 
-	self:NetHook("VAddAutoPromoteListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
-			local tab = net.ReadTable()
-			tab.UniqueID = self:CreateListingUID()
-			setmetatable(tab, { __index = pDataMeta })
-			table.insert(MODULE:GetData("promotion_listings_mk2", {}, true), tab)
-			sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
-		end
+	self:NetHook("VAddAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
+		local tab = net.ReadTable()
+		tab.UniqueID = self:CreateListingUID()
+		setmetatable(tab, { __index = pDataMeta })
+		table.insert(MODULE:GetData("promotion_listings_mk2", {}, true), tab)
+		sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
 	end)
 
-	self:NetHook("VDelAutoPromoteListings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
-			local tab = net.ReadTable()
-			for i,k in pairs(tab) do
-				for i1,k1 in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
-					if(k1.UniqueID == k) then
-						table.RemoveByValue(MODULE:GetData("promotion_listings_mk2", {}, true), k1)
-						break
-					end
-				end
-			end
-			sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
-		end
-	end)
-
-	self:NetHook("VEditAutoPromoteListing", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_autopromote")) then
-			local tab = net.ReadTable()
-			for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
-				if(k.UniqueID == tab.UniqueID) then
-					k.Rank = tab.Rank
-					k.ToRank = tab.ToRank
-					k.TimerValues = tab.TimerValues
-					sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+	self:NetHook("VDelAutoPromoteListings", { "manage_autopromote" }, function(vplayer)
+		local tab = net.ReadTable()
+		for i,k in pairs(tab) do
+			for i1,k1 in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+				if(k1.UniqueID == k) then
+					table.RemoveByValue(MODULE:GetData("promotion_listings_mk2", {}, true), k1)
 					break
 				end
+			end
+		end
+		sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+	end)
+
+	self:NetHook("VEditAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
+		local tab = net.ReadTable()
+		for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
+			if(k.UniqueID == tab.UniqueID) then
+				k.Rank = tab.Rank
+				k.ToRank = tab.ToRank
+				k.TimerValues = tab.TimerValues
+				sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
+				break
 			end
 		end
 	end)

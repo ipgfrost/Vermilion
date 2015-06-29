@@ -2213,29 +2213,23 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VAddGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			local gimp = net.ReadString()
-			if(not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)) then
-				table.insert(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)
-			end
+	self:NetHook("VAddGimp", { "edit_gimps" }, function(vplayer)
+		local gimp = net.ReadString()
+		if(not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)) then
+			table.insert(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)
 		end
 	end)
 
-	self:NetHook("VEditGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			local oldGimp = net.ReadString()
-			local newGimp = net.ReadString()
-			if(table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp) and not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), newGimp)) then
-				MODULE:GetData("gimps", MODULE.DefaultGimps, true)[table.KeyFromValue(oldGimp)] = newGimp
-			end
+	self:NetHook("VEditGimp", { "edit_gimps" }, function(vplayer)
+		local oldGimp = net.ReadString()
+		local newGimp = net.ReadString()
+		if(table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp) and not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), newGimp)) then
+			MODULE:GetData("gimps", MODULE.DefaultGimps, true)[table.KeyFromValue(oldGimp)] = newGimp
 		end
 	end)
 
-	self:NetHook("VRemoveGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
-		end
+	self:NetHook("VRemoveGimp", { "edit_gimps" }, function(vplayer)
+		table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
 	end)
 
 end
