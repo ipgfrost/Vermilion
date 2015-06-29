@@ -239,11 +239,14 @@ MENU:AddPage({
 					"Addon validator now has functionality to check for missing mounted content (won't work until GMod is fixed)",
 					"Addon validator can be set to kick for missing addons",
 					"Addon validator can be set to kick for missing mounted content (don't use this yet)",
-					//"Addon validator can be set to provide a collection ID",
-					//"Addon validator can be set to open missing mounted content on the Steam Store",
+					"Addon validator can be set to provide a collection ID",
+					"Addon validator can be set to open missing mounted content on the Steam Store",
 					"Chat predictor will no longer show commands that the current user doesn't have permissions for",
 					"Added functionalty to create 'chat' commands that only work in console",
-					"Attempted to improve the user experience of Vermilion on a listen server"
+					"Attempted to improve the user experience of Vermilion on a listen server",
+					"Added Public Domain tool",
+					"Fixed spawn limits not being applied correctly",
+					"Fixed the !vanish command"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {

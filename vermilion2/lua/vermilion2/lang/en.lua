@@ -185,6 +185,7 @@ Subscribing to these addons will significantly decrease the time taken to connec
 Please consider fixing this by using the list below!]])
 lang:Add("addon_validator:open_workshop_page", "Open Workshop Page")
 lang:Add("addon_validator:open_steam_store", "Open Steam Store Page")
+lang:Add("addon_validator:open_collection", "Open Server Collection")
 lang:Add("addon_validator:dna", "Close and do not ask again")
 lang:Add("addon_validator:dna:confirm", "Are you sure?\nThis will take effect on every server you join.\nTo reset it, type \"vermilion_addonnag_do_not_ask 0\" into the console!")
 

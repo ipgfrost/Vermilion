@@ -30,6 +30,9 @@ MODULE.NetworkStrings = {
 	"VForceAddonRequest"
 }
 
+MODULE.SteamStoreAppURL = "http://store.steampowered.com/app/"
+MODULE.WorkshopCollectionURL = "http://steamcommunity.com/sharedfiles/filedetails/?id="
+
 function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "checkaddons",
@@ -152,10 +155,10 @@ function MODULE:InitServer()
 				if(not has) then table.insert(tab, { Title = k.title, ID = k.depot, Type = "MountedContent" }) end
 			end
 		end
-		
+
 		local atab = {}
 		local mtab = {}
-		
+
 		if(MODULE:GetData("kick_missing_addon", false, true)) then
 			for i,k in pairs(tab) do
 				if(k.Type == "Addon") then
@@ -171,7 +174,7 @@ function MODULE:InitServer()
 				end
 			end
 		end
-		
+
 		if(table.Count(atab) + table.Count(mtab) > 0) then
 			local text = ""
 			if(table.Count(atab) > 0) then
@@ -267,18 +270,28 @@ function MODULE:InitClient()
 			openInWSButton:SetParent(panel)
 			openInWSButton:SetDisabled(true)
 
-			
+
 			local openInSteamButton
 			if(checkMissingMounts) then
 				openInSteamButton = VToolkit:CreateButton(MODULE:TranslateStr("open_steam_store"), function(self)
-					gui.OpenURL("http://store.steampowered.com/app/" .. missingAddonsList:GetSelected()[1].ID)
+					gui.OpenURL(MODULE.SteamStoreAppURL .. missingAddonsList:GetSelected()[1].ID)
 				end)
 				openInSteamButton:SetPos(330, 230)
 				openInSteamButton:SetSize(180, 35)
 				openInSteamButton:SetParent(panel)
 				openInSteamButton:SetDisabled(true)
 			end
-			
+
+			local openCollectionButton
+			if(provideCollectionID) then
+				openCollectionButton = VToolkit:CreateButton(MODULE:TranslateStr("open_collection"), function(self)
+					gui.OpenURL(MODULE.WorkshopCollectionURL .. tostring(collectionID))
+				end)
+				openCollectionButton:SetPos(330, 280)
+				openCollectionButton:SetSize(180, 35)
+				openCollectionButton:SetParent(panel)
+			end
+
 			function missingAddonsList:OnRowSelected(index, line)
 				openInWSButton:SetDisabled(true)
 				if(checkMissingMounts) then openInSteamButton:SetDisabled(true) end
@@ -317,7 +330,7 @@ function MODULE:InitClient()
 			net.SendToServer()
 		end
 	end)
-	
+
 	self:NetHook("VForceAddonRequest", function()
 		MODULE:NetStart("VAddonListRequest")
 		local tab = {}
