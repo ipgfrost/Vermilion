@@ -26,10 +26,10 @@ MODULE.Permissions = {
 	"manage_autopromote"
 }
 MODULE.NetworkStrings = {
-	"VGetAutoPromoteListings",
-	"VAddAutoPromoteListing",
-	"VDelAutoPromoteListings",
-	"VEditAutoPromoteListing"
+	"GetAutoPromoteListings",
+	"AddAutoPromoteListing",
+	"DelAutoPromoteListings",
+	"EditAutoPromoteListing"
 }
 
 function MODULE:InitServer()
@@ -65,6 +65,7 @@ function MODULE:InitServer()
 		for i,k in pairs(MODULE:GetData("promotion_listings", {}, true)) do
 			local tab = {}
 			tab.UniqueID = self:CreateListingUID()
+			if(Vermilion:GetRank(k.Rank) == nil or Vermilion:GetRank(k.ToRank) == nil) then continue end
 			tab.Rank = Vermilion:GetRank(k.Rank):GetUID()
 			tab.ToRank = Vermilion:GetRank(k.ToRank):GetUID()
 			tab.TimerValues = {
@@ -93,7 +94,7 @@ function MODULE:InitServer()
 	end
 
 	function sendAutoPromoteListings(vplayer)
-		MODULE:NetStart("VGetAutoPromoteListings")
+		MODULE:NetStart("GetAutoPromoteListings")
 
 			local tab = {}
 			for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
@@ -115,11 +116,11 @@ function MODULE:InitServer()
 	end
 
 
-	self:NetHook("VGetAutoPromoteListings", function(vplayer)
+	self:NetHook("GetAutoPromoteListings", function(vplayer)
 		sendAutoPromoteListings(vplayer)
 	end)
 
-	self:NetHook("VAddAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
+	self:NetHook("AddAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
 		local tab = net.ReadTable()
 		tab.UniqueID = self:CreateListingUID()
 		setmetatable(tab, { __index = pDataMeta })
@@ -127,7 +128,7 @@ function MODULE:InitServer()
 		sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
 	end)
 
-	self:NetHook("VDelAutoPromoteListings", { "manage_autopromote" }, function(vplayer)
+	self:NetHook("DelAutoPromoteListings", { "manage_autopromote" }, function(vplayer)
 		local tab = net.ReadTable()
 		for i,k in pairs(tab) do
 			for i1,k1 in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
@@ -140,7 +141,7 @@ function MODULE:InitServer()
 		sendAutoPromoteListings(Vermilion:GetUsersWithPermission("manage_autopromote"))
 	end)
 
-	self:NetHook("VEditAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
+	self:NetHook("EditAutoPromoteListing", { "manage_autopromote" }, function(vplayer)
 		local tab = net.ReadTable()
 		for i,k in pairs(MODULE:GetData("promotion_listings_mk2", {}, true)) do
 			if(k.UniqueID == tab.UniqueID) then
@@ -166,7 +167,7 @@ function MODULE:InitServer()
 				if(k1.Rank == rank:GetUID()) then
 					if(vPlayerData.Playtime >= k1:GetTotalTime()) then
 						vPlayerData:SetRank(k1.ToRank)
-						MODULE:TransBroadcastNotify("autodone", { k:GetName(), Vermilion:GetRankByID(k1.ToRank), k1:GetTotalTimeString() })
+						Vermilion:BroadcastNotify("autodone", { k:GetName(), Vermilion:GetRankByID(k1.ToRank), k1:GetTotalTimeString() })
 					end
 				end
 			end
@@ -177,7 +178,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetAutoPromoteListings", function()
+	self:NetHook("GetAutoPromoteListings", function()
 		local paneldata = Vermilion.Menu.Pages["autopromote"]
 		if(IsValid(paneldata.Panel)) then
 			paneldata.Listings:Clear()
@@ -339,7 +340,7 @@ function MODULE:InitClient()
 				D = daysWang:GetValue()
 			}
 
-			MODULE:NetStart("VAddAutoPromoteListing")
+			MODULE:NetStart("AddAutoPromoteListing")
 			net.WriteTable(tab)
 			net.SendToServer()
 
@@ -510,7 +511,7 @@ function MODULE:InitClient()
 				D = daysWang:GetValue()
 			}
 
-			MODULE:NetStart("VEditAutoPromoteListing")
+			MODULE:NetStart("EditAutoPromoteListing")
 			net.WriteTable(tab)
 			net.SendToServer()
 
@@ -603,7 +604,7 @@ function MODULE:InitClient()
 				for i,k in pairs(listings:GetSelected()) do
 					table.insert(tab, k.ListingUID)
 				end
-				MODULE:NetStart("VDelAutoPromoteListings")
+				MODULE:NetStart("DelAutoPromoteListings")
 				net.WriteTable(tab)
 				net.SendToServer()
 			end)
@@ -622,7 +623,7 @@ function MODULE:InitClient()
 
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VGetAutoPromoteListings")
+			MODULE:NetCommand("GetAutoPromoteListings")
 
 			paneldata.AddFromRankCombo:Clear()
 			paneldata.AddToRankCombo:Clear()

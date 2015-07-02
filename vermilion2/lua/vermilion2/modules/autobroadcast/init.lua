@@ -26,11 +26,11 @@ MODULE.Permissions = {
 	"manage_auto_broadcast"
 }
 MODULE.NetworkStrings = {
-	"VGetAutoBroadcastListing",
-	"VAddAutoBroadcastListing",
-	"VUpdateAutoBroadcastListing",
-	"VDelAutoBroadcastListing",
-	"VPublishAutoBroadcast"
+	"GetAutoBroadcastListing",
+	"AddAutoBroadcastListing",
+	"UpdateAutoBroadcastListing",
+	"DelAutoBroadcastListing",
+	"PublishAutoBroadcast"
 }
 MODULE.APIFuncs = {
 	{
@@ -63,7 +63,7 @@ function MODULE:InitServer()
 			end
 			k.Timeout = k.Timeout - 1
 			if(k.Timeout <= 0) then
-				MODULE:NetStart("VPublishAutoBroadcast")
+				MODULE:NetStart("PublishAutoBroadcast")
 				net.WriteString(k.Text)
 				net.WriteBoolean(k.Colour != nil)
 				net.WriteTable(k.Colour)
@@ -74,21 +74,21 @@ function MODULE:InitServer()
 	end)
 
 	local function sendListings(vplayer)
-		MODULE:NetStart("VGetAutoBroadcastListing")
+		MODULE:NetStart("GetAutoBroadcastListing")
 		net.WriteTable(MODULE:GetData("listings", {}, true))
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VGetAutoBroadcastListing", function(vplayer)
+	self:NetHook("GetAutoBroadcastListing", function(vplayer)
 		sendListings(vplayer)
 	end)
 
-	self:NetHook("VAddAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+	self:NetHook("AddAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
 		table.insert(MODULE:GetData("listings", {}, true), net.ReadTable())
 		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 	end)
 
-	self:NetHook("VUpdateAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+	self:NetHook("UpdateAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
 		local vtab = net.ReadTable()
 		for i,k in pairs(MODULE:GetData("listings", {}, true)) do
 			if(k.Text == vtab.OText) then
@@ -102,7 +102,7 @@ function MODULE:InitServer()
 		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
 	end)
 
-	self:NetHook("VDelAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
+	self:NetHook("DelAutoBroadcastListing", { "manage_auto_broadcast" }, function(vplayer)
 		local target = net.ReadInt(32)
 		table.remove(MODULE:GetData("listings", {}, true), target)
 		sendListings(Vermilion:GetUsersWithPermission("manage_auto_broadcast"))
@@ -111,7 +111,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VPublishAutoBroadcast", function()
+	self:NetHook("PublishAutoBroadcast", function()
 		local text = net.ReadString()
 		local colour = Color(255, 255, 255)
 		if(net.ReadBoolean()) then
@@ -121,7 +121,7 @@ function MODULE:InitClient()
 		chat.AddText(Vermilion.Colours.Red, "[Vermilion] ", colour, text)
 	end)
 
-	self:NetHook("VGetAutoBroadcastListing", function()
+	self:NetHook("GetAutoBroadcastListing", function()
 		local paneldata = Vermilion.Menu.Pages["autobroadcast"]
 		if(IsValid(paneldata.Panel)) then
 			paneldata.MessageTable:Clear()
@@ -175,7 +175,7 @@ function MODULE:InitClient()
 					for i,k in pairs(listings:GetLines()) do
 						for i1,k1 in pairs(listings:GetSelected()) do
 							if(k1 == k) then
-								MODULE:NetStart("VDelAutoBroadcastListing")
+								MODULE:NetStart("DelAutoBroadcastListing")
 								net.WriteInt(i, 32)
 								net.SendToServer()
 								break
@@ -289,7 +289,7 @@ function MODULE:InitClient()
 						return
 					end
 
-					MODULE:NetStart("VUpdateAutoBroadcastListing")
+					MODULE:NetStart("UpdateAutoBroadcastListing")
 					net.WriteTable({ OText = editMessagePanel.OriginalMessage, Text = emessageBox:GetValue(), IntervalString = tostring(edaysWang:GetValue()) .. "d " .. tostring(ehoursWang:GetValue()) .. "h " .. tostring(eminsWang:GetValue()) .. "m " .. tostring(esecondsWang:GetValue()) .. "s", Interval = time, Values = { d = edaysWang:GetValue(), h = ehoursWang:GetValue(), m = eminsWang:GetValue(), s = esecondsWang:GetValue() }, Colour = { eColourMixer:GetColor().r, eColourMixer:GetColor().g, eColourMixer:GetColor().b } })
 					net.SendToServer()
 
@@ -443,7 +443,7 @@ function MODULE:InitClient()
 						return
 					end
 
-					MODULE:NetStart("VAddAutoBroadcastListing")
+					MODULE:NetStart("AddAutoBroadcastListing")
 					net.WriteTable({ Text = messageBox:GetValue(), IntervalString = tostring(daysWang:GetValue()) .. "d " .. tostring(hoursWang:GetValue()) .. "h " .. tostring(minsWang:GetValue()) .. "m " .. tostring(secondsWang:GetValue()) .. "s", Interval = time, Values = { d = daysWang:GetValue(), h = hoursWang:GetValue(), m = minsWang:GetValue(), s = secondsWang:GetValue() }, Colour = { addColourMixer:GetColor().r, addColourMixer:GetColor().g, addColourMixer:GetColor().b } })					net.SendToServer()
 
 					messageBox:SetValue("")
@@ -462,7 +462,7 @@ function MODULE:InitClient()
 				addMessagePanel:MoveToFront()
 			end,
 			OnOpen = function(panel, paneldata)
-				MODULE:NetCommand("VGetAutoBroadcastListing")
+				MODULE:NetCommand("GetAutoBroadcastListing")
 				paneldata.AddMessagePanel:Close()
 			end
 		})

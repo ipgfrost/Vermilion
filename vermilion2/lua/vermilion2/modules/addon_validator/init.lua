@@ -26,8 +26,8 @@ MODULE.Permissions = {
 
 }
 MODULE.NetworkStrings = {
-	"VAddonListRequest",
-	"VForceAddonRequest"
+	"AddonListRequest",
+	"ForceAddonRequest"
 }
 
 MODULE.SteamStoreAppURL = "http://store.steampowered.com/app/"
@@ -40,7 +40,7 @@ function MODULE:RegisterChatCommands()
 		CanRunOnDS = false,
 		Function = function(sender, text, log, glog)
 			if(not MODULE:GetData("enabled", true, true)) then return end
-			MODULE:NetStart("VForceAddonRequest")
+			MODULE:NetStart("ForceAddonRequest")
 			net.Send(sender)
 		end
 	})
@@ -126,7 +126,7 @@ end
 function MODULE:InitServer()
 
 
-	self:NetHook("VAddonListRequest", function(vplayer)
+	self:NetHook("AddonListRequest", function(vplayer)
 		if(not MODULE:GetData("enabled", true, true)) then return end
 		local tab = {}
 		local serverAddons = engine.GetAddons()
@@ -190,7 +190,7 @@ function MODULE:InitServer()
 			return
 		end
 
-		MODULE:NetStart("VAddonListRequest")
+		MODULE:NetStart("AddonListRequest")
 		net.WriteBoolean(MODULE:GetData("check_missing_mounts", false))
 		net.WriteBoolean(MODULE:GetData("provide_collection_id", false))
 		if(MODULE:GetData("provide_collection_id")) then
@@ -205,7 +205,7 @@ function MODULE:InitClient()
 
 	CreateClientConVar("vermilion_addonnag_do_not_ask", 0, true, false)
 
-	self:NetHook("VAddonListRequest", function()
+	self:NetHook("AddonListRequest", function()
 		local checkMissingMounts = net.ReadBoolean()
 		local provideCollectionID = net.ReadBoolean()
 		local collectionID = nil
@@ -316,7 +316,7 @@ function MODULE:InitClient()
 
 	self:AddHook(Vermilion.Event.MOD_POST, function()
 		if(GetConVarNumber("vermilion_addonnag_do_not_ask") == 0) then
-			MODULE:NetStart("VAddonListRequest")
+			MODULE:NetStart("AddonListRequest")
 			local tab = {}
 			for i,k in pairs(engine.GetAddons()) do
 				if(k.mounted) then table.insert(tab, k.wsid) end
@@ -331,8 +331,8 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:NetHook("VForceAddonRequest", function()
-		MODULE:NetStart("VAddonListRequest")
+	self:NetHook("ForceAddonRequest", function()
+		MODULE:NetStart("AddonListRequest")
 		local tab = {}
 		for i,k in pairs(engine.GetAddons()) do
 			if(k.mounted) then table.insert(tab, k.wsid) end

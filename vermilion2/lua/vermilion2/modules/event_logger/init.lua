@@ -26,8 +26,8 @@ MODULE.Permissions = {
 	"see_event_log"
 }
 MODULE.NetworkStrings = {
-	"VGetEvents",
-	"VSendEvent"
+	"GetEvents",
+	"SendEvent"
 }
 
 MODULE.SessionLog = {}
@@ -60,13 +60,13 @@ function MODULE:InitServer()
 
 	function MODULE:AddEvent(icon, text)
 		table.insert(self.SessionLog, { Time = os.time(), Icon = "icon16/" .. icon .. ".png", Text = text })
-		MODULE:NetStart("VSendEvent")
+		MODULE:NetStart("SendEvent")
 		net.WriteTable({ Time = os.time(), Icon = "icon16/" .. icon .. ".png", Text = text })
 		net.Send(Vermilion:GetUsersWithPermission("see_event_log"))
 	end
 
-	self:NetHook("VGetEvents", { "see_event_log" }, function(vplayer)
-		MODULE:NetStart("VGetEvents")
+	self:NetHook("GetEvents", { "see_event_log" }, function(vplayer)
+		MODULE:NetStart("GetEvents")
 		net.WriteTable(MODULE.SessionLog)
 		net.Send(vplayer)
 	end)
@@ -162,7 +162,7 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
-	self:NetHook("VGetEvents", function()
+	self:NetHook("GetEvents", function()
 		local paneldata = Vermilion.Menu.Pages["event_log"]
 		paneldata.EventList:Clear()
 		local var = net.ReadTable()
@@ -183,7 +183,7 @@ function MODULE:InitClient()
 		end)
 	end)
 
-	self:NetHook("VSendEvent", function()
+	self:NetHook("SendEvent", function()
 		if(Vermilion.Menu.IsOpen) then
 			local paneldata = Vermilion.Menu.Pages["event_log"]
 			local k = net.ReadTable()
@@ -226,7 +226,7 @@ function MODULE:InitClient()
 			evtlist.Columns[2]:SetFixedWidth(16)
 		end,
 		OnOpen = function(panel)
-			MODULE:NetCommand("VGetEvents")
+			MODULE:NetCommand("GetEvents")
 		end
 	})
 end

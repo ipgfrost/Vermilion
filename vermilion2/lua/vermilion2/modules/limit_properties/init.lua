@@ -26,10 +26,10 @@ MODULE.Permissions = {
 	"manage_property_limits"
 }
 MODULE.NetworkStrings = {
-	"VGetPropertyLimits",
-	"VBlockProperty",
-	"VUnblockProperty",
-	"VBuildEntityMenu"
+	"GetPropertyLimits",
+	"BlockProperty",
+	"UnblockProperty",
+	"BuildEntityMenu"
 }
 
 function MODULE:InitServer()
@@ -39,6 +39,7 @@ function MODULE:InitServer()
 		for i,k in pairs(MODULE:GetAllData()) do
 			if(i == "enabled") then continue end
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -50,10 +51,10 @@ function MODULE:InitServer()
 		MODULE:SetData("uidUpdate", true)
 	end
 
-	self:NetHook("VGetPropertyLimits", function(vplayer)
+	self:NetHook("GetPropertyLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
-		MODULE:NetStart("VGetPropertyLimits")
+		MODULE:NetStart("GetPropertyLimits")
 		net.WriteString(rnk)
 		if(data != nil) then
 			net.WriteTable(data)
@@ -63,7 +64,7 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VBlockProperty", { "manage_property_limits" }, function(vplayer)
+	self:NetHook("BlockProperty", { "manage_property_limits" }, function(vplayer)
 		local rnk = net.ReadString()
 		local weapon = net.ReadString()
 		if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
@@ -71,22 +72,22 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VUnblockProperty", { "manage_property_limits" }, function(vplayer)
+	self:NetHook("UnblockProperty", { "manage_property_limits" }, function(vplayer)
 		local rnk = net.ReadString()
 		local weapon = net.ReadString()
 		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
-	self:NetHook("VBuildEntityMenu", function(vplayer)
+	self:NetHook("BuildEntityMenu", function(vplayer)
 		if(MODULE:GetData("enabled", 3, true) == 1) then
-			MODULE:NetStart("VBuildEntityMenu")
+			MODULE:NetStart("BuildEntityMenu")
 			net.WriteString(net.ReadString())
 			net.WriteTable({})
 			net.Send(vplayer)
 			return
 		end
 		if(MODULE:GetData("enabled", 3, true) == 2) then return end
-		MODULE:NetStart("VBuildEntityMenu")
+		MODULE:NetStart("BuildEntityMenu")
 		net.WriteString(net.ReadString()) -- send back the code to make sure that we really want to build this menu
 		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true))
 		net.Send(vplayer)
@@ -143,7 +144,7 @@ function MODULE:InitClient()
 	local ltr = nil
 	local code = nil
 
-	self:NetHook("VBuildEntityMenu", function()
+	self:NetHook("BuildEntityMenu", function()
 		local rcode = net.ReadString()
 		if(rcode == code) then
 			local menu = DermaMenu()
@@ -163,12 +164,12 @@ function MODULE:InitClient()
 		lent = ent
 		ltr = tr
 		code = tostring(math.Rand(0, 1000000))
-		MODULE:NetStart("VBuildEntityMenu")
+		MODULE:NetStart("BuildEntityMenu")
 		net.WriteString(code)
 		net.SendToServer()
 	end
 
-	self:NetHook("VGetPropertyLimits", function()
+	self:NetHook("GetPropertyLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_properties"].RankList)) then return end
 		if(net.ReadString() != Vermilion.Menu.Pages["limit_properties"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
@@ -225,7 +226,7 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockProperty:SetDisabled(not (self:GetSelected()[1] != nil and allProperties:GetSelected()[1] != nil))
 					unblockProperty:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VGetPropertyLimits")
+					MODULE:NetStart("GetPropertyLimits")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -279,7 +280,7 @@ function MODULE:InitClient()
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-						MODULE:NetStart("VBlockProperty")
+						MODULE:NetStart("BlockProperty")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
@@ -292,7 +293,7 @@ function MODULE:InitClient()
 
 				unblockProperty = VToolkit:CreateButton("Unblock Property", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VUnblockProperty")
+						MODULE:NetStart("UnblockProperty")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()

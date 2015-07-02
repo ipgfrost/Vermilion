@@ -148,7 +148,7 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
-			{ "2.5.0 - Sometime in June/July?", {
+			{ "2.5 - 10th July 2015", {
 					"Rebuilt module data storage mechanisms",
 					"Ranks are now addressed by unique identifiers",
 					"Updated default rank data to be more complex",

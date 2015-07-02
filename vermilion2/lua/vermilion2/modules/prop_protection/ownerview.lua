@@ -22,16 +22,16 @@ AddCSLuaFile()
 local MODULE = Vermilion:GetModule("prop_protect")
 
 function MODULE:OwnerViewInitServer()
-	self:NetHook("VQueryPPSteamID", function(vplayer)
+	self:NetHook("QueryPPSteamID", function(vplayer)
 		local steamid = net.ReadString()
 		if(Vermilion:GetUserBySteamID(steamid) == nil) then
-			MODULE:NetStart("VQueryPPSteamID")
+			MODULE:NetStart("QueryPPSteamID")
 			net.WriteString(steamid)
 			net.WriteBoolean(false)
 			net.Send(vplayer)
 			return
 		end
-		MODULE:NetStart("VQueryPPSteamID")
+		MODULE:NetStart("QueryPPSteamID")
 		net.WriteString(steamid)
 		net.WriteBoolean(true)
 		net.WriteString(Vermilion:GetUserBySteamID(steamid).Name)
@@ -47,7 +47,7 @@ function MODULE:OwnerViewInitClient()
 	local namedata = nil
 	local tentity = nil
 
-	self:NetHook("VQueryPPSteamID", function()
+	self:NetHook("QueryPPSteamID", function()
 		local sid = net.ReadString()
 		if(not net.ReadBoolean()) then
 			namedata = false
@@ -77,7 +77,7 @@ function MODULE:OwnerViewInitClient()
 			if(namedata == nil or tentity != trace.Entity:EntIndex()) then
 				namedata = true
 				tentity = trace.Entity:EntIndex()
-				MODULE:NetStart("VQueryPPSteamID")
+				MODULE:NetStart("QueryPPSteamID")
 				net.WriteString(steamid)
 				net.SendToServer()
 				return

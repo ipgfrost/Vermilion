@@ -26,9 +26,9 @@ MODULE.Permissions = {
 	"manage_toolgun_limits"
 }
 MODULE.NetworkStrings = {
-	"VGetToolgunLimits",
-	"VBlockTool",
-	"VUnblockTool"
+	"GetToolgunLimits",
+	"BlockTool",
+	"UnblockTool"
 }
 
 function MODULE:InitServer()
@@ -37,6 +37,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -54,10 +55,10 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VGetToolgunLimits", function(vplayer)
+	self:NetHook("GetToolgunLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
-		MODULE:NetStart("VGetToolgunLimits")
+		MODULE:NetStart("GetToolgunLimits")
 		net.WriteString(rnk)
 		if(data != nil) then
 			net.WriteTable(data)
@@ -67,7 +68,7 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VBlockTool", { "manage_toolgun_limits" }, function(vplayer)
+	self:NetHook("BlockTool", { "manage_toolgun_limits" }, function(vplayer)
 		local rnk = net.ReadString()
 		local tool = net.ReadString()
 		if(not table.HasValue(MODULE:GetData(rnk, {}, true), tool)) then
@@ -75,7 +76,7 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VUnblockTool", { "manage_toolgun_limits" }, function(vplayer)
+	self:NetHook("UnblockTool", { "manage_toolgun_limits" }, function(vplayer)
 		local rnk = net.ReadString()
 		local tool = net.ReadString()
 		table.RemoveByValue(MODULE:GetData(rnk, {}, true), tool)
@@ -85,7 +86,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetToolgunLimits", function()
+	self:NetHook("GetToolgunLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_toolgun"].RankList)) then return end
 		if(net.ReadString() != Vermilion.Menu.Pages["limit_toolgun"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
@@ -142,7 +143,7 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockTool:SetDisabled(not (self:GetSelected()[1] != nil and allTools:GetSelected()[1] != nil))
 					unblockTool:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VGetToolgunLimits")
+					MODULE:NetStart("GetToolgunLimits")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -196,7 +197,7 @@ function MODULE:InitClient()
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-						MODULE:NetStart("VBlockTool")
+						MODULE:NetStart("BlockTool")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
@@ -209,7 +210,7 @@ function MODULE:InitClient()
 
 				unblockTool = VToolkit:CreateButton("Unblock Tool", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VUnblockTool")
+						MODULE:NetStart("UnblockTool")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()

@@ -37,15 +37,15 @@ MODULE.PermissionDefintions = {
 	["ignore_zones"] = "This player is not affected by any zones."
 }
 MODULE.NetworkStrings = {
-	"VUpdateBlocks",
-	"VDrawCreateBlocks",
-	"VGetZones",
-	"VGetZoneModes",
-	"VAddZoneMode",
-	"VAddZoneModeAdv",
-	"VDelZoneMode",
-	"VRenameZone",
-	"VDelZone"
+	"UpdateBlocks",
+	"DrawCreateBlocks",
+	"GetZones",
+	"GetZoneModes",
+	"AddZoneMode",
+	"AddZoneModeAdv",
+	"DelZoneMode",
+	"RenameZone",
+	"DelZone"
 }
 
 MODULE.Zones = {}
@@ -141,7 +141,7 @@ function MODULE:GetZonesWithName(name)
 end
 
 function MODULE:UpdateClients(client)
-	MODULE:NetStart("VUpdateBlocks")
+	MODULE:NetStart("UpdateBlocks")
 	local stab = {}
 	for i,k in pairs(MODULE.Zones) do
 		if(k.Map == game.GetMap()) then
@@ -614,7 +614,7 @@ function MODULE:InitShared()
 end
 
 function MODULE:InitServer()
-	self:NetHook("VUpdateBlocks", function(vplayer)
+	self:NetHook("UpdateBlocks", function(vplayer)
 		MODULE:UpdateClients(vplayer)
 	end)
 
@@ -665,7 +665,7 @@ function MODULE:InitServer()
 	end)
 
 	local function sendZones(vplayer)
-		MODULE:NetStart("VGetZones")
+		MODULE:NetStart("GetZones")
 		local tab = {}
 		for i,k in pairs(MODULE.Zones) do
 			if(k.Map == game.GetMap()) then
@@ -678,19 +678,19 @@ function MODULE:InitServer()
 
 	local function sendZoneModes(vplayer, name, zone)
 		if(zone == nil) then return end
-		MODULE:NetStart("VGetZoneModes")
+		MODULE:NetStart("GetZoneModes")
 		net.WriteString(name)
 		net.WriteTable(table.GetKeys(zone.Modes))
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VGetZones", sendZones)
-	self:NetHook("VGetZoneModes", function(vplayer)
+	self:NetHook("GetZones", sendZones)
+	self:NetHook("GetZoneModes", function(vplayer)
 		local name = net.ReadString()
 		sendZoneModes(vplayer, name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VAddZoneMode", { "zone_manager" }, function(vplayer)
+	self:NetHook("AddZoneMode", { "zone_manager" }, function(vplayer)
 		local name = net.ReadString()
 		local mode = net.ReadString()
 
@@ -701,7 +701,7 @@ function MODULE:InitServer()
 		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VAddZoneModeAdv", { "zone_manager" }, function(vplayer)
+	self:NetHook("AddZoneModeAdv", { "zone_manager" }, function(vplayer)
 		local name = net.ReadString()
 		local mode = net.ReadString()
 
@@ -712,7 +712,7 @@ function MODULE:InitServer()
 		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VDelZoneMode", { "zone_manager" }, function(vplayer)
+	self:NetHook("DelZoneMode", { "zone_manager" }, function(vplayer)
 		local name = net.ReadString()
 		local mode = net.ReadString()
 
@@ -723,7 +723,7 @@ function MODULE:InitServer()
 		sendZoneModes(Vermilion:GetUsersWithPermission("zone_manager"), name, MODULE.Zones[name])
 	end)
 
-	self:NetHook("VRenameZone", { "zone_manager" }, function(vplayer)
+	self:NetHook("RenameZone", { "zone_manager" }, function(vplayer)
 		local name = net.ReadString()
 		local nname = net.ReadString()
 
@@ -736,7 +736,7 @@ function MODULE:InitServer()
 		MODULE:UpdateClients(player.GetHumans())
 	end)
 
-	self:NetHook("VDelZone", { "zone_manager" }, function(vplayer)
+	self:NetHook("DelZone", { "zone_manager" }, function(vplayer)
 		local name = net.ReadString()
 
 		if(MODULE.Zones[name] != nil) then
@@ -809,7 +809,7 @@ function MODULE:RegisterChatCommands()
 			if(MODULE.Point1[sender:SteamID()] == nil) then
 				MODULE.Point1[sender:SteamID()] = sender:GetPos()
 				if(IsValid(sender)) then log("Set point 1. Use !cancelzone to stop drawing the zone and !addzone <name> to define the second point.") end
-				MODULE:NetStart("VDrawCreateBlocks")
+				MODULE:NetStart("DrawCreateBlocks")
 				net.WriteTable( { sender:GetPos().x, sender:GetPos().y, sender:GetPos().z } )
 				net.Send(sender)
 			else
@@ -840,7 +840,7 @@ function MODULE:RegisterChatCommands()
 				MODULE:NewZone(p1t, p2t, text[1], sender:SteamID())
 				MODULE.Point1[sender:SteamID()] = nil
 				glog(sender:GetName() .. " created a new zone called '" .. text[1] .. "'!")
-				MODULE:NetStart("VDrawCreateBlocks")
+				MODULE:NetStart("DrawCreateBlocks")
 				net.WriteTable( { nil, nil, nil } )
 				net.Send(sender)
 			end
@@ -858,7 +858,7 @@ function MODULE:RegisterChatCommands()
 			end
 			MODULE.Point1[sender:SteamID()] = nil
 			log("Zone creation cancelled!")
-			MODULE:NetStart("VDrawCreateBlocks")
+			MODULE:NetStart("DrawCreateBlocks")
 			net.WriteTable({ nil, nil, nil })
 			net.Send(sender)
 		end
@@ -1097,7 +1097,7 @@ end
 function MODULE:InitClient()
 	CreateClientConVar("vermilion_render_zones", 1, true, false)
 
-	self:NetHook("VUpdateBlocks", function()
+	self:NetHook("UpdateBlocks", function()
 		local stab = {}
 		for i,k in pairs(net.ReadTable()) do
 			table.insert(stab, VToolkit.CBound(k[1], k[2]))
@@ -1105,7 +1105,7 @@ function MODULE:InitClient()
 		MODULE.Zones = stab
 	end)
 
-	self:NetHook("VDrawCreateBlocks", function()
+	self:NetHook("DrawCreateBlocks", function()
 		local vec = net.ReadTable()
 		if(vec[1] == nil and vec[2] == nil and vec[3] == nil) then
 			MODULE.DrawingFrom = nil
@@ -1144,7 +1144,7 @@ function MODULE:InitClient()
 
 	end)
 
-	self:NetHook("VGetZones", function()
+	self:NetHook("GetZones", function()
 		local paneldata = Vermilion.Menu.Pages["zones"]
 		local data = net.ReadTable()
 		paneldata.ZoneList:Clear()
@@ -1153,7 +1153,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:NetHook("VGetZoneModes", function()
+	self:NetHook("GetZoneModes", function()
 		local paneldata = Vermilion.Menu.Pages["zones"]
 		if(paneldata.ZoneList:GetSelected()[1] == nil or paneldata.ZoneList:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
 		local data = net.ReadTable()
@@ -1205,7 +1205,7 @@ function MODULE:InitClient()
 				takeWeapon:SetDisabled(not (self:GetSelected()[1] != nil and zoneModes:GetSelected()[1] != nil))
 				renZone:SetDisabled(self:GetSelected()[1] == nil)
 				delZone:SetDisabled(self:GetSelected()[1] == nil)
-				MODULE:NetStart("VGetZoneModes")
+				MODULE:NetStart("GetZoneModes")
 				net.WriteString(self:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end
@@ -1232,7 +1232,7 @@ function MODULE:InitClient()
 				end
 				local oldZoneName = zoneList:GetSelected()[1]:GetValue(1)
 				zoneList:GetSelected()[1]:SetValue(1, fZoneName)
-				MODULE:NetStart("VRenameZone")
+				MODULE:NetStart("RenameZone")
 				net.WriteString(oldZoneName)
 				net.WriteString(fZoneName)
 				net.SendToServer()
@@ -1256,7 +1256,7 @@ function MODULE:InitClient()
 
 			delZone = VToolkit:CreateButton("Delete Zone", function()
 				VToolkit:CreateConfirmDialog("Really delete zone?", function()
-					MODULE:NetStart("VDelZone")
+					MODULE:NetStart("DelZone")
 					net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 					net.SendToServer()
 					delZone:SetDisabled(true)
@@ -1337,7 +1337,7 @@ function MODULE:InitClient()
 							self:OClose()
 						end
 						MODULE.ModeDefinitions[k.ClassName].GuiBuilder(zoneList:GetSelected()[1]:GetValue(1), function(values)
-							MODULE:NetStart("VAddZoneModeAdv")
+							MODULE:NetStart("AddZoneModeAdv")
 							net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 							net.WriteString(k.ClassName)
 							net.WriteTable(values)
@@ -1351,7 +1351,7 @@ function MODULE:InitClient()
 
 					zoneModes:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-					MODULE:NetStart("VAddZoneMode")
+					MODULE:NetStart("AddZoneMode")
 					net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
 					net.SendToServer()
@@ -1364,7 +1364,7 @@ function MODULE:InitClient()
 
 			takeWeapon = VToolkit:CreateButton("Remove Mode", function()
 				for i,k in pairs(zoneModes:GetSelected()) do
-					MODULE:NetStart("VDelZoneMode")
+					MODULE:NetStart("DelZoneMode")
 					net.WriteString(zoneList:GetSelected()[1]:GetValue(1))
 					net.WriteString(k.ClassName)
 					net.SendToServer()
@@ -1384,7 +1384,7 @@ function MODULE:InitClient()
 			paneldata.TakeWeapon = takeWeapon
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VGetZones")
+			MODULE:NetCommand("GetZones")
 			paneldata.AllPermissions:Clear()
 			for i,k in pairs(MODULE.ModeDefinitions) do
 				paneldata.AllPermissions:AddLine(MODULE:TranslateStr("mode:" .. i)).ClassName = i
@@ -1395,5 +1395,5 @@ function MODULE:InitClient()
 			paneldata.ZoneModes:Clear()
 		end
 	})
-	self:NetCommand("VUpdateBlocks")
+	self:NetCommand("UpdateBlocks")
 end

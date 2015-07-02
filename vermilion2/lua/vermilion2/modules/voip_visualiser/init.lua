@@ -23,7 +23,7 @@ MODULE.ID = "voip_visualiser"
 MODULE.Description = "Displays a 3D graph of the recent VoIP volume."
 MODULE.Author = "Ned"
 MODULE.NetworkStrings = {
-	"VUpdateClientColour"
+	"UpdateClientColour"
 }
 MODULE.ConVars = {
 	Client = {
@@ -55,7 +55,7 @@ MODULE.ConVars = {
 }
 
 function MODULE:InitServer()
-	self:NetHook("VUpdateClientColour", function(vplayer)
+	self:NetHook("UpdateClientColour", function(vplayer)
 		local colour = net.ReadColor()
 		vplayer:SetGlobalValue("VVoIPR", colour.r)
 		vplayer:SetGlobalValue("VVoIPG", colour.g)
@@ -66,7 +66,7 @@ end
 function MODULE:InitClient()
 
 	local function sendColourToServer()
-		MODULE:NetStart("VUpdateClientColour")
+		MODULE:NetStart("UpdateClientColour")
 		net.WriteColor(Color(GetConVarNumber("vermilion_voipgraph_r"), GetConVarNumber("vermilion_voipgraph_g"), GetConVarNumber("vermilion_voipgraph_b")))
 		net.SendToServer()
 	end

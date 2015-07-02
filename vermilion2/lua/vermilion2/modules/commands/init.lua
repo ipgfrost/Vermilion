@@ -66,10 +66,10 @@ MODULE.Permissions = {
 }
 
 MODULE.NetworkStrings = {
-	"VGetGimpList",
-	"VAddGimp",
-	"VRemoveGimp",
-	"VEditGimp"
+	"GetGimpList",
+	"AddGimp",
+	"RemoveGimp",
+	"EditGimp"
 }
 
 MODULE.TeleportRequests = {}
@@ -2207,20 +2207,20 @@ function MODULE:InitServer()
 		if(MODULE:GetData("gagged_players", {}, true)[talker:SteamID()]) then return false end
 	end)
 
-	self:NetHook("VGetGimpList", function(vplayer)
-		MODULE:NetStart("VGetGimpList")
+	self:NetHook("GetGimpList", function(vplayer)
+		MODULE:NetStart("GetGimpList")
 		net.WriteTable(MODULE:GetData("gimps", MODULE.DefaultGimps, true))
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VAddGimp", { "edit_gimps" }, function(vplayer)
+	self:NetHook("AddGimp", { "edit_gimps" }, function(vplayer)
 		local gimp = net.ReadString()
 		if(not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)) then
 			table.insert(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)
 		end
 	end)
 
-	self:NetHook("VEditGimp", { "edit_gimps" }, function(vplayer)
+	self:NetHook("EditGimp", { "edit_gimps" }, function(vplayer)
 		local oldGimp = net.ReadString()
 		local newGimp = net.ReadString()
 		if(table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp) and not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), newGimp)) then
@@ -2228,7 +2228,7 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VRemoveGimp", { "edit_gimps" }, function(vplayer)
+	self:NetHook("RemoveGimp", { "edit_gimps" }, function(vplayer)
 		table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
 	end)
 
@@ -2236,7 +2236,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetGimpList", function()
+	self:NetHook("GetGimpList", function()
 		local paneldata = Vermilion.Menu.Pages["gimps"]
 
 		paneldata.MessageTable:Clear()
@@ -2289,7 +2289,7 @@ function MODULE:InitClient()
 					end
 				end
 				for i,k in pairs(rtab) do
-					MODULE:NetStart("VRemoveGimp")
+					MODULE:NetStart("RemoveGimp")
 					net.WriteInt(k, 32)
 					net.SendToServer()
 				end
@@ -2331,7 +2331,7 @@ function MODULE:InitClient()
 
 				local ln = listings:AddLine(messageBox:GetValue())
 
-				MODULE:NetStart("VAddGimp")
+				MODULE:NetStart("AddGimp")
 				net.WriteString(ln:GetValue(1))
 				net.SendToServer()
 
@@ -2343,7 +2343,7 @@ function MODULE:InitClient()
 			addListingButton:SetParent(addMessagePanel)
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VGetGimpList")
+			MODULE:NetCommand("GetGimpList")
 			paneldata.AddMessagePanel:Close()
 		end
 	})

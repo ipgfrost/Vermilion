@@ -26,10 +26,10 @@ MODULE.Permissions = {
 	"manage_map"
 }
 MODULE.NetworkStrings = {
-	"VGetMapList",
-	"VScheduleMapChange",
-	"VAbortMapChange",
-	"VBroadcastSchedule"
+	"GetMapList",
+	"ScheduleMapChange",
+	"AbortMapChange",
+	"BroadcastSchedule"
 }
 
 MODULE.MapChangeInProgress = false
@@ -348,8 +348,8 @@ function MODULE:InitServer()
 
 	self:BuildMapCache()
 
-	self:NetHook("VGetMapList", function(vplayer)
-		MODULE:NetStart("VGetMapList")
+	self:NetHook("GetMapList", function(vplayer)
+		MODULE:NetStart("GetMapList")
 		net.WriteTable(MODULE.MapCache)
 		net.Send(vplayer)
 	end)
@@ -369,7 +369,7 @@ function MODULE:InitServer()
 			return
 		end
 
-		MODULE:NetStart("VBroadcastSchedule")
+		MODULE:NetStart("BroadcastSchedule")
 		net.WriteInt(MODULE.MapChangeIn, 32)
 		net.WriteString(MODULE.MapChangeTo)
 		net.Broadcast()
@@ -382,7 +382,7 @@ function MODULE:InitServer()
 		MODULE.MapChangeInProgress = false
 		MODULE.MapChangeIn = nil
 		MODULE.MapChangeTo = nil
-		MODULE:NetStart("VAbortMapChange")
+		MODULE:NetStart("AbortMapChange")
 		net.Broadcast()
 		return true
 	end
@@ -395,7 +395,7 @@ function MODULE:InitServer()
 				local to = MODULE.MapChangeTo
 				MODULE.MapChangeTo = nil
 				RunConsoleCommand("changelevel", to)
-				MODULE:NetStart("VAbortMapChange")
+				MODULE:NetStart("AbortMapChange")
 				net.Broadcast()
 			else
 				MODULE.MapChangeIn = MODULE.MapChangeIn - 1
@@ -403,7 +403,7 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VScheduleMapChange", { "manage_map" }, function(vplayer)
+	self:NetHook("ScheduleMapChange", { "manage_map" }, function(vplayer)
 		if(MODULE.MapChangeInProgress) then
 			--Vermilion:SendMessageBox(vplayer, "A map change is already in progress. Abort the map change to change to a new map!")
 			return
@@ -413,7 +413,7 @@ function MODULE:InitServer()
 		Vermilion:BroadcastNotify(vplayer:GetName() .. " has instigated a level change to " .. MODULE.MapChangeTo)
 	end)
 
-	self:NetHook("VAbortMapChange", { "manage_map" }, function(vplayer)
+	self:NetHook("AbortMapChange", { "manage_map" }, function(vplayer)
 		MODULE:AbortMapChange()
 		Vermilion:BroadcastNotify(vplayer:GetName() .. " has halted the level change.")
 	end)
@@ -422,7 +422,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetMapList", function()
+	self:NetHook("GetMapList", function()
 		local paneldata = Vermilion.Menu.Pages["map"]
 		local map_list = paneldata.MapList
 		if(IsValid(map_list)) then
@@ -466,7 +466,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:NetHook("VBroadcastSchedule", function()
+	self:NetHook("BroadcastSchedule", function()
 		MODULE.MapChangeInProgress = true
 		MODULE.MapChangeIn = net.ReadInt(32)// + VToolkit.TimeDiff
 		MODULE.MapChangeTo = net.ReadString()
@@ -474,7 +474,7 @@ function MODULE:InitClient()
 		print("Got map schedule!")
 	end)
 
-	self:NetHook("VAbortMapChange", function()
+	self:NetHook("AbortMapChange", function()
 		MODULE.MapChangeInProgress = false
 		MODULE.MapChangeIn = nil
 		MODULE.MapChangeTo = nil
@@ -665,7 +665,7 @@ function MODULE:InitClient()
 						VToolkit:CreateErrorDialog("Must select a map to change to!")
 						return
 					end
-					MODULE:NetStart("VScheduleMapChange")
+					MODULE:NetStart("ScheduleMapChange")
 					net.WriteString(mapList:GetSelected()[1]:GetValue(1))
 					for i,k in pairs(times) do
 						if(k[1] == timeDelayComboBox.Vermilion_Value) then
@@ -682,7 +682,7 @@ function MODULE:InitClient()
 
 				local abortLevelChangeButton = VToolkit:CreateButton("Abort Level Change", function()
 					VToolkit:CreateConfirmDialog("Are you sure you want to abort the level change?", function()
-						MODULE:NetStart("VAbortMapChange")
+						MODULE:NetStart("AbortMapChange")
 						net.SendToServer()
 					end)
 				end)
@@ -704,7 +704,7 @@ function MODULE:InitClient()
 				local reload = VToolkit:CreateButton("Reload Maps", function()
 					VToolkit:CreateConfirmDialog("Really reload all maps?", function()
 						mapList:Clear()
-						MODULE:NetStart("VGetMapList")
+						MODULE:NetStart("GetMapList")
 						net.SendToServer()
 					end)
 				end)
@@ -714,7 +714,7 @@ function MODULE:InitClient()
 			end,
 			OnOpen = function(panel, paneldata)
 				if(table.Count(paneldata.MapList:GetLines()) == 0) then
-					MODULE:NetStart("VGetMapList")
+					MODULE:NetStart("GetMapList")
 					net.SendToServer()
 				end
 				paneldata.MapList:SetVisible(true)

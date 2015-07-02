@@ -26,10 +26,10 @@ MODULE.Permissions = {
 	"manage_spawn_settings"
 }
 MODULE.NetworkStrings = {
-	"VRankSpawnLoad",
-	"VRankSpawnAdd",
-	"VRankSpawnDel",
-	"VUpdateRule"
+	"RankSpawnLoad",
+	"RankSpawnAdd",
+	"RankSpawnDel",
+	"UpdateRule"
 }
 
 MODULE.DataTypes = {}
@@ -138,6 +138,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -206,19 +207,19 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VRankSpawnLoad", { "manage_spawn_settings" }, function(vplayer)
+	self:NetHook("RankSpawnLoad", { "manage_spawn_settings" }, function(vplayer)
 		local rank = net.ReadString()
 		local tab = {}
 		for i,k in pairs(MODULE:GetData(rank, {}, true)) do
 			table.insert(tab, { PrintName = i, Value = k })
 		end
-		MODULE:NetStart("VRankSpawnLoad")
+		MODULE:NetStart("RankSpawnLoad")
 		net.WriteString(rank)
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VRankSpawnAdd", { "manage_spawn_settings" }, function(vplayer)
+	self:NetHook("RankSpawnAdd", { "manage_spawn_settings" }, function(vplayer)
 		local rank = net.ReadString()
 		local prop = net.ReadString()
 		local val = net.ReadFloat()
@@ -226,14 +227,14 @@ function MODULE:InitServer()
 		MODULE:GetData(rank, {}, true)[prop] = val
 	end)
 
-	self:NetHook("VRankSpawnDel", { "manage_spawn_settings" }, function(vplayer)
+	self:NetHook("RankSpawnDel", { "manage_spawn_settings" }, function(vplayer)
 		local rank = net.ReadString()
 		local prop = net.ReadString()
 
 		MODULE:GetData(rank, {}, true)[prop] = nil
 	end)
 
-	self:NetHook("VUpdateRule", { "manage_spawn_settings" }, function(vplayer)
+	self:NetHook("UpdateRule", { "manage_spawn_settings" }, function(vplayer)
 		local rank = net.ReadString()
 		local prop = net.ReadString()
 		local val = net.ReadFloat()
@@ -244,7 +245,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VRankSpawnLoad", function()
+	self:NetHook("RankSpawnLoad", function()
 		local paneldata = Vermilion.Menu.Pages["spawn_settings"]
 		if(paneldata.RankList:GetSelected()[1] == nil or paneldata.RankList:GetSelected()[1].UniqueRankID != net.ReadString()) then return end
 		paneldata.RankRuleList:Clear()
@@ -293,7 +294,7 @@ function MODULE:InitClient()
 					addRule:SetDisabled(not (self:GetSelected()[1] != nil and allRules:GetSelected()[1] != nil))
 					delRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
 					editRule:SetDisabled(not (self:GetSelected()[1] != nil and rankRuleList:GetSelected()[1] != nil))
-					MODULE:NetStart("VRankSpawnLoad")
+					MODULE:NetStart("RankSpawnLoad")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -357,7 +358,7 @@ function MODULE:InitClient()
 								return
 							end
 							local ln = rankRuleList:AddLine(k:GetValue(1), value)
-							MODULE:NetStart("VRankSpawnAdd")
+							MODULE:NetStart("RankSpawnAdd")
 							net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 							net.WriteString(k:GetValue(1))
 							net.WriteFloat(tonumber(value))
@@ -374,7 +375,7 @@ function MODULE:InitClient()
 
 				delRule = VToolkit:CreateButton("Remove Property", function()
 					for i,k in pairs(rankRuleList:GetSelected()) do
-						MODULE:NetStart("VRankSpawnDel")
+						MODULE:NetStart("RankSpawnDel")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()
@@ -399,7 +400,7 @@ function MODULE:InitClient()
 							return
 						end
 						rankRuleList:GetSelected()[1]:SetValue(2, value)
-						MODULE:NetStart("VUpdateRule")
+						MODULE:NetStart("UpdateRule")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(rankRuleList:GetSelected()[1]:GetValue(1))
 						net.WriteFloat(tonumber(rankRuleList:GetSelected()[1]:GetValue(2)))

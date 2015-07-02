@@ -143,13 +143,13 @@ MODULE.PermissionDefinitions = {
 	["immediate_cleanup"] = "This player will not be able to leave the server and re-connect in a specified time before having their props deleted."
 }
 MODULE.NetworkStrings = {
-	"VGetBuddyList",
-	"VAddBuddy",
-	"VDelBuddy",
-	"VGetBuddyPermissions",
-	"VUpdateBuddyPermissions",
+	"GetBuddyList",
+	"AddBuddy",
+	"DelBuddy",
+	"GetBuddyPermissions",
+	"UpdateBuddyPermissions",
 
-	"VQueryPPSteamID"
+	"QueryPPSteamID"
 }
 
 MODULE.UidCache = {}

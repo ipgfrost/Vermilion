@@ -21,15 +21,15 @@ local MODULE = Vermilion:GetModule("sound")
 
 --[[
 
-	"VSoundCloudGetPlaylists",
-	"VSoundCloudGetPlaylistContent",
-	"VSoundCloudNewPlaylist",
-	"VSoundCloudAddToPlaylist",
-	"VSoundCloudEditPlaylist",
-	"VSoundCloudRemoveFromPlaylist",
-	"VSoundCloudRemovePlaylist",
-	"VSoundCloudPlayPlaylist",
-	"VSoundCloudBroadcastPlaylist"
+	"SoundCloudGetPlaylists",
+	"SoundCloudGetPlaylistContent",
+	"SoundCloudNewPlaylist",
+	"SoundCloudAddToPlaylist",
+	"SoundCloudEditPlaylist",
+	"SoundCloudRemoveFromPlaylist",
+	"SoundCloudRemovePlaylist",
+	"SoundCloudPlayPlaylist",
+	"SoundCloudBroadcastPlaylist"
 
 ]]--
 
@@ -106,7 +106,7 @@ if(SERVER) then
 				table.insert(tab, k1)
 			end
 		end
-		MODULE:NetStart("VSoundCloudGetPlaylists")
+		MODULE:NetStart("SoundCloudGetPlaylists")
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end
@@ -117,17 +117,17 @@ if(SERVER) then
 		end
 	end
 
-	MODULE:NetHook("VSoundCloudGetPlaylists", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudGetPlaylists", { "use_playlists" }, function(vplayer)
 		sendPlaylistsToPlayer(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudNewPlaylist", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudNewPlaylist", { "use_playlists" }, function(vplayer)
 		local pl = createNewPlaylist(vplayer, net.ReadString())
 		table.insert(MODULE:GetData("scplaylists", {}, true), pl)
 		sendPlaylistsToPlayer(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudRemovePlaylist", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudRemovePlaylist", { "use_playlists" }, function(vplayer)
 		local plName = net.ReadString()
 		local pl = MODULE:LookupPlaylist(plName, vplayer)
 		if(pl == nil) then return end
@@ -135,7 +135,7 @@ if(SERVER) then
 		sendPlaylistsToPlayer(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudAddToPlaylist", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudAddToPlaylist", { "use_playlists" }, function(vplayer)
 		local plName = net.ReadString()
 		local trackID = net.ReadString()
 		local trackName = net.ReadString()
@@ -146,31 +146,31 @@ if(SERVER) then
 		pl:AddTrack(trackID, trackName, trackUploader)
 	end)
 
-	MODULE:NetHook("VSoundCloudRemoveFromPlaylist", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudRemoveFromPlaylist", { "use_playlists" }, function(vplayer)
 		local plName = net.ReadString()
 		local trackID = net.ReadString()
 
 		local pl = MODULE:LookupPlaylist(plName, vplayer)
 		if(pl == nil) then return end
 		pl:DelTrack(trackID)
-		MODULE:NetStart("VSoundCloudGetPlaylistContent")
+		MODULE:NetStart("SoundCloudGetPlaylistContent")
 		net.WriteString(plName)
 		net.WriteTable(pl.Content)
 		net.Send(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudGetPlaylistContent", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudGetPlaylistContent", { "use_playlists" }, function(vplayer)
 		local plName = net.ReadString()
 
 		local pl = MODULE:LookupPlaylist(plName, vplayer)
 		if(pl == nil) then return end
-		MODULE:NetStart("VSoundCloudGetPlaylistContent")
+		MODULE:NetStart("SoundCloudGetPlaylistContent")
 		net.WriteString(plName)
 		net.WriteTable(pl.Content)
 		net.Send(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudEditPlaylist", { "use_playlists" }, function(vplayer)
+	MODULE:NetHook("SoundCloudEditPlaylist", { "use_playlists" }, function(vplayer)
 		local plName = net.ReadString()
 		local trackID = net.ReadString()
 		local dir = net.ReadBoolean()
@@ -183,14 +183,14 @@ if(SERVER) then
 		else
 			pl:MoveDown(trackID)
 		end
-		MODULE:NetStart("VSoundCloudGetPlaylistContent")
+		MODULE:NetStart("SoundCloudGetPlaylistContent")
 		net.WriteString(plName)
 		net.WriteTable(pl.Content)
 		net.Send(vplayer)
 	end)
 
-	MODULE:NetHook("VSoundCloudAddToPlaylistQuestion", { "use_playlists" }, function(vplayer)
-		MODULE:NetStart("VSoundCloudAddToPlaylistQuestion")
+	MODULE:NetHook("SoundCloudAddToPlaylistQuestion", { "use_playlists" }, function(vplayer)
+		MODULE:NetStart("SoundCloudAddToPlaylistQuestion")
 		local tab = {}
 		for i,k in pairs(MODULE:GetData("scplaylists", {}, true)) do
 			if(k:GetOwner() == vplayer:SteamID()) then
@@ -232,7 +232,7 @@ else
 	end)
 
 
-	MODULE:NetHook("VSoundCloudGetPlaylists", function()
+	MODULE:NetHook("SoundCloudGetPlaylists", function()
 		if(IsValid(PlaylistListGlobal)) then
 			PlaylistListGlobal:Clear()
 			local playlists = net.ReadTable()
@@ -243,7 +243,7 @@ else
 		end
 	end)
 
-	MODULE:NetHook("VSoundCloudGetPlaylistContent", function()
+	MODULE:NetHook("SoundCloudGetPlaylistContent", function()
 		if(IsValid(PlaylistContentGlobal)) then
 			if(PlaylistListGlobal:GetSelected()[1] == nil or PlaylistListGlobal:GetSelected()[1]:GetValue(1) != net.ReadString()) then return end
 			PlaylistContentGlobal:Clear()
@@ -255,13 +255,13 @@ else
 		end
 	end)
 
-	MODULE:NetHook("VSoundCloudAddToPlaylistQuestion", function()
+	MODULE:NetHook("SoundCloudAddToPlaylistQuestion", function()
 		local id = net.ReadString()
 		local name = net.ReadString()
 		local uploader = net.ReadString()
 		local playlists = net.ReadTable()
 		VToolkit:CreateComboboxPanel("Please choose a playlist to add this track to...", playlists, 1, function(val)
-			MODULE:NetStart("VSoundCloudAddToPlaylist")
+			MODULE:NetStart("SoundCloudAddToPlaylist")
 			net.WriteString(val)
 			net.WriteString(id)
 			net.WriteString(name)
@@ -281,7 +281,7 @@ else
 		local submitButton = VToolkit:CreateButton("Create Playlist", function()
 			local name = textbox:GetValue()
 			if(name == nil or name == "") then return end
-			MODULE:NetStart("VSoundCloudNewPlaylist")
+			MODULE:NetStart("SoundCloudNewPlaylist")
 			net.WriteString(name)
 			net.SendToServer()
 			drawer:Close()
@@ -338,7 +338,7 @@ else
 
 		local delPlaylistButton = VToolkit:CreateButton("Delete", function()
 			VToolkit:CreateConfirmDialog("Are you sure you want to delete this playlist?", function()
-				MODULE:NetStart("VSoundCloudRemovePlaylist")
+				MODULE:NetStart("SoundCloudRemovePlaylist")
 				net.WriteString(playlistList:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end, {
@@ -381,7 +381,7 @@ else
 
 		local removeFromPlaylistButton = VToolkit:CreateButton("Remove Track", function()
 			VToolkit:CreateConfirmDialog("Are you sure you want to remove this track?", function()
-				MODULE:NetStart("VSoundCloudRemoveFromPlaylist")
+				MODULE:NetStart("SoundCloudRemoveFromPlaylist")
 				net.WriteString(playlistList:GetSelected()[1]:GetValue(1))
 				net.WriteString(playlistContentList:GetSelected()[1].SCID)
 				net.SendToServer()
@@ -397,7 +397,7 @@ else
 		removeFromPlaylistButton:SetDisabled(true)
 
 		local moveUpInPlaylistButton = VToolkit:CreateButton("Move Up", function()
-			MODULE:NetStart("VSoundCloudEditPlaylist")
+			MODULE:NetStart("SoundCloudEditPlaylist")
 			net.WriteString(playlistList:GetSelected()[1]:GetValue(1))
 			net.WriteString(playlistContentList:GetSelected()[1].SCID)
 			net.WriteBoolean(true)
@@ -409,7 +409,7 @@ else
 		moveUpInPlaylistButton:SetDisabled(true)
 
 		local moveDownInPlaylistButton = VToolkit:CreateButton("Move Down", function()
-			MODULE:NetStart("VSoundCloudEditPlaylist")
+			MODULE:NetStart("SoundCloudEditPlaylist")
 			net.WriteString(playlistList:GetSelected()[1]:GetValue(1))
 			net.WriteString(playlistContentList:GetSelected()[1].SCID)
 			net.WriteBoolean(false)
@@ -436,7 +436,7 @@ else
 			delPlaylistButton:SetDisabled(table.Count(self:GetSelected()) != 1)
 			playPlaylistButton:SetDisabled(table.Count(self:GetSelected()) != 1)
 			if(table.Count(self:GetSelected()) == 1) then
-				MODULE:NetStart("VSoundCloudGetPlaylistContent")
+				MODULE:NetStart("SoundCloudGetPlaylistContent")
 				net.WriteString(self:GetSelected()[1]:GetValue(1))
 				net.SendToServer()
 			end
@@ -451,7 +451,7 @@ else
 
 
 		addPlaylistDrawer:MoveToFront()
-		MODULE:NetCommand("VSoundCloudGetPlaylists")
+		MODULE:NetCommand("SoundCloudGetPlaylists")
 	end
 
 end
