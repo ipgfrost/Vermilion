@@ -64,7 +64,7 @@ end
 
 function Vermilion:BroadcastRankData(target)
 	target = target or VToolkit:GetValidPlayers()
-	if(not IsValid(target)) then return end
+	if(not IsValid(target) and not istable(target)) then return end
 	local normalData = {}
 	for i,k in pairs(self:GetDriver():GetAllRanks()) do
 		table.insert(normalData, k:GetNetPacket())
@@ -328,7 +328,7 @@ local spawnFuncsPatch = {
 }
 
 for i,spHook in pairs(spawnFuncsPatch) do
-	Vermilion:AddHook(spHook, "Vermilion_CheckLimitFixer" .. i, false, function(vplayer)
+	Vermilion:AddLPHook(spHook, "Vermilion_CheckLimitFixer" .. i, false, function(vplayer)
 		local str = ""
 		if(spHook == "PlayerSpawnRagdoll") then str = "ragdolls" end
 		if(spHook == "PlayerSpawnProp") then str = "props" end

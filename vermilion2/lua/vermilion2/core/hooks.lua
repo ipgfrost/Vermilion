@@ -87,16 +87,6 @@ local vHookCall = function(evtName, gmTable, ...)
 			hookFunc(...)
 		end
 	end
-	if(Vermilion.Hooks[evtName] != nil) then
-		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
-			a, b, c, d, e, f = hookFunc(...)
-			if(a != nil) then
-				//print("HOOK", id, " RETURNED!")
-				destroySDHook(evtName)
-				return a, b, c, d, e, f
-			end
-		end
-	end
 	for i,mod in pairs(Vermilion.Modules) do
 		a, b, c, d, e, f = mod:DistributeEvent(evtName, ...)
 		if(a != nil) then
@@ -118,6 +108,17 @@ local vHookCall = function(evtName, gmTable, ...)
 			end
 		end
 	end
+	if(Vermilion.Hooks[evtName] != nil) then
+		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
+			a, b, c, d, e, f = hookFunc(...)
+			if(a != nil) then
+				//print("HOOK", id, " RETURNED!")
+				destroySDHook(evtName)
+				return a, b, c, d, e, f
+			end
+		end
+	end
+
 	local vars = { ... }
 
 	-- I don't like doing this, but I don't appear to have a choice. GMod keeps blaming Vermilion for
@@ -129,7 +130,7 @@ local vHookCall = function(evtName, gmTable, ...)
 	if(not xpcall(function()
 		a,b,c,d,e,f = hook.oldHook(evtName, gmTable, unpack(vars))
 	end, function(err)
-		hook.Run("OnLuaError") -- bring up the standard "script errors" notification. (doesn't seem to work; make own?)
+		hook.Run("OnLuaError") -- bring up the standard "script errors" notification. (doesn't seem to work [probably in the wrong realm]; make own?)
 		Vermilion.Log("An error has been detected in the base GMod hook system. This most likely has nothing to do with Vermilion.")
 		print(err)
 		debug.Trace()

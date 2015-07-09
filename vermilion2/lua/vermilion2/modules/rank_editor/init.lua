@@ -597,28 +597,24 @@ function MODULE:InitClient()
 
 				renameRank = VToolkit:CreateButton("Rename", function()
 					local rnk = rankList:GetSelected()[1]
-					--if(not rnk.Protected) then
-						VToolkit:CreateTextInput("Enter the new name for the \"" .. rnk:GetValue(1) .. "\" rank:", function(text)
-							local has = false
-							for i,k in pairs(rankList:GetLines()) do
-								if(k:GetValue(1) == text) then
-									has = true
-									break
-								end
+					VToolkit:CreateTextInput("Enter the new name for the \"" .. rnk:GetValue(1) .. "\" rank:", function(text)
+						local has = false
+						for i,k in pairs(rankList:GetLines()) do
+							if(k:GetValue(1) == text) then
+								has = true
+								break
 							end
-							if(not has) then
-								MODULE:NetStart("RenameRank")
-								net.WriteString(rnk.UniqueRankID)
-								net.WriteString(text)
-								net.SendToServer()
-								VToolkit:CreateDialog("Success", "Rank renamed!")
-							else
-								VToolkit:CreateErrorDialog("This rank already exists!")
-							end
-						end)
-					--else
-					--	VToolkit:CreateErrorDialog("This is a protected rank!")
-					--end
+						end
+						if(not has) then
+							MODULE:NetStart("RenameRank")
+							net.WriteString(rnk.UniqueRankID)
+							net.WriteString(text)
+							net.SendToServer()
+							VToolkit:CreateDialog("Success", "Rank renamed!")
+						else
+							VToolkit:CreateErrorDialog("This rank already exists!")
+						end
+					end)
 				end)
 				renameRank:SetPos(panel:GetWide() - 285, 110)
 				renameRank:SetSize(panel:GetWide() - renameRank:GetX() - 5, 30)
@@ -779,17 +775,17 @@ function MODULE:InitClient()
 					frame:MakePopup()
 					frame:SetAutoDelete(true)
 
-					local rankName = rankList:GetSelected()[1].UniqueRankID
+					local rankID = rankList:GetSelected()[1].UniqueRankID
 
 					local icnBrowser = vgui.Create("DIconBrowser")
 					icnBrowser:SetPos(10, 30)
 					icnBrowser:SetSize(280, 230)
 					icnBrowser:SetParent(frame)
-					icnBrowser:SelectIcon(Vermilion:GetRankIcon(rankName))
+					icnBrowser:SelectIcon("icon16/" .. Vermilion:GetRankByID(rankID):GetIcon() .. ".png")
 
 					local ok = VToolkit:CreateButton("Save", function()
 						MODULE:NetStart("ChangeRankIcon")
-						net.WriteString(rankName)
+						net.WriteString(rankID)
 						local icn = icnBrowser.m_strSelectedIcon
 						icn = string.Replace(icn, "icon16/", "")
 						icn = string.Replace(icn, ".png", "")

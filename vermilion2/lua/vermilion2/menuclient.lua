@@ -250,7 +250,11 @@ MENU:AddPage({
 					"Errors in the OnOpen menu hook no longer prevent the menu from opening",
 					"Fixed patterns in chat commands causing script errors",
 					"Added a secure network hook to create standard API for secure network endpoints",
-					"Updated GMod DCategoryList rendering to make it (hopefully) easier on the eyes"
+					"Updated GMod DCategoryList rendering to make it (hopefully) easier to read",
+					"Redefined NetworkStrings style",
+					"Module hooks now take priority over VCore hooks",
+					"CheckLimit patchers are now LP hooks and can be overridden properly",
+					"Updating a rank icon now triggers a rank broadcast"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -490,7 +494,8 @@ MENU:AddPage({
 			{ "How do I use MOTD Variables?", "Place \"%\" around the name of the variable, for example, %player_name%." },
 			{ "Other mods aren't recognising my rank!", "Add the \"identify_as_x\" permission to your rank, for example, admins should have \"identify_as_admin\" which is the same as placing them in the admin rank in the users.txt file.", 35 },
 			{ "How do I create a jail?", "You need to create a jail zone. Make sure that the Zones module is enabled. Start by placing yourself at one corner and type \"!addzone\". Then noclip to the other corner and type \"!addzone <zone name>\". After this, type \"!setmode <zone name> jail\". You can then use the jail command by specifying your zone name as the jail name", 55 },
-			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
+			{ "Where is the god mode command?!?!?", "To keep in line with how Vermilion internally refers to damage control, the command is !damagemode" },
+			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question in the comments (nicely) and I'll probably add it to the FAQ in the future." }
 		}
 
 		for i,k in pairs(faqs) do

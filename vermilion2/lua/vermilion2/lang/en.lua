@@ -560,10 +560,6 @@ lang:Add("commands:gag:gagged:done", "%s gagged %s")
 lang:Add("commands:gag:ungagged:done", "%s ungagged %s")
 lang:Add("commands:gag:help", "Run the gag command again to ungag this player.")
 
-
-lang:Add("commands:setjailpos:world", "That isn't inside the world...")
-lang:Add("commands:setjailpos:done", "%s set the jail position to %s")
-
 lang:Add("commands:convarvote:question", "Set %s to %s?")
 lang:Add("commands:convarvote:syntax", "Syntax: <convar> <value>")
 
@@ -629,6 +625,7 @@ lang:Add("zones:mode:kill", "Kill")
 lang:Add("zones:mode:anti_propspawn", "Prevent Prop Spawning")
 lang:Add("zones:mode:no_gravity", "Zero Gravity")
 lang:Add("zones:mode:anti_pvp", "Anti-PvP")
+lang:Add("zones:mode:jail", "Jail")
 
 
 lang:Add("zones:cmd:jail:syntax", "<player> <jail zone>")
