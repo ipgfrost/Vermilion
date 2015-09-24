@@ -66,10 +66,10 @@ MODULE.Permissions = {
 }
 
 MODULE.NetworkStrings = {
-	"VGetGimpList",
-	"VAddGimp",
-	"VRemoveGimp",
-	"VEditGimp"
+	"GetGimpList",
+	"AddGimp",
+	"RemoveGimp",
+	"EditGimp"
 }
 
 MODULE.TeleportRequests = {}
@@ -866,6 +866,24 @@ function MODULE:RegisterChatCommands()
 		end
 	})
 
+	if(SERVER) then
+		MODULE:AddHook("PlayerSwitchWeapon", "VanishSwitch", function(vplayer, old, new)
+			if(vplayer.Vanished) then
+				if(new:GetRenderMode() == RENDERMODE_NONE) then return end
+				new:SetRenderMode(RENDERMODE_NONE)
+				for i,k in pairs(player.GetAll()) do
+					new:SetPreventTransmit(k, true)
+				end
+			else
+				if(new:GetRenderMode() == RENDERMODE_NORMAL) then return end
+				new:SetRenderMode(RENDERMODE_NORMAL)
+				for i,k in pairs(player.GetAll()) do
+					new:SetPreventTransmit(k, false)
+				end
+			end
+		end)
+	end
+
 	Vermilion:AddChatCommand({
 		Name = "vanish",
 		Description = "Makes you invisible to other players.",
@@ -876,12 +894,26 @@ function MODULE:RegisterChatCommands()
 				sender:SetRenderMode(RENDERMODE_NONE)
 				for i,k in pairs(player.GetAll()) do
 					sender:SetPreventTransmit(k, true)
+					for i1,k1 in pairs(sender:GetWeapons()) do
+						k1:SetPreventTransmit(k, true)
+					end
 				end
+				for i,k in pairs(sender:GetWeapons()) do
+					k:SetRenderMode(RENDERMODE_NONE)
+				end
+				sender.Vanished = true
 			else
 				sender:SetRenderMode(RENDERMODE_NORMAL)
 				for i,k in pairs(player.GetAll()) do
 					sender:SetPreventTransmit(k, false)
+					for i1,k1 in pairs(sender:GetWeapons()) do
+						k1:SetPreventTransmit(k, false)
+					end
 				end
+				for i,k in pairs(sender:GetWeapons()) do
+					k:SetRenderMode(RENDERMODE_NORMAL)
+				end
+				sender.Vanished = false
 			end
 		end
 	})
@@ -2175,42 +2207,36 @@ function MODULE:InitServer()
 		if(MODULE:GetData("gagged_players", {}, true)[talker:SteamID()]) then return false end
 	end)
 
-	self:NetHook("VGetGimpList", function(vplayer)
-		MODULE:NetStart("VGetGimpList")
+	self:NetHook("GetGimpList", function(vplayer)
+		MODULE:NetStart("GetGimpList")
 		net.WriteTable(MODULE:GetData("gimps", MODULE.DefaultGimps, true))
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VAddGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			local gimp = net.ReadString()
-			if(not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)) then
-				table.insert(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)
-			end
+	self:NetHook("AddGimp", { "edit_gimps" }, function(vplayer)
+		local gimp = net.ReadString()
+		if(not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)) then
+			table.insert(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp)
 		end
 	end)
 
-	self:NetHook("VEditGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			local oldGimp = net.ReadString()
-			local newGimp = net.ReadString()
-			if(table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp) and not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), newGimp)) then
-				MODULE:GetData("gimps", MODULE.DefaultGimps, true)[table.KeyFromValue(oldGimp)] = newGimp
-			end
+	self:NetHook("EditGimp", { "edit_gimps" }, function(vplayer)
+		local oldGimp = net.ReadString()
+		local newGimp = net.ReadString()
+		if(table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), gimp) and not table.HasValue(MODULE:GetData("gimps", MODULE.DefaultGimps, true), newGimp)) then
+			MODULE:GetData("gimps", MODULE.DefaultGimps, true)[table.KeyFromValue(oldGimp)] = newGimp
 		end
 	end)
 
-	self:NetHook("VRemoveGimp", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "edit_gimps")) then
-			table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
-		end
+	self:NetHook("RemoveGimp", { "edit_gimps" }, function(vplayer)
+		table.remove(MODULE:GetData("gimps", MODULE.DefaultGimps, true), net.ReadInt(32))
 	end)
 
 end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetGimpList", function()
+	self:NetHook("GetGimpList", function()
 		local paneldata = Vermilion.Menu.Pages["gimps"]
 
 		paneldata.MessageTable:Clear()
@@ -2263,7 +2289,7 @@ function MODULE:InitClient()
 					end
 				end
 				for i,k in pairs(rtab) do
-					MODULE:NetStart("VRemoveGimp")
+					MODULE:NetStart("RemoveGimp")
 					net.WriteInt(k, 32)
 					net.SendToServer()
 				end
@@ -2305,7 +2331,7 @@ function MODULE:InitClient()
 
 				local ln = listings:AddLine(messageBox:GetValue())
 
-				MODULE:NetStart("VAddGimp")
+				MODULE:NetStart("AddGimp")
 				net.WriteString(ln:GetValue(1))
 				net.SendToServer()
 
@@ -2317,7 +2343,7 @@ function MODULE:InitClient()
 			addListingButton:SetParent(addMessagePanel)
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VGetGimpList")
+			MODULE:NetCommand("GetGimpList")
 			paneldata.AddMessagePanel:Close()
 		end
 	})

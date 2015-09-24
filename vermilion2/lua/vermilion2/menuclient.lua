@@ -148,7 +148,20 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
-			{ "2.5.0 - Sometime in June/July?", {
+			{ "2.5.3 - 24th September 2015", {
+					"Fixed autopromote.",
+					"Added rank halos (WIP) (request)"
+				}
+			},
+			{ "2.5.2 - 16th September 2015", {
+					"Fixed interface after GMod update."
+				}
+			},
+			{ "2.5.1 - 16th July 2015", {
+					"Fixed rank deletion bug."
+				}
+			},
+			{ "2.5 - 10th July 2015", {
 					"Rebuilt module data storage mechanisms",
 					"Ranks are now addressed by unique identifiers",
 					"Updated default rank data to be more complex",
@@ -239,11 +252,22 @@ MENU:AddPage({
 					"Addon validator now has functionality to check for missing mounted content (won't work until GMod is fixed)",
 					"Addon validator can be set to kick for missing addons",
 					"Addon validator can be set to kick for missing mounted content (don't use this yet)",
-					//"Addon validator can be set to provide a collection ID",
-					//"Addon validator can be set to open missing mounted content on the Steam Store",
+					"Addon validator can be set to provide a collection ID",
+					"Addon validator can be set to open missing mounted content on the Steam Store",
 					"Chat predictor will no longer show commands that the current user doesn't have permissions for",
 					"Added functionalty to create 'chat' commands that only work in console",
-					"Attempted to improve the user experience of Vermilion on a listen server"
+					"Attempted to improve the user experience of Vermilion on a listen server",
+					"Added Public Domain tool",
+					"Fixed spawn limits not being applied correctly",
+					"Fixed the !vanish command",
+					"Errors in the OnOpen menu hook no longer prevent the menu from opening",
+					"Fixed patterns in chat commands causing script errors",
+					"Added a secure network hook to create standard API for secure network endpoints",
+					"Updated GMod DCategoryList rendering to make it (hopefully) easier to read",
+					"Redefined NetworkStrings style",
+					"Module hooks now take priority over VCore hooks",
+					"CheckLimit patchers are now LP hooks and can be overridden properly",
+					"Updating a rank icon now triggers a rank broadcast"
 				}
 			},
 			{ "2.4.4 - 10th March 2015", {
@@ -483,7 +507,8 @@ MENU:AddPage({
 			{ "How do I use MOTD Variables?", "Place \"%\" around the name of the variable, for example, %player_name%." },
 			{ "Other mods aren't recognising my rank!", "Add the \"identify_as_x\" permission to your rank, for example, admins should have \"identify_as_admin\" which is the same as placing them in the admin rank in the users.txt file.", 35 },
 			{ "How do I create a jail?", "You need to create a jail zone. Make sure that the Zones module is enabled. Start by placing yourself at one corner and type \"!addzone\". Then noclip to the other corner and type \"!addzone <zone name>\". After this, type \"!setmode <zone name> jail\". You can then use the jail command by specifying your zone name as the jail name", 55 },
-			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question on the comments and I'll probably add it to the FAQ in the future." }
+			{ "Where is the god mode command?!?!?", "To keep in line with how Vermilion internally refers to damage control, the command is !damagemode" },
+			{ "The question I have isn't answered here!", "Please tell me about it! Ask the question in the comments (nicely) and I'll probably add it to the FAQ in the future." }
 		}
 
 		for i,k in pairs(faqs) do
@@ -953,7 +978,10 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 			end
 		end
 
-		self:GetActivePage().OnOpen(self:GetActivePage().Panel, self:GetActivePage())
+		xpcall(self:GetActivePage().OnOpen, function(err)
+			Vermilion.Log("Failed to run OnOpen for panel (" .. self:GetActivePage().ID .. "): " .. err)
+			debug.Trace()
+		end, self:GetActivePage().Panel, self:GetActivePage())
 
 		MENU.IsOpen = true
 		MENU.TabPanel:SetVisible(true)
@@ -985,12 +1013,14 @@ Vermilion:AddHook(Vermilion.Event.MOD_POST, "MenuClientBuild", true, function()
 	end
 
 	local categories = {}
-	for index,catData in SortedPairsByMemberValue(MENU.Categories, "Order", false) do
+	for index,catData1 in SortedPairsByMemberValue(MENU.Categories, "Order", false) do
+		local catData = MENU.Categories[index]
 		categories[catData.ID] = MENU.CatList:Add(catData.Name)
 		catData.Impl = categories[catData.ID]
 	end
 
-	for index,pageData in SortedPairsByMemberValue(MENU.Pages, "Order", false) do
+	for index,pageData1 in SortedPairsByMemberValue(MENU.Pages, "Order", false) do
+		local pageData = MENU.Pages[index]
 		local cat = categories[pageData.Category]
 		local btn = cat:Add(pageData.Name)
 		btn.OldDCI = btn.DoClickInternal

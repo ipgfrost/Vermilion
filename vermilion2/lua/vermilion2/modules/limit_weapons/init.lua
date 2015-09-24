@@ -26,9 +26,9 @@ MODULE.Permissions = {
 	"manage_weapon_limits"
 }
 MODULE.NetworkStrings = {
-	"VGetWeaponLimits",
-	"VBlockWeapon",
-	"VUnblockWeapon"
+	"GetWeaponLimits",
+	"BlockWeapon",
+	"UnblockWeapon"
 }
 
 function MODULE:InitShared()
@@ -55,6 +55,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -117,45 +118,38 @@ function MODULE:InitServer()
 
 
 
-	self:NetHook("VGetWeaponLimits", function(vplayer)
+	self:NetHook("GetWeaponLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("GetWeaponLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetWeaponLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetWeaponLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
+		end
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("BlockWeapon", { "manage_weapon_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
+			table.insert(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
 
-	self:NetHook("VBlockWeapon", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
-				table.insert(MODULE:GetData(rnk, {}, true), weapon)
-			end
-		end
-	end)
-
-	self:NetHook("VUnblockWeapon", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_weapon_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
-		end
+	self:NetHook("UnblockWeapon", { "manage_weapon_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
 end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetWeaponLimits", function()
+	self:NetHook("GetWeaponLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_weapons"].RankList)) then return end
 		if(net.ReadString() != Vermilion.Menu.Pages["limit_weapons"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
@@ -238,7 +232,7 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and allWeapons:GetSelected()[1] != nil))
 					unblockWeapon:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VGetWeaponLimits")
+					MODULE:NetStart("GetWeaponLimits")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -292,7 +286,7 @@ function MODULE:InitClient()
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-						MODULE:NetStart("VBlockWeapon")
+						MODULE:NetStart("BlockWeapon")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
@@ -305,7 +299,7 @@ function MODULE:InitClient()
 
 				unblockWeapon = VToolkit:CreateButton("Unblock Weapon", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VUnblockWeapon")
+						MODULE:NetStart("UnblockWeapon")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()

@@ -32,24 +32,24 @@ MODULE.Permissions = {
 	"use_playlists"
 }
 MODULE.NetworkStrings = {
-	"VQueueSound",
-	"VQueueStream",
-	"VPlaySound",
-	"VPlayStream",
-	"VStop",
-	"VPause",
-	"VUnpause",
+	"QueueSound",
+	"QueueStream",
+	"PlaySound",
+	"PlayStream",
+	"Stop",
+	"Pause",
+	"Unpause",
 
-	"VSoundCloudGetPlaylists",
-	"VSoundCloudGetPlaylistContent",
-	"VSoundCloudNewPlaylist",
-	"VSoundCloudAddToPlaylist",
-	"VSoundCloudEditPlaylist",
-	"VSoundCloudRemoveFromPlaylist",
-	"VSoundCloudRemovePlaylist",
-	"VSoundCloudPlayPlaylist",
-	"VSoundCloudBroadcastPlaylist",
-	"VSoundCloudAddToPlaylistQuestion"
+	"SoundCloudGetPlaylists",
+	"SoundCloudGetPlaylistContent",
+	"SoundCloudNewPlaylist",
+	"SoundCloudAddToPlaylist",
+	"SoundCloudEditPlaylist",
+	"SoundCloudRemoveFromPlaylist",
+	"SoundCloudRemovePlaylist",
+	"SoundCloudPlayPlaylist",
+	"SoundCloudBroadcastPlaylist",
+	"SoundCloudAddToPlaylistQuestion"
 }
 
 MODULE.TYPE_FILE = -1
@@ -225,7 +225,7 @@ function MODULE:RegisterChatCommands()
 				channel = text[2]
 			end
 
-			MODULE:NetStart("VStop")
+			MODULE:NetStart("Stop")
 			net.WriteString(channel)
 			net.Send(target)
 
@@ -262,7 +262,7 @@ function MODULE:RegisterChatCommands()
 				channel = text[2]
 			end
 
-			MODULE:NetStart("VPause")
+			MODULE:NetStart("Pause")
 			net.WriteString(channel)
 			net.Send(target)
 
@@ -299,7 +299,7 @@ function MODULE:RegisterChatCommands()
 				channel = text[2]
 			end
 
-			MODULE:NetStart("VUnpause")
+			MODULE:NetStart("Unpause")
 			net.WriteString(channel)
 			net.Send(target)
 
@@ -325,7 +325,7 @@ end
 function MODULE:InitServer()
 
 	function MODULE:SendSound(vplayer, path, channel, parameters)
-		MODULE:NetStart("VPlaySound")
+		MODULE:NetStart("PlaySound")
 		net.WriteString(path)
 		net.WriteString(channel)
 		net.WriteTable(parameters or {})
@@ -337,7 +337,7 @@ function MODULE:InitServer()
 	end
 
 	function MODULE:SendStream(vplayer, url, channel, parameters)
-		MODULE:NetStart("VPlayStream")
+		MODULE:NetStart("PlayStream")
 		net.WriteString(url)
 		net.WriteString(channel)
 		net.WriteTable(parameters or {})
@@ -348,24 +348,20 @@ function MODULE:InitServer()
 		self:SendStream(VToolkit.GetValidPlayers(false), url, channel, parameters)
 	end
 
-	self:NetHook("VPlaySound", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "playsound")) then
-			local path = net.ReadString()
-			local channel = net.ReadString()
-			local parameters = net.ReadTable()
+	self:NetHook("PlaySound", { "playsound" }, function(vplayer)
+		local path = net.ReadString()
+		local channel = net.ReadString()
+		local parameters = net.ReadTable()
 
-			MODULE:BroadcastSound(path, channel, parameters)
-		end
+		MODULE:BroadcastSound(path, channel, parameters)
 	end)
 
-	self:NetHook("VPlayStream", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "playstream")) then
-			local url = net.ReadString()
-			local channel = net.ReadString()
-			local parameters = net.ReadTable()
+	self:NetHook("PlayStream", { "playstream" }, function(vplayer)
+		local url = net.ReadString()
+		local channel = net.ReadString()
+		local parameters = net.ReadTable()
 
-			MODULE:BroadcastStream(url, channel, parameters)
-		end
+		MODULE:BroadcastStream(url, channel, parameters)
 	end)
 
 end
@@ -397,7 +393,7 @@ function MODULE:InitClient()
 		})
 	end)
 
-	self:NetHook("VPlaySound", function()
+	self:NetHook("PlaySound", function()
 		local path = net.ReadString()
 		local channel = net.ReadString()
 		local parameters = net.ReadTable()
@@ -406,7 +402,7 @@ function MODULE:InitClient()
 		end)
 	end)
 
-	self:NetHook("VPlayStream", function()
+	self:NetHook("PlayStream", function()
 		local url = net.ReadString()
 		local channel = net.ReadString()
 		local parameters = net.ReadTable()
@@ -415,7 +411,7 @@ function MODULE:InitClient()
 		end)
 	end)
 
-	self:NetHook("VStop", function()
+	self:NetHook("Stop", function()
 		local channel = net.ReadString()
 		MODULE:StopChannel(channel)
 	end)

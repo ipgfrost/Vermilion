@@ -87,16 +87,6 @@ local vHookCall = function(evtName, gmTable, ...)
 			hookFunc(...)
 		end
 	end
-	if(Vermilion.Hooks[evtName] != nil) then
-		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
-			a, b, c, d, e, f = hookFunc(...)
-			if(a != nil) then
-				//print("HOOK", id, " RETURNED!")
-				destroySDHook(evtName)
-				return a, b, c, d, e, f
-			end
-		end
-	end
 	for i,mod in pairs(Vermilion.Modules) do
 		a, b, c, d, e, f = mod:DistributeEvent(evtName, ...)
 		if(a != nil) then
@@ -110,7 +100,7 @@ local vHookCall = function(evtName, gmTable, ...)
 				for i,hookFunc in pairs(hookList) do
 					a, b, c, d, e, f = hookFunc(...)
 					if(a != nil) then
-						//print("MODULE", mod.Name, "RETURNED STANDARD HOOK!")
+						//print("MODULE", mod.Name, "RETURNED STANDARD HOOK!", evtName)
 						destroySDHook(evtName)
 						return a, b, c, d, e, f
 					end
@@ -118,11 +108,29 @@ local vHookCall = function(evtName, gmTable, ...)
 			end
 		end
 	end
+	if(Vermilion.Hooks[evtName] != nil) then
+		for id,hookFunc in pairs(Vermilion.Hooks[evtName]) do
+			a, b, c, d, e, f = hookFunc(...)
+			if(a != nil) then
+				//print("HOOK", id, " RETURNED!")
+				destroySDHook(evtName)
+				return a, b, c, d, e, f
+			end
+		end
+	end
+
 	local vars = { ... }
+
+	-- I don't like doing this, but I don't appear to have a choice. GMod keeps blaming Vermilion for
+	-- bugs in other addons because of these lines of code. Alternative fixes would be appreciated.
+	-- TODO: make ALL Vermilion hooks use the Vermilion-standard hook system and keep them out of
+	-- the vanilla hook system so I can change the message to make it more scathing.
+	-- I'm bored of this. Really, I am.
+
 	if(not xpcall(function()
 		a,b,c,d,e,f = hook.oldHook(evtName, gmTable, unpack(vars))
 	end, function(err)
-		hook.Run("OnLuaError") -- bring up the standard "script errors" notification.
+		hook.Run("OnLuaError") -- bring up the standard "script errors" notification. (doesn't seem to work [probably in the wrong realm]; make own?)
 		Vermilion.Log("An error has been detected in the base GMod hook system. This most likely has nothing to do with Vermilion.")
 		print(err)
 		debug.Trace()

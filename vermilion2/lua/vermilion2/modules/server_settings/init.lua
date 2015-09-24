@@ -57,18 +57,18 @@ MODULE.Permissions = {
 	"anonymous_command_exec"
 }
 MODULE.NetworkStrings = {
-	"VServerGetProperties", -- used to build the settings page
-	"VServerUpdate",
-	"VRequestMOTD",
-	"VUpdateMOTD",
-	"VUpdateMOTDSettings",
-	"VGetMOTDProperties",
-	"VGetCommandMuting",
-	"VSetCommandMuting",
-	"VUserDataList",
-	"VGetUserData",
-	"VDelUserData",
-	"VResetConfiguration"
+	"ServerGetProperties", -- used to build the settings page
+	"ServerUpdate",
+	"RequestMOTD",
+	"UpdateMOTD",
+	"UpdateMOTDSettings",
+	"GetMOTDProperties",
+	"GetCommandMuting",
+	"SetCommandMuting",
+	"UserDataList",
+	"GetUserData",
+	"DelUserData",
+	"ResetConfiguration"
 }
 MODULE.DefaultPermissions = {
 	{ Name = "admin", Permissions = {
@@ -124,6 +124,7 @@ end
 local categories = {
 	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
 	{ Name = MODULE:TranslateStr("cat:spawncampprevention"), ID = "SpawncampPrevention", Order = 30 },
+	{ Name = MODULE:TranslateStr("cat:halo"), ID = "Halo", Order = 25 },
 	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 },
 	{ Name = MODULE:TranslateStr("cat:danger"), ID = "Danger", Order = 1000 }
 }
@@ -197,7 +198,7 @@ local options = {
 	{ Name = "driver", GuiText = MODULE:TranslateStr("driver"), Type = "Combobox", Options = table.GetKeys(Vermilion.Drivers), Category = "Danger", Permission = "*", Default = 1 },
 	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Danger", Permission = "*", Function = function()
 		VToolkit:CreateConfirmDialog(MODULE:TranslateStr("resetconf:question"), function()
-				MODULE:NetCommand("VResetConfiguration")
+				MODULE:NetCommand("ResetConfiguration")
 			end, {
 				Confirm = MODULE:TranslateStr("yes"),
 				Deny = MODULE:TranslateStr("noemergency"),
@@ -210,6 +211,10 @@ local options = {
 	{ Name = "enable_spawncamp_protection", GuiText = MODULE:TranslateStr("spawncampprevention:enable"), Type = "Checkbox", Category = "SpawncampPrevention", Default = false },
 	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 },
 	//{ Name = "gamemode", GuiText = MODULE:TranslateStr("active_gamemode"), Type = "Combobox", Options = VToolkit.GetGamemodeNames(), Category = "Misc", Default = table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()) }
+	{ Name = "halo_enabled", GuiText = MODULE:TranslateStr("player_halos:enabled"), Type = "Checkbox", Category = "Halo", Default = false },
+	{ Name = "halo_only_target_player", GuiText = MODULE:TranslateStr("player_halos:target_only"), Type = "Checkbox", Category = "Halo", Default = false },
+	{ Name = "halo_range", GuiText = MODULE:TranslateStr("player_halos:max_range"), Type = "Slider", Category = "Halo", Default = 1500, Bounds = { Min = 100, Max = 5000 } },
+
 }
 
 function MODULE:AddCategory(name, id, order)
@@ -365,7 +370,7 @@ function MODULE:RegisterChatCommands()
 		Name = "motd",
 		Description = "Request the MOTD again.",
 		Function = function(sender, text, log, glog)
-			MODULE:NetStart("VRequestMOTD")
+			MODULE:NetStart("RequestMOTD")
 			local str = MODULE:GetData("motd", "", true)
 			for i,k in pairs(MODULE.MOTDVars) do
 				str = string.Replace(str, "%" .. i .. "%", tostring(k(sender) or "%" .. i .. "%"))
@@ -715,27 +720,25 @@ function MODULE:InitServer()
 	self:SetData("gamemode", table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()))
 
 
-	self:NetHook("VResetConfiguration", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "*")) then
-			Vermilion:BroadcastNotification(vplayer:GetName() .. " has reset the configuration! Level reload in 30 seconds!", NOTIFY_ERROR)
-			file.Delete(Vermilion.GetFileName("settings"))
-			Vermilion:DelHook("ShutDown", "SaveConfiguration")
-			timer.Destroy("Vermilion:SaveConfiguration")
-			function Vermilion:SaveConfiguration() end
-			if(Vermilion:GetModule("map") != nil) then
-				local mod = Vermilion:GetModule("map")
-				mod:AbortMapChange()
-				mod:ScheduleMapChange(game.GetMap(), 30)
-				mod.BlockAbort = true
-			else
-				timer.Simple(30, function()
-					RunConsoleCommand("changelevel", game.GetMap())
-				end)
-			end
+	self:NetHook("ResetConfiguration", { "*" }, function(vplayer)
+		Vermilion:BroadcastNotification(vplayer:GetName() .. " has reset the configuration! Level reload in 30 seconds!", NOTIFY_ERROR)
+		file.Delete(Vermilion.GetFileName("settings"))
+		Vermilion:DelHook("ShutDown", "SaveConfiguration")
+		timer.Destroy("Vermilion:SaveConfiguration")
+		function Vermilion:SaveConfiguration() end
+		if(Vermilion:GetModule("map") != nil) then
+			local mod = Vermilion:GetModule("map")
+			mod:AbortMapChange()
+			mod:ScheduleMapChange(game.GetMap(), 30)
+			mod.BlockAbort = true
+		else
+			timer.Simple(30, function()
+				RunConsoleCommand("changelevel", game.GetMap())
+			end)
 		end
 	end)
 
-	self:NetHook("VServerGetProperties", function(vplayer)
+	self:NetHook("ServerGetProperties", function(vplayer)
 		local tab = {}
 		for i,k in pairs(options) do
 			local val = nil
@@ -751,7 +754,7 @@ function MODULE:InitServer()
 			end
 			tab[tostring(k.Module) .. k.Name] = val
 		end
-		MODULE:NetStart("VServerGetProperties")
+		MODULE:NetStart("ServerGetProperties")
 		net.WriteTable(tab)
 		net.Send(vplayer)
 	end)
@@ -767,53 +770,47 @@ function MODULE:InitServer()
 		else
 			val = MODULE:GetData(name)
 		end
-		MODULE:NetStart("VServerGetProperties")
+		MODULE:NetStart("ServerGetProperties")
 		local tab = {}
 		tab[tostring(mod) .. name] = val
 		net.WriteTable(tab)
 		net.Send(Vermilion:GetUsersWithPermission("manage_server"))
 	end
 
-	self:NetHook("VServerUpdate", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_server")) then
-			local data = net.ReadTable()
-			for i,k in pairs(data) do
-				if(k.DoNotUpdate) then continue end
-				if(k.Module != nil) then
-					if(k.Module == "Vermilion") then
-						Vermilion:SetData(k.Name, k.Value)
-					else
-						Vermilion:SetModuleData(k.Module, k.Name, k.Value)
-					end
+	self:NetHook("ServerUpdate", { "manage_server" }, function(vplayer)
+		local data = net.ReadTable()
+		for i,k in pairs(data) do
+			if(k.DoNotUpdate) then continue end
+			if(k.Module != nil) then
+				if(k.Module == "Vermilion") then
+					Vermilion:SetData(k.Name, k.Value)
 				else
-					self:SetData(k.Name, k.Value)
+					Vermilion:SetModuleData(k.Module, k.Name, k.Value)
 				end
-				sendUpdatedMenuValue(k.Module, k.Name)
+			else
+				self:SetData(k.Name, k.Value)
 			end
+			sendUpdatedMenuValue(k.Module, k.Name)
 		end
 	end)
 
-	self:NetHook("VUpdateMOTD", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "change_motd")) then
-			MODULE:SetData("motd", net.ReadString())
-		end
+	self:NetHook("UpdateMOTD", { "change_motd" }, function(vplayer)
+		MODULE:SetData("motd", net.ReadString())
 	end)
 
-	self:NetHook("VUpdateMOTDSettings", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "change_motd")) then
-			MODULE:SetData("motd_type", net.ReadInt(32))
-		end
+	self:NetHook("UpdateMOTDSettings", { "change_motd" }, function(vplayer)
+		MODULE:SetData("motd_type", net.ReadInt(32))
 	end)
 
-	self:NetHook("VGetMOTDProperties", function(vplayer)
-		MODULE:NetStart("VGetMOTDProperties")
+	self:NetHook("GetMOTDProperties", function(vplayer)
+		MODULE:NetStart("GetMOTDProperties")
 		net.WriteString(MODULE:GetData("motd", "", true))
 		net.WriteInt(MODULE:GetData("motd_type", 1, true), 32)
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VRequestMOTD", function(vplayer)
-		MODULE:NetStart("VRequestMOTD")
+	self:NetHook("RequestMOTD", function(vplayer)
+		MODULE:NetStart("RequestMOTD")
 		local str = MODULE:GetData("motd", "", true)
 		for i,k in pairs(MODULE.MOTDVars) do
 			//if(string.find(str, "%" .. i .. "%")) then
@@ -825,8 +822,8 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VGetCommandMuting", function(vplayer)
-		MODULE:NetStart("VGetCommandMuting")
+	self:NetHook("GetCommandMuting", function(vplayer)
+		MODULE:NetStart("GetCommandMuting")
 		local tab = {}
 		for i,k in pairs(Vermilion.ChatCommands) do
 			if(not k.CanMute) then continue end
@@ -836,13 +833,10 @@ function MODULE:InitServer()
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VSetCommandMuting", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_server")) then
-			local typ = net.ReadString()
-			local enabled = net.ReadBoolean()
-			print("Setting " .. typ .. " to " .. tostring(enabled))
-			Vermilion:GetData("muted_commands", {}, true)[typ] = enabled
-		end
+	self:NetHook("SetCommandMuting", { "manage_server" }, function(vplayer)
+		local typ = net.ReadString()
+		local enabled = net.ReadBoolean()
+		Vermilion:GetData("muted_commands", {}, true)[typ] = enabled
 	end)
 
 	self:AddHook("PlayerSay", function(ply)
@@ -991,9 +985,9 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VUserDataList", function(vplayer)
+	self:NetHook("UserDataList", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
-			MODULE:NetStart("VUserDataList")
+			MODULE:NetStart("UserDataList")
 			local tab = {}
 			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
@@ -1003,9 +997,9 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VGetUserData", function(vplayer)
+	self:NetHook("GetUserData", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
-			MODULE:NetStart("VGetUserData")
+			MODULE:NetStart("GetUserData")
 			local username = net.ReadString()
 			net.WriteBoolean(true)
 			net.WriteString(username)
@@ -1019,20 +1013,20 @@ function MODULE:InitServer()
 		end
 	end)
 
-	self:NetHook("VDelUserData", function(vplayer)
+	self:NetHook("DelUserData", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
 			local tSteamID = net.ReadString()
 			for i,k in pairs(Vermilion.Data.Users) do
 				if(k.SteamID == tSteamID) then
 					table.RemoveByValue(Vermilion.Data.Users, k)
-					MODULE:NetStart("VUserDataList")
+					MODULE:NetStart("UserDataList")
 					local tab = {}
 					for i,k in pairs(Vermilion.Data.Users) do
 						table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
 					end
 					net.WriteTable(tab)
 					net.Send(vplayer)
-					MODULE:NetStart("VGetUserData")
+					MODULE:NetStart("GetUserData")
 					net.WriteBoolean(false)
 					net.Send(vplayer)
 					return
@@ -1065,6 +1059,20 @@ function MODULE:InitServer()
 	VToolkit:SetGlobalValue("FMKB_Enabled", MODULE:GetData("forced_menu_enabled", false, true))
 	VToolkit:SetGlobalValue("FMKB_Key", MODULE:GetData("forced_menu_keybind", "0", true))
 
+	self:AddDataChangeHook("halo_enabled", "halo_enabled", function(value)
+		VToolkit:SetGlobalValue("player_halo_enabled", value)
+	end)
+	self:AddDataChangeHook("halo_only_target_player", "halo_only_target_player", function(value)
+		VToolkit:SetGlobalValue("player_halo_only_target_player", value)
+	end)
+	self:AddDataChangeHook("halo_range", "halo_range", function(value)
+		VToolkit:SetGlobalValue("player_halo_range", value)
+	end)
+	VToolkit:SetGlobalValue("player_halo_enabled", MODULE:GetData("halo_enabled", false, true))
+	VToolkit:SetGlobalValue("player_halo_only_target_player", MODULE:GetData("halo_only_target_player", false, true))
+	VToolkit:SetGlobalValue("player_halo_range", MODULE:GetData("halo_range", 1500, true))
+
+
 end
 
 function MODULE:InitClient()
@@ -1083,7 +1091,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:NetHook("VServerGetProperties", function()
+	self:NetHook("ServerGetProperties", function()
 		MODULE.UpdatingGUI = true
 		for i,k in pairs(net.ReadTable()) do
 			for i1,k1 in pairs(options) do
@@ -1103,7 +1111,7 @@ function MODULE:InitClient()
 		MODULE.UpdatingGUI = false
 	end)
 
-	self:NetHook("VGetMOTDProperties", function()
+	self:NetHook("GetMOTDProperties", function()
 		local paneldata = Vermilion.Menu.Pages["motd"]
 		local text = net.ReadString()
 		local typ = net.ReadInt(32)
@@ -1116,7 +1124,7 @@ function MODULE:InitClient()
 		paneldata.UnsavedChanges = false
 	end)
 
-	self:NetHook("VGetCommandMuting", function()
+	self:NetHook("GetCommandMuting", function()
 		local data = net.ReadTable()
 		local paneldata = Vermilion.Menu.Pages["command_muting"]
 		local panel = paneldata.Panel
@@ -1148,7 +1156,7 @@ function MODULE:InitClient()
 
 			function cb:OnChange()
 				if(not self.AllowUpdate) then return end
-				MODULE:NetStart("VSetCommandMuting")
+				MODULE:NetStart("SetCommandMuting")
 				net.WriteString(k.Name)
 				net.WriteBoolean(cb:GetChecked())
 				net.SendToServer()
@@ -1206,7 +1214,7 @@ function MODULE:InitClient()
 		end
 	end
 
-	self:NetHook("VRequestMOTD", function()
+	self:NetHook("RequestMOTD", function()
 		local text = net.ReadString()
 		local typ = net.ReadInt(32)
 
@@ -1215,11 +1223,11 @@ function MODULE:InitClient()
 
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
 		timer.Simple(2, function()
-			MODULE:NetCommand("VRequestMOTD")
+			MODULE:NetCommand("RequestMOTD")
 		end)
 	end)
 
-	self:NetHook("VUserDataList", function()
+	self:NetHook("UserDataList", function()
 		local paneldata = Vermilion.Menu.Pages["userdata"]
 		local panel = paneldata.Panel
 
@@ -1256,7 +1264,7 @@ function MODULE:InitClient()
 		end
 	end
 
-	self:NetHook("VGetUserData", function()
+	self:NetHook("GetUserData", function()
 		local paneldata = Vermilion.Menu.Pages["userdata"]
 		local panel = paneldata.Panel
 
@@ -1274,6 +1282,27 @@ function MODULE:InitClient()
 		repeatParseTree(data, paneldata.BaseNode)
 	end)
 
+	self:AddHook("PreDrawHalos", function()
+		if(not VToolkit:GetGlobalValue("player_halo_enabled")) then return end
+		if(not VToolkit:GetGlobalValue("player_halo_only_target_player")) then
+			for i,k in pairs(VToolkit.GetValidPlayers()) do
+				if(k:GetPos():Distance(LocalPlayer():GetPos()) < VToolkit:GetGlobalValue("player_halo_range")) then
+					halo.Add({ k }, Vermilion:GetUser(k):GetColour())
+				end
+			end
+		else
+			local trace = LocalPlayer():GetEyeTrace()
+			if(IsValid(trace.Entity)) then
+				if(trace.Entity:IsPlayer()) then
+					if(Vermilion:GetUser(trace.Entity) != nil) then
+						if(Vermilion:GetUser(trace.Entity):GetColour()) then
+							halo.Add({trace.Entity}, Vermilion:GetUser(trace.Entity):GetColour())
+						end
+					end
+				end
+			end
+		end
+	end)
 
 	Vermilion.Menu:AddCategory("server", 2)
 
@@ -1295,7 +1324,7 @@ function MODULE:InitClient()
 			local sl = paneldata.SettingsList
 
 			for i,k in SortedPairsByMemberValue(categories, "Order") do
-				k.Impl = sl:Add(k.Name)
+				categories[i].Impl = sl:Add(k.Name)
 			end
 
 			for i,k in pairs(options) do
@@ -1331,7 +1360,7 @@ function MODULE:InitClient()
 
 					function combobox:OnSelect(index)
 						if(MODULE.UpdatingGUI) then return end
-						MODULE:NetStart("VServerUpdate")
+						MODULE:NetStart("ServerUpdate")
 						if(k.SendText) then
 							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = k.Options[index] }})
 						else
@@ -1343,16 +1372,17 @@ function MODULE:InitClient()
 					panel:SetSize(select(1, combobox:GetPos()) + combobox:GetWide() + 10, combobox:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					combobox:ChooseOptionID(k.Default)
 
@@ -1372,7 +1402,7 @@ function MODULE:InitClient()
 
 					function cb:OnChange()
 						if(MODULE.UpdatingGUI) then return end
-						MODULE:NetStart("VServerUpdate")
+						MODULE:NetStart("ServerUpdate")
 						net.WriteTable({{Module = k.Module, Name = k.Name, Value = cb:GetChecked()}})
 						net.SendToServer()
 					end
@@ -1391,16 +1421,17 @@ function MODULE:InitClient()
 					end
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					if(k.Permission != nil) then
 						cb:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -1418,7 +1449,7 @@ function MODULE:InitClient()
 
 					function slider:OnValueChanged(value)
 						if(MODULE.UpdatingGUI) then return end
-						MODULE:NetStart("VServerUpdate")
+						MODULE:NetStart("ServerUpdate")
 						net.WriteTable({{ Module = k.Module, Name = k.Name, Value = math.Round(value, k.Decimals or 2) }})
 						net.SendToServer()
 					end
@@ -1426,16 +1457,17 @@ function MODULE:InitClient()
 					panel:SetSize(slider:GetWide() + 10, slider:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					if(k.Permission != nil) then
 						slider:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -1462,7 +1494,7 @@ function MODULE:InitClient()
 
 					function wang:OnValueChanged(value)
 						if(MODULE.UpdatingGUI) then return end
-						MODULE:NetStart("VServerUpdate")
+						MODULE:NetStart("ServerUpdate")
 						net.WriteTable({{ Module = k.Module, Name = k.Name, Value = value }})
 						net.SendToServer()
 					end
@@ -1470,16 +1502,17 @@ function MODULE:InitClient()
 					panel:SetSize(select(1, wang:GetPos()) + wang:GetWide() + 10, wang:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					if(k.Permission != nil) then
 						wang:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -1502,16 +1535,17 @@ function MODULE:InitClient()
 					panel:SetSize(btn:GetWide() + btn:GetX(), btn:GetY() + btn:GetTall() + 3)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					k.Impl = btn
 				end
@@ -1519,7 +1553,7 @@ function MODULE:InitClient()
 			MODULE.UpdatingGUI = false
 		end,
 		OnOpen = function(panel)
-			MODULE:NetCommand("VServerGetProperties")
+			MODULE:NetCommand("ServerGetProperties")
 		end
 	})
 
@@ -1560,7 +1594,7 @@ function MODULE:InitClient()
 				if(typCombo.VUpdating) then
 					return
 				end
-				MODULE:NetStart("VUpdateMOTDSettings")
+				MODULE:NetStart("UpdateMOTDSettings")
 				net.WriteInt(index, 32)
 				net.SendToServer()
 			end
@@ -1607,7 +1641,7 @@ function MODULE:InitClient()
 			preview:SetParent(panel)
 
 			local save = VToolkit:CreateButton(MODULE:TranslateStr("motd:save"), function()
-				MODULE:NetStart("VUpdateMOTD")
+				MODULE:NetStart("UpdateMOTD")
 				net.WriteString(motdtext:GetValue())
 				net.SendToServer()
 				paneldata.UnsavedChanges = false
@@ -1628,7 +1662,7 @@ function MODULE:InitClient()
 
 		end,
 		OnOpen = function(panel)
-			MODULE:NetCommand("VGetMOTDProperties")
+			MODULE:NetCommand("GetMOTDProperties")
 		end
 	})
 
@@ -1655,7 +1689,7 @@ function MODULE:InitClient()
 			paneldata.UserList = userList
 
 			function userList:OnRowSelected(index, line)
-				MODULE:NetStart("VGetUserData")
+				MODULE:NetStart("GetUserData")
 				net.WriteString(line:GetValue(1))
 				net.SendToServer()
 				paneldata.DeleteBtn:SetDisabled(false)
@@ -1674,7 +1708,7 @@ function MODULE:InitClient()
 
 			local deleteBtn = VToolkit:CreateButton(MODULE:TranslateStr("userdata:delete"), function()
 				VToolkit:CreateConfirmDialog("Really delete this userdata?", function()
-						MODULE:NetStart("VDelUserData")
+						MODULE:NetStart("DelUserData")
 						net.WriteString(userList:GetSelected()[1].SteamID)
 						net.SendToServer()
 						paneldata.DeleteBtn:SetDisabled(true)
@@ -1688,7 +1722,7 @@ function MODULE:InitClient()
 
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VUserDataList")
+			MODULE:NetCommand("UserDataList")
 			paneldata.DeleteBtn:SetDisabled(true)
 		end
 	})
@@ -1736,7 +1770,7 @@ function MODULE:InitClient()
 			paneldata.Scroll = scroll
 		end,
 		OnOpen = function(panel)
-			MODULE:NetCommand("VGetCommandMuting")
+			MODULE:NetCommand("GetCommandMuting")
 		end
 	})
 end

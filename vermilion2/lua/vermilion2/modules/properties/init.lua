@@ -26,21 +26,21 @@ MODULE.Permissions = {
 
 }
 MODULE.NetworkStrings = {
-	"VCopySteamID",
-	"VCopySteamID64",
-	"VCopyIP"
+	"CopySteamID",
+	"CopySteamID64",
+	"CopyIP"
 }
 
 function MODULE:InitServer()
-	self:NetHook("VCopySteamID", function(vplayer)
+	self:NetHook("CopySteamID", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. net.ReadEntity():SteamID() .. "')")
 	end)
 
-	self:NetHook("VCopySteamID64", function(vplayer)
+	self:NetHook("CopySteamID64", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():SteamID64()) .. "')")
 	end)
 
-	self:NetHook("VCopyIP", function(vplayer)
+	self:NetHook("CopyIP", function(vplayer)
 		vplayer:SendLua("SetClipboardText('" .. tostring(net.ReadEntity():IPAddress()) .. "')")
 	end)
 end
@@ -56,7 +56,7 @@ function MODULE:InitShared()
 			return true
 		end,
 		Action = function(self, ent)
-			MODULE:NetStart("VCopySteamID")
+			MODULE:NetStart("CopySteamID")
 			net.WriteEntity(ent)
 			net.SendToServer()
 		end
@@ -72,7 +72,7 @@ function MODULE:InitShared()
 			return true
 		end,
 		Action = function(self, ent)
-			MODULE:NetStart("VCopySteamID64")
+			MODULE:NetStart("CopySteamID64")
 			net.WriteEntity(ent)
 			net.SendToServer()
 		end
@@ -89,7 +89,7 @@ function MODULE:InitShared()
 			return true
 		end,
 		Action = function(self, ent)
-			MODULE:NetStart("VCopyIP")
+			MODULE:NetStart("CopyIP")
 			net.WriteEntity(ent)
 			net.SendToServer()
 		end

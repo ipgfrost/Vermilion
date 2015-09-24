@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -96,7 +96,7 @@ function MODULE:BuddyListInitServer()
 	end
 
 	local function sendBuddyList(vplayer, steamid)
-		MODULE:NetStart("VGetBuddyList")
+		MODULE:NetStart("GetBuddyList")
 		local blist = MODULE:GetBuddyListSteamID(steamid)
 		local tab = {}
 		for i,k in pairs(blist) do
@@ -108,18 +108,18 @@ function MODULE:BuddyListInitServer()
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VGetBuddyList", function(vplayer)
+	self:NetHook("GetBuddyList", function(vplayer)
 		sendBuddyList(vplayer, net.ReadString())
 	end)
 
-	self:NetHook("VAddBuddy", function(vplayer)
+	self:NetHook("AddBuddy", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		if(table.Count(blist) >= 64) then return end
 		table.insert(blist, { SteamID = net.ReadString(), Permissions = {} })
 		sendBuddyList(vplayer, vplayer:SteamID())
 	end)
 
-	self:NetHook("VDelBuddy", function(vplayer)
+	self:NetHook("DelBuddy", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
 		for i,k in pairs(blist) do
@@ -128,7 +128,7 @@ function MODULE:BuddyListInitServer()
 		sendBuddyList(vplayer, vplayer:SteamID())
 	end)
 
-	self:NetHook("VGetBuddyPermissions", function(vplayer)
+	self:NetHook("GetBuddyPermissions", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
 
@@ -141,12 +141,12 @@ function MODULE:BuddyListInitServer()
 		end
 		if(not has) then return end
 
-		MODULE:NetStart("VGetBuddyPermissions")
+		MODULE:NetStart("GetBuddyPermissions")
 		net.WriteTable(has.Permissions)
 		net.Send(vplayer)
 	end)
 
-	self:NetHook("VUpdateBuddyPermissions", function(vplayer)
+	self:NetHook("UpdateBuddyPermissions", function(vplayer)
 		local blist = MODULE:GetBuddyList(vplayer)
 		local tplayer = net.ReadString()
 		local typ = net.ReadString()
@@ -171,7 +171,7 @@ end
 
 function MODULE:BuddyListInitClient()
 
-	self:NetHook("VGetBuddyList", function()
+	self:NetHook("GetBuddyList", function()
 		local blist = net.ReadTable()
 		local paneldata = Vermilion.Menu.Pages["buddylist"]
 
@@ -193,7 +193,7 @@ function MODULE:BuddyListInitClient()
 		end
 	end)
 
-	self:NetHook("VGetBuddyPermissions", function()
+	self:NetHook("GetBuddyPermissions", function()
 		local paneldata = Vermilion.Menu.Pages["buddylist"]
 		local data = net.ReadTable()
 
@@ -252,7 +252,7 @@ function MODULE:BuddyListInitClient()
 
 			VToolkit:CreateSearchBox(addBuddyList)
 
-			local addBuddyHeader = VToolkit:CreateHeaderLabel(addBuddyList, "Active Players")
+			local addBuddyHeader = VToolkit:CreateHeaderLabel(addBuddyList, MODULE:TranslateStr("activeplayers"))
 			addBuddyHeader:SetParent(addBuddyDrawer)
 
 			local addBuddyFinalBtn = VToolkit:CreateButton("Add Player(s)", function()
@@ -261,7 +261,7 @@ function MODULE:BuddyListInitClient()
 					return
 				end
 				addBuddyDrawer:Close()
-				MODULE:NetStart("VAddBuddy")
+				MODULE:NetStart("AddBuddy")
 				net.WriteString(addBuddyList:GetSelected()[1].SteamID)
 				net.SendToServer()
 			end)
@@ -319,7 +319,7 @@ function MODULE:BuddyListInitClient()
 				function ln:IsLineSelected() return false end
 				function cb:OnChange(val)
 					if(not self.UpdatingFromServer) then
-						MODULE:NetStart("VUpdateBuddyPermissions")
+						MODULE:NetStart("UpdateBuddyPermissions")
 						net.WriteString(buddies:GetSelected()[1]:GetValue(2))
 						net.WriteString(ln.MachineText)
 						net.WriteBoolean(val)
@@ -331,7 +331,7 @@ function MODULE:BuddyListInitClient()
 			paneldata.PermissionsCheckboxes = permissionsCB
 
 			local editPermissionsBtn = VToolkit:CreateButton("Edit Buddy Permissions", function()
-				MODULE:NetStart("VGetBuddyPermissions")
+				MODULE:NetStart("GetBuddyPermissions")
 				net.WriteString(buddies:GetSelected()[1]:GetValue(2))
 				net.SendToServer()
 				editBuddyDrawer:Open()
@@ -345,7 +345,7 @@ function MODULE:BuddyListInitClient()
 
 
 			local deleteBuddyBtn = VToolkit:CreateButton("Delete Buddy", function()
-				MODULE:NetStart("VDelBuddy")
+				MODULE:NetStart("DelBuddy")
 				net.WriteString(buddies:GetSelected()[1]:GetValue(2))
 				net.SendToServer()
 			end)
@@ -367,7 +367,7 @@ function MODULE:BuddyListInitClient()
 			paneldata.BuddyList:Clear()
 			paneldata.QuotaBar:SetFraction(0)
 			paneldata.QuotaHeader:SetText(MODULE:TranslateStr("quotaheader", { "0" }))
-			MODULE:NetStart("VGetBuddyList")
+			MODULE:NetStart("GetBuddyList")
 			net.WriteString(LocalPlayer():SteamID())
 			net.SendToServer()
 

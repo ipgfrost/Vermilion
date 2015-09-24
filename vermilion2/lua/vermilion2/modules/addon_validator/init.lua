@@ -26,8 +26,12 @@ MODULE.Permissions = {
 
 }
 MODULE.NetworkStrings = {
-	"VAddonListRequest"
+	"AddonListRequest",
+	"ForceAddonRequest"
 }
+
+MODULE.SteamStoreAppURL = "http://store.steampowered.com/app/"
+MODULE.WorkshopCollectionURL = "http://steamcommunity.com/sharedfiles/filedetails/?id="
 
 function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
@@ -36,12 +40,7 @@ function MODULE:RegisterChatCommands()
 		CanRunOnDS = false,
 		Function = function(sender, text, log, glog)
 			if(not MODULE:GetData("enabled", true, true)) then return end
-			MODULE:NetStart("VAddonListRequest")
-			local tab = {}
-			for i,k in pairs(engine.GetAddons()) do
-				if(k.mounted) then table.insert(tab, k) end
-			end
-			net.WriteTable(tab)
+			MODULE:NetStart("ForceAddonRequest")
 			net.Send(sender)
 		end
 	})
@@ -127,7 +126,7 @@ end
 function MODULE:InitServer()
 
 
-	self:NetHook("VAddonListRequest", function(vplayer)
+	self:NetHook("AddonListRequest", function(vplayer)
 		if(not MODULE:GetData("enabled", true, true)) then return end
 		local tab = {}
 		local serverAddons = engine.GetAddons()
@@ -141,7 +140,7 @@ function MODULE:InitServer()
 					break
 				end
 			end
-			if(k.mounted and not has) then table.insert(tab, { Title = k.title, ID = k, Type = "Addon" }) end
+			if(k.mounted and not has) then table.insert(tab, { Title = k.title, ID = k.wsid, Type = "Addon" }) end
 		end
 		if(MODULE:GetData("check_missing_mounts", false, true)) then
 			for i,k in pairs(engine.GetGames()) do
@@ -157,33 +156,41 @@ function MODULE:InitServer()
 			end
 		end
 
+		local atab = {}
+		local mtab = {}
+
 		if(MODULE:GetData("kick_missing_addon", false, true)) then
-			local atab = {}
 			for i,k in pairs(tab) do
 				if(k.Type == "Addon") then
 					table.insert(atab, k.Title)
 				end
 			end
-			if(table.Count(atab) > 0) then
-				vplayer:Kick("Missing addons: \n" .. table.concat(atab, "\n"))
-				return
-			end
 		end
 
 		if(MODULE:GetData("kick_missing_mounts", false, true)) then
-			local mtab = {}
 			for i,k in pairs(tab) do
 				if(k.Type == "Addon") then
 					table.insert(mtab, k.Title)
 				end
 			end
-			if(table.Count(mtab) > 0) then
-				vplayer:Kick("Missing mounted content: \n" .. table.concat(mtab, "\n"))
-				return
-			end
 		end
 
-		MODULE:NetStart("VAddonListRequest")
+		if(table.Count(atab) + table.Count(mtab) > 0) then
+			local text = ""
+			if(table.Count(atab) > 0) then
+				text = text .. MODULE:TranslateStr("disconnect:missing_addons", nil, vplayer) .. "\n" .. table.concat(atab, "\n") .. "\n"
+			end
+			if(table.Count(mtab) > 0) then
+				text = text .. MODULE:TranslateStr("disconnect:missing_mounts", nil, vplayer) .. "\n" .. table.concat(mtab, "\n") .. "\n"
+			end
+			if(provideCollectionID) then
+				text = text .. MODULE:TranslateStr("disconnect:collection", { collectionID }, vplayer)
+			end
+			vplayer:Kick("\n" .. string.Trim(text))
+			return
+		end
+
+		MODULE:NetStart("AddonListRequest")
 		net.WriteBoolean(MODULE:GetData("check_missing_mounts", false))
 		net.WriteBoolean(MODULE:GetData("provide_collection_id", false))
 		if(MODULE:GetData("provide_collection_id")) then
@@ -198,7 +205,13 @@ function MODULE:InitClient()
 
 	CreateClientConVar("vermilion_addonnag_do_not_ask", 0, true, false)
 
-	self:NetHook("VAddonListRequest", function()
+	self:NetHook("AddonListRequest", function()
+		local checkMissingMounts = net.ReadBoolean()
+		local provideCollectionID = net.ReadBoolean()
+		local collectionID = nil
+		if(provideCollectionID) then
+			collectionID = net.ReadInt(32)
+		end
 		local missingAddons = net.ReadTable()
 
 		Vermilion.Log("Missing " .. tostring(table.Count(missingAddons)) .. " addons!")
@@ -255,16 +268,33 @@ function MODULE:InitClient()
 			openInWSButton:SetPos(330, 180)
 			openInWSButton:SetSize(180, 35)
 			openInWSButton:SetParent(panel)
+			openInWSButton:SetDisabled(true)
 
-			local openInSteamButton = VToolkit:CreateButton(MODULE:TranslateStr("open_steam_store"), function(self)
-				gui.OpenURL("http://store.steampowered.com/app/" .. missingAddonsList:GetSelected()[1].ID)
-			end)
-			openInSteamButton:SetPos(330, 230)
-			openInSteamButton:SetSize()
+
+			local openInSteamButton
+			if(checkMissingMounts) then
+				openInSteamButton = VToolkit:CreateButton(MODULE:TranslateStr("open_steam_store"), function(self)
+					gui.OpenURL(MODULE.SteamStoreAppURL .. missingAddonsList:GetSelected()[1].ID)
+				end)
+				openInSteamButton:SetPos(330, 230)
+				openInSteamButton:SetSize(180, 35)
+				openInSteamButton:SetParent(panel)
+				openInSteamButton:SetDisabled(true)
+			end
+
+			local openCollectionButton
+			if(provideCollectionID) then
+				openCollectionButton = VToolkit:CreateButton(MODULE:TranslateStr("open_collection"), function(self)
+					gui.OpenURL(MODULE.WorkshopCollectionURL .. tostring(collectionID))
+				end)
+				openCollectionButton:SetPos(330, 280)
+				openCollectionButton:SetSize(180, 35)
+				openCollectionButton:SetParent(panel)
+			end
 
 			function missingAddonsList:OnRowSelected(index, line)
 				openInWSButton:SetDisabled(true)
-				openInSteamButton:SetDisabled(true)
+				if(checkMissingMounts) then openInSteamButton:SetDisabled(true) end
 				if(line.Type == "Addon") then
 					openInWSButton:SetDisabled(false)
 				elseif (line.Type == "MountedContent") then
@@ -284,16 +314,36 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:AddHook(Vermilion.Event.MOD_LOADED, function()
+	self:AddHook(Vermilion.Event.MOD_POST, function()
 		if(GetConVarNumber("vermilion_addonnag_do_not_ask") == 0) then
-			MODULE:NetStart("VAddonListRequest")
+			MODULE:NetStart("AddonListRequest")
 			local tab = {}
 			for i,k in pairs(engine.GetAddons()) do
 				if(k.mounted) then table.insert(tab, k.wsid) end
 			end
 			net.WriteTable(tab)
+			local tabm = {}
+			for i,k in pairs(engine.GetGames()) do
+				if(k.mounted and k.installed) then table.insert(tabm, k.depot) end
+			end
+			net.WriteTable(tabm)
 			net.SendToServer()
 		end
+	end)
+
+	self:NetHook("ForceAddonRequest", function()
+		MODULE:NetStart("AddonListRequest")
+		local tab = {}
+		for i,k in pairs(engine.GetAddons()) do
+			if(k.mounted) then table.insert(tab, k.wsid) end
+		end
+		net.WriteTable(tab)
+		local tabm = {}
+		for i,k in pairs(engine.GetGames()) do
+			if(k.mounted and k.installed) then table.insert(tabm, k.depot) end
+		end
+		net.WriteTable(tabm)
+		net.SendToServer()
 	end)
 
 end

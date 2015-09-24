@@ -44,7 +44,7 @@ MODULE.RankPermissions = {
 	}
 }
 MODULE.NetworkStrings = {
-	"VCallVote"
+	"CallVote"
 }
 
 MODULE.VoteTypes = {}
@@ -208,7 +208,7 @@ function MODULE:InitServer()
 		self.Voters = {}
 		self.VoteCaller = caller:GetName()
 		self.VoteExpires = os.time() + time
-		MODULE:NetStart("VCallVote")
+		MODULE:NetStart("CallVote")
 		net.WriteString(text)
 		net.WriteTable(data)
 		net.WriteInt(time, 32)
@@ -257,7 +257,7 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
-	self:NetHook("VCallVote", function()
+	self:NetHook("CallVote", function()
 		local text = net.ReadString()
 		local data = net.ReadTable()
 		local time = net.ReadInt(32)

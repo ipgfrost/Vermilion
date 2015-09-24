@@ -76,7 +76,7 @@ function VToolkit.MatchPlayerPart(pool, query, matcher)
 	end
 	local result = {}
 	for i,k in pairs(pool) do
-		if(string.find(string.lower(k:GetName()), string.lower(query)) and matcher(k, query)) then
+		if(string.find(string.lower(k:GetName()), string.lower(query), 0, true) and matcher(k, query)) then
 			table.insert(result, k:GetName())
 		end
 	end

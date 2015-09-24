@@ -154,7 +154,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 					k:SetParent(nil)
 				end
 			end
-			Vermilion:GetDriver():RemoveRank(self)
+			Vermilion:GetDriver():DeleteRank(self)
 			Vermilion:BroadcastRankData()
 			Vermilion.Log(Vermilion:TranslateStr("config:rank:deleted", { self.Name }))
 			hook.Run(Vermilion.Event.RankDeleted, self.UniqueID)

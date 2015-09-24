@@ -143,13 +143,13 @@ MODULE.PermissionDefinitions = {
 	["immediate_cleanup"] = "This player will not be able to leave the server and re-connect in a specified time before having their props deleted."
 }
 MODULE.NetworkStrings = {
-	"VGetBuddyList",
-	"VAddBuddy",
-	"VDelBuddy",
-	"VGetBuddyPermissions",
-	"VUpdateBuddyPermissions",
+	"GetBuddyList",
+	"AddBuddy",
+	"DelBuddy",
+	"GetBuddyPermissions",
+	"UpdateBuddyPermissions",
 
-	"VQueryPPSteamID"
+	"QueryPPSteamID"
 }
 
 MODULE.UidCache = {}
@@ -554,6 +554,23 @@ function MODULE:InitShared()
 			return MODULE:GetActiveBuddies(self)
 		end
 		return CPPI.CPPI_NOTIMPLEMENTED
+	end
+
+	local eMeta = FindMetaTable("Entity")
+	function eMeta:VDoesOwn(vplayer)
+		if(SERVER) then
+			return self.Vermilion_Owner == vplayer:SteamID()
+		else
+			return self:GetGlobalValue("Vermilion_Owner") == vplayer:SteamID()
+		end
+	end
+
+	function eMeta:VGetOwner()
+		if(SERVER) then
+			return self.Vermilion_Owner
+		else
+			return self:GetGlobalValue("Vermilion_Owner")
+		end
 	end
 
 	self:AddHook(Vermilion.Event.MOD_LOADED, "AddGui", function()

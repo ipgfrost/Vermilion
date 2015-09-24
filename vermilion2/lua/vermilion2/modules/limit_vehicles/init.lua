@@ -26,9 +26,9 @@ MODULE.Permissions = {
 	"manage_vehicle_limits"
 }
 MODULE.NetworkStrings = {
-	"VGetVehicleLimits",
-	"VBlockVehicle",
-	"VUnblockVehicle"
+	"GetVehicleLimits",
+	"BlockVehicle",
+	"UnblockVehicle"
 }
 
 function MODULE:InitServer()
@@ -37,6 +37,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -63,45 +64,38 @@ function MODULE:InitServer()
 
 
 
-	self:NetHook("VGetVehicleLimits", function(vplayer)
+	self:NetHook("GetVehicleLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("GetVehicleLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetVehicleLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetVehicleLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
+		end
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("BlockVehicle", { "manage_vehicle_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
+			table.insert(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
 
-	self:NetHook("VBlockVehicle", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_vehicle_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
-				table.insert(MODULE:GetData(rnk, {}, true), weapon)
-			end
-		end
-	end)
-
-	self:NetHook("VUnblockVehicle", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_vehicle_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
-		end
+	self:NetHook("UnblockVehicle", { "manage_vehicle_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
 end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetVehicleLimits", function()
+	self:NetHook("GetVehicleLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_vehicle"].RankList)) then return end
 		if(net.ReadString() != Vermilion.Menu.Pages["limit_vehicle"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
@@ -163,7 +157,7 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and allVehicles:GetSelected()[1] != nil))
 					unblockVehicle:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VGetVehicleLimits")
+					MODULE:NetStart("GetVehicleLimits")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -217,7 +211,7 @@ function MODULE:InitClient()
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-						MODULE:NetStart("VBlockVehicle")
+						MODULE:NetStart("BlockVehicle")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
@@ -230,7 +224,7 @@ function MODULE:InitClient()
 
 				unblockVehicle = VToolkit:CreateButton("Unblock Vehicle", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VUnblockVehicle")
+						MODULE:NetStart("UnblockVehicle")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()

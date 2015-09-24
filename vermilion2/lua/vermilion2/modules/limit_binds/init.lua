@@ -26,10 +26,10 @@ MODULE.Permissions = {
 	"manage_keybinds"
 }
 MODULE.NetworkStrings = {
-	"VBindBlockUpdate",
-	"VBindListLoad",
-	"VAddBindBlock",
-	"VRemoveBindBlock"
+	"BindBlockUpdate",
+	"BindListLoad",
+	"AddBindBlock",
+	"RemoveBindBlock"
 }
 -- Client side list
 MODULE.BannedBinds = {}
@@ -37,7 +37,7 @@ MODULE.BannedBinds = {}
 
 function MODULE:BroadcastNewBinds()
 	for i,k in pairs(player.GetAll()) do
-		MODULE:NetStart("VBindBlockUpdate")
+		MODULE:NetStart("BindBlockUpdate")
 		net.WriteTable(self:GetData(Vermilion:GetUser(k):GetRankUID(), {}, true))
 		net.Send(k)
 	end
@@ -49,6 +49,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -59,15 +60,15 @@ function MODULE:InitServer()
 		MODULE:SetData("uidUpdate", true)
 	end
 
-	self:NetHook("VBindBlockUpdate", function(vplayer)
-		MODULE:NetStart("VBindBlockUpdate")
+	self:NetHook("BindBlockUpdate", function(vplayer)
+		MODULE:NetStart("BindBlockUpdate")
 		net.WriteTable(MODULE:GetData(Vermilion:GetUser(vplayer):GetRankUID(), {}, true))
 		net.Send(vplayer)
 	end)
 
 	self:NetHook(Vermilion.Event.PlayerChangeRank, function(data, old, new)
 		if(IsValid(data:GetEntity())) then
-			MODULE:NetStart("VBindBlockUpdate")
+			MODULE:NetStart("BindBlockUpdate")
 			net.WriteTable(MODULE:GetData(new, {}, true))
 			net.Send(data:GetEntity())
 		end
@@ -77,41 +78,37 @@ function MODULE:InitServer()
 		if(not Vermilion:HasRankID(rank)) then
 			return -- bad rank id
 		end
-		MODULE:NetStart("VBindListLoad")
+		MODULE:NetStart("BindListLoad")
 		net.WriteString(rank)
 		net.WriteTable(MODULE:GetData(rank, {}, true))
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VBindListLoad", function(vplayer)
+	self:NetHook("BindListLoad", function(vplayer)
 		local rank = net.ReadString()
 		sendMenuBindList(vplayer, rank)
 	end)
 
-	self:NetHook("VAddBindBlock", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_keybinds")) then
-			local rank = net.ReadString()
-			local bind = net.ReadString()
+	self:NetHook("AddBindBlock", { "manage_keybinds" }, function(vplayer)
+		local rank = net.ReadString()
+		local bind = net.ReadString()
 
-			table.insert(MODULE:GetData(rank, {}, true), bind)
+		table.insert(MODULE:GetData(rank, {}, true), bind)
 
-			sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
+		sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
 
-			MODULE:BroadcastNewBinds()
-		end
+		MODULE:BroadcastNewBinds()
 	end)
 
-	self:NetHook("VRemoveBindBlock", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_keybinds")) then
-			local rank = net.ReadString()
-			local bind = net.ReadString()
+	self:NetHook("RemoveBindBlock", { "manage_keybinds" }, function(vplayer)
+		local rank = net.ReadString()
+		local bind = net.ReadString()
 
-			table.RemoveByValue(MODULE:GetData(rank, {}, true), bind)
+		table.RemoveByValue(MODULE:GetData(rank, {}, true), bind)
 
-			sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
+		sendMenuBindList(Vermilion:GetUsersWithPermission("manage_keybinds"), rank)
 
-			MODULE:BroadcastNewBinds()
-		end
+		MODULE:BroadcastNewBinds()
 	end)
 
 
@@ -120,7 +117,7 @@ end
 
 function MODULE:InitClient()
 
-	self:NetHook("VBindBlockUpdate", function()
+	self:NetHook("BindBlockUpdate", function()
 		MODULE.BannedBinds = net.ReadTable()
 	end)
 
@@ -130,7 +127,7 @@ function MODULE:InitClient()
 		end
 	end)
 
-	self:NetHook("VBindListLoad", function()
+	self:NetHook("BindListLoad", function()
 		local paneldata = Vermilion.Menu.Pages["bindcontrol"]
 		paneldata.RankBlockList:Clear()
 		local rank = net.ReadString()
@@ -143,7 +140,7 @@ function MODULE:InitClient()
 	end)
 
 	self:AddHook(Vermilion.Event.MOD_LOADED, function()
-		MODULE:NetCommand("VBindBlockUpdate")
+		MODULE:NetCommand("BindBlockUpdate")
 	end)
 
 	Vermilion.Menu:AddCategory("player", 4)
@@ -183,7 +180,7 @@ function MODULE:InitClient()
 					blockBind:SetDisabled(self:GetSelected()[1] == nil)
 					unblockBind:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
 					if(self:GetSelected()[1] != nil) then
-						MODULE:NetStart("VBindListLoad")
+						MODULE:NetStart("BindListLoad")
 						net.WriteString(self:GetSelected()[1].UniqueRankID)
 						net.SendToServer()
 					end
@@ -220,7 +217,7 @@ function MODULE:InitClient()
 				local addBlockText = VToolkit:CreateButton("Add", function()
 					if(blocktext:GetValue() == "") then return end
 					rankBlockList:AddLine(blocktext:GetValue())
-					MODULE:NetStart("VAddBindBlock")
+					MODULE:NetStart("AddBindBlock")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.WriteString(blocktext:GetValue())
 					net.SendToServer()
@@ -243,7 +240,7 @@ function MODULE:InitClient()
 
 				unblockBind = VToolkit:CreateButton("Unblock Bind", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VRemoveBindBlock")
+						MODULE:NetStart("RemoveBindBlock")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k:GetValue(1))
 						net.SendToServer()

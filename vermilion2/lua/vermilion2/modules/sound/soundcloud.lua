@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett, 
+ Copyright 2015 Ned Hyett,
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -126,12 +126,12 @@ if(CLIENT) then
 		playButton:SetParent(panel)
 
 		local broadcastButton = VToolkit:CreateButton("Broadcast", function()
-			MODULE:NetStart("VPlayStream")
+			MODULE:NetStart("PlayStream")
 			net.WriteString(SoundCloud.Tracks:GenerateStream(trackid))
 			net.WriteString("BaseSound")
 			net.WriteTable({})
 			net.SendToServer()
-			
+
 		end)
 		broadcastButton:SetSize(100, 20)
 		broadcastButton:SetImage("icon16/transmit.png")
@@ -168,7 +168,7 @@ if(CLIENT) then
 			if(data.original_format != nil) then scmenu:AddOption("Format: " .. data.original_format):SetIcon("icon16/application_xp_terminal.png") else scmenu:AddOption("Format: Unknown"):SetIcon("icon16/application_xp_terminal.png") end
 			scmenu:AddSpacer()
 			scmenu:AddOption("Add To Playlist", function()
-				MODULE:NetStart("VSoundCloudAddToPlaylistQuestion")
+				MODULE:NetStart("SoundCloudAddToPlaylistQuestion")
 				net.WriteString(data.id)
 				net.WriteString(name)
 				net.WriteString(uploader)

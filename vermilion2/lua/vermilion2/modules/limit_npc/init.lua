@@ -26,9 +26,9 @@ MODULE.Permissions = {
 	"manage_npc_limits"
 }
 MODULE.NetworkStrings = {
-	"VGetNPCLimits",
-	"VBlockNPC",
-	"VUnblockNPC"
+	"GetNPCLimits",
+	"BlockNPC",
+	"UnblockNPC"
 }
 
 function MODULE:InitServer()
@@ -37,6 +37,7 @@ function MODULE:InitServer()
 		local ndata = {}
 		for i,k in pairs(MODULE:GetAllData()) do
 			local obj = k
+			if(Vermilion:GetRank(i) == nil) then continue end
 			local nr = Vermilion:GetRank(i):GetUID()
 			ndata[nr] = obj
 			MODULE:SetData(i, nil)
@@ -63,45 +64,38 @@ function MODULE:InitServer()
 
 
 
-	self:NetHook("VGetNPCLimits", function(vplayer)
+	self:NetHook("GetNPCLimits", function(vplayer)
 		local rnk = net.ReadString()
 		local data = MODULE:GetData(rnk, {}, true)
+		MODULE:NetStart("GetNPCLimits")
+		net.WriteString(rnk)
 		if(data != nil) then
-			MODULE:NetStart("VGetNPCLimits")
-			net.WriteString(rnk)
 			net.WriteTable(data)
-			net.Send(vplayer)
 		else
-			MODULE:NetStart("VGetNPCLimits")
-			net.WriteString(rnk)
 			net.WriteTable({})
-			net.Send(vplayer)
+		end
+		net.Send(vplayer)
+	end)
+
+	self:NetHook("BlockNPC", { "manage_npc_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
+			table.insert(MODULE:GetData(rnk, {}, true), weapon)
 		end
 	end)
 
-	self:NetHook("VBlockNPC", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_npc_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			if(not table.HasValue(MODULE:GetData(rnk, {}, true), weapon)) then
-				table.insert(MODULE:GetData(rnk, {}, true), weapon)
-			end
-		end
-	end)
-
-	self:NetHook("VUnblockNPC", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_npc_limits")) then
-			local rnk = net.ReadString()
-			local weapon = net.ReadString()
-			table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
-		end
+	self:NetHook("UnblockNPC", { "manage_npc_limits" }, function(vplayer)
+		local rnk = net.ReadString()
+		local weapon = net.ReadString()
+		table.RemoveByValue(MODULE:GetData(rnk, {}, true), weapon)
 	end)
 
 end
 
 function MODULE:InitClient()
 
-	self:NetHook("VGetNPCLimits", function()
+	self:NetHook("GetNPCLimits", function()
 		if(not IsValid(Vermilion.Menu.Pages["limit_npc"].RankList)) then return end
 		if(net.ReadString() != Vermilion.Menu.Pages["limit_npc"].RankList:GetSelected()[1].UniqueRankID) then return end
 		local data = net.ReadTable()
@@ -158,7 +152,7 @@ function MODULE:InitClient()
 				function rankList:OnRowSelected(index, line)
 					blockNPC:SetDisabled(not (self:GetSelected()[1] != nil and allNPCs:GetSelected()[1] != nil))
 					unblockNPC:SetDisabled(not (self:GetSelected()[1] != nil and rankBlockList:GetSelected()[1] != nil))
-					MODULE:NetStart("VGetNPCLimits")
+					MODULE:NetStart("GetNPCLimits")
 					net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 					net.SendToServer()
 				end
@@ -212,7 +206,7 @@ function MODULE:InitClient()
 						if(has) then continue end
 						rankBlockList:AddLine(k:GetValue(1)).ClassName = k.ClassName
 
-						MODULE:NetStart("VBlockNPC")
+						MODULE:NetStart("BlockNPC")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()
@@ -225,7 +219,7 @@ function MODULE:InitClient()
 
 				unblockNPC = VToolkit:CreateButton("Unblock NPC", function()
 					for i,k in pairs(rankBlockList:GetSelected()) do
-						MODULE:NetStart("VUnblockNPC")
+						MODULE:NetStart("UnblockNPC")
 						net.WriteString(rankList:GetSelected()[1].UniqueRankID)
 						net.WriteString(k.ClassName)
 						net.SendToServer()

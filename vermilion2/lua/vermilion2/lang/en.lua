@@ -184,7 +184,8 @@ Subscribing to these addons will significantly decrease the time taken to connec
 
 Please consider fixing this by using the list below!]])
 lang:Add("addon_validator:open_workshop_page", "Open Workshop Page")
-lang:Add("addon_validator:open_workshop_page:g1", "Must select at least one addon to open the workshop page for!")
+lang:Add("addon_validator:open_steam_store", "Open Steam Store Page")
+lang:Add("addon_validator:open_collection", "Open Server Collection")
 lang:Add("addon_validator:dna", "Close and do not ask again")
 lang:Add("addon_validator:dna:confirm", "Are you sure?\nThis will take effect on every server you join.\nTo reset it, type \"vermilion_addonnag_do_not_ask 0\" into the console!")
 
@@ -194,6 +195,9 @@ lang:Add("addon_validator:opt:check_missing_mounts", "Check for missing mounted 
 lang:Add("addon_validator:opt:kick_missing_mounts", "Kick users missing mounted content (doesn't work on DS/LS)")
 lang:Add("addon_validator:opt:provide_collection_id", "Provide collection URL to players missing addons")
 lang:Add("addon_validator:opt:collection_id", "Collection ID:")
+
+lang:Add("addon_validator:disconnect:missing_addons", "Missing addons:")
+lang:Add("addon_validator:disconnect:missing_mounts", "Missing mounted content:")
 
 --[[
 
@@ -556,10 +560,6 @@ lang:Add("commands:gag:gagged:done", "%s gagged %s")
 lang:Add("commands:gag:ungagged:done", "%s ungagged %s")
 lang:Add("commands:gag:help", "Run the gag command again to ungag this player.")
 
-
-lang:Add("commands:setjailpos:world", "That isn't inside the world...")
-lang:Add("commands:setjailpos:done", "%s set the jail position to %s")
-
 lang:Add("commands:convarvote:question", "Set %s to %s?")
 lang:Add("commands:convarvote:syntax", "Syntax: <convar> <value>")
 
@@ -625,6 +625,7 @@ lang:Add("zones:mode:kill", "Kill")
 lang:Add("zones:mode:anti_propspawn", "Prevent Prop Spawning")
 lang:Add("zones:mode:no_gravity", "Zero Gravity")
 lang:Add("zones:mode:anti_pvp", "Anti-PvP")
+lang:Add("zones:mode:jail", "Jail")
 
 
 lang:Add("zones:cmd:jail:syntax", "<player> <jail zone>")
@@ -698,6 +699,7 @@ lang:Add("server_settings:all_allowed", "All Players Allowed")
 lang:Add("server_settings:cat:limits", "Limits")
 lang:Add("server_settings:cat:immunity", "Immunity")
 lang:Add("server_settings:cat:misc", "Misc")
+lang:Add("server_settings:cat:halo", "Player Halos")
 lang:Add("server_settings:cat:danger", "Danger Zone")
 lang:Add("server_settings:cat:addon_validator", "Addon Validator")
 lang:Add("server_settings:unlimited_ammo", "Unlimited ammunition:")
@@ -746,6 +748,10 @@ lang:Add("server_settings:sprint", "Sprint Permissions:")
 lang:Add("server_settings:forced_menu_keybind:enabled", "Enable Forced Menu Keybind")
 lang:Add("server_settings:forced_menu_keybind:key", "Forced Key:")
 
+lang:Add("server_settings:player_halos:enabled", "Enable Halos")
+lang:Add("server_settings:player_halos:target_only", "Only highlight players under crosshair")
+lang:Add("server_settings:player_halos:max_range", "Max halo range")
+
 
 --[[
 
@@ -784,5 +790,19 @@ lang:Add("votes:kick:question", "Kick player %s?")
 lang:Add("votes:kick:syntax", "Syntax: <player>")
 lang:Add("votes:kick:done", "%s was kicked from the server!")
 
+--[[
+
+	//		Reserved Slots		\\
+
+]]--
+lang:Add("menu:reserved_slots", "Reserved Slots")
+lang:Add("reserved_slots:new", "Add Slot")
+lang:Add("reserved_slots:new:add", "Add Player")
+lang:Add("reserved_slots:remove", "Remove Slot")
+lang:Add("reserved_slots:list:title", "Slots")
+lang:Add("reserved_slots:list:name", "Name")
+lang:Add("reserved_slots:list:steamid", "Steam ID")
+
+lang:Add("reserved_slots:noslots", "No remaining unreserved slots!")
 
 Vermilion:RegisterLanguage(lang)

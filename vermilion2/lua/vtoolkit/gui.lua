@@ -754,6 +754,35 @@ function VToolkit:CreateCategoryList(onecategory)
 	lst.OldAdd = lst.Add
 	function lst:Add(str) -- allows the headers to be re-skinned
 		local btn = self:OldAdd(str)
+
+		btn.OldAdd = btn.Add
+		function btn:Add(str)
+			local tbtn = self:OldAdd(str)
+
+			function tbtn:Paint(w, h)
+				if(self.Depressed or self.m_bSelected) then
+					surface.SetDrawColor(Color(100, 170, 220))
+				else
+					if(self.AltLine) then
+						surface.SetDrawColor(self:GetSkin().Colours.Category.LineAlt.Button)
+					else
+						surface.SetDrawColor(self:GetSkin().Colours.Category.Line.Button)
+					end
+				end
+				surface.DrawRect( 0, 0, w, h )
+			end
+
+			tbtn.OldUpdateColours = tbtn.UpdateColours
+			function tbtn.UpdateColours(vbtn, skin)
+				tbtn.OldUpdateColours(vbtn, skin)
+				if(vbtn.Depressed or vbtn.m_bSelected) then
+					return vbtn:SetTextStyleColor(Color(255, 255, 255))
+				end
+				return vbtn:SetTextStyleColor(Color(0, 0, 0))
+			end
+			return tbtn
+		end
+
 		if(onecategory) then
 			if(table.Count(self.pnlCanvas:GetChildren()) > 1) then
 				if(btn:GetExpanded()) then

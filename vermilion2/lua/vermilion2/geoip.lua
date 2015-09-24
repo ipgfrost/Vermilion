@@ -191,7 +191,7 @@ else
 
 	Vermilion:AddHook("Vermilion2_TargetIDDataGeoIP", "GeoIPTargetID", false, function(vplayer)
 		if(not VToolkit:GetGlobalValue("geoip_enabled")) then return end
-		if(vplayer.VCountry == nil or vplayer.VCountry == "" and vplayer:GetGlobalValue("CountryCode") != nil) then
+		if((vplayer.VCountry == nil or vplayer.VCountry == "") and vplayer:GetGlobalValue("CountryCode") != nil) then
 			vplayer.VCountry = string.lower(vplayer:GetGlobalValue("CountryCode"))
 			vplayer.VCountryMat = Material("flags16/" .. vplayer.VCountry .. ".png", "noclamp smooth")
 		end

@@ -30,11 +30,11 @@ MODULE.Permissions = {
 	"manage_bans"
 }
 MODULE.NetworkStrings = {
-	"VGetBanRecords",
-	"VBanPlayer",
-	"VKickPlayer",
-	"VUnbanPlayer",
-	"VUpdateBanReason"
+	"GetBanRecords",
+	"BanPlayer",
+	"KickPlayer",
+	"UnbanPlayer",
+	"UpdateBanReason"
 }
 MODULE.DefaultPermissions = {
 	{ Name = "admin", Permissions = {
@@ -284,63 +284,55 @@ function MODULE:InitServer()
 	end)
 
 	local function sendBanRecords(vplayer)
-		MODULE:NetStart("VGetBanRecords")
+		MODULE:NetStart("GetBanRecords")
 		net.WriteTable(MODULE:GetData("bans", {}, true))
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VGetBanRecords", function(vplayer)
+	self:NetHook("GetBanRecords", function(vplayer)
 		sendBanRecords(vplayer)
 	end)
 
-	self:NetHook("VBanPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local ent = net.ReadEntity()
-			if(IsValid(ent)) then
-				MODULE:BanPlayer(ent, vplayer, net.ReadInt(32), net.ReadString())
+	self:NetHook("BanPlayer", { "manage_bans" }, function(vplayer)
+		local ent = net.ReadEntity()
+		if(IsValid(ent)) then
+			MODULE:BanPlayer(ent, vplayer, net.ReadInt(32), net.ReadString())
 
+			sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+		end
+	end)
+
+	self:NetHook("KickPlayer", { "manage_bans" }, function(vplayer)
+		local ent = net.ReadEntity()
+		if(IsValid(ent)) then
+			ent:Kick(net.ReadString())
+			MODULE:NetStart("VGetBanRecords")
+			net.WriteTable(MODULE:GetData("bans", {}, true))
+			net.Broadcast()
+		end
+	end)
+
+	self:NetHook("UnbanPlayer", { "manage_bans" }, function(vplayer)
+		local steamid = net.ReadString()
+		for i,k in pairs(MODULE:GetData("bans", {}, true)) do
+			if(k.SteamID == steamid) then
+				table.RemoveByValue(MODULE:GetData("bans", {}, true), k)
+				Vermilion:BroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
 				sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+				break
 			end
 		end
 	end)
 
-	self:NetHook("VKickPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local ent = net.ReadEntity()
-			if(IsValid(ent)) then
-				ent:Kick(net.ReadString())
-				MODULE:NetStart("VGetBanRecords")
-				net.WriteTable(MODULE:GetData("bans", {}, true))
-				net.Broadcast()
-			end
-		end
-	end)
+	self:NetHook("UpdateBanReason", { "manage_bans" }, function(vplayer)
+		local steamid = net.ReadString()
+		local newreason = net.ReadString()
 
-	self:NetHook("VUnbanPlayer", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local steamid = net.ReadString()
-			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
-				if(k.SteamID == steamid) then
-					table.RemoveByValue(MODULE:GetData("bans", {}, true), k)
-					Vermilion:BroadcastNotify("bans:unban:text", { k.Name, vplayer:GetName() })
-					sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
-					break
-				end
-			end
-		end
-	end)
-
-	self:NetHook("VUpdateBanReason", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_bans")) then
-			local steamid = net.ReadString()
-			local newreason = net.ReadString()
-
-			for i,k in pairs(MODULE:GetData("bans", {}, true)) do
-				if(k.SteamID == steamid) then
-					k.Reason = newreason
-					sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
-					return
-				end
+		for i,k in pairs(MODULE:GetData("bans", {}, true)) do
+			if(k.SteamID == steamid) then
+				k.Reason = newreason
+				sendBanRecords(Vermilion:GetUsersWithPermission("manage_bans"))
+				return
 			end
 		end
 	end)
@@ -475,7 +467,7 @@ function MODULE:InitClient()
 			VToolkit:CreateTextInput(MODULE:TranslateStr("reason"), function(text)
 				local time = (times[1] * 31557600) + (times[2] * 2592000) + (times[3] * 604800) + (times[4] * 86400) + (times[5] * 3600) + (times[6] * 60) + times[7]
 				for i,k in pairs(playersToBan) do
-					MODULE:NetStart("VBanPlayer")
+					MODULE:NetStart("BanPlayer")
 					net.WriteEntity(k)
 					net.WriteInt(time, 32)
 					net.WriteString(text)
@@ -505,7 +497,7 @@ function MODULE:InitClient()
 	end
 
 
-	self:NetHook("VGetBanRecords", function()
+	self:NetHook("GetBanRecords", function()
 		if(not Vermilion.Menu.IsOpen) then return end
 		local paneldata = Vermilion.Menu.Pages["bans"]
 		paneldata.UnbanPlayer:SetDisabled(true)
@@ -543,7 +535,7 @@ function MODULE:InitClient()
 	end)
 
 	Vermilion.Menu:AddCategory("player", 4)
-	
+
 	self:AddMenuPage({
 			ID = "bans",
 			Name = Vermilion:TranslateStr("menu:bans"),
@@ -650,7 +642,7 @@ function MODULE:InitClient()
 					end
 					VToolkit:CreateTextInput(MODULE:TranslateStr("kickbtn:reason"), function(text)
 						for i,k in pairs(kickUserList:GetSelected()) do
-							MODULE:NetStart("VKickPlayer")
+							MODULE:NetStart("KickPlayer")
 							net.WriteEntity(VToolkit.LookupPlayer(k:GetValue(1)))
 							net.WriteString(text)
 							net.SendToServer()
@@ -695,7 +687,7 @@ function MODULE:InitClient()
 				editReason = VToolkit:CreateButton(MODULE:TranslateStr("editreason"), function()
 					VToolkit:CreateTextInput(MODULE:TranslateStr("editreason:dialog"), function(text)
 						banList:GetSelected()[1]:SetValue(5, text)
-						MODULE:NetStart("VUpdateBanReason")
+						MODULE:NetStart("UpdateBanReason")
 						net.WriteString(banList:GetSelected()[1].BSteamID)
 						net.WriteString(text)
 						net.SendToServer()
@@ -713,7 +705,7 @@ function MODULE:InitClient()
 				editImg:SetPos(10, (editReason:GetTall() - 16) / 2)
 
 				viewReasonDetail = VToolkit:CreateButton(MODULE:TranslateStr("details"), function()
-					Vermilion:CreateErrorDialog("Not implemented!")
+					VToolkit:CreateErrorDialog("Not implemented!")
 				end)
 				viewReasonDetail:SetPos(panel:GetWide() - 185, 190)
 				viewReasonDetail:SetSize(panel:GetWide() - viewReasonDetail:GetX() - 5, 30)
@@ -727,7 +719,7 @@ function MODULE:InitClient()
 				detailImg:SetPos(10, (viewReasonDetail:GetTall() - 16) / 2)
 
 				updateDuration = VToolkit:CreateButton(MODULE:TranslateStr("editduration"), function()
-					Vermilion:CreateErrorDialog("Not implemented!")
+					VToolkit:CreateErrorDialog("Not implemented!")
 				end)
 				updateDuration:SetPos(panel:GetWide() - 185, 230)
 				updateDuration:SetSize(panel:GetWide() - updateDuration:GetX() - 5, 30)
@@ -741,7 +733,7 @@ function MODULE:InitClient()
 				durationImg:SetPos(10, (updateDuration:GetTall() - 16) / 2)
 
 				unbanPlayer = VToolkit:CreateButton(MODULE:TranslateStr("unbanbtn"), function()
-					MODULE:NetStart("VUnbanPlayer")
+					MODULE:NetStart("UnbanPlayer")
 					net.WriteString(banList:GetSelected()[1].BSteamID)
 					net.SendToServer()
 				end)
@@ -762,7 +754,7 @@ function MODULE:InitClient()
 
 			end,
 			OnOpen = function(panel, paneldata)
-				MODULE:NetCommand("VGetBanRecords")
+				MODULE:NetCommand("GetBanRecords")
 
 				paneldata.BanUserList:Clear()
 				paneldata.KickUserList:Clear()

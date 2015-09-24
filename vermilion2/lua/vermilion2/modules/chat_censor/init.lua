@@ -26,12 +26,12 @@ MODULE.Permissions = {
 	"manage_chat_censor"
 }
 MODULE.NetworkStrings = {
-	"VPhraseListLoad",
-	"VAddPhrase",
-	"VRemovePhrase",
-	"VEditPhrase",
-	"VCensorUpdate",
-	"VGetCensorUpdate"
+	"PhraseListLoad",
+	"AddPhrase",
+	"RemovePhrase",
+	"EditPhrase",
+	"CensorUpdate",
+	"GetCensorUpdate"
 }
 
 function MODULE:InitServer()
@@ -65,62 +65,54 @@ function MODULE:InitServer()
 	end)
 
 	local function sendPhraseList(vplayer)
-		MODULE:NetStart("VPhraseListLoad")
+		MODULE:NetStart("PhraseListLoad")
 		net.WriteTable(MODULE:GetData("banned", {}, true))
 		net.Send(vplayer)
 	end
 
-	self:NetHook("VPhraseListLoad", function(vplayer)
+	self:NetHook("PhraseListLoad", function(vplayer)
 		sendPhraseList(vplayer)
 	end)
 
-	self:NetHook("VAddPhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local newPhrase = net.ReadString()
-			if(not table.HasValue(MODULE:GetData("banned", {}, true), newPhrase)) then
-				table.insert(MODULE:GetData("banned", {}, true), newPhrase)
+	self:NetHook("AddPhrase", { "manage_chat_censor" }, function(vplayer)
+		local newPhrase = net.ReadString()
+		if(not table.HasValue(MODULE:GetData("banned", {}, true), newPhrase)) then
+			table.insert(MODULE:GetData("banned", {}, true), newPhrase)
+		end
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
+	end)
+
+	self:NetHook("RemovePhrase", { "manage_chat_censor" }, function(vplayer)
+		local phrase = net.ReadString()
+		table.RemoveByValue(MODULE:GetData("banned", {}, true), phrase)
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
+	end)
+
+	self:NetHook("EditPhrase", { "manage_chat_censor" }, function(vplayer)
+		local oldPhrase = net.ReadString()
+		local newPhrase = net.ReadString()
+
+		for i,k in pairs(MODULE:GetData("banned", {}, true)) do
+			if(k == oldPhrase) then
+				MODULE:GetData("banned", {}, true)[i] = newPhrase
+				break
 			end
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 		end
+		sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 	end)
 
-	self:NetHook("VRemovePhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local phrase = net.ReadString()
-			table.RemoveByValue(MODULE:GetData("banned", {}, true), phrase)
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
+	self:NetHook("CensorUpdate", { "manage_chat_censor" }, function(vplayer)
+		MODULE:SetData("enabled", net.ReadBoolean())
+		MODULE:SetData("filter_ips", net.ReadBoolean())
+
+		MODULE:NetStart("GetCensorUpdate")
+		net.WriteBoolean(MODULE:GetData("enabled", false, true))
+		net.WriteBoolean(MODULE:GetData("filter_ips", false, true))
+		net.Send(Vermilion:GetUsersWithPermission("manage_chat_censor"))
 	end)
 
-	self:NetHook("VEditPhrase", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			local oldPhrase = net.ReadString()
-			local newPhrase = net.ReadString()
-
-			for i,k in pairs(MODULE:GetData("banned", {}, true)) do
-				if(k == oldPhrase) then
-					MODULE:GetData("banned", {}, true)[i] = newPhrase
-					break
-				end
-			end
-			sendPhraseList(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
-	end)
-
-	self:NetHook("VCensorUpdate", function(vplayer)
-		if(Vermilion:HasPermission(vplayer, "manage_chat_censor")) then
-			MODULE:SetData("enabled", net.ReadBoolean())
-			MODULE:SetData("filter_ips", net.ReadBoolean())
-
-			MODULE:NetStart("VGetCensorUpdate")
-			net.WriteBoolean(MODULE:GetData("enabled", false, true))
-			net.WriteBoolean(MODULE:GetData("filter_ips", false, true))
-			net.Send(Vermilion:GetUsersWithPermission("manage_chat_censor"))
-		end
-	end)
-
-	self:NetHook("VGetCensorUpdate", function(vplayer)
-		MODULE:NetStart("VGetCensorUpdate")
+	self:NetHook("GetCensorUpdate", function(vplayer)
+		MODULE:NetStart("GetCensorUpdate")
 		net.WriteBoolean(MODULE:GetData("enabled", false, true))
 		net.WriteBoolean(MODULE:GetData("filter_ips", false, true))
 		net.Send(vplayer)
@@ -128,7 +120,7 @@ function MODULE:InitServer()
 end
 
 function MODULE:InitClient()
-	self:NetHook("VPhraseListLoad", function()
+	self:NetHook("PhraseListLoad", function()
 		local paneldata = Vermilion.Menu.Pages["chat_censor"]
 
 		paneldata.PhraseList:Clear()
@@ -138,7 +130,7 @@ function MODULE:InitClient()
 		paneldata.PhraseList:OnRowSelected()
 	end)
 
-	self:NetHook("VGetCensorUpdate", function()
+	self:NetHook("GetCensorUpdate", function()
 		local paneldata = Vermilion.Menu.Pages["chat_censor"]
 		paneldata.CanUpdateServer = false
 		paneldata.EnabledCheckbox:SetValue(net.ReadBoolean())
@@ -160,7 +152,7 @@ function MODULE:InitClient()
 		Builder = function(panel, paneldata)
 			local function updateServer()
 				if(not paneldata.CanUpdateServer) then return end
-				MODULE:NetStart("VCensorUpdate")
+				MODULE:NetStart("CensorUpdate")
 				net.WriteBoolean(paneldata.EnabledCheckbox:GetChecked())
 				net.WriteBoolean(paneldata.IPCensorCB:GetChecked())
 				net.SendToServer()
@@ -197,7 +189,7 @@ function MODULE:InitClient()
 			local addPhraseButton = VToolkit:CreateButton(MODULE:TranslateStr("new"), function()
 				if(phraseData:GetValue() == nil or phraseData:GetValue() == "") then return end
 				paneldata.PhraseList:AddLine(phraseData:GetValue())
-				MODULE:NetStart("VAddPhrase")
+				MODULE:NetStart("AddPhrase")
 				net.WriteString(phraseData:GetValue())
 				net.SendToServer()
 				addPhrasePanel:Close()
@@ -218,7 +210,7 @@ function MODULE:InitClient()
 				if(ephraseData:GetValue() == nil or ephraseData:GetValue() == "") then return end
 				local old = paneldata.PhraseList:GetSelected()[1]:GetValue(1)
 				paneldata.PhraseList:GetSelected()[1]:SetValue(1, ephraseData:GetValue())
-				MODULE:NetStart("VEditPhrase")
+				MODULE:NetStart("EditPhrase")
 				net.WriteString(old)
 				net.WriteString(ephraseData:GetValue())
 				net.SendToServer()
@@ -250,7 +242,7 @@ function MODULE:InitClient()
 
 			local remPhrase = VToolkit:CreateButton(MODULE:TranslateStr("remove"), function()
 				for i,k in pairs(paneldata.PhraseList:GetSelected()) do
-					MODULE:NetStart("VRemovePhrase")
+					MODULE:NetStart("RemovePhrase")
 					net.WriteString(k:GetValue(1))
 					net.SendToServer()
 					paneldata.PhraseList:RemoveLine(k:GetID())
@@ -285,8 +277,8 @@ function MODULE:InitClient()
 			editPhrasePanel:MoveToFront()
 		end,
 		OnOpen = function(panel, paneldata)
-			MODULE:NetCommand("VPhraseListLoad")
-			MODULE:NetCommand("VGetCensorUpdate")
+			MODULE:NetCommand("PhraseListLoad")
+			MODULE:NetCommand("GetCensorUpdate")
 			paneldata.EditPhraseBtn:SetDisabled(true)
 			paneldata.RemPhraseBtn:SetDisabled(true)
 

@@ -77,7 +77,7 @@ function MODULE:InitClient()
 			sl:SetSize(600, 560)
 
 			for i,k in SortedPairsByMemberValue(categories, "Order") do
-				k.Impl = sl:Add(k.Name)
+				categories[i].Impl = sl:Add(k.Name)
 			end
 
 			for i,k in pairs(options) do
@@ -118,16 +118,17 @@ function MODULE:InitClient()
 					panel:SetSize(select(1, combobox:GetPos()) + combobox:GetWide() + 10, combobox:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 
 					if(tonumber(GetConVarString(k.ConVar)) == nil) then
@@ -158,16 +159,17 @@ function MODULE:InitClient()
 					end
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					k.Impl = cb
 				elseif(k.Type == "Slider") then
@@ -188,16 +190,17 @@ function MODULE:InitClient()
 					panel:SetSize(slider:GetWide() + 10, slider:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					if(k.Permission != nil) then
 						slider:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -227,16 +230,17 @@ function MODULE:InitClient()
 					panel:SetSize(select(1, mixer:GetPos()) + mixer:GetWide() + 10, mixer:GetTall() + 5)
 					panel:SetPaintBackground(false)
 
-					local cat = nil
 					for ir,cat1 in pairs(categories) do
-						if(cat1.ID == k.Category) then cat = cat1.Impl break end
+						if(cat1.ID == k.Category) then
+							panel:SetParent(cat1.Impl)
+							break
+						end
 					end
 
 					panel:SetContentAlignment( 4 )
 					panel:DockMargin( 1, 0, 1, 0 )
 
 					panel:Dock(TOP)
-					panel:SetParent(cat)
 
 					k.Impl = mixer
 				elseif(k.Type == "NumberWang") then

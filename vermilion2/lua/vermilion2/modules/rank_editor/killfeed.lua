@@ -52,7 +52,7 @@ MODULE:AddHook("AddDeathNotice", function( Victim, team1, Inflictor, Attacker, t
 end)
 //This is no longer GMod code.
 
-MODULE:NetHook("VPlayerKilledPlayer", function()
+MODULE:NetHook("PlayerKilledPlayer", function()
   local v = net.ReadEntity()
   local i = net.ReadString()
   local a = net.ReadEntity()
@@ -84,7 +84,7 @@ MODULE:NetHook("VPlayerKilledPlayer", function()
   table.insert(Deaths, Death)
 end)
 
-MODULE:NetHook("VPlayerSuicide", function()
+MODULE:NetHook("PlayerSuicide", function()
   local v = net.ReadEntity()
   if(not IsValid(v)) then
     local Death = {}
@@ -99,7 +99,7 @@ MODULE:NetHook("VPlayerSuicide", function()
   end
 end)
 
-MODULE:NetHook("VPlayerKilled", function()
+MODULE:NetHook("PlayerKilled", function()
   local v = net.ReadEntity()
   if(not IsValid(v)) then return end
   local i = net.ReadString()
@@ -117,7 +117,7 @@ MODULE:NetHook("VPlayerKilled", function()
   table.insert(Deaths, Death)
 end)
 
-MODULE:NetHook("VPlayerKillNPC", function()
+MODULE:NetHook("PlayerKillNPC", function()
   local vt = net.ReadString()
 	local v	= "#" .. vt
 	local i	= net.ReadString()
@@ -137,7 +137,7 @@ MODULE:NetHook("VPlayerKillNPC", function()
   table.insert(Deaths, Death)
 end)
 
-MODULE:NetHook("VNPCKilledNPC", function()
+MODULE:NetHook("NPCKilledNPC", function()
   local v = "#" .. net.ReadString()
   local i = net.ReadString()
   local a = "#" .. net.ReadString()
