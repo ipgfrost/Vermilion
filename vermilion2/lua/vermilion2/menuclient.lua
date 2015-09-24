@@ -148,6 +148,7 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+<<<<<<< HEAD
 			{ "2.5.3 - 24th September 2015", {
 					"Fixed autopromote.",
 					"Added rank halos (WIP) (request)"
@@ -161,6 +162,8 @@ MENU:AddPage({
 					"Fixed rank deletion bug."
 				}
 			},
+=======
+>>>>>>> origin/master
 			{ "2.5 - 10th July 2015", {
 					"Rebuilt module data storage mechanisms",
 					"Ranks are now addressed by unique identifiers",
