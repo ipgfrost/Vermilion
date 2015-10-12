@@ -1016,22 +1016,17 @@ function MODULE:InitServer()
 	self:NetHook("DelUserData", function(vplayer)
 		if(Vermilion:HasPermission(vplayer, "manage_userdata")) then
 			local tSteamID = net.ReadString()
-			for i,k in pairs(Vermilion.Data.Users) do
-				if(k.SteamID == tSteamID) then
-					table.RemoveByValue(Vermilion.Data.Users, k)
-					MODULE:NetStart("UserDataList")
-					local tab = {}
-					for i,k in pairs(Vermilion.Data.Users) do
-						table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
-					end
-					net.WriteTable(tab)
-					net.Send(vplayer)
-					MODULE:NetStart("GetUserData")
-					net.WriteBoolean(false)
-					net.Send(vplayer)
-					return
-				end
+			Vermilion:GetDriver():DeleteUser(tSteamID)
+			MODULE:NetStart("UserDataList")
+			local tab = {}
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
+				table.insert(tab, { Name = k.Name, Rank = k.Rank, SteamID = k.SteamID })
 			end
+			net.WriteTable(tab)
+			net.Send(vplayer)
+			MODULE:NetStart("GetUserData")
+			net.WriteBoolean(false)
+			net.Send(vplayer)
 		end
 	end)
 

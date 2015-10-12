@@ -148,6 +148,10 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+			{ "2.5.4 - ? ?ber 2015", {
+					"Fixed Userdata removal."
+				}
+			},
 			{ "2.5.3 - 24th September 2015", {
 					"Fixed autopromote.",
 					"Added rank halos (WIP) (request)"

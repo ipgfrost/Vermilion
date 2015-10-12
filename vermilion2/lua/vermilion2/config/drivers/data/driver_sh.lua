@@ -285,6 +285,15 @@ function DRIVER:SetUserRank(user)
 	-- noop on Data driver
 end
 
+function DRIVER:DeleteUser(steamid)
+	for i,k in pairs(self.Data.Users) do
+		if(k.SteamID == steamid) then
+			table.RemoveByValue(self.Data.Users, k)
+			return
+		end
+	end
+end
+
 
 
 Vermilion:RegisterDriver("Data", DRIVER)
