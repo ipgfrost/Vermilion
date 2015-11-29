@@ -115,7 +115,7 @@ function Vermilion.GetVersionString()
 end
 
 function Vermilion.GetVersion()
-	return 2, 5, 3
+	return 2, 5, 4
 end
 
 Vermilion.Internal = {}

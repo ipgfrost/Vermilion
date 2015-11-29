@@ -148,8 +148,9 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
-			{ "2.5.4 - ? ?ber 2015", {
-					"Fixed Userdata removal."
+			{ "2.5.4 - 29th November 2015", {
+					"Fixed Userdata removal.",
+					"Fixed banning offline users by SteamID."
 				}
 			},
 			{ "2.5.3 - 24th September 2015", {

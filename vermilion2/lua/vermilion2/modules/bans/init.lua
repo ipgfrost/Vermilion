@@ -91,6 +91,12 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			local target = VToolkit.LookupPlayer(text[1])
+			if(target == nil) then 
+				if(tonumber(util.SteamIDTo64(text[1])) > 0) then
+					MODULE:BanPlayer({ SteamID = function() return text[1] end, GetName = function() return text[1] end }, sender, tonumber(text[2]) * 60, table.concat(text, " ", 3), log, glog)
+				end
+				return
+			end
 			if(Vermilion:GetUser(target):IsImmune(sender)) then
 				log("bad_syntax", { target:GetName() }, NOTIFY_ERROR)
 				return
@@ -228,7 +234,9 @@ function MODULE:BanPlayer(vplayer, banner, time, reason, log, glog)
 		table.insert(MODULE:GetData("bans", {}, true), { Name = vplayer:GetName(), SteamID = vplayer:SteamID(), Reason = reason, BanTime = os.time(), ExpiryTime = os.time() + time, BannerSteamID = banner:SteamID(), BannerName = banner:GetName() })
 		glog("bans:ban:text", { vplayer:GetName(), banner:GetName(), os.date("%d/%m/%y", os.time() + time), reason or MODULE:TranslateStr("noreason") })
 	end
-	vplayer:Kick(reason or MODULE:TranslateStr("noreason", nil, vplayer))
+	if(vplayer.Kick) then
+		vplayer:Kick(reason or MODULE:TranslateStr("noreason", nil, vplayer))
+	end
 end
 
 function MODULE:UnbanPlayer(name)
