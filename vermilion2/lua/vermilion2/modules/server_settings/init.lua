@@ -68,7 +68,8 @@ MODULE.NetworkStrings = {
 	"UserDataList",
 	"GetUserData",
 	"DelUserData",
-	"ResetConfiguration"
+	"ResetConfiguration",
+	"GetGamemodeList"
 }
 MODULE.DefaultPermissions = {
 	{ Name = "admin", Permissions = {
@@ -210,7 +211,7 @@ local options = {
 	{ Name = "forced_menu_keybind", GuiText = MODULE:TranslateStr("forced_menu_keybind:key"), Type = "Combobox", Options = keylist, Category = "Misc", Permission = "*", Default = 1, SendText = true },
 	{ Name = "enable_spawncamp_protection", GuiText = MODULE:TranslateStr("spawncampprevention:enable"), Type = "Checkbox", Category = "SpawncampPrevention", Default = false },
 	{ Name = "spawncamp_spawn_inv_time", GuiText = MODULE:TranslateStr("spawncampprevention:timer"), Type = "Slider", Category = "SpawncampPrevention", Default = 20, Bounds = { Min = 5, Max = 60 }, Decimals = 0 },
-	//{ Name = "gamemode", GuiText = MODULE:TranslateStr("active_gamemode"), Type = "Combobox", Options = VToolkit.GetGamemodeNames(), Category = "Misc", Default = table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()) }
+	{ Name = "gamemode", GuiText = MODULE:TranslateStr("active_gamemode"), Type = "Combobox", Options = {}, Category = "Misc", Default = 0 },
 	{ Name = "halo_enabled", GuiText = MODULE:TranslateStr("player_halos:enabled"), Type = "Checkbox", Category = "Halo", Default = false },
 	{ Name = "halo_only_target_player", GuiText = MODULE:TranslateStr("player_halos:target_only"), Type = "Checkbox", Category = "Halo", Default = false },
 	{ Name = "halo_range", GuiText = MODULE:TranslateStr("player_halos:max_range"), Type = "Slider", Category = "Halo", Default = 1500, Bounds = { Min = 100, Max = 5000 } },
@@ -718,6 +719,27 @@ function MODULE:InitServer()
 
 	if(self:GetData("voip_control", 3, true) > 3) then self:SetData("voip_control", 3) end
 	self:SetData("gamemode", table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()))
+	
+	self:AddDataChangeHook("gamemode", "ChangeGamemode", function(val)
+		local map = Vermilion:GetModule("map")
+		local target = VToolkit.GetLowerGamemodeNames()[val]
+		local fullname = nil
+		for i1,k1 in pairs(engine.GetGamemodes()) do
+			if(string.lower(k1.title) == target) then
+				fullname = k1.name
+			end
+		end
+		RunConsoleCommand("gamemode", fullname)
+		if(map != nil) then
+			map:ScheduleMapChange(game.GetMap(), 15)
+		end
+	end)
+	
+	self:NetHook("GetGamemodeList", function(vplayer)
+		MODULE:NetStart("GetGamemodeList")
+		net.WriteTable(VToolkit.GetLowerGamemodeNames())
+		net.Send(vplayer)
+	end)
 
 
 	self:NetHook("ResetConfiguration", { "*" }, function(vplayer)
@@ -1095,7 +1117,9 @@ function MODULE:InitClient()
 						if(k1.SendText) then
 							k1.Impl:ChooseOptionID(table.KeyFromValue(keylist, k))
 						else
-							k1.Impl:ChooseOptionID(k)
+							if(k1.Name != "gamemode") then 
+								k1.Impl:ChooseOptionID(k)
+							end
 						end
 					end
 					if(k1.Type == "Checkbox") then k1.Impl:SetValue(k) end
@@ -1298,6 +1322,28 @@ function MODULE:InitClient()
 			end
 		end
 	end)
+	
+	self:NetHook("GetGamemodeList", function() 
+		local page = Vermilion.Menu.Pages["server_settings"]
+		for i,k in pairs(options) do
+			if(k.Name == "gamemode") then
+				MODULE.UpdatingGUI = true
+				local impl = k.Impl
+				local tab = net.ReadTable()
+				for i1,k1 in pairs(tab) do
+					impl:AddChoice(k1)
+				end
+				local fullname = nil
+				for i1,k1 in pairs(engine.GetGamemodes()) do
+					if(k1.name == engine.ActiveGamemode()) then
+						fullname = string.lower(k1.title)
+					end
+				end
+				impl:ChooseOptionID(table.KeyFromValue(tab, fullname))
+				MODULE.UpdatingGUI = false
+			end
+		end
+	end)
 
 	Vermilion.Menu:AddCategory("server", 2)
 
@@ -1324,6 +1370,7 @@ function MODULE:InitClient()
 
 			for i,k in pairs(options) do
 				if(k.Type == "Combobox") then
+					PrintTable(k)
 					local panel = vgui.Create("DPanel")
 
 					local label = VToolkit:CreateLabel(k.GuiText)
@@ -1359,7 +1406,7 @@ function MODULE:InitClient()
 						if(k.SendText) then
 							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = k.Options[index] }})
 						else
-							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = index}})
+							net.WriteTable({{ Module = k.Module, Name = k.Name, Value = index }})
 						end
 						net.SendToServer()
 					end
@@ -1379,7 +1426,10 @@ function MODULE:InitClient()
 
 					panel:Dock(TOP)
 
-					combobox:ChooseOptionID(k.Default)
+					if(table.Count(k.Options) != 0) then
+						combobox:ChooseOptionID(k.Default)
+					end
+					
 
 					if(k.Permission != nil) then
 						combobox:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -1546,6 +1596,8 @@ function MODULE:InitClient()
 				end
 			end
 			MODULE.UpdatingGUI = false
+			
+			self:NetCommand("GetGamemodeList")
 		end,
 		OnOpen = function(panel)
 			MODULE:NetCommand("ServerGetProperties")

@@ -41,6 +41,8 @@ lang:Add("secondslabel", "Seconds:")
 
 lang:Add("activeplayers", "Active Players")
 
+lang:Add("active_gamemode", "Active Gamemode")
+
 
 lang:Add("no_users", "No such player exists on the server.")
 lang:Add("ambiguous_users", "Ambiguous results for search \"%s\". (Matched %s users).")
