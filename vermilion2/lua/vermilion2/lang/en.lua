@@ -250,9 +250,9 @@ lang:Add("auto_promote:removemain", "Remove")
 
 ]]--
 lang:Add("menu:bans", "Ban Management")
-lang:Add("cmd:ban:syntax", "<name> <time:minutes (can be fractional, or 0 for permaban)> <reason>")
-lang:Add("cmd:kick:syntax", "<name> <reason>")
-lang:Add("cmd:unban:syntax", "<name>")
+lang:Add("bans:cmd:ban:syntax", "<name> <time:minutes (can be fractional, or 0 for permaban)> <reason>")
+lang:Add("bans:cmd:kick:syntax", "<name> <reason>")
+lang:Add("bans:cmd:unban:syntax", "<name>")
 lang:Add("bans:noreason", "No reason given")
 lang:Add("bans:ban:allplayers:perma", "All players were permanently banned by %s with reason: %s")
 lang:Add("bans:ban:allplayers", "All players were banned by %s until %s with reason: %s")
@@ -290,6 +290,7 @@ lang:Add("bans:list:bannedon", "Banned On")
 lang:Add("bans:list:expires", "Expires")
 lang:Add("bans:list:bannedby", "Banned By")
 lang:Add("bans:list:reason", "Reason")
+lang:Add("bans:self", "You cannot ban yourself.")
 
 
 --[[

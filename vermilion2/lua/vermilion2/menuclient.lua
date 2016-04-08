@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett
+ Copyright 2015-16 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -148,22 +148,23 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
-			{ "2.5.4 - 29th November 2015", {
-					"Fixed Userdata removal.",
-					"Fixed banning offline users by SteamID."
+			{ "2.5.4 - 13th October 2015", {
+					"Fixed Userdata removal",
+					"Can ban/unban players by SteamID",
+					"Fixed Bans localisation"
 				}
 			},
 			{ "2.5.3 - 24th September 2015", {
-					"Fixed autopromote.",
+					"Fixed autopromote",
 					"Added rank halos (WIP) (request)"
 				}
 			},
 			{ "2.5.2 - 16th September 2015", {
-					"Fixed interface after GMod update."
+					"Fixed interface after GMod update"
 				}
 			},
 			{ "2.5.1 - 16th July 2015", {
-					"Fixed rank deletion bug."
+					"Fixed rank deletion bug"
 				}
 			},
 			{ "2.5 - 10th July 2015", {

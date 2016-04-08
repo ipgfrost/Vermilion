@@ -1,5 +1,5 @@
 --[[
- Copyright 2015 Ned Hyett
+ Copyright 2015-16 Ned Hyett
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  in compliance with the License. You may obtain a copy of the License at
@@ -328,7 +328,7 @@ local spawnFuncsPatch = {
 }
 
 for i,spHook in pairs(spawnFuncsPatch) do
-	Vermilion:AddLPHook(spHook, "Vermilion_CheckLimitFixer" .. i, false, function(vplayer)
+	Vermilion:AddLPHook(spHook, "Vermilion_CheckLimitFixer" .. i, function(vplayer)
 		local str = ""
 		if(spHook == "PlayerSpawnRagdoll") then str = "ragdolls" end
 		if(spHook == "PlayerSpawnProp") then str = "props" end
