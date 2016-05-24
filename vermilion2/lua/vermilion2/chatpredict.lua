@@ -196,7 +196,7 @@ else
 			local maptx = nil
 			mapbx = select(1, chat.GetChatBoxSize()) + 20
 			maptx = select(1, chat.GetChatBoxSize()) + 25
-			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 15, Vermilion.ChatPredict.ChatBGW + 10, Vermilion.ChatPredict.ChatBGH + 5, Color(0, 0, 0, 128))
+			draw.RoundedBox(2, mapbx, select(2, chat.GetChatBoxPos()) - 5, Vermilion.ChatPredict.ChatBGW + 10, Vermilion.ChatPredict.ChatBGH + 5, Color(0, 0, 0, 128))
 			draw.SimpleText(text, "Default", maptx, select(2, chat.GetChatBoxPos()) - 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 			Vermilion.ChatPredict.ChatBGH = 0
 			for i,k in pairs(Vermilion.ChatPredict.ChatPredictions) do

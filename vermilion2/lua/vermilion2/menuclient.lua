@@ -148,6 +148,14 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+			{ "2.5.5 - 21st April 2016", {
+					"Backported fixes from remains of lost experimental build",
+					"Fixed compatibility with AdvDuplicator 2",
+					"Added prototype gamemode changer to Basic Settings",
+					"Tweaked English localisation",
+					"Updated license information to reflect change in year"
+				}
+			},
 			{ "2.5.4 - 13th October 2015", {
 					"Fixed Userdata removal",
 					"Can ban/unban players by SteamID",

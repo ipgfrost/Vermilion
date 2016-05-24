@@ -84,8 +84,9 @@ end
 
 Skin.Textbox = {}
 Skin.Textbox.Config = function(textbox)
-	textbox.m_bBackground = false
+	textbox:SetDrawBackground(false)
 	textbox.m_colText = Color( 0, 0, 0, 255 )
+	
 end
 
 Skin.Textbox.Paint = function( self, w, h )
@@ -99,7 +100,7 @@ Skin.Textbox.Paint = function( self, w, h )
 		surface.SetTextPos(2, self:GetTall() / 2 - (select(2, surface.GetTextSize(self.PlaceholderText)) / 2))
 		surface.DrawText(self.PlaceholderText)
 	end
-	self:DrawTextEntryText( self.m_colText, self.m_colHighlight, self.m_colCursor )
+	self:DrawTextEntryText( self:GetTextColor(), self:GetHighlightColor(), self:GetCursorColor() )
 end
 
 

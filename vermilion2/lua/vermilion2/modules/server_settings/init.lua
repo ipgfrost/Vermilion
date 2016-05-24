@@ -1370,7 +1370,6 @@ function MODULE:InitClient()
 
 			for i,k in pairs(options) do
 				if(k.Type == "Combobox") then
-					PrintTable(k)
 					local panel = vgui.Create("DPanel")
 
 					local label = VToolkit:CreateLabel(k.GuiText)
