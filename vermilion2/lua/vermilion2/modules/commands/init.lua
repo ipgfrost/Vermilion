@@ -1988,7 +1988,7 @@ function MODULE:RegisterChatCommands()
 				return false
 			end
 
-			timer.Create("Slap" .. tplayer:GetName() .. tostring(RealTime()), 1, times, function()
+			timer.Create("Slap" .. tplayer:GetName(), 1, times, function()
 				if(IsValid(tplayer)) then
 					local dmg = DamageInfo()
 					dmg:SetDamage(damage)
@@ -2005,6 +2005,47 @@ function MODULE:RegisterChatCommands()
 		end,
 		AllBroadcast = function(sender, text, forplayer)
 			return "commands:slap:done:all", { sender:GetName(), text[2] }
+		end
+	})
+	
+	Vermilion:AddChatCommand({
+		Name = "stopslap",
+		Description = "Stops the slap command prematurely.",
+		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:stopslap:syntax", nil, vplayer) end,
+		BasicParameters = {
+			{ Type = Vermilion.ChatCommandConst.MultiPlayerArg }
+		},
+		Category = "Fun",
+		CommandFormat = "\"%s\"",
+		CanMute = true,
+		Permissions = { "slap" },
+		AllValid = {
+			{ Size = 3, Indexes = { 1 } }
+		},
+		Predictor = function(pos, current, all, vplayer)
+			if(pos == 1) then
+				return VToolkit.MatchPlayerPart(current)
+			end
+		end,
+		Function = function(sender, text, log, glog)
+			if(table.Count(text) < 1) then
+				log("bad_syntax", nil, NOTIFY_ERROR)
+				return false
+			end
+			local tplayer = VToolkit.LookupPlayer(text[1])
+			if(not IsValid(tplayer)) then
+				log("no_users", nil, NOTIFY_ERROR)
+				return
+			end
+			if(Vermilion:GetUser(tplayer):IsImmune(sender)) then
+				log("player_immune", { tplayer:GetName() }, NOTIFY_ERROR)
+				return
+			end
+			timer.Remove("Slap" .. tplayer:GetName())
+			glog("commands:stopslap:done", { sender:GetName(), tplayer:GetName(), tostring(times) })
+		end,
+		AllBroadcast = function(sender, text, forplayer)
+			return "commands:stopslap:done:all", { sender:GetName(), text[2] }
 		end
 	})
 

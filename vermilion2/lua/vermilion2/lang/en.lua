@@ -421,6 +421,7 @@ lang:Add("commands:cmd:health:syntax", "[player] <health>")
 lang:Add("commands:cmd:explode:syntax", "<player> [magnitude:20]")
 lang:Add("commands:cmd:setteam:syntax", "<player> <team>")
 lang:Add("commands:cmd:slap:syntax", "<player> <times> <damage>")
+lang:Add("commands:cmd:stopslap:syntax", "<player>")
 lang:Add("commands:cmd:adminchat:syntax", "<msg>")
 lang:Add("commands:cmd:gimp:syntax", "<player>")
 lang:Add("commands:cmd:mute:syntax", "<player>")
@@ -547,6 +548,9 @@ lang:Add("commands:setteam:done:all", "%s assigned everybody to team '%s'")
 
 lang:Add("commands:slap:done", "%s slapped %s %s times!")
 lang:Add("commands:slap:done:all", "%s slapped everybody %s times!")
+
+lang:Add("commands:stopslap:done", "%s stopped slapping %s!")
+lang:Add("commands:stopslap:done:all", "%s stopped slapping everybody!")
 
 lang:Add("commands:adminchat:noadmin", "No administrators are currently online.")
 lang:Add("commands:adminchat:sent", "Message Sent!")
