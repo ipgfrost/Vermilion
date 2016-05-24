@@ -48,6 +48,8 @@ MODULE.Permissions = {
 	"setflashlight_others",
 	"setuammo",
 	"setuammo_others",
+	
+	"open_spawnmenu",
 
 
 
@@ -106,7 +108,8 @@ MODULE.DefaultPermissions = {
 			"setfalldamage",
 			"setdamage",
 			"setflashlight",
-			"setuammo"
+			"setuammo",
+			"open_spawnmenu"
 		}
 	}
 }
@@ -196,6 +199,11 @@ local options = {
 			MODULE:TranslateStr("pvpmode:disable"),
 			MODULE:TranslateStr("permissions_based")
 		}, Category = "Limits", Default = 3 },
+	{ Name = "spawnmenu_control", GuiText = MODULE:TranslateStr("spawnmenu_control"), Type = "Combobox", Options = {
+			MODULE:TranslateStr("off"),
+			MODULE:TranslateStr("spawnmenu_control:allplayers"),
+			MODULE:TranslateStr("permissions_based")
+		}, Category = "Limits", Default = 1 },
 	{ Name = "driver", GuiText = MODULE:TranslateStr("driver"), Type = "Combobox", Options = table.GetKeys(Vermilion.Drivers), Category = "Danger", Permission = "*", Default = 1 },
 	{ Name = "reset_config", GuiText = MODULE:TranslateStr("resetconf"), Type = "Button", Category = "Danger", Permission = "*", Function = function()
 		VToolkit:CreateConfirmDialog(MODULE:TranslateStr("resetconf:question"), function()
@@ -1066,7 +1074,11 @@ function MODULE:InitServer()
 		end
 	end)
 
-
+	self:AddDataChangeHook("spawnmenu_control", "spawnmenu_control_update", function(value)
+		VToolkit:SetGlobalValue("spawnmenu_control", value)
+	end)
+	VToolkit:SetGlobalValue("spawnmenu_control", MODULE:GetData("spawnmenu_control", 1, true))
+	
 	self:AddDataChangeHook("forced_menu_keybind", "FMKB_Key", function(value)
 		VToolkit:SetGlobalValue("FMKB_Key", value)
 	end)
@@ -1106,6 +1118,12 @@ function MODULE:InitClient()
 		if(enabled) then
 			return Vermilion:HasPermission("noclip")
 		end
+	end)
+	
+	self:AddHook("SpawnMenuOpen", function()
+		if(VToolkit:GetGlobalValue("spawnmenu_control") == 1) then return end
+		if(VToolkit:GetGlobalValue("spawnmenu_control") == 2) then return false end
+		return Vermilion:HasPermission("open_spawnmenu")
 	end)
 
 	self:NetHook("ServerGetProperties", function()

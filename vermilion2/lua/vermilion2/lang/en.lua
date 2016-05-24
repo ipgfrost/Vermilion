@@ -724,6 +724,8 @@ lang:Add("server_settings:falldmg", "Fall Damage Modifier:")
 lang:Add("server_settings:ownernag", "Disable 'No owner detected' nag at startup")
 lang:Add("server_settings:plycoll", "Player Collisions Mode (experimental):")
 lang:Add("server_settings:pvpmode", "PvP Mode:")
+lang:Add("server_settings:spawnmenu_control", "Spawnmenu Control:")
+lang:Add("server_settings:spawnmenu_control:allplayers", "Spawnmenu Disabled")
 lang:Add("server_settings:resetconf", "Reset Configuration")
 
 lang:Add("server_settings:apb", "All Players Blocked")

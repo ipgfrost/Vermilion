@@ -148,6 +148,12 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+			{ "2.5.6 - 24th May 2016", {
+					"Hopefully fixed text field problems (please report if this is not the case)",
+					"Added stopslap command.",
+					"Added ability to prevent users from accessing the spawnmenu."
+				}
+			},
 			{ "2.5.5 - 21st April 2016", {
 					"Backported fixes from remains of lost experimental build",
 					"Fixed compatibility with AdvDuplicator 2",
