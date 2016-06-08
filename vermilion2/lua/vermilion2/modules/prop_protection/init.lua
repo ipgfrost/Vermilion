@@ -64,7 +64,9 @@ MODULE.Permissions = {
 	"antispam_notify",
 
 	"immune_to_cleanup",
-	"immediate_cleanup"
+	"immediate_cleanup",
+	
+	"allow_public_domain_override"
 }
 MODULE.DefaultPermissions = {
 	{ "admin", {

@@ -39,7 +39,7 @@ function TOOL:LeftClick( trace )
 				Vermilion:AddNotification(self:GetOwner(), "Entity " .. tostring(trace.Entity:EntIndex()) .. " doesn't have an owner!", NOTIFY_ERROR)
 				return
 			end
-      if(not trace.Entity:VDoesOwn(self:GetOwner())) then
+      if(not trace.Entity:VDoesOwn(self:GetOwner()) and not Vermilion:HasPermission(self:GetOwner(), "allow_public_domain_override")) then
         Vermilion:AddNotification(self:GetOwner(), "You don't own this.", NOTIFY_ERROR)
         return
       end
@@ -51,6 +51,7 @@ function TOOL:LeftClick( trace )
       undo.SetPlayer(self:GetOwner())
       undo.Finish()
       trace.Entity:VSetOwner(nil)
+	  Vermilion:AddNotification(self:GetOwner(), "This prop is now in the public domain.", NOTIFY_HINT)
     end
 	end
 	return true
