@@ -129,7 +129,7 @@ local categories = {
 	{ Name = MODULE:TranslateStr("cat:limits"), ID = "Limits", Order = 0 },
 	{ Name = MODULE:TranslateStr("cat:spawncampprevention"), ID = "SpawncampPrevention", Order = 30 },
 	{ Name = MODULE:TranslateStr("cat:halo"), ID = "Halo", Order = 25 },
-	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 50 },
+	{ Name = MODULE:TranslateStr("cat:misc"), ID = "Misc", Order = 500 },
 	{ Name = MODULE:TranslateStr("cat:danger"), ID = "Danger", Order = 1000 }
 }
 

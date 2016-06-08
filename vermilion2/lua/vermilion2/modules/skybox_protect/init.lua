@@ -172,6 +172,8 @@ function MODULE:InitServer()
 	self:AddHook(Vermilion.Event.ShuttingDown, "skybox_save", function()
 		MODULE:SaveSettings()
 	end)
+	
+	self:LoadSettings()
 end
 
 function MODULE:InitClient()

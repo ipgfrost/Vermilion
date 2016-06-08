@@ -105,7 +105,7 @@ CreateClientConVar("vtoolkit_skin", "Basic", true, false)
 
 function VToolkit:GetActiveSkin()
 	if(GetConVarString("vtoolkit_skin") == nil or self.Skins[GetConVarString("vtoolkit_skin")] == nil) then
-		RunConsoleCommand("vtoolkit_skin", "Basic")
+		//RunConsoleCommand("vtoolkit_skin", "Basic")
 		return self.Skins["Basic"]
 	end
 	return self.Skins[GetConVarString("vtoolkit_skin")]

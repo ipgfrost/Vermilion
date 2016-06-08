@@ -74,6 +74,7 @@ function MODULE.BaseZone:AddMode(mode, parameters)
 		hook.Call("Vermilion_Player_Left_Zone", nil, self, VToolkit.LookupPlayerBySteamID(i))
 		self.ActivePlayers[i] = nil
 	end
+	MODULE:UpdateClients()
 end
 function MODULE.BaseZone:RemoveMode(mode)
 	for i,k in pairs(self.ActiveObjects) do
@@ -85,6 +86,7 @@ function MODULE.BaseZone:RemoveMode(mode)
 		self.ActivePlayers[i] = nil
 	end
 	self.Modes[mode] = nil
+	MODULE:UpdateClients()
 end
 function MODULE.BaseZone:GetModeProps(mode)
 	return self.Modes[mode]
@@ -124,9 +126,11 @@ function MODULE:RegisterMode(data)
 	MODULE.ModeDefinitions[data.Name] = data
 end
 
-function MODULE:NewZone(c1, c2, name, owner)
-	self.Zones[name] = { Bound = VToolkit.CBound(c1, c2), Modes = { }, Owner = owner, ActivePlayers = {}, ActiveObjects = {}, Map = game.GetMap() }
+function MODULE:NewZone(c1, c2, name, owner, modes)
+	if(modes == nil) then modes = { } end
+	self.Zones[name] = { Bound = VToolkit.CBound(c1, c2), Modes = modes, Owner = owner, ActivePlayers = {}, ActiveObjects = {}, Map = game.GetMap() }
 	setmetatable(self.Zones[name], { __index = MODULE.BaseZone })
+	if(CLIENT) then return end
 	self:UpdateClients()
 end
 
@@ -145,7 +149,7 @@ function MODULE:UpdateClients(client)
 	local stab = {}
 	for i,k in pairs(MODULE.Zones) do
 		if(k.Map == game.GetMap()) then
-			table.insert(stab, {k.Bound.Point1, k.Bound.Point2})
+			table.insert(stab, { k.Bound.Point1, k.Bound.Point2, i, k.Owner, k.Modes })
 		end
 	end
 	net.WriteTable(stab)
@@ -183,7 +187,7 @@ function MODULE:ResetSettings()
 end
 
 function MODULE:DistributeEvent(eventName, ...)
-	if(CLIENT) then return end
+	//if(CLIENT) then return end
 	for i,k in pairs(VToolkit.FindInTable(MODULE.ModeDefinitions, function(tentry)
 		if(tentry.Events == nil) then return false end
 		return tentry.Events[eventName] != nil
@@ -608,6 +612,16 @@ function MODULE:InitShared()
 				if(vervplayer.Jailed and vervplayer.AssignedJail == zone:GetName()) then
 					vplayer:SetPos(zone.Bound:CentreBase())
 				end
+			end
+		}
+	})
+	
+	self:RegisterMode({
+		Name = "norender",
+		Events = {
+			["Vermilion_RenderZone"] = function(zone, vplayer)
+				if(not zone:HasMode("norender")) then return end
+				return true
 			end
 		}
 	})
@@ -1098,11 +1112,9 @@ function MODULE:InitClient()
 	CreateClientConVar("vermilion_render_zones", 1, true, false)
 
 	self:NetHook("UpdateBlocks", function()
-		local stab = {}
 		for i,k in pairs(net.ReadTable()) do
-			table.insert(stab, VToolkit.CBound(k[1], k[2]))
+			MODULE:NewZone(k[1], k[2], k[3], k[4], k[5])
 		end
-		MODULE.Zones = stab
 	end)
 
 	self:NetHook("DrawCreateBlocks", function()
@@ -1123,6 +1135,10 @@ function MODULE:InitClient()
 				Category = "Features"
 			})
 		end
+		if(Vermilion:GetModule("server_settings") != nil) then
+			local ss = Vermilion:GetModule("server_settings")
+			//ss:AddCategory(MODULE:TranslateStr("cat:zones"), "Zones", 450)
+		end
 	end)
 
 	self:AddHook("PostDrawOpaqueRenderables", function(bDrawingDepth, bDrawingSkybox)
@@ -1136,10 +1152,12 @@ function MODULE:InitClient()
 		end
 		if(bDrawingSkybox or bDrawingDepth or GetConVarNumber("vermilion_render_zones") == 0) then return end
 		for i,k in pairs(MODULE.Zones) do
-			cam.Start3D2D(k.Point1, Angle(0, 0, 0), 1)
-				render.SetMaterial(MODULE.DrawEffect)
-				render.DrawBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (k.Point2 - k.Point1) * Vector(1, -1, 1), Color(0, 0, 0, 255), false)
-			cam.End3D2D()
+			if(not hook.Call("Vermilion_RenderZone", nil, k, LocalPlayer())) then
+				cam.Start3D2D(k.Bound.Point1, Angle(0, 0, 0), 1)
+					render.SetMaterial(MODULE.DrawEffect)
+					render.DrawBox(Vector(0, 0, 0), Angle(0, 0, 0), Vector(0, 0, 0), (k.Bound.Point2 - k.Bound.Point1) * Vector(1, -1, 1), Color(0, 0, 0, 255), false)
+				cam.End3D2D()
+			end
 		end
 
 	end)

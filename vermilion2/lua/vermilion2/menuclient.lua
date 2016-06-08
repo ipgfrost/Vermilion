@@ -148,6 +148,12 @@ MENU:AddPage({
 		clContainer:DockMargin(2, 2, 2, 2)
 
 		local changelog = {
+			{ "2.5.7 - TBD", {
+					"Fixed the inability to move a rank down in the editor.",
+					"Fixed weapon confiscation using slightly different scales.",
+					"Fixed unwanted skin reset during startup."
+				}
+			},
 			{ "2.5.6 - 24th May 2016", {
 					"Hopefully fixed text field problems (please report if this is not the case)",
 					"Added stopslap command.",

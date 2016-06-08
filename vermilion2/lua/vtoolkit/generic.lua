@@ -99,10 +99,14 @@ function VToolkit.CBound(Point1, Point2)
 	CBound.Point2 = Point2
 
 	function CBound:IsInside(point)
-		if(isentity(point) and point:IsPlayer()) then
+		if(isentity(point)) then
+			local currentlyInside = ents.FindInBox(self.Point1, self.Point2)
+			return table.HasValue(currentlyInside, point)
+		end
+	--[[if(isentity(point) and point:IsPlayer()) then
 			return point:GetPos():WithinAABox(self.Point1, self.Point2) or point:GetPos():WithinAABox(self.Point2, self.Point1) or (point:GetPos() + Vector(0, 0, 80)):WithinAABox(self.Point1, self.Point2) or (point:GetPos() + Vector(0, 0, 80)):WithinAABox(self.Point2, self.Point1)
 		end
-		if(isentity(point)) then return point:GetPos():WithinAABox(self.Point1, self.Point2) or point:GetPos():WithinAABox(self.Point2, self.Point1) end
+		if(isentity(point)) then return point:GetPos():WithinAABox(self.Point1, self.Point2) or point:GetPos():WithinAABox(self.Point2, self.Point1) end ]]
 		return point:WithinAABox(self.Point1, self.Point2) or point:WithinAABox(self.Point2, self.Point1)
 	end
 

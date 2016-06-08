@@ -89,7 +89,7 @@ function Vermilion:AttachRankFunctions(rankObj)
 				Vermilion.Log("Cannot call rank:MoveDown() on client!")
 				return
 			end
-			if(self:GetImmunity() == table.Count(Vermilion.Data.Ranks)) then
+			if(self:GetImmunity() == table.Count(Vermilion:GetDriver():GetAllRanks())) then
 				Vermilion.Log(Vermilion:TranslateStr("config:rank:cantmovedown"))
 				return false
 			end
