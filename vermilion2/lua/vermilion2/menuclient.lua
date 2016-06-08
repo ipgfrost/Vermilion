@@ -151,7 +151,9 @@ MENU:AddPage({
 			{ "2.5.7 - TBD", {
 					"Fixed the inability to move a rank down in the editor.",
 					"Fixed weapon confiscation using slightly different scales.",
-					"Fixed unwanted skin reset during startup."
+					"Fixed unwanted skin reset during startup.",
+					"Added norender zone mode.",
+					"Fixed !cleanup."
 				}
 			},
 			{ "2.5.6 - 24th May 2016", {

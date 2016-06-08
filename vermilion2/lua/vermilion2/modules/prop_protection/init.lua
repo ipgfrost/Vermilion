@@ -496,7 +496,7 @@ function MODULE:RegisterChatCommands()
 			end
 			local steamid = nil
 			local name = nil
-			for i,k in pairs(Vermilion.Data.Users) do
+			for i,k in pairs(Vermilion:GetDriver():GetAllUsers()) do
 				if(string.find(string.lower(k.Name), string.lower(text[1]))) then steamid = k.SteamID name = k.Name break end
 			end
 			if(steamid == nil) then
