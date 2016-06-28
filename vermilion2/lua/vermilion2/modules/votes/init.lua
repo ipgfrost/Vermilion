@@ -64,6 +64,8 @@ function MODULE:AddVoteType(name, createFunc, sfunc, predictor, localisationStri
 		Vermilion.Log("Overwriting vote type " .. name .. "!")
 	end
 	self.VoteTypes[name] = { Create = createFunc, Success = sfunc, Predictor = predictor, LocalisationString = localisationString }
+	table.Add(self.Permissions, "allow_call_" .. name .. "_vote")
+	table.insert(Vermilion.AllPermissions, { Permission = "allow_call_" .. name .. "_vote", Owner = self.ID })
 end
 
 function MODULE:RegisterChatCommands()
@@ -105,6 +107,10 @@ function MODULE:RegisterChatCommands()
 			end
 			if(not MODULE:GetData("vote_" .. typ, true, true)) then
 				log("votes:disabled", NOTIFY_ERROR)
+				return
+			end
+			if(not Vermilion:HasPermission(sender, "allow_call_" .. typ .. "_vote")) then
+				log("votes:noperm", NOTIFY_ERROR)
 				return
 			end
 			local tcopy = table.Copy(text)

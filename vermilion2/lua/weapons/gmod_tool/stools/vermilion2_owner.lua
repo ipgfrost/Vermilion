@@ -17,7 +17,7 @@
  in any way, nor claims to be so.
 ]]
 
-TOOL.Category = "Vermilion 2 Dev Toolkit"
+TOOL.Category = "Prop Protection"
 TOOL.Name = "Owner"
 TOOL.Tab = "Vermilion 2"
 TOOL.Command = nil

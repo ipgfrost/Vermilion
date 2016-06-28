@@ -65,8 +65,9 @@ MODULE.Permissions = {
 
 	"immune_to_cleanup",
 	"immediate_cleanup",
-	
-	"allow_public_domain_override"
+
+	"allow_public_domain_override",
+	"allow_force_transfer_override"
 }
 MODULE.DefaultPermissions = {
 	{ "admin", {

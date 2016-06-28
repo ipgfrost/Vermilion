@@ -39,6 +39,7 @@ MODULE.NetworkStrings = {
 	"Stop",
 	"Pause",
 	"Unpause",
+	"ShowSoundInfo",
 
 	"SoundCloudGetPlaylists",
 	"SoundCloudGetPlaylistContent",
@@ -307,6 +308,16 @@ function MODULE:RegisterChatCommands()
 		end
 	})
 
+	Vermilion:AddChatCommand({
+		Name = "song",
+		Description = "Shows the credits for the last sound played, if any.",
+		Function = function(sender, text, log)
+			MODULE:NetStart("ShowSoundInfo")
+			net.WriteBool(false)
+			net.Send(sender)
+		end
+	})
+
 end
 
 function MODULE:InitShared()
@@ -360,6 +371,12 @@ function MODULE:InitServer()
 		local url = net.ReadString()
 		local channel = net.ReadString()
 		local parameters = net.ReadTable()
+		local info = net.ReadTable()
+
+		MODULE:NetStart("ShowSoundInfo")
+		net.WriteBool(true)
+		net.WriteTable(info)
+		net.Send(vplayer)
 
 		MODULE:BroadcastStream(url, channel, parameters)
 	end)
@@ -414,6 +431,18 @@ function MODULE:InitClient()
 	self:NetHook("Stop", function()
 		local channel = net.ReadString()
 		MODULE:StopChannel(channel)
+	end)
+
+	self:NetHook("ShowSoundInfo", function()
+		if(not net.ReadBool()) then
+			MODULE.Credits = MODULE.OldCredits
+		else
+			MODULE.Credits = net.ReadTable()
+		end
+		timer.Simple(20, function()
+			MODULE.OldCredits = MODULE.Credits
+			MODULE.Credits = nil
+		end)
 	end)
 
 	local function setChannel(name, data)

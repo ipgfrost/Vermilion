@@ -55,7 +55,7 @@ Skin.Button = {}
 Skin.Button.Config = function(button)
 	if(not Skin.CreatedBtnFont) then
 		if(system.IsOSX() and false) then
-			
+
 		else
 			surface.CreateFont( 'VToolkitButton', {
 				font		= 'Tahoma',
@@ -86,7 +86,7 @@ Skin.Textbox = {}
 Skin.Textbox.Config = function(textbox)
 	textbox:SetDrawBackground(false)
 	textbox.m_colText = Color( 0, 0, 0, 255 )
-	
+
 end
 
 Skin.Textbox.Paint = function( self, w, h )
@@ -149,8 +149,8 @@ Skin.PropertySheetTab.Paint = function(self, w, h)
 	surface.DrawOutlinedRect( 0, 0, w, h )
 end
 
-Skin.CollapsibleCateogryHeader = {}
-Skin.CollapsibleCateogryHeader.Paint = function(self, w, h)
+Skin.CollapsibleCategoryHeader = {}
+Skin.CollapsibleCategoryHeader.Paint = function(self, w, h)
 	surface.SetDrawColor(255, 0, 0, self:GetAlpha())
 	surface.DrawRect(0, 0, w, 20)
 end

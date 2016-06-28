@@ -44,7 +44,6 @@ end)
 
 local commandMustHave = { "Name", "Function" }
 local commandShouldHave = {
-	{ "Description", "There isn't one." },
 	{ "Predictor", nil },
 	{ "Syntax", "" },
 	{ "CanMute", false },
@@ -84,6 +83,15 @@ function Vermilion:AddChatCommand(props)
 	end
 	for i,k in pairs(commandShouldHave) do
 		if(props[k[1]] == nil) then props[k[1]] = k[2] end
+	end
+	if(props.Description == nil) then
+		props.Description = Vermilion:TranslateStr("cmd:" .. props.Name .. ":description")
+	end
+	if(props.Syntax == "") then
+		local test = Vermilion:TranslateStr("cmd:" .. props.Name .. ":syntax")
+		if(test != "cmd:" .. props.Name .. ":syntax") then
+			props.Syntax = test
+		end
 	end
 	if(self.ChatCommands[activator] != nil) then
 		self.Log("Chat command " .. activator .. " has been overwritten!")

@@ -153,7 +153,12 @@ MENU:AddPage({
 					"Fixed weapon confiscation using slightly different scales.",
 					"Fixed unwanted skin reset during startup.",
 					"Added norender zone mode.",
-					"Fixed !cleanup."
+					"Fixed !cleanup.",
+					"Added !song.",
+					"Broadcasting SoundCloud songs now shows the information view properly.",
+					"Changing skins no longer requires restart.",
+					"sbox_godmode set to 0 automatically to give Vermilion full control over damage.",
+					"Added Force Transfer tool."
 				}
 			},
 			{ "2.5.6 - 24th May 2016", {

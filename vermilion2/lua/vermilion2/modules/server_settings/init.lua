@@ -48,7 +48,7 @@ MODULE.Permissions = {
 	"setflashlight_others",
 	"setuammo",
 	"setuammo_others",
-	
+
 	"open_spawnmenu",
 
 
@@ -725,9 +725,11 @@ end
 
 function MODULE:InitServer()
 
+	RunConsoleCommand("sbox_godmode", 0) -- People moan about Vermilion "stopping PvP" but don't change this. I'm bored.
+
 	if(self:GetData("voip_control", 3, true) > 3) then self:SetData("voip_control", 3) end
 	self:SetData("gamemode", table.KeyFromValue(VToolkit.GetLowerGamemodeNames(), engine.ActiveGamemode()))
-	
+
 	self:AddDataChangeHook("gamemode", "ChangeGamemode", function(val)
 		local map = Vermilion:GetModule("map")
 		local target = VToolkit.GetLowerGamemodeNames()[val]
@@ -742,7 +744,7 @@ function MODULE:InitServer()
 			map:ScheduleMapChange(game.GetMap(), 15)
 		end
 	end)
-	
+
 	self:NetHook("GetGamemodeList", function(vplayer)
 		MODULE:NetStart("GetGamemodeList")
 		net.WriteTable(VToolkit.GetLowerGamemodeNames())
@@ -1078,7 +1080,7 @@ function MODULE:InitServer()
 		VToolkit:SetGlobalValue("spawnmenu_control", value)
 	end)
 	VToolkit:SetGlobalValue("spawnmenu_control", MODULE:GetData("spawnmenu_control", 1, true))
-	
+
 	self:AddDataChangeHook("forced_menu_keybind", "FMKB_Key", function(value)
 		VToolkit:SetGlobalValue("FMKB_Key", value)
 	end)
@@ -1119,7 +1121,7 @@ function MODULE:InitClient()
 			return Vermilion:HasPermission("noclip")
 		end
 	end)
-	
+
 	self:AddHook("SpawnMenuOpen", function()
 		if(VToolkit:GetGlobalValue("spawnmenu_control") == 1) then return end
 		if(VToolkit:GetGlobalValue("spawnmenu_control") == 2) then return false end
@@ -1135,7 +1137,7 @@ function MODULE:InitClient()
 						if(k1.SendText) then
 							k1.Impl:ChooseOptionID(table.KeyFromValue(keylist, k))
 						else
-							if(k1.Name != "gamemode") then 
+							if(k1.Name != "gamemode") then
 								k1.Impl:ChooseOptionID(k)
 							end
 						end
@@ -1340,8 +1342,8 @@ function MODULE:InitClient()
 			end
 		end
 	end)
-	
-	self:NetHook("GetGamemodeList", function() 
+
+	self:NetHook("GetGamemodeList", function()
 		local page = Vermilion.Menu.Pages["server_settings"]
 		for i,k in pairs(options) do
 			if(k.Name == "gamemode") then
@@ -1446,7 +1448,7 @@ function MODULE:InitClient()
 					if(table.Count(k.Options) != 0) then
 						combobox:ChooseOptionID(k.Default)
 					end
-					
+
 
 					if(k.Permission != nil) then
 						combobox:SetEnabled(Vermilion:HasPermission(k.Permission))
@@ -1613,7 +1615,7 @@ function MODULE:InitClient()
 				end
 			end
 			MODULE.UpdatingGUI = false
-			
+
 			self:NetCommand("GetGamemodeList")
 		end,
 		OnOpen = function(panel)

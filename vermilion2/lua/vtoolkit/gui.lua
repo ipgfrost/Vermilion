@@ -115,6 +115,18 @@ function VToolkit:GetSkinComponent(typ)
 	return self:GetActiveSkin()[typ]
 end
 
+function VToolkit:GenerateSubscriberFunction(typ)
+	return function(self, w, h)
+		if(VToolkit:GetSkinComponent(typ) == nil) then
+			return self:OldPaint(w, h)
+		end
+		if(VToolkit:GetSkinComponent(typ).Paint == nil) then
+			return self:OldPaint(w, h)
+		end
+		return VToolkit:GetSkinComponent(typ).Paint(self, w, h)
+	end
+end
+
 
 
 function VToolkit:SetDark(dark)
@@ -131,9 +143,7 @@ function VToolkit:CreateLabel(text)
 			self:GetSkinComponent("Label").Config(label)
 		end
 		label.OldPaint = label.Paint
-		if(self:GetSkinComponent("Label").Paint != nil) then
-			label.Paint = self:GetSkinComponent("Label").Paint
-		end
+		label.Paint = self:GenerateSubscriberFunction("Label")
 	end
 	return label
 end
@@ -203,9 +213,7 @@ function VToolkit:CreateComboBox(options, selected, nonalphabetical)
 			self:GetSkinComponent("ComboBox").Config(cbox)
 		end
 		cbox.OldPaint = cbox.Paint
-		if(self:GetSkinComponent("ComboBox").Paint != nil) then
-			cbox.Paint = self:GetSkinComponent("ComboBox").Paint
-		end
+		cbox.Paint = self:GenerateSubscriberFunction("ComboBox")
 	end
 	return cbox
 end
@@ -231,9 +239,8 @@ function VToolkit:CreateCheckBox(text, convar, initialValue)
 			self:GetSkinComponent("Checkbox").Config(checkbox)
 		end
 		checkbox.Button.OldPaint = checkbox.Button.Paint
-		if(self:GetSkinComponent("Checkbox").Paint != nil) then
-			checkbox.Button.Paint = self:GetSkinComponent("Checkbox").Paint
-		end
+		checkbox.Button.Paint = self:GenerateSubscriberFunction("Checkbox")
+
 	end
 	checkbox.OldSetDisabled = checkbox.SetDisabled
 	function checkbox:SetDisabled(mode)
@@ -277,9 +284,7 @@ function VToolkit:CreateColourMixer(palette, alpha, wangs, defaultColour, valueC
 			self:GetSkinComponent("ColourMixer").Config(mixer)
 		end
 		mixer.OldPaint = mixer.Paint
-		if(self:GetSkinComponent("ColourMixer").Paint != nil) then
-			mixer.Paint = self:GetSkinComponent("ColourMixer").Paint
-		end
+		mixer.Paint = self:GenerateSubscriberFunction("ColourMixer")
 	end
 	return mixer
 end
@@ -310,9 +315,7 @@ function VToolkit:CreateButton(text, onClick)
 			self:GetSkinComponent("Button").Config(button)
 		end
 		button.OldPaint = button.Paint
-		if(self:GetSkinComponent("Button").Paint != nil) then
-			button.Paint = self:GetSkinComponent("Button").Paint
-		end
+		button.Paint = self:GenerateSubscriberFunction("Button")
 	end
 	return button
 end
@@ -329,9 +332,7 @@ function VToolkit:CreateNumberWang(min, max)
 			self:GetSkinComponent("NumberWang").Config(wang)
 		end
 		wang.OldPaint = wang.Paint
-		if(self:GetSkinComponent("NumberWang").Paint != nil) then
-			wang.Paint = self:GetSkinComponent("NumberWang").Paint
-		end
+		wang.Paint = self:GenerateSubscriberFunction("NumberWang")
 	end
 	return wang
 end
@@ -349,6 +350,8 @@ function VToolkit:CreateSlider(text, min, max, decimals, convar)
 	end
 	slider:SetConVar(convar)
 	slider:SetDark(self.Dark)
+	//slider.OldPaint = slider.Paint
+	//slider.Paint = self:GenerateSubscriberFunction("Slider")
 	return slider
 end
 
@@ -365,9 +368,7 @@ function VToolkit:CreateTextbox(text)
 			self:GetSkinComponent("Textbox").Config(textbox)
 		end
 		textbox.OldPaint = textbox.Paint
-		if(self:GetSkinComponent("Textbox").Paint != nil) then
-			textbox.Paint = self:GetSkinComponent("Textbox").Paint
-		end
+		textbox.Paint = self:GenerateSubscriberFunction("Textbox")
 	end
 	return textbox
 end
@@ -385,9 +386,7 @@ function VToolkit:CreatePanel(props)
 			self:GetSkinComponent("WindowPanel").Config(panel)
 		end
 		panel.OldPaint = panel.Paint
-		if(self:GetSkinComponent("WindowPanel").Paint != nil) then
-			panel.Paint = self:GetSkinComponent("WindowPanel").Paint
-		end
+		panel.Paint = self:GenerateSubscriberFunction("WindowPanel")
 	end
 	return panel
 end
@@ -417,9 +416,7 @@ function VToolkit:CreateFrame(props)
 			self:GetSkinComponent("Frame").Config(panel)
 		end
 		panel.OldPaint = panel.Paint
-		if(self:GetSkinComponent("Frame").Paint != nil) then
-			panel.Paint = self:GetSkinComponent("Frame").Paint
-		end
+		panel.Paint = self:GenerateSubscriberFunction("Frame")
 	end
 	return panel
 end
@@ -678,9 +675,7 @@ function VToolkit:CreateList(data)
 			self:GetSkinComponent("ListView").Config(lst)
 		end
 		lst.OldPaint = lst.Paint
-		if(self:GetSkinComponent("ListView").Paint != nil) then
-			lst.Paint = self:GetSkinComponent("ListView").Paint
-		end
+		lst.Paint = self:GenerateSubscriberFunction("ListView")
 	end
 	return lst
 end
@@ -715,9 +710,7 @@ function VToolkit:CreatePropertySheet()
 			self:GetSkinComponent("PropertySheet").Config(sheet)
 		end
 		sheet.OldPaint = sheet.Paint
-		if(self:GetSkinComponent("PropertySheet").Paint != nil) then
-			sheet.Paint = self:GetSkinComponent("PropertySheet").Paint
-		end
+		sheet.Paint = self:GenerateSubscriberFunction("PropertySheet")
 	end
 	return sheet
 end
@@ -796,14 +789,12 @@ function VToolkit:CreateCategoryList(onecategory)
 				btn:Toggle()
 			end
 		end
-		if(VToolkit:GetSkinComponent("CollapsibleCateogryHeader") != nil) then
-			if(VToolkit:GetSkinComponent("CollapsibleCateogryHeader").Config != nil) then
-				VToolkit:GetSkinComponent("CollapsibleCateogryHeader").Config(btn)
+		if(VToolkit:GetSkinComponent("CollapsibleCategoryHeader") != nil) then
+			if(VToolkit:GetSkinComponent("CollapsibleCategoryHeader").Config != nil) then
+				VToolkit:GetSkinComponent("CollapsibleCategoryHeader").Config(btn)
 			end
 			btn.OldPaint = btn.Paint
-			if(VToolkit:GetSkinComponent("CollapsibleCateogryHeader").Paint != nil) then
-				btn.Paint = VToolkit:GetSkinComponent("CollapsibleCateogryHeader").Paint
-			end
+			btn.Paint = VToolkit:GenerateSubscriberFunction("CollapsibleCategoryHeader")
 		end
 		return btn
 	end
@@ -812,9 +803,7 @@ function VToolkit:CreateCategoryList(onecategory)
 			self:GetSkinComponent("CategoryList").Config(lst)
 		end
 		lst.OldPaint = lst.Paint
-		if(self:GetSkinComponent("CategoryList").Paint != nil) then
-			lst.Paint = self:GetSkinComponent("CategoryList").Paint
-		end
+		lst.Paint = self:GenerateSubscriberFunction("CategoryList")
 	end
 	return lst
 end

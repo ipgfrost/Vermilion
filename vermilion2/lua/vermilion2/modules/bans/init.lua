@@ -65,8 +65,6 @@ MODULE.BanReasons = {
 function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "ban",
-		Description = "Bans a player",
-		Syntax = function(vplayer) return MODULE:TranslateStr("bans:cmd:ban:syntax", nil, vplayer) end,
 		CanMute = true,
 		Permissions = { "ban_user" },
 		AllValid = {
@@ -91,7 +89,7 @@ function MODULE:RegisterChatCommands()
 				return
 			end
 			local target = VToolkit.LookupPlayer(text[1])
-			if(target == nil) then 
+			if(target == nil) then
 				if(tonumber(util.SteamIDTo64(text[1])) > 0) then
 					MODULE:BanPlayer({ SteamID = function() return text[1] end, GetName = function() return text[1] end }, sender, tonumber(text[2]) * 60, table.concat(text, " ", 3), log, glog)
 				end
@@ -121,8 +119,6 @@ function MODULE:RegisterChatCommands()
 
 	Vermilion:AddChatCommand({
 		Name = "kick",
-		Description = "Kicks a player",
-		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:kick:syntax", nil, vplayer) end,
 		CanMute = true,
 		Permissions = { "kick_user" },
 		AllValid = {
@@ -157,8 +153,6 @@ function MODULE:RegisterChatCommands()
 
 	Vermilion:AddChatCommand({
 		Name = "unban",
-		Description = "Unbans a player",
-		Syntax = function(vplayer) return MODULE:TranslateStr("cmd:unban:syntax", nil, vplayer) end,
 		CanMute = true,
 		Permissions = { "unban_user" },
 		Predictor = function(pos, current, all, vplayer)

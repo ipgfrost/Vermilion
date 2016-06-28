@@ -109,15 +109,6 @@ if(CLIENT) then
 		local playButton = VToolkit:CreateButton("Play", function()
 			MODULE:QueueSoundStream(SoundCloud.Tracks:GenerateStream(trackid), "BaseSound", {}, function(data)
 				MODULE:PlayChannel("BaseSound")
-				MODULE.Credits = {
-					name,
-					uploader,
-					genre,
-					uploaded
-				}
-				timer.Simple(20, function()
-					MODULE.Credits = nil
-				end)
 			end)
 		end)
 		playButton:SetPos(10, authorLabel:GetY() + 20)
@@ -130,6 +121,12 @@ if(CLIENT) then
 			net.WriteString(SoundCloud.Tracks:GenerateStream(trackid))
 			net.WriteString("BaseSound")
 			net.WriteTable({})
+			net.WriteTable({
+				name,
+				uploader,
+				genre,
+				uploaded
+			})
 			net.SendToServer()
 
 		end)

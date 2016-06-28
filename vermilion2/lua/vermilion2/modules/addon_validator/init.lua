@@ -36,7 +36,6 @@ MODULE.WorkshopCollectionURL = "http://steamcommunity.com/sharedfiles/filedetail
 function MODULE:RegisterChatCommands()
 	Vermilion:AddChatCommand({
 		Name = "checkaddons",
-		Description = "Brings up the addon validator again.",
 		CanRunOnDS = false,
 		Function = function(sender, text, log, glog)
 			if(not MODULE:GetData("enabled", true, true)) then return end
