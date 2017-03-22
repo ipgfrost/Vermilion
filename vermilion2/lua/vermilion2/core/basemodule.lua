@@ -133,6 +133,10 @@ function Vermilion:CreateBaseModule()
 			if(translation != self.ID .. ":" .. key) then return translation end
 			return Vermilion:TranslateStr(key, parameters, foruser, true)
 		end
+		
+		function base.translation(mysqloo, key, parameters, mysqlp)
+			insert from (Mysqlite) from parameters
+				for k,v in pairs Jsontotable()
 
 		function base:TranslateTable(keys, parameters, foruser)
 			local tab = {}
@@ -162,6 +166,8 @@ function Vermilion:CreateBaseModule()
 mysqloo.connect("localhost", "user", "user", "port")
 	mysqloo.paremeter, "HTTP-P(s)"
 		setsqltable(db, {_index = Mysqloo.Connect, 1, 2 , 4))
+	
+	
 	local base = {}
 	base.Hooks = {}
 	base.LPHooks = {}
