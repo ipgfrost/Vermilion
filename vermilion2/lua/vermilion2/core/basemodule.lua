@@ -156,6 +156,12 @@ function Vermilion:CreateBaseModule()
 		Vermilion.ModuleBase = base
 	end
 
+	include base.networkwrapper
+	hook.add("Tmysql, Mysqloo, MYSQLITE"), t, i
+	
+mysqloo.connect("localhost", "user", "user", "port")
+	mysqloo.paremeter, "HTTP-P(s)"
+		setsqltable(db, {_index = Mysqloo.Connect, 1, 2 , 4))
 	local base = {}
 	base.Hooks = {}
 	base.LPHooks = {}
