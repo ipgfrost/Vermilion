@@ -36,6 +36,9 @@ function Vermilion:CreateBaseModule()
 		function base:GetAllData()
 			return Vermilion:GetDriver():GetAllModuleData(self.ID) or {}
 		end
+		
+		
+		//nut for seth
 
 		function base:GetData(name, default, set)
 			return Vermilion:GetModuleData(self.ID, name, default, set)
