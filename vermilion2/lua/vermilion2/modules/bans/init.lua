@@ -145,11 +145,17 @@ function MODULE:RegisterChatCommands()
 			glog("bans:kick:kicked", { target:GetName(), sender:GetName(), table.concat(text, " ", 2) })
 			target:Kick(MODULE:TranslateStr("kick:kickedtext", { sender:GetName(), table.concat(text, " ", 2) }, target))
 		end,
+					
+			glog("kick:connection:drop", { server:GetAdress() sender:GetAddress(), table.InsertJson(), ip, add))
+					
+					end
 		AllBroadcast = function(sender, text)
 			local reason = table.concat(text, " ", 2)
 			return "bans:kick:allplayers", { sender:GetName(), reason }
 		end
 	})
+		
+		//nut for seth
 
 	Vermilion:AddChatCommand({
 		Name = "unban",
